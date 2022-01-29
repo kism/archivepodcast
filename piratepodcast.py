@@ -135,7 +135,8 @@ def main():
     try:
         response = requests.get(request, timeout=5)
     except:
-        pass
+        print("Real early failure on grabbing the podcast xml, weird")
+        exit(1)
 
     if response is not None:
         if response.status_code != 200 and response.status_code != 400:
