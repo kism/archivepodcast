@@ -15,24 +15,54 @@ def print_debug(text):  # Debug messages in yellow if the debug global is true
         print("\033[93m" + text + "\033[0m")
 
 
-def download_episode(url, filename):
-    filepath = "output/" + filename + '.mp3'
-    filepath = filepath.encode('ascii', 'ignore')
+def cleanup_episode_name(filename):
+    filename = filename.encode('ascii', 'ignore')
+    filename = filename.decode()
+    filename = filename.replace('?',' ')
+    filename = filename.replace('\\',' ')
+    filename = filename.replace('/',' ')
+    filename = filename.replace(':',' ')
+    filename = filename.replace('*',' ')
+    filename = filename.replace('"',' ')
+    filename = filename.replace('<',' ')
+    filename = filename.replace('>',' ')
+    filename = filename.replace('|',' ')
+    filename = filename.replace('[AUDIO]','')
+    filename = filename.replace('[Audio]','')
+    filename = filename.replace('[audio]','')
+    filename = filename.replace('Ep ',      'Ep. ')
+    filename = filename.replace('Ep: ',     'Ep. ')
+    filename = filename.replace('Episode ', 'Ep. ')
+    filename = filename.replace('Episode: ','Ep. ')
+    
+    while '  ' in filename:
+        filename = filename.replace('  ',' ')
+    
+    filename = filename.strip()
+
+    
+    print_debug('\033[92mClean Filename\033[0m: ' + "'" + filename + "'")
+    return filename
+
+
+def download_episode(url, title):
+    filepath = "output/" + title + '.mp3'
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
-        try:
-            podcastURL = url
-            headers = {'user-agent': 'Mozilla/5.0'}
-            r=requests.get(podcastURL, headers=headers)
-            with open(filepath, 'wb') as f:
-                f.write(r.content)
+        if True:
+            try:
+                podcastURL = url
+                headers = {'user-agent': 'Mozilla/5.0'}
+                r = requests.get(podcastURL, headers=headers)
+                with open(filepath, 'wb') as f:
+                    f.write(r.content)
 
-            print("  \033[92mSuccess!\033[0m")
-        except urllib.error.HTTPError as err:
-            print("  \033[91mDownload Failed\033[0m" + ' ' + str(err))
+                print("  \033[92mSuccess!\033[0m")
+            except urllib.error.HTTPError as err:
+                print("  \033[91mDownload Failed\033[0m" + ' ' + str(err))
 
     else:
-        print("Already downloaded: " + filename)
+        print("Already downloaded: " + title)
 
 
 def main():
@@ -67,7 +97,8 @@ def main():
             failure = False
     else:
         print("Failure, no sign of a responce.")
-        print_debug("Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
+        print_debug(
+            "Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
         failure = True
 
     podcastxml = ET.fromstring(response.content)
@@ -75,7 +106,7 @@ def main():
 
     podcastxml = podcastxml[0]
 
-    for channel in podcastxml: # Dont complain
+    for channel in podcastxml:  # Dont complain
         print_debug("\nNew Entry")
         title = ''
 
@@ -87,7 +118,11 @@ def main():
                 title = str(child.text)
 
             if child.tag == 'enclosure':
-                download_episode(child.attrib.get('url'), title)
+                title = cleanup_episode_name(title)
+                if '.mp3' in child.attrib.get('url'):
+                    download_episode(child.attrib.get('url'), title)
+                else:
+                    print("Skipping non-mp3 file:" + title)
 
 
 if __name__ == "__main__":
