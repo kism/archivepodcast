@@ -16,7 +16,9 @@ defaultjson = """
 {
     "podcasturl": "",
     "podcastnewname": "",
-    "webroot": ""
+    "podcastdescription": "",
+    "inetpath": "http://localhost/",
+    "webroot": "output/"
 }
 """
 
@@ -47,17 +49,12 @@ def get_settings():
     settingsjsonfile.close()
 
     try:
-        if settingsjson['podcasturl'] == '':
-            settingserror = True
-            print("podcasturl not set")
+        # Iterate through the default settings json in this file, if any of the keys arent in settings.json throw an error
+        for setting in json.loads(defaultjson).keys():
+            if settingsjson[setting] == '':
+                settingserror = True
+                print(setting + " not set")
 
-        if settingsjson['podcastnewname'] == '':
-            settingserror = True
-            print("podcastnewname not set")
-
-        if settingsjson['webroot'] == '':
-            settingserror = True
-            print("webroot not set")
     except KeyError:
         settingserror = True
         print("Looks like settings.json doesnt match the expecting schema format, make a backup, remove the original file, run the script again and have a look at the default settings.json file")
@@ -72,6 +69,7 @@ def get_settings():
 def cleanup_episode_name(filename):
     filename = filename.encode('ascii', 'ignore')
     filename = filename.decode()
+    # Filesystem
     filename = filename.replace('?', ' ')
     filename = filename.replace('\\', ' ')
     filename = filename.replace('/', ' ')
@@ -81,6 +79,10 @@ def cleanup_episode_name(filename):
     filename = filename.replace('<', ' ')
     filename = filename.replace('>', ' ')
     filename = filename.replace('|', ' ')
+    # HTML
+    filename = filename.replace('&', ' ')
+    filename = filename.replace("'", ' ')
+    # Standardise
     filename = filename.replace('[AUDIO]', '')
     filename = filename.replace('[Audio]', '')
     filename = filename.replace('[audio]', '')
@@ -93,6 +95,7 @@ def cleanup_episode_name(filename):
         filename = filename.replace('  ', ' ')
 
     filename = filename.strip()
+    filename = filename.replace(' ', '_')
 
     print_debug('\033[92mClean Filename\033[0m: ' + "'" + filename + "'")
     return filename
@@ -121,6 +124,11 @@ def main():
     response = None
 
     settingsjson = get_settings()
+
+    try:
+        os.mkdir(settingsjson['webroot'])
+    except FileExistsError:
+        pass
 
     request = settingsjson['podcasturl']
 
@@ -181,13 +189,19 @@ def main():
                 else:
                     print("Skipping non image file:" + title)
 
+            if child.tag == 'description':
+                child.text = settingsjson['podcastdescription']
+
             if child.tag == 'enclosure':
                 title = cleanup_episode_name(title)
                 url = child.attrib.get('url')
                 if '.mp3' in url:
                     download_asset(url, title, settingsjson, '.mp3')
                 else:
+                    url = ''
                     print("Skipping non-mp3 file:" + title)
+
+                child.attrib['url'] = settingsjson['inetpath'] + title + '.mp3'
 
     podcastxml[0] = xmlfirstchild
 
