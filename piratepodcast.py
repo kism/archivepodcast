@@ -135,7 +135,7 @@ def main():
                 title = cleanup_episode_name(title)
                 url = child.text
                 if ('.jpg' in url) or ('.png' in url) or ('.webp' in url) or ('.jpeg' in url) or ('.gif' in url):
-                    download_asset(child.attrib.get('url'), title)
+                    download_asset(url, title)
                 else:
                     print("Skipping non-mp3 file:" + title)
 
