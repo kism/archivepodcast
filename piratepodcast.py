@@ -38,21 +38,29 @@ def get_settings():
         settingsjsonfile.close()
         settingsjsonfile = open("settings.json", "r")
 
-    settingsjson = json.loads(settingsjsonfile.read())
+    try:
+        settingsjson = json.loads(settingsjsonfile.read())
+    except:
+        print("Malformed json in settings.json, check the syntax")
+        exit(1)
 
     settingsjsonfile.close()
 
-    if settingsjson['podcasturl'] == '':
-        settingserror = True
-        print("podcasturl not set")
+    try:
+        if settingsjson['podcasturl'] == '':
+            settingserror = True
+            print("podcasturl not set")
 
-    if settingsjson['podcastnewname'] == '':
-        settingserror = True
-        print("podcastnewname not set")
+        if settingsjson['podcastnewname'] == '':
+            settingserror = True
+            print("podcastnewname not set")
 
-    if settingsjson['webroot'] == '':
+        if settingsjson['webroot'] == '':
+            settingserror = True
+            print("webroot not set")
+    except KeyError:
         settingserror = True
-        print("webroot not set")
+        print("Looks like settings.json doesnt match the expecting schema format, make a backup, remove the original file, run the script again and have a look at the default settings.json file")
 
     if settingserror:
         print("Invalid config exiting, check settings.json")
