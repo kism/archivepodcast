@@ -7,14 +7,53 @@ import xml.etree.ElementTree as Et
 import urllib
 import os
 import sys
+import json
 
 debug = True
 imageformats = ['.webp', '.png', '.jpg', '.jpeg', '.gif']
 
+defaultjson = """
+{
+    "podcasturl": "",
+    "podcastnewname": "",
+    "webroot": ""
+}
+"""
 
 def print_debug(text):  # Debug messages in yellow if the debug global is true
     if debug:
         print("\033[93m" + text + "\033[0m")
+
+def get_settings():
+    settingsjson = None
+    settingserror = False
+
+    try:
+        settingsjson = open("settings.json", "r")
+    except:
+        settingsjson = open("settings.json", "w")
+        settingsjson.write(defaultjson)
+        settingsjson.close()
+
+    settingsjson = json.loads(settingsjson.read())
+
+    if settingsjson['podcasturl'] == '':
+        settingserror = True
+        print("podcasturl not set")
+
+    if settingsjson['podcastnewname'] == '':
+        settingserror = True
+        print("podcastnewname not set")
+
+    if settingsjson['webroot'] == '':
+        settingserror = True
+        print("webroot not set")
+
+    if settingserror:
+        "Invalid config exiting, check settings.json"
+        exit(1)
+
+    return settingsjson
 
 
 def cleanup_episode_name(filename):
@@ -46,8 +85,8 @@ def cleanup_episode_name(filename):
     return filename
 
 
-def download_asset(url, title, extension=''):
-    filepath = "output/" + title + extension
+def download_asset(url, title, settingsjson, extension=''):
+    filepath = settingsjson['webroot'] + title + extension
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         if True:
@@ -67,20 +106,10 @@ def download_asset(url, title, extension=''):
 
 def main():
     response = None
-    podcastfile = None
 
-    try:
-        podcastfile = open("podcast.txt", "r")
-    except:
-        print('Gotta have a one line podcast.txt that has the premium podcast URL')
-        exit(1)
-    request = podcastfile.read().strip()
-    print(request)
+    settingsjson = get_settings()
 
-    try:
-        os.mkdir("output")
-    except FileExistsError:
-        pass
+    request = settingsjson['podcasturl']
 
     try:
         response = requests.get(request, timeout=5)
@@ -91,7 +120,7 @@ def main():
         if response.status_code != 200 and response.status_code != 400:
             print("Not a great web request, we got: " +
                   str(response.status_code))
-            failure = True
+            exit(1)
         else:
             print_debug("We got a pretty real response by the looks of it")
             print_debug(str(response))
@@ -100,7 +129,7 @@ def main():
         print("Failure, no sign of a response.")
         print_debug(
             "Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
-        failure = True
+        exit(1)
 
     podcastxml = Et.fromstring(response.content)
     print(podcastxml)
@@ -135,7 +164,7 @@ def main():
 
                 for filetype in imageformats:
                     if filetype in url:
-                        download_asset(url, title, filetype)
+                        download_asset(url, title, settingsjson, filetype)
                 else:
                     print("Skipping non image file:" + title)
 
@@ -143,20 +172,14 @@ def main():
                 title = cleanup_episode_name(title)
                 url = child.attrib.get('url')
                 if '.mp3' in url:
-                    download_asset(url, title, '.mp3')
+                    download_asset(url, title, settingsjson, '.mp3')
                 else:
                     print("Skipping non-mp3 file:" + title)
 
     podcastxml[0] = xmlfirstchild
 
     tree = Et.ElementTree(podcastxml)
-    tree.write("filename.xml")
-
-
-
-    # podcastxml.
-    # podcastxml.
-    # podcastxml.write("output/output.xml")
+    tree.write(settingsjson['webroot'] + "output.xml")
 
     if failure is True:
         exit(1)
