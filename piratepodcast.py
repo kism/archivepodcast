@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-import re
+# I hate XML
+
 import requests
 import xml.etree.ElementTree as ET
 import urllib
@@ -18,34 +19,37 @@ def print_debug(text):  # Debug messages in yellow if the debug global is true
 def cleanup_episode_name(filename):
     filename = filename.encode('ascii', 'ignore')
     filename = filename.decode()
-    filename = filename.replace('?',' ')
-    filename = filename.replace('\\',' ')
-    filename = filename.replace('/',' ')
-    filename = filename.replace(':',' ')
-    filename = filename.replace('*',' ')
-    filename = filename.replace('"',' ')
-    filename = filename.replace('<',' ')
-    filename = filename.replace('>',' ')
-    filename = filename.replace('|',' ')
-    filename = filename.replace('[AUDIO]','')
-    filename = filename.replace('[Audio]','')
-    filename = filename.replace('[audio]','')
+    filename = filename.replace('?', ' ')
+    filename = filename.replace('\\', ' ')
+    filename = filename.replace('/', ' ')
+    filename = filename.replace(':', ' ')
+    filename = filename.replace('*', ' ')
+    filename = filename.replace('"', ' ')
+    filename = filename.replace('<', ' ')
+    filename = filename.replace('>', ' ')
+    filename = filename.replace('|', ' ')
+    filename = filename.replace('[AUDIO]', '')
+    filename = filename.replace('[Audio]', '')
+    filename = filename.replace('[audio]', '')
     filename = filename.replace('Ep ',      'Ep. ')
     filename = filename.replace('Ep: ',     'Ep. ')
     filename = filename.replace('Episode ', 'Ep. ')
-    filename = filename.replace('Episode: ','Ep. ')
-    
+    filename = filename.replace('Episode: ', 'Ep. ')
+
     while '  ' in filename:
-        filename = filename.replace('  ',' ')
-    
+        filename = filename.replace('  ', ' ')
+
     filename = filename.strip()
 
-    
     print_debug('\033[92mClean Filename\033[0m: ' + "'" + filename + "'")
     return filename
 
 
-def download_episode(url, title):
+def download_misc(url, title):
+    pass
+
+
+def download_asset(url, title):
     filepath = "output/" + title + '.mp3'
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
@@ -108,19 +112,38 @@ def main():
 
     for channel in podcastxml:  # Dont complain
         print_debug("\nNew Entry")
+        print_debug(str(channel))
+        print(str(channel.tag) + ': ' +
+                  str(channel.text) + ' ' + str(channel.attrib))
+        
         title = ''
+        url = ''
+
+        if channel.tag == 'title':
+            title = str(channel.text)
+            print_debug("WE HERE: " + title)
 
         for child in channel:
+            #print_debug(str(child))
             print(str(child.tag) + ': ' +
                   str(child.text) + ' ' + str(child.attrib))
 
             if child.tag == 'title':
                 title = str(child.text)
 
+            if child.tag == 'url':
+                title = cleanup_episode_name(title)
+                url = child.text
+                if ('.jpg' in url) or ('.png' in url) or ('.webp' in url) or ('.jpeg' in url) or ('.gif' in url):
+                    download_asset(child.attrib.get('url'), title)
+                else:
+                    print("Skipping non-mp3 file:" + title)
+
             if child.tag == 'enclosure':
                 title = cleanup_episode_name(title)
-                if '.mp3' in child.attrib.get('url'):
-                    download_episode(child.attrib.get('url'), title)
+                url = child.attrib.get('url')
+                if '.mp3' in url:
+                    download_asset(url, title)
                 else:
                     print("Skipping non-mp3 file:" + title)
 
