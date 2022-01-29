@@ -22,8 +22,8 @@ def download_episode(url, filename):
         try:
             urllib.request.urlretrieve(url, "output/" + filename)
             print("  \033[92mSuccess!\033[0m")
-        except:
-            print("  \033[91mDownload Failed\033[0m", end=', ')
+        except urllib.error.HTTPError as err:
+            print("  \033[91mDownload Failed\033[0m" + ' ' + str(err))
 
     else:
         print("Already downloaded: " + filename)
