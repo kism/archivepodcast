@@ -9,7 +9,7 @@ import os
 import sys
 
 debug = True
-
+imageformats = ['.webp','.png','.jpg','.jpeg','.gif']
 
 def print_debug(text):  # Debug messages in yellow if the debug global is true
     if debug:
@@ -45,12 +45,8 @@ def cleanup_episode_name(filename):
     return filename
 
 
-def download_misc(url, title):
-    pass
-
-
-def download_asset(url, title):
-    filepath = "output/" + title + '.mp3'
+def download_asset(url, title, extension=''):
+    filepath = "output/" + title + extension
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         if True:
@@ -108,16 +104,18 @@ def main():
     podcastxml = ET.fromstring(response.content)
     print(podcastxml)
 
-    podcastxml = podcastxml[0]
+    xmlfirstchild = podcastxml[0]
 
-    for channel in podcastxml:  # Dont complain
+    # It's time to iterate
+    title = ''
+    url = ''
+
+    for channel in xmlfirstchild:  # Dont complain
         print_debug("\nNew Entry")
         print_debug(str(channel))
         print(str(channel.tag) + ': ' +
                   str(channel.text) + ' ' + str(channel.attrib))
-        
-        title = ''
-        url = ''
+    
 
         if channel.tag == 'title':
             title = str(channel.text)
@@ -134,18 +132,23 @@ def main():
             if child.tag == 'url':
                 title = cleanup_episode_name(title)
                 url = child.text
-                if ('.jpg' in url) or ('.png' in url) or ('.webp' in url) or ('.jpeg' in url) or ('.gif' in url):
-                    download_asset(url, title)
+
+                for filetype in imageformats:
+                    if filetype in url:
+                        download_asset(url, title, filetype)
                 else:
-                    print("Skipping non-mp3 file:" + title)
+                    print("Skipping non image file:" + title)
 
             if child.tag == 'enclosure':
                 title = cleanup_episode_name(title)
                 url = child.attrib.get('url')
                 if '.mp3' in url:
-                    download_asset(url, title)
+                    download_asset(url, title, '.mp3')
                 else:
                     print("Skipping non-mp3 file:" + title)
+
+    podcastxml[0] = xmlfirstchild
+    
 
 
 if __name__ == "__main__":
