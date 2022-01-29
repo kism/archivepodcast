@@ -3,13 +3,14 @@
 # I hate XML
 
 import requests
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as Et
 import urllib
 import os
 import sys
 
 debug = True
-imageformats = ['.webp','.png','.jpg','.jpeg','.gif']
+imageformats = ['.webp', '.png', '.jpg', '.jpeg', '.gif']
+
 
 def print_debug(text):  # Debug messages in yellow if the debug global is true
     if debug:
@@ -31,8 +32,8 @@ def cleanup_episode_name(filename):
     filename = filename.replace('[AUDIO]', '')
     filename = filename.replace('[Audio]', '')
     filename = filename.replace('[audio]', '')
-    filename = filename.replace('Ep ',      'Ep. ')
-    filename = filename.replace('Ep: ',     'Ep. ')
+    filename = filename.replace('Ep ', 'Ep. ')
+    filename = filename.replace('Ep: ', 'Ep. ')
     filename = filename.replace('Episode ', 'Ep. ')
     filename = filename.replace('Episode: ', 'Ep. ')
 
@@ -51,9 +52,8 @@ def download_asset(url, title, extension=''):
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         if True:
             try:
-                podcastURL = url
                 headers = {'user-agent': 'Mozilla/5.0'}
-                r = requests.get(podcastURL, headers=headers)
+                r = requests.get(url, headers=headers)
                 with open(filepath, 'wb') as f:
                     f.write(r.content)
 
@@ -67,6 +67,7 @@ def download_asset(url, title, extension=''):
 
 def main():
     response = None
+    podcastfile = None
 
     try:
         podcastfile = open("podcast.txt", "r")
@@ -86,7 +87,7 @@ def main():
     except:
         pass
 
-    if response != None:
+    if response is not None:
         if response.status_code != 200 and response.status_code != 400:
             print("Not a great web request, we got: " +
                   str(response.status_code))
@@ -96,12 +97,12 @@ def main():
             print_debug(str(response))
             failure = False
     else:
-        print("Failure, no sign of a responce.")
+        print("Failure, no sign of a response.")
         print_debug(
             "Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
         failure = True
 
-    podcastxml = ET.fromstring(response.content)
+    podcastxml = Et.fromstring(response.content)
     print(podcastxml)
 
     xmlfirstchild = podcastxml[0]
@@ -114,15 +115,14 @@ def main():
         print_debug("\nNew Entry")
         print_debug(str(channel))
         print(str(channel.tag) + ': ' +
-                  str(channel.text) + ' ' + str(channel.attrib))
-    
+              str(channel.text) + ' ' + str(channel.attrib))
 
         if channel.tag == 'title':
             title = str(channel.text)
             print_debug("WE HERE: " + title)
 
         for child in channel:
-            #print_debug(str(child))
+            # print_debug(str(child))
             print(str(child.tag) + ': ' +
                   str(child.text) + ' ' + str(child.attrib))
 
@@ -148,7 +148,18 @@ def main():
                     print("Skipping non-mp3 file:" + title)
 
     podcastxml[0] = xmlfirstchild
-    
+
+    tree = Et.ElementTree(podcastxml)
+    tree.write("filename.xml")
+
+
+
+    # podcastxml.
+    # podcastxml.
+    # podcastxml.write("output/output.xml")
+
+    if failure is True:
+        exit(1)
 
 
 if __name__ == "__main__":
