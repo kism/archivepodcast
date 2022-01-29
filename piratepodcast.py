@@ -20,22 +20,27 @@ defaultjson = """
 }
 """
 
+
 def print_debug(text):  # Debug messages in yellow if the debug global is true
     if debug:
         print("\033[93m" + text + "\033[0m")
+
 
 def get_settings():
     settingsjson = None
     settingserror = False
 
     try:
-        settingsjson = open("settings.json", "r")
+        settingsjsonfile = open("settings.json", "r")
     except:
-        settingsjson = open("settings.json", "w")
-        settingsjson.write(defaultjson)
-        settingsjson.close()
+        settingsjsonfile = open("settings.json", "w")
+        settingsjsonfile.write(defaultjson)
+        settingsjsonfile.close()
+        settingsjsonfile = open("settings.json", "r")
 
-    settingsjson = json.loads(settingsjson.read())
+    settingsjson = json.loads(settingsjsonfile.read())
+
+    settingsjsonfile.close()
 
     if settingsjson['podcasturl'] == '':
         settingserror = True
@@ -50,7 +55,7 @@ def get_settings():
         print("webroot not set")
 
     if settingserror:
-        "Invalid config exiting, check settings.json"
+        print("Invalid config exiting, check settings.json")
         exit(1)
 
     return settingsjson
