@@ -16,11 +16,17 @@ def print_debug(text):  # Debug messages in yellow if the debug global is true
 
 
 def download_episode(url, filename):
-    filepath = "output/" + filename
+    filepath = "output/" + filename + '.mp3'
+    filepath = filepath.encode('ascii', 'ignore')
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         try:
-            urllib.request.urlretrieve(url, "output/" + filename)
+            podcastURL = url
+            headers = {'user-agent': 'Mozilla/5.0'}
+            r=requests.get(podcastURL, headers=headers)
+            with open(filepath, 'wb') as f:
+                f.write(r.content)
+
             print("  \033[92mSuccess!\033[0m")
         except urllib.error.HTTPError as err:
             print("  \033[91mDownload Failed\033[0m" + ' ' + str(err))
@@ -32,9 +38,18 @@ def download_episode(url, filename):
 def main():
     response = None
 
-    podcastfile = open("podcast.txt", "r")
+    try:
+        podcastfile = open("podcast.txt", "r")
+    except:
+        print('Gotta have a one line podcast.txt that has the premium podcast URL')
+        exit(1)
     request = podcastfile.read().strip()
     print(request)
+
+    try:
+        os.mkdir("output")
+    except FileExistsError:
+        pass
 
     try:
         response = requests.get(request, timeout=5)
@@ -60,19 +75,19 @@ def main():
 
     podcastxml = podcastxml[0]
 
-    for child in podcastxml:
+    for channel in podcastxml: # Dont complain
         print_debug("\nNew Entry")
         title = ''
 
-        for doublechild in child:
-            print(str(doublechild.tag) + ': ' +
-                  str(doublechild.text) + ' ' + str(doublechild.attrib))
+        for child in channel:
+            print(str(child.tag) + ': ' +
+                  str(child.text) + ' ' + str(child.attrib))
 
-            if doublechild.tag == 'title':
-                title = str(doublechild.text)
+            if child.tag == 'title':
+                title = str(child.text)
 
-            if doublechild.tag == 'enclosure':
-                download_episode(doublechild.attrib.get('url'), title)
+            if child.tag == 'enclosure':
+                download_episode(child.attrib.get('url'), title)
 
 
 if __name__ == "__main__":
