@@ -2,6 +2,7 @@
 
 # I hate XML
 
+import textwrap
 import requests
 import xml.etree.ElementTree as Et
 import urllib
@@ -28,7 +29,7 @@ defaultjson = """
 
 #        location = /rss/<podcastnameoneword> {
 #           ## override content-type ##
-#           types { } default_type "application/atom+xml; charset=utf-8";
+#           types { } default_type "application/rss+xml; charset=utf-8";
 #
 #           ## override header (more like send custom header using nginx) #
 #           add_header x-robots-tag "noindex, nofollow";
