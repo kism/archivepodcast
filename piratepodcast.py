@@ -103,7 +103,7 @@ def cleanup_episode_name(filename):
 
 
 def download_asset(url, title, settingsjson, extension=''):
-    filepath = settingsjson['webroot'] + title + extension
+    filepath = settingsjson['webroot'] + 'content/' + title + extension
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         if True:
@@ -223,13 +223,13 @@ def main():
                         url = ''
                         print("Skipping non-mp3 file:" + title)
 
-                    child.attrib['url'] = settingsjson['inetpath'] + \
+                    child.attrib['url'] = settingsjson['inetpath'] + 'content/' + \
                         title + '.mp3'
 
     podcastxml[0] = xmlfirstchild
 
     tree = Et.ElementTree(podcastxml)
-    tree.write(settingsjson['webroot'] + "output.xml")
+    tree.write(settingsjson['webroot'] + 'rss/' + settingsjson['podcastnameoneword'])
 
     if failure is True:
         exit(1)
