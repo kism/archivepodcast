@@ -175,6 +175,10 @@ def main():
         print(str(channel.tag) + ': ' +
               str(channel.text) + ' ' + str(channel.attrib))
 
+        if channel.tag == 'link':
+            channel.text = settingsjson['inetpath'] + \
+                'rss/' + settingsjson['podcastnameoneword']
+
         if channel.tag == 'title':
             channel.text = settingsjson['podcastnewname']
 
@@ -184,7 +188,7 @@ def main():
         if channel.tag == '{http://www.w3.org/2005/Atom}link':
             channel.attrib['href'] = settingsjson['inetpath'] + \
                 'rss/' + settingsjson['podcastnameoneword']
-            channel.text = ' '
+            channel.text = ' '  # here me out...
 
         if channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
             for child in channel:
@@ -207,6 +211,8 @@ def main():
                     channel.attrib['href'] = settingsjson['inetpath'] + \
                         'content/' + title + filetype
 
+            channel.text = ' '
+
         if channel.tag == 'image':
             for child in channel:
                 if child.tag == 'title':
@@ -224,7 +230,9 @@ def main():
                             child.text = settingsjson['inetpath'] + \
                                 'content/' + title + filetype
                     else:
-                        print("Skipping non image file:" + title)
+                        print("Skipping non image file:" + title)                        
+
+            channel.text = ' '  # here me out...
 
         if channel.tag == 'item':
             for child in channel:
@@ -268,5 +276,5 @@ def main():
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and (sys.argv[1] == "-d" or sys.argv[1] == "--debug"):
-        debug=True
+        debug = True
     main()
