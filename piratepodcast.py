@@ -182,6 +182,27 @@ def main():
         if channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
             channel.attrib['href'] = settingsjson['inetpath'] + \
                 'rss/' + settingsjson['podcastnameoneword']
+            for child in channel:
+                if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}name':
+                    child.text = settingsjson['podcastnewname']
+                if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}email':
+                    child.text = settingsjson['contactemail']
+
+        if channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}author':
+            channel.text = settingsjson['podcastnewname']
+
+        if channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
+            title = settingsjson['podcastnewname']
+            title = cleanup_episode_name(title)
+            url = channel.attrib.get('href')
+
+            for filetype in imageformats:
+                if filetype in url:
+                    download_asset(url, title, settingsjson, filetype)
+                    channel.attrib['href'] = settingsjson['inetpath'] + \
+                        'content/' + title + filetype
+            
+            
 
         if channel.tag == 'image':
             for child in channel:
