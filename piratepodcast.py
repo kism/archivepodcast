@@ -9,13 +9,14 @@ import os
 import sys
 import json
 
-debug = True
+debug = False
 imageformats = ['.webp', '.png', '.jpg', '.jpeg', '.gif']
 
 defaultjson = """
 {
     "podcasturl": "",
     "podcastnewname": "",
+    "podcastnameoneword": "",
     "podcastdescription": "",
     "inetpath": "http://localhost/",
     "webroot": "output/",
@@ -23,19 +24,28 @@ defaultjson = """
 }
 """
 
+# Make sure to set this in the server{} section of nginx.conf
+
+#        location = /rss/<podcastnameoneword> {
+#           ## override content-type ##
+#           types { } default_type "application/atom+xml; charset=utf-8";
+#
+#           ## override header (more like send custom header using nginx) #
+#           add_header x-robots-tag "noindex, nofollow";
+#        }
 
 def print_debug(text):  # Debug messages in yellow if the debug global is true
     if debug:
         print("\033[93m" + text + "\033[0m")
 
 
-def get_settings():
+def get_settings(): # Load settings from settings.json
     settingsjson = None
     settingserror = False
 
     try:
         settingsjsonfile = open("settings.json", "r")
-    except:
+    except: # If settings.json doesn't exist, create it based on the template defined earlier
         settingsjsonfile = open("settings.json", "w")
         settingsjsonfile.write(defaultjson)
         settingsjsonfile.close()
@@ -66,8 +76,19 @@ def get_settings():
 
     return settingsjson
 
+def make_folder_structure(settingsjson):
+    folders = []
+    folders.append(settingsjson['webroot'])
+    folders.append(settingsjson['webroot'] + '/rss')
+    folders.append(settingsjson['webroot'] + '/content')
 
-def cleanup_episode_name(filename):
+    for folder in folders:
+        try:
+            os.mkdir(folder)
+        except FileExistsError:
+            pass
+
+def cleanup_episode_name(filename): # Standardise naming, fix everything that could cause something to be borked on the file system or in a url
     filename = filename.encode('ascii', 'ignore')
     filename = filename.decode()
 
@@ -89,6 +110,8 @@ def cleanup_episode_name(filename):
     filename = filename.replace('"', ' ')
     filename = filename.replace('<', ' ')
     filename = filename.replace('>', ' ')
+    filename = filename.replace('(', ' ')
+    filename = filename.replace(')', ' ')
     filename = filename.replace('|', ' ')
     # HTML
     filename = filename.replace('&', ' ')
@@ -108,7 +131,7 @@ def cleanup_episode_name(filename):
     return filename
 
 
-def download_asset(url, title, settingsjson, extension=''):
+def download_asset(url, title, settingsjson, extension=''): # Download asset from url with appropiate file name
     filepath = settingsjson['webroot'] + 'content/' + title + extension
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
@@ -130,14 +153,12 @@ def download_asset(url, title, settingsjson, extension=''):
 def main():
     response = None
 
-    settingsjson = get_settings()
+    settingsjson = get_settings() # grab settings from settings.json, json > xml
 
-    try:
-        os.mkdir(settingsjson['webroot'])
-    except FileExistsError:
-        pass
+    make_folder_structure(settingsjson) # make the folder structure in the webroot if it doesnt already exist
 
-    request = settingsjson['podcasturl']
+    # lets fetch the original podcast xml
+    request = settingsjson['podcasturl'] 
 
     try:
         response = requests.get(request, timeout=5)
@@ -147,8 +168,7 @@ def main():
 
     if response is not None:
         if response.status_code != 200 and response.status_code != 400:
-            print("Not a great web request, we got: " +
-                  str(response.status_code))
+            print("Not a great web request, we got: " + str(response.status_code))
             exit(1)
         else:
             print_debug("We got a pretty real response by the looks of it")
@@ -156,24 +176,23 @@ def main():
             failure = False
     else:
         print("Failure, no sign of a response.")
-        print_debug(
-            "Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
+        print_debug("Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
         exit(1)
 
+    # We have the xml
     podcastxml = Et.fromstring(response.content)
-    print(podcastxml)
+    print_debug(str(podcastxml))
 
     xmlfirstchild = podcastxml[0]
 
-    # It's time to iterate
+    # It's time to iterate through the lad, we overwrite as necessary from the settings in settings.json
     title = ''
     url = ''
 
     for channel in xmlfirstchild:  # Dont complain
-        print_debug("\nNew Entry")
+        print("\n - Found XML item -")
         print_debug(str(channel))
-        print(str(channel.tag) + ': ' +
-              str(channel.text) + ' ' + str(channel.attrib))
+        print_debug(str(channel.tag) + ': ' + str(channel.text) + ' ' + str(channel.attrib))
 
         if channel.tag == 'link':
             channel.text = settingsjson['inetpath']
@@ -185,8 +204,7 @@ def main():
             channel.text = settingsjson['podcastdescription']
 
         if channel.tag == '{http://www.w3.org/2005/Atom}link':
-            channel.attrib['href'] = settingsjson['inetpath'] + \
-                'rss/' + settingsjson['podcastnameoneword']
+            channel.attrib['href'] = settingsjson['inetpath'] + 'rss/' + settingsjson['podcastnameoneword']
             channel.text = ' '  # here me out...
 
         if channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
@@ -207,8 +225,7 @@ def main():
             for filetype in imageformats:
                 if filetype in url:
                     download_asset(url, title, settingsjson, filetype)
-                    channel.attrib['href'] = settingsjson['inetpath'] + \
-                        'content/' + title + filetype
+                    channel.attrib['href'] = settingsjson['inetpath'] + 'content/' + title + filetype
 
             channel.text = ' '
 
@@ -236,8 +253,7 @@ def main():
         if channel.tag == 'item':
             for child in channel:
                 # print_debug(str(child))
-                print(str(child.tag) + ': ' +
-                      str(child.text) + ' ' + str(child.attrib))
+                print_debug(str(child.tag) + ': ' + str(child.text) + ' ' + str(child.attrib))
 
                 if child.tag == 'title':
                     title = str(child.text)
@@ -260,14 +276,11 @@ def main():
     podcastxml[0] = xmlfirstchild
 
     tree = Et.ElementTree(podcastxml)
-    Et.register_namespace(
-        'googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
+    Et.register_namespace('googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
     Et.register_namespace('atom', 'http://www.w3.org/2005/Atom')
-    Et.register_namespace(
-        'itunes', 'http://www.itunes.com/dtds/podcast-1.0.dtd')
+    Et.register_namespace('itunes', 'http://www.itunes.com/dtds/podcast-1.0.dtd')
 
-    tree.write(settingsjson['webroot'] + 'rss/' +
-               settingsjson['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
+    tree.write(settingsjson['webroot'] + 'rss/' + settingsjson['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
     if failure is True:
         exit(1)
