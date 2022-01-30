@@ -18,7 +18,8 @@ defaultjson = """
     "podcastnewname": "",
     "podcastdescription": "",
     "inetpath": "http://localhost/",
-    "webroot": "output/"
+    "webroot": "output/",
+    "contactemail": "bootleg@localhost"
 }
 """
 
@@ -169,40 +170,61 @@ def main():
               str(channel.text) + ' ' + str(channel.attrib))
 
         if channel.tag == 'title':
-            title = str(channel.text)
-            print_debug("WE HERE: " + title)
+            channel.text = settingsjson['podcastnewname']
 
-        for child in channel:
-            # print_debug(str(child))
-            print(str(child.tag) + ': ' +
-                  str(child.text) + ' ' + str(child.attrib))
+        if channel.tag == 'description':
+            channel.text = settingsjson['podcastdescription']
 
-            if child.tag == 'title':
-                title = str(child.text)
+        if channel.tag == '{http://www.w3.org/2005/Atom}link':
+            channel.attrib['href'] = settingsjson['inetpath'] + \
+                'rss/' + settingsjson['podcastnameoneword']
 
-            if child.tag == 'url':
-                title = cleanup_episode_name(title)
-                url = child.text
+        if channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
+            channel.attrib['href'] = settingsjson['inetpath'] + \
+                'rss/' + settingsjson['podcastnameoneword']
 
-                for filetype in imageformats:
-                    if filetype in url:
-                        download_asset(url, title, settingsjson, filetype)
-                else:
-                    print("Skipping non image file:" + title)
+        if channel.tag == 'image':
+            for child in channel:
+                if child.tag == 'title':
+                    child.text = settingsjson['podcastnewname']
+                if child.tag == 'link':
+                    child.text = settingsjson['inetpath']
+                if child.tag == 'url':
+                    title = settingsjson['podcastnewname']
+                    title = cleanup_episode_name(title)
+                    url = child.text
 
-            if child.tag == 'description':
-                child.text = settingsjson['podcastdescription']
+                    for filetype in imageformats:
+                        if filetype in url:
+                            download_asset(url, title, settingsjson, filetype)
+                            child.text = settingsjson['inetpath'] + \
+                                'content/' + title + filetype
+                    else:
+                        print("Skipping non image file:" + title)
 
-            if child.tag == 'enclosure':
-                title = cleanup_episode_name(title)
-                url = child.attrib.get('url')
-                if '.mp3' in url:
-                    download_asset(url, title, settingsjson, '.mp3')
-                else:
-                    url = ''
-                    print("Skipping non-mp3 file:" + title)
+        if channel.tag == 'item':
+            for child in channel:
+                # print_debug(str(child))
+                print(str(child.tag) + ': ' +
+                      str(child.text) + ' ' + str(child.attrib))
 
-                child.attrib['url'] = settingsjson['inetpath'] + title + '.mp3'
+                if child.tag == 'title':
+                    title = str(child.text)
+
+                if child.tag == 'description':
+                    child.text = settingsjson['podcastdescription']
+
+                if child.tag == 'enclosure':
+                    title = cleanup_episode_name(title)
+                    url = child.attrib.get('url')
+                    if '.mp3' in url:
+                        download_asset(url, title, settingsjson, '.mp3')
+                    else:
+                        url = ''
+                        print("Skipping non-mp3 file:" + title)
+
+                    child.attrib['url'] = settingsjson['inetpath'] + \
+                        title + '.mp3'
 
     podcastxml[0] = xmlfirstchild
 
