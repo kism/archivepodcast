@@ -70,6 +70,16 @@ def get_settings():
 def cleanup_episode_name(filename):
     filename = filename.encode('ascii', 'ignore')
     filename = filename.decode()
+
+    # Standardise
+    filename = filename.replace('[AUDIO]', '')
+    filename = filename.replace('[Audio]', '')
+    filename = filename.replace('[audio]', '')
+    filename = filename.replace('AUDIO', '')
+    filename = filename.replace('Ep ', 'Ep. ')
+    filename = filename.replace('Ep: ', 'Ep. ')
+    filename = filename.replace('Episode ', 'Ep. ')
+    filename = filename.replace('Episode: ', 'Ep. ')
     # Filesystem
     filename = filename.replace('?', ' ')
     filename = filename.replace('\\', ' ')
@@ -83,14 +93,10 @@ def cleanup_episode_name(filename):
     # HTML
     filename = filename.replace('&', ' ')
     filename = filename.replace("'", ' ')
-    # Standardise
-    filename = filename.replace('[AUDIO]', '')
-    filename = filename.replace('[Audio]', '')
-    filename = filename.replace('[audio]', '')
-    filename = filename.replace('Ep ', 'Ep. ')
-    filename = filename.replace('Ep: ', 'Ep. ')
-    filename = filename.replace('Episode ', 'Ep. ')
-    filename = filename.replace('Episode: ', 'Ep. ')
+    filename = filename.replace("_", ' ')
+    filename = filename.replace("[", ' ')
+    filename = filename.replace("]", ' ')
+    filename = filename.replace(".", ' ')
 
     while '  ' in filename:
         filename = filename.replace('  ', ' ')
@@ -178,10 +184,9 @@ def main():
         if channel.tag == '{http://www.w3.org/2005/Atom}link':
             channel.attrib['href'] = settingsjson['inetpath'] + \
                 'rss/' + settingsjson['podcastnameoneword']
+            channel.text = ' '
 
         if channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
-            channel.attrib['href'] = settingsjson['inetpath'] + \
-                'rss/' + settingsjson['podcastnameoneword']
             for child in channel:
                 if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}name':
                     child.text = settingsjson['podcastnewname']
