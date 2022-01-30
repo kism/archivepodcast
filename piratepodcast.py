@@ -176,8 +176,7 @@ def main():
               str(channel.text) + ' ' + str(channel.attrib))
 
         if channel.tag == 'link':
-            channel.text = settingsjson['inetpath'] + \
-                'rss/' + settingsjson['podcastnameoneword']
+            channel.text = settingsjson['inetpath']
 
         if channel.tag == 'title':
             channel.text = settingsjson['podcastnewname']
