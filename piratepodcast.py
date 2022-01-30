@@ -96,7 +96,7 @@ def cleanup_episode_name(filename):
         filename = filename.replace('  ', ' ')
 
     filename = filename.strip()
-    filename = filename.replace(' ', '_')
+    filename = filename.replace(' ', '-')
 
     print_debug('\033[92mClean Filename\033[0m: ' + "'" + filename + "'")
     return filename
@@ -201,8 +201,6 @@ def main():
                     download_asset(url, title, settingsjson, filetype)
                     channel.attrib['href'] = settingsjson['inetpath'] + \
                         'content/' + title + filetype
-            
-            
 
         if channel.tag == 'image':
             for child in channel:
@@ -250,7 +248,14 @@ def main():
     podcastxml[0] = xmlfirstchild
 
     tree = Et.ElementTree(podcastxml)
-    tree.write(settingsjson['webroot'] + 'rss/' + settingsjson['podcastnameoneword'])
+    Et.register_namespace(
+        'googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
+    Et.register_namespace('atom', 'http://www.w3.org/2005/Atom')
+    Et.register_namespace(
+        'itunes', 'http://www.itunes.com/dtds/podcast-1.0.dtd')
+
+    tree.write(settingsjson['webroot'] + 'rss/' +
+               settingsjson['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
     if failure is True:
         exit(1)
@@ -258,5 +263,5 @@ def main():
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and (sys.argv[1] == "-d" or sys.argv[1] == "--debug"):
-        debug = True
+        debug=True
     main()
