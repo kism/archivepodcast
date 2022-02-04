@@ -78,7 +78,7 @@ def get_settings(args): # Load settings from settings.json
         print("Looks like settings.json doesnt match the expecting schema format, make a backup, remove the original file, run the script again and have a look at the default settings.json file")
 
     if settingserror:
-        print("Invalid config exiting, check settings.json")
+        print("Invalid config exiting, check " + settingspath)
         exit(1)
 
     return settingsjson
@@ -95,7 +95,7 @@ def make_folder_structure(settingsjson):
         except FileExistsError:
             pass
 
-def cleanup_episode_name(filename): # Standardise naming, fix everything that could cause something to be borked on the file system or in a url
+def cleanup_file_name(filename): # Standardise naming, fix everything that could cause something to be borked on the file system or in a url
     filename = filename.encode('ascii', 'ignore')
     filename = filename.decode()
 
@@ -232,7 +232,7 @@ def main():
 
         if channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
             title = settingsjson['podcastnewname']
-            title = cleanup_episode_name(title)
+            title = cleanup_file_name(title)
             url = channel.attrib.get('href')
 
             for filetype in imageformats:
@@ -250,7 +250,7 @@ def main():
                     child.text = settingsjson['inetpath']
                 if child.tag == 'url':
                     title = settingsjson['podcastnewname']
-                    title = cleanup_episode_name(title)
+                    title = cleanup_file_name(title)
                     url = child.text
 
                     for filetype in imageformats:
@@ -271,11 +271,11 @@ def main():
                 if child.tag == 'title':
                     title = str(child.text)
 
-                if child.tag == 'description':
-                    child.text = settingsjson['podcastdescription']
+                #if child.tag == 'description':
+                #    child.text = settingsjson['podcastdescription']
 
                 if child.tag == 'enclosure':
-                    title = cleanup_episode_name(title)
+                    title = cleanup_file_name(title)
                     url = child.attrib.get('url')
                     if '.mp3' in url:
                         download_asset(url, title, settingsjson, '.mp3')
@@ -302,7 +302,9 @@ def main():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Mirror / rehost a podcast')
     parser.add_argument('-c', type=str, dest='settingspath', help='Config path (settings.json)')
-    parser.add_argument('--feature', dest='debug', action='store_true', help='Show debug output')
+    parser.add_argument('--debug', dest='debug', action='store_true', help='Show debug output')
     args = parser.parse_args()
+
+    print(args)
 
     main(args)
