@@ -14,13 +14,19 @@ imageformats = ['.webp', '.png', '.jpg', '.jpeg', '.gif']
 
 defaultjson = """
 {
-    "podcasturl": "",
-    "podcastnewname": "",
-    "podcastnameoneword": "",
-    "podcastdescription": "",
+    "webpagetitle": "Podcast Archive",
+    "cssurl": "https://raw.githubusercontent.com/kism/zy.css/main/zy.css",
     "inetpath": "http://localhost/",
     "webroot": "output/",
-    "contactemail": "bootleg@localhost"
+    "podcast": [
+        {
+            "podcasturl": "",
+            "podcastnewname": "",
+            "podcastnameoneword": "",
+            "podcastdescription": "",
+            "contactemail": ""
+        }
+    ]
 }
 """
 
