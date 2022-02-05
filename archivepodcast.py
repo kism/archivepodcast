@@ -385,6 +385,7 @@ def download_podcasts(settingsjson):
                 podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
 def create_html(settingsjson):
+    print("\n\033[47m\033[30m Generating HTML \033[0m")
     htmlstring = ""
     htmlstring = htmlstring + websitepartone
     htmlstring = htmlstring + settingsjson['webpagetitle']
@@ -398,10 +399,7 @@ def create_html(settingsjson):
         
     htmlstring = htmlstring + websitepartthree
     
-    print_debug('\nWriting HTML')
-    print_debug(htmlstring)
-
-    print(settingsjson['webroot'] + 'index.html')
+    print('Writing HTML: ' + settingsjson['webroot'] + 'index.html')
     indexhtmlfile = None
     indexhtmlfile = open(settingsjson['webroot'] + 'index.html', "w")
     indexhtmlfile.write(htmlstring)
