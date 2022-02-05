@@ -30,6 +30,28 @@ defaultjson = """
 }
 """
 
+websitepartone = """
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>keeeeeeb</title>
+    <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
+
+    <link rel="stylesheet" href="""
+
+websiteparttwo = """/>
+  </head>
+
+  <body>
+    <main>
+"""
+
+websitepartthree = """
+    </main>
+  </body>
+</html>
+"""
+
 # Make sure to set this in the server{} section of nginx.conf
 
 #        location = /rss/<podcastnameoneword> {
@@ -101,9 +123,7 @@ def make_folder_structure(settingsjson):
 
     for entry in settingsjson['podcast']:
         folders.append(settingsjson['webroot'] +
-                   '/content/' + entry['podcastnameoneword'])
-
-    
+                       '/content/' + entry['podcastnameoneword'])
 
     for folder in folders:
         try:
@@ -138,7 +158,7 @@ def cleanup_file_name(filename):
     filename = filename.replace('(', ' ')
     filename = filename.replace(')', ' ')
     filename = filename.replace('|', ' ')
-    # HTML
+    # HTML / HTTP
     filename = filename.replace('&', ' ')
     filename = filename.replace("'", ' ')
     filename = filename.replace("_", ' ')
@@ -146,6 +166,7 @@ def cleanup_file_name(filename):
     filename = filename.replace("]", ' ')
     filename = filename.replace(".", ' ')
     filename = filename.replace("#", ' ')
+    filename = filename.replace(";", ' ')
 
     while '  ' in filename:
         filename = filename.replace('  ', ' ')
@@ -178,14 +199,7 @@ def download_asset(url, title, settingsjson, podcast, extension=''):
         print("Already downloaded: " + title + extension)
 
 
-def main(args):
-    response = None
-
-    # grab settings from settings.json, json > xml
-    settingsjson = get_settings(args)
-
-    # make the folder structure in the webroot if it doesnt already exist
-    make_folder_structure(settingsjson)
+def download_podcasts(settingsjson):
 
     for podcast in settingsjson['podcast']:
 
@@ -206,7 +220,6 @@ def main(args):
             else:
                 print_debug("We got a pretty real response by the looks of it")
                 print_debug(str(response))
-                failure = False
         else:
             print("Failure, no sign of a response.")
             print_debug(
@@ -283,7 +296,8 @@ def main(args):
 
                         for filetype in imageformats:
                             if filetype in url:
-                                download_asset(url, title, settingsjson, podcast, filetype)
+                                download_asset(
+                                    url, title, settingsjson, podcast, filetype)
                                 child.text = settingsjson['inetpath'] + 'content/' + \
                                     podcast['podcastnameoneword'] + \
                                     '/' + title + filetype
@@ -307,7 +321,8 @@ def main(args):
                         title = cleanup_file_name(title)
                         url = child.attrib.get('url')
                         if '.mp3' in url:
-                            download_asset(url, title, settingsjson, podcast, '.mp3')
+                            download_asset(url, title, settingsjson,
+                                        podcast, '.mp3')
                         else:
                             url = ''
                             print("Skipping non-mp3 file:" + title)
@@ -334,8 +349,38 @@ def main(args):
         tree.write(settingsjson['webroot'] + 'rss/' +
                 podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
-    if failure is True:
-        exit(1)
+def create_html(settingsjson):
+    htmlstring = ""
+    htmlstring = htmlstring + websitepartone
+    htmlstring = htmlstring + '"' +  settingsjson['cssurl'] + '"' # TODO fix this, gross as
+    htmlstring = htmlstring + websiteparttwo
+
+    htmlstring = htmlstring + "<h1>" + settingsjson['webpagetitle'] + "</h1>\n"
+
+    for podcast in settingsjson['podcast']:
+         htmlstring = htmlstring + "<h2>" + podcast['podcastnewname'] + "</h2>\n"
+         htmlstring = htmlstring + "<p>" + settingsjson['webroot'] + "rss/" + podcast['podcastnameoneword'] + "</p>\n"
+        
+    htmlstring = htmlstring + websitepartthree
+    
+    print('\n\n')
+    print(htmlstring)
+
+def main(args):
+    response = None
+
+    # grab settings from settings.json, json > xml
+    settingsjson = get_settings(args)
+
+    # make the folder structure in the webroot if it doesnt already exist
+    make_folder_structure(settingsjson)
+
+    # download all the podcasts
+    download_podcasts(settingsjson)
+
+    # download all the podcasts
+    create_html(settingsjson)
+
 
 
 if __name__ == "__main__":
