@@ -98,8 +98,12 @@ def make_folder_structure(settingsjson):
     folders.append(settingsjson['webroot'])
     folders.append(settingsjson['webroot'] + '/rss')
     folders.append(settingsjson['webroot'] + '/content')
-    folders.append(settingsjson['webroot'] +
-                   '/content/' + settingsjson['podcastnameoneword'])
+
+    for entry in settingsjson['podcast']:
+        folders.append(settingsjson['webroot'] +
+                   '/content/' + entry['podcastnameoneword'])
+
+    
 
     for folder in folders:
         try:
@@ -154,9 +158,9 @@ def cleanup_file_name(filename):
 
 
 # Download asset from url with appropiate file name
-def download_asset(url, title, settingsjson, extension=''):
+def download_asset(url, title, settingsjson, podcast, extension=''):
     filepath = settingsjson['webroot'] + 'content/' + \
-        settingsjson['podcastnameoneword'] + '/' + title + extension
+        podcast['podcastnameoneword'] + '/' + title + extension
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         if True:
@@ -183,150 +187,152 @@ def main(args):
     # make the folder structure in the webroot if it doesnt already exist
     make_folder_structure(settingsjson)
 
-    # lets fetch the original podcast xml
-    request = settingsjson['podcasturl']
+    for podcast in settingsjson['podcast']:
 
-    try:
-        response = requests.get(request, timeout=5)
-    except:
-        print("Real early failure on grabbing the podcast xml, weird")
-        exit(1)
+        # lets fetch the original podcast xml
+        request = podcast['podcasturl']
 
-    if response is not None:
-        if response.status_code != 200 and response.status_code != 400:
-            print("Not a great web request, we got: " +
-                  str(response.status_code))
+        try:
+            response = requests.get(request, timeout=5)
+        except:
+            print("Real early failure on grabbing the podcast xml, weird")
             exit(1)
+
+        if response is not None:
+            if response.status_code != 200 and response.status_code != 400:
+                print("Not a great web request, we got: " +
+                    str(response.status_code))
+                exit(1)
+            else:
+                print_debug("We got a pretty real response by the looks of it")
+                print_debug(str(response))
+                failure = False
         else:
-            print_debug("We got a pretty real response by the looks of it")
-            print_debug(str(response))
-            failure = False
-    else:
-        print("Failure, no sign of a response.")
-        print_debug(
-            "Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
-        exit(1)
+            print("Failure, no sign of a response.")
+            print_debug(
+                "Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
+            exit(1)
 
-    # We have the xml
-    podcastxml = Et.fromstring(response.content)
-    print_debug(str(podcastxml))
+        # We have the xml
+        podcastxml = Et.fromstring(response.content)
+        print_debug(str(podcastxml))
 
-    xmlfirstchild = podcastxml[0]
+        xmlfirstchild = podcastxml[0]
 
-    # It's time to iterate through the lad, we overwrite as necessary from the settings in settings.json
-    title = ''
-    url = ''
+        # It's time to iterate through the lad, we overwrite as necessary from the settings in settings.json
+        title = ''
+        url = ''
 
-    for channel in xmlfirstchild:  # Dont complain
-        print("\n\033[47m\033[30m Found XML item \033[0m")
+        for channel in xmlfirstchild:  # Dont complain
+            print("\n\033[47m\033[30m Found XML item \033[0m")
 
-        if channel.tag == 'link':
-            print("Podcast link: " + channel.text)
-            channel.text = settingsjson['inetpath']
+            if channel.tag == 'link':
+                print("Podcast link: " + channel.text)
+                channel.text = settingsjson['inetpath']
 
-        elif channel.tag == 'title':
-            print("Podcast title: " + channel.text)
-            channel.text = settingsjson['podcastnewname']
+            elif channel.tag == 'title':
+                print("Podcast title: " + channel.text)
+                channel.text = podcast['podcastnewname']
 
-        elif channel.tag == 'description':
-            print("Podcast description: " + channel.text)
-            channel.text = settingsjson['podcastdescription']
+            elif channel.tag == 'description':
+                print("Podcast description: " + channel.text)
+                channel.text = podcast['podcastdescription']
 
-        elif channel.tag == '{http://www.w3.org/2005/Atom}link':
-            channel.attrib['href'] = settingsjson['inetpath'] + \
-                'rss/' + settingsjson['podcastnameoneword']
-            channel.text = ' '  # here me out...
+            elif channel.tag == '{http://www.w3.org/2005/Atom}link':
+                channel.attrib['href'] = settingsjson['inetpath'] + \
+                    'rss/' + podcast['podcastnameoneword']
+                channel.text = ' '  # here me out...
 
-        elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
-            for child in channel:
-                if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}name':
-                    child.text = settingsjson['podcastnewname']
-                if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}email':
-                    child.text = settingsjson['contactemail']
+            elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
+                for child in channel:
+                    if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}name':
+                        child.text = podcast['podcastnewname']
+                    if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}email':
+                        child.text = podcast['contactemail']
 
-        elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}author':
-            channel.text = settingsjson['podcastnewname']
+            elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}author':
+                channel.text = podcast['podcastnewname']
 
-        elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
-            title = settingsjson['podcastnewname']
-            title = cleanup_file_name(title)
-            url = channel.attrib.get('href')
+            elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
+                title = podcast['podcastnewname']
+                title = cleanup_file_name(title)
+                url = channel.attrib.get('href')
 
-            for filetype in imageformats:
-                if filetype in url:
-                    print("Downloading: " + url)
-                    download_asset(url, title, settingsjson, filetype)
-                    channel.attrib['href'] = settingsjson['inetpath'] + \
-                        'content/' + title + filetype
+                for filetype in imageformats:
+                    if filetype in url:
+                        print("Downloading: " + url)
+                        download_asset(url, title, settingsjson, podcast, filetype)
+                        channel.attrib['href'] = settingsjson['inetpath'] + \
+                            'content/' + title + filetype
 
-            channel.text = ' '
+                channel.text = ' '
 
-        elif channel.tag == 'image':
-            for child in channel:
-                if child.tag == 'title':
-                    print("Title: " + child.text)
-                    child.text = settingsjson['podcastnewname']
+            elif channel.tag == 'image':
+                for child in channel:
+                    if child.tag == 'title':
+                        print("Title: " + child.text)
+                        child.text = podcast['podcastnewname']
 
-                elif child.tag == 'link':
-                    child.text = settingsjson['inetpath']
+                    elif child.tag == 'link':
+                        child.text = settingsjson['inetpath']
 
-                elif child.tag == 'url':
-                    title = settingsjson['podcastnewname']
-                    title = cleanup_file_name(title)
-                    url = child.text
+                    elif child.tag == 'url':
+                        title = podcast['podcastnewname']
+                        title = cleanup_file_name(title)
+                        url = child.text
 
-                    for filetype in imageformats:
-                        if filetype in url:
-                            download_asset(url, title, settingsjson, filetype)
-                            child.text = settingsjson['inetpath'] + 'content/' + \
-                                settingsjson['podcastnameoneword'] + \
-                                '/' + title + filetype
+                        for filetype in imageformats:
+                            if filetype in url:
+                                download_asset(url, title, settingsjson, podcast, filetype)
+                                child.text = settingsjson['inetpath'] + 'content/' + \
+                                    podcast['podcastnameoneword'] + \
+                                    '/' + title + filetype
+                        else:
+                            print("Skipping non image file:" + title)
+
                     else:
-                        print("Skipping non image file:" + title)
+                        print_debug('Unhandled XML tag: ' +
+                                    child.tag + ' Leaving as-is')
 
-                else:
-                    print_debug('Unhandled XML tag: ' +
-                                child.tag + ' Leaving as-is')
+                channel.text = ' '  # here me out...
 
-            channel.text = ' '  # here me out...
+            elif channel.tag == 'item':
+                for child in channel:
 
-        elif channel.tag == 'item':
-            for child in channel:
+                    if child.tag == 'title':
+                        title = str(child.text)
+                        print("Title: " + title)
 
-                if child.tag == 'title':
-                    title = str(child.text)
-                    print("Title: " + title)
+                    elif child.tag == 'enclosure':
+                        title = cleanup_file_name(title)
+                        url = child.attrib.get('url')
+                        if '.mp3' in url:
+                            download_asset(url, title, settingsjson, podcast, '.mp3')
+                        else:
+                            url = ''
+                            print("Skipping non-mp3 file:" + title)
 
-                elif child.tag == 'enclosure':
-                    title = cleanup_file_name(title)
-                    url = child.attrib.get('url')
-                    if '.mp3' in url:
-                        download_asset(url, title, settingsjson, '.mp3')
+                        child.text = settingsjson['inetpath'] + 'content/' + \
+                            podcast['podcastnameoneword'] + \
+                            '/' + title + '.mp3'
+
                     else:
-                        url = ''
-                        print("Skipping non-mp3 file:" + title)
+                        print_debug('Unhandled XML tag: ' +
+                                    child.tag + ' Leaving as-is')
 
-                    child.text = settingsjson['inetpath'] + 'content/' + \
-                        settingsjson['podcastnameoneword'] + \
-                        '/' + title + '.mp3'
+            else:
+                print_debug('Unhandled XML tag: ' +
+                            channel.tag + ' Leaving as-is')
 
-                else:
-                    print_debug('Unhandled XML tag: ' +
-                                child.tag + ' Leaving as-is')
+        podcastxml[0] = xmlfirstchild
 
-        else:
-            print_debug('Unhandled XML tag: ' +
-                        channel.tag + ' Leaving as-is')
+        tree = Et.ElementTree(podcastxml)
+        Et.register_namespace('googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
+        Et.register_namespace('atom',       'http://www.w3.org/2005/Atom')
+        Et.register_namespace('itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
 
-    podcastxml[0] = xmlfirstchild
-
-    tree = Et.ElementTree(podcastxml)
-    Et.register_namespace('googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
-    Et.register_namespace('atom',       'http://www.w3.org/2005/Atom')
-    Et.register_namespace('itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
-
-    tree.write(settingsjson['webroot'] + 'rss/' +
-               settingsjson['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
+        tree.write(settingsjson['webroot'] + 'rss/' +
+                podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
     if failure is True:
         exit(1)
