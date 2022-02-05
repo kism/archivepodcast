@@ -12,10 +12,10 @@ import json
 debug = False
 imageformats = ['.webp', '.png', '.jpg', '.jpeg', '.gif']
 
+# A default settings config to be written to the file system if none exists at the expected path
 defaultjson = """
 {
     "webpagetitle": "Podcast Archive",
-    "cssurl": "https://raw.githubusercontent.com/kism/zy.css/main/zy.css",
     "inetpath": "http://localhost/",
     "webroot": "output/",
     "podcast": [
@@ -34,20 +34,55 @@ websitepartone = """
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>keeeeeeb</title>
+    <title>"""
+    
+websiteparttwo = """</title>
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
-
-    <link rel="stylesheet" href="""
-
-websiteparttwo = """/>
   </head>
 
-  <body>
-    <main>
-"""
+  <style>
+    body {
+    font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+        "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: 18px;
+    font-weight: 500;
+    background-color: rgb(26, 26, 26);
+    color: rgb(200, 200, 200);
+    line-height: 1.5;
+    }
+    h1,
+    h2 {
+    font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
+    line-height: 1.2;
+    color: rgb(220, 220, 220);
+    }
+    h1 {
+    font-size: 40px;
+    font-weight: 700;
+    margin: 20px 0 16px;
+    }
+    h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 20px 0 16px;
+    }
+    p {
+    margin: 0;
+    margin-bottom: 16px;
+    margin-top: -8px;
+    }
+    a:link {
+    color: rgb(0, 128, 128);
+    }
+    a:visited {
+    color: rgb(128, 0, 64);
+    }
+  </style>
 
-websitepartthree = """
-    </main>
+  <body>
+    <main>"""
+websitepartthree = """    </main>
   </body>
 </html>
 """
@@ -200,8 +235,8 @@ def download_asset(url, title, settingsjson, podcast, extension=''):
 
 
 def download_podcasts(settingsjson):
-
     for podcast in settingsjson['podcast']:
+        response = None
 
         # lets fetch the original podcast xml
         request = podcast['podcasturl']
@@ -352,23 +387,28 @@ def download_podcasts(settingsjson):
 def create_html(settingsjson):
     htmlstring = ""
     htmlstring = htmlstring + websitepartone
-    htmlstring = htmlstring + '"' +  settingsjson['cssurl'] + '"' # TODO fix this, gross as
+    htmlstring = htmlstring + settingsjson['webpagetitle']
     htmlstring = htmlstring + websiteparttwo
 
     htmlstring = htmlstring + "<h1>" + settingsjson['webpagetitle'] + "</h1>\n"
 
     for podcast in settingsjson['podcast']:
          htmlstring = htmlstring + "<h2>" + podcast['podcastnewname'] + "</h2>\n"
-         htmlstring = htmlstring + "<p>" + settingsjson['webroot'] + "rss/" + podcast['podcastnameoneword'] + "</p>\n"
+         htmlstring = htmlstring + "<p>" + settingsjson['inetpath'] + "rss/" + podcast['podcastnameoneword'] + "</p>\n"
         
     htmlstring = htmlstring + websitepartthree
     
-    print('\n\n')
-    print(htmlstring)
+    print_debug('\nWriting HTML')
+    print_debug(htmlstring)
+
+    print(settingsjson['webroot'] + 'index.html')
+    indexhtmlfile = None
+    indexhtmlfile = open(settingsjson['webroot'] + 'index.html', "w")
+    indexhtmlfile.write(htmlstring)
+    indexhtmlfile.close()
+
 
 def main(args):
-    response = None
-
     # grab settings from settings.json, json > xml
     settingsjson = get_settings(args)
 
@@ -380,7 +420,6 @@ def main(args):
 
     # download all the podcasts
     create_html(settingsjson)
-
 
 
 if __name__ == "__main__":
