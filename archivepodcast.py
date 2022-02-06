@@ -2,8 +2,6 @@
 
 # I hate XML
 
-# TODO, file permissions check
-
 import argparse
 import requests
 import xml.etree.ElementTree as Et
@@ -192,9 +190,13 @@ def make_folder_structure(settingsjson):
             permissionserror = True
             print("You do not have permission to create folder: " + folder)
 
+    # Create robots.txt, do a delete and remake to catch potential permissions errors that will make the script fail later
     try:
         robotstxtpath = settingsjson['webroot'] + 'robots.txt'
-        os.remove(robotstxtpath)
+        try:
+            os.remove(robotstxtpath)
+        except FileNotFoundError: 
+            print("Creating: " + robotstxtpath)
         robotstxtfile = None
         robotstxtfile = open(robotstxtpath, "w")
         robotstxtfile.write("User-agent: *\nDisallow: /")
