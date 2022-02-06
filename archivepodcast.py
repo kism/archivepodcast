@@ -149,18 +149,21 @@ def get_settings(args):  # Load settings from settings.json
         settingserror = True
         print("Looks like settings json doesnt match the expecting schema format, make a backup, remove the original file, run the script again and have a look at the default settings.json file")
 
-    for idx, podcast in enumerate(settingsjson['podcast']):
-        print_debug('Podcast entry: ' + str(podcast))
-        try:
-            if podcast['podcasturl'] == '':
-                print('"podcasturl"         not defined in podcast entry ' + str(idx + 1))
+    try:
+        for idx, podcast in enumerate(settingsjson['podcast']):
+            print_debug('Podcast entry: ' + str(podcast))
+            try:
+                if podcast['podcasturl'] == '':
+                    print('"podcasturl"         not defined in podcast entry ' + str(idx + 1))
+                    settingserror = True
+                if podcast['podcastnameoneword'] == '':
+                    print('"podcastnameoneword" not defined in podcast entry ' + str(idx + 1))
+                    settingserror = True
+            except:
+                print("Issue with podcast entry in settings json: " + str(podcast))
                 settingserror = True
-            if podcast['podcastnameoneword'] == '':
-                print('"podcastnameoneword" not defined in podcast entry ' + str(idx + 1))
-                settingserror = True
-        except:
-            print("Issue with podcast entry in settings json: " + str(podcast))
-            settingserror = True
+    except KeyError:
+        settingserror = True
 
     if settingserror:
         print("Invalid config, exiting, check " + settingspath)
@@ -300,6 +303,8 @@ def download_podcasts(settingsjson):
 
             elif channel.tag == 'title':
                 print("Podcast title: " + channel.text)
+                if podcast['podcastnewname'] == '':
+                    podcast['podcastnewname'] = channel.text
                 channel.text = podcast['podcastnewname']
 
             elif channel.tag == 'description':
@@ -314,14 +319,22 @@ def download_podcasts(settingsjson):
             elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
                 for child in channel:
                     if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}name':
+                        if podcast['podcastnewname'] == '':
+                            podcast['podcastnewname'] = child.text
                         child.text = podcast['podcastnewname']
                     if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}email':
+                        if podcast['contactemail'] == '':
+                            podcast['contactemail'] = child.text
                         child.text = podcast['contactemail']
 
             elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}author':
+                if podcast['podcastnewname'] == '':
+                    podcast['podcastnewname'] = channel.text
                 channel.text = podcast['podcastnewname']
 
             elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
+                if podcast['podcastnewname'] == '':
+                    podcast['podcastnewname'] = channel.text
                 title = podcast['podcastnewname']
                 title = cleanup_file_name(title)
                 url = channel.attrib.get('href')
@@ -381,7 +394,7 @@ def download_podcasts(settingsjson):
                             url = ''
                             print("Skipping non-mp3 file:" + title)
 
-                        child.text = settingsjson['inetpath'] + 'content/' + \
+                        child.attrib['url'] = settingsjson['inetpath'] + 'content/' + \
                             podcast['podcastnameoneword'] + \
                             '/' + title + '.mp3'
 
