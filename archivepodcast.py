@@ -39,7 +39,7 @@ websitepartone = """
 <html lang="en">
   <head>
     <title>"""
-    
+
 websiteparttwo = """</title>
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
   </head>
@@ -173,6 +173,7 @@ def get_settings(args):  # Load settings from settings.json
 
 
 def make_folder_structure(settingsjson):
+    permissionserror = False
     folders = []
     folders.append(settingsjson['webroot'])
     folders.append(settingsjson['webroot'] + '/rss')
@@ -187,11 +188,24 @@ def make_folder_structure(settingsjson):
             os.mkdir(folder)
         except FileExistsError:
             pass
+        except PermissionError:
+            permissionserror = True
+            print("You do not have permission to create folder: " + folder)
 
-    robotstxtfile = None
-    robotstxtfile = open(settingsjson['webroot'] + 'robots.txt', "w")
-    robotstxtfile.write("User-agent: *\nDisallow: /")
-    robotstxtfile.close()
+    try:
+        robotstxtpath = settingsjson['webroot'] + 'robots.txt'
+        os.remove(robotstxtpath)
+        robotstxtfile = None
+        robotstxtfile = open(robotstxtpath, "w")
+        robotstxtfile.write("User-agent: *\nDisallow: /")
+        robotstxtfile.close()
+    except PermissionError:
+        permissionserror = True
+        print("You do not have permission to create file: " + robotstxtpath)
+
+    if permissionserror:
+        print("Run this this script as a different user. ex: nginx, apache, root")
+        exit(1)
 
 
 # Standardise naming, fix everything that could cause something to be borked on the file system or in a url
@@ -278,7 +292,7 @@ def download_podcasts(settingsjson):
         if response is not None:
             if response.status_code != 200 and response.status_code != 400:
                 print("Not a great web request, we got: " +
-                    str(response.status_code))
+                      str(response.status_code))
                 exit(1)
             else:
                 print_debug("We got a pretty real response by the looks of it")
@@ -317,8 +331,7 @@ def download_podcasts(settingsjson):
                 channel.text = podcast['podcastdescription']
 
             elif channel.tag == '{http://www.w3.org/2005/Atom}link':
-                channel.attrib['href'] = settingsjson['inetpath'] + \
-                    'rss/' + podcast['podcastnameoneword']
+                channel.attrib['href'] = settingsjson['inetpath'] + 'rss/' + podcast['podcastnameoneword']
                 channel.text = ' '  # here me out...
 
             elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
@@ -346,9 +359,9 @@ def download_podcasts(settingsjson):
 
                 for filetype in imageformats:
                     if filetype in url:
-                        download_asset(url, title, settingsjson, podcast, filetype)
-                        channel.attrib['href'] = settingsjson['inetpath'] + \
-                            'content/' + title + filetype
+                        download_asset(url, title, settingsjson,
+                                       podcast, filetype)
+                        channel.attrib['href'] = settingsjson['inetpath'] + 'content/' + title + filetype
 
                 channel.text = ' '
 
@@ -370,9 +383,7 @@ def download_podcasts(settingsjson):
                             if filetype in url:
                                 download_asset(
                                     url, title, settingsjson, podcast, filetype)
-                                child.text = settingsjson['inetpath'] + 'content/' + \
-                                    podcast['podcastnameoneword'] + \
-                                    '/' + title + filetype
+                                child.text = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + filetype
                         else:
                             print("Skipping non image file:" + title)
 
@@ -393,15 +404,12 @@ def download_podcasts(settingsjson):
                         title = cleanup_file_name(title)
                         url = child.attrib.get('url')
                         if '.mp3' in url:
-                            download_asset(url, title, settingsjson,
-                                        podcast, '.mp3')
+                            download_asset(url, title, settingsjson, podcast, '.mp3')
                         else:
                             url = ''
                             print("Skipping non-mp3 file:" + title)
 
-                        child.attrib['url'] = settingsjson['inetpath'] + 'content/' + \
-                            podcast['podcastnameoneword'] + \
-                            '/' + title + '.mp3'
+                        child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + '.mp3'
 
                     else:
                         print_debug('Unhandled XML tag: ' +
@@ -419,7 +427,7 @@ def download_podcasts(settingsjson):
         Et.register_namespace('itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
 
         tree.write(settingsjson['webroot'] + 'rss/' +
-                podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
+                   podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
 
 def create_html(settingsjson):
@@ -432,13 +440,13 @@ def create_html(settingsjson):
     htmlstring = htmlstring + "<p>" + settingsjson['webpagedescription'] + "</p>\n"
     htmlstring = htmlstring + '<p>For instructions on how to add a podcast url like that one to your particular podcast app, <a href="' + settingsjson['webpagepodcastguidelink'] + 'url">check out this helpful guide</a>.</p>\n'
     for podcast in settingsjson['podcast']:
-         htmlstring = htmlstring + "<h2>" + podcast['podcastnewname'] + "</h2>\n"
-         htmlstring = htmlstring + "<p>" + podcast['podcastdescription'] + "</p>\n"
-         podcasturl = settingsjson['inetpath'] + "rss/" + podcast['podcastnameoneword']
-         htmlstring = htmlstring + '<p><a href="' + podcasturl + 'url">' + podcasturl + '</a></p>\n'
-        
+        htmlstring = htmlstring + "<h2>" + podcast['podcastnewname'] + "</h2>\n"
+        htmlstring = htmlstring + "<p>" + podcast['podcastdescription'] + "</p>\n"
+        podcasturl = settingsjson['inetpath'] + "rss/" + podcast['podcastnameoneword']
+        htmlstring = htmlstring + '<p><a href="' + podcasturl + 'url">' + podcasturl + '</a></p>\n'
+
     htmlstring = htmlstring + websitepartthree
-    
+
     print('Writing HTML: ' + settingsjson['webroot'] + 'index.html')
     indexhtmlfile = None
     indexhtmlfile = open(settingsjson['webroot'] + 'index.html', "w")
@@ -463,10 +471,8 @@ def main(args):
 if __name__ == "__main__":
     print("\n\033[47m\033[30m archivepodcast.py \033[0m")
     parser = argparse.ArgumentParser(description='Mirror / rehost a podcast')
-    parser.add_argument('-c', type=str, dest='settingspath',
-                        help='Config path /path/to/settings.json')
-    parser.add_argument('--debug', dest='debug',
-                        action='store_true', help='Show debug output')
+    parser.add_argument('-c', type=str, dest='settingspath', help='Config path /path/to/settings.json')
+    parser.add_argument('--debug', dest='debug', action='store_true', help='Show debug output')
     args = parser.parse_args()
 
     debug = args.debug
