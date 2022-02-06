@@ -90,17 +90,15 @@ websitepartthree = """    </main>
 </html>
 """
 
-nginxinstructions = """
-Make sure to set this in the server{} section of nginx.conf:
+nginxinstructionsone = "\nlocation = /rss/"
 
-location = /rss/<podcastnameoneword> {
+nginxinstructionstwo = """ {
     ### override content-type ##
     types { } default_type "application/rss+xml; charset=utf-8";
 
     ## override header (more like send custom header using nginx) ##
     add_header x-robots-tag "noindex, nofollow";
-}
-"""
+}"""
 
 def print_debug(text):  # Debug messages in yellow if the debug global is true
     if debug:
@@ -452,9 +450,11 @@ def create_html(settingsjson):
     indexhtmlfile.write(htmlstring)
     indexhtmlfile.close()
 
-    print(nginxinstructions)
+    print("\nMake sure to set this in the server{} section of nginx.conf:")
+    for podcast in settingsjson['podcast']:
+        print(nginxinstructionsone + podcast['podcastnameoneword'] + nginxinstructionstwo)
 
-    print("Done!")
+    print("\nDone!")
 
 
 def main(args):
