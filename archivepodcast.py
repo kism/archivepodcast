@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# Python script to archive and re-host Podcasts
 # I hate XML
 
 import argparse
@@ -89,16 +90,17 @@ websitepartthree = """    </main>
 </html>
 """
 
-# Make sure to set this in the server{} section of nginx.conf
+nginxinstructions = """
+Make sure to set this in the server{} section of nginx.conf:
 
-#        location = /rss/<podcastnameoneword> {
-#           ## override content-type ##
-#           types { } default_type "application/rss+xml; charset=utf-8";
-#
-#           ## override header (more like send custom header using nginx) #
-#           add_header x-robots-tag "noindex, nofollow";
-#        }
+location = /rss/<podcastnameoneword> {
+    ### override content-type ##
+    types { } default_type "application/rss+xml; charset=utf-8";
 
+    ## override header (more like send custom header using nginx) ##
+    add_header x-robots-tag "noindex, nofollow";
+}
+"""
 
 def print_debug(text):  # Debug messages in yellow if the debug global is true
     if debug:
@@ -178,8 +180,7 @@ def make_folder_structure(settingsjson):
     folders.append(settingsjson['webroot'] + '/content')
 
     for entry in settingsjson['podcast']:
-        folders.append(settingsjson['webroot'] +
-                       '/content/' + entry['podcastnameoneword'])
+        folders.append(settingsjson['webroot'] + '/content/' + entry['podcastnameoneword'])
 
     for folder in folders:
         try:
@@ -293,8 +294,7 @@ def download_podcasts(settingsjson):
 
         if response is not None:
             if response.status_code != 200 and response.status_code != 400:
-                print("Not a great web request, we got: " +
-                      str(response.status_code))
+                print("Not a great web request, we got: " + str(response.status_code))
                 exit(1)
             else:
                 print_debug("We got a pretty real response by the looks of it")
@@ -361,9 +361,8 @@ def download_podcasts(settingsjson):
 
                 for filetype in imageformats:
                     if filetype in url:
-                        download_asset(url, title, settingsjson,
-                                       podcast, filetype)
-                        channel.attrib['href'] = settingsjson['inetpath'] + 'content/' + title + filetype
+                        download_asset(url, title, settingsjson, podcast, filetype)
+                        channel.attrib['href'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + filetype
 
                 channel.text = ' '
 
@@ -383,8 +382,7 @@ def download_podcasts(settingsjson):
 
                         for filetype in imageformats:
                             if filetype in url:
-                                download_asset(
-                                    url, title, settingsjson, podcast, filetype)
+                                download_asset(url, title, settingsjson, podcast, filetype)
                                 child.text = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + filetype
                         else:
                             print("Skipping non image file:" + title)
@@ -428,8 +426,7 @@ def download_podcasts(settingsjson):
         Et.register_namespace('atom',       'http://www.w3.org/2005/Atom')
         Et.register_namespace('itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
 
-        tree.write(settingsjson['webroot'] + 'rss/' +
-                   podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
+        tree.write(settingsjson['webroot'] + 'rss/' + podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
 
 def create_html(settingsjson):
@@ -445,7 +442,7 @@ def create_html(settingsjson):
         htmlstring = htmlstring + "<h2>" + podcast['podcastnewname'] + "</h2>\n"
         htmlstring = htmlstring + "<p>" + podcast['podcastdescription'] + "</p>\n"
         podcasturl = settingsjson['inetpath'] + "rss/" + podcast['podcastnameoneword']
-        htmlstring = htmlstring + '<p><a href="' + podcasturl + 'url">' + podcasturl + '</a></p>\n'
+        htmlstring = htmlstring + '<p><a href="' + podcasturl + '">' + podcasturl + '</a></p>\n'
 
     htmlstring = htmlstring + websitepartthree
 
@@ -454,6 +451,10 @@ def create_html(settingsjson):
     indexhtmlfile = open(settingsjson['webroot'] + 'index.html', "w")
     indexhtmlfile.write(htmlstring)
     indexhtmlfile.close()
+
+    print(nginxinstructions)
+
+    print("Done!")
 
 
 def main(args):
