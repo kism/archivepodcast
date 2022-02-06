@@ -188,6 +188,11 @@ def make_folder_structure(settingsjson):
         except FileExistsError:
             pass
 
+    robotstxtfile = None
+    robotstxtfile = open(settingsjson['webroot'] + 'robots.txt', "w")
+    robotstxtfile.write("User-agent: *\nDisallow: /")
+    robotstxtfile.close()
+
 
 # Standardise naming, fix everything that could cause something to be borked on the file system or in a url
 def cleanup_file_name(filename):
