@@ -386,8 +386,7 @@ def download_podcasts(settingsjson):
                             print("Skipping non image file:" + title)
 
                     else:
-                        print_debug('Unhandled XML tag: ' +
-                                    child.tag + ' Leaving as-is')
+                        print_debug('Unhandled XML tag: ' + child.tag + ' Leaving as-is')
 
                 channel.text = ' '  # here me out...
 
@@ -409,13 +408,29 @@ def download_podcasts(settingsjson):
 
                         child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + '.mp3'
 
+                    elif child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
+                        url = child.attrib.get('href')
+                        for filetype in imageformats:
+                            if filetype in url:
+                                download_asset(url, title, settingsjson, podcast, filetype)
+                                child.attrib['href'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + filetype
+
+                    elif child.tag == '{http://search.yahoo.com/mrss/}content':
+                        title = cleanup_file_name(title)
+                        url = child.attrib.get('url')
+                        if '.mp3' in url:
+                            download_asset(url, title, settingsjson, podcast, '.mp3')
+                        else:
+                            url = ''
+                            print("Skipping non-mp3 file:" + title)
+
+                        child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + '.mp3'
+
                     else:
-                        print_debug('Unhandled XML tag: ' +
-                                    child.tag + ' Leaving as-is')
+                        print_debug('Unhandled XML tag: ' + child.tag + ' Leaving as-is')
 
             else:
-                print_debug('Unhandled XML tag: ' +
-                            channel.tag + ' Leaving as-is')
+                print_debug('Unhandled XML tag: ' + channel.tag + ' Leaving as-is')
 
         podcastxml[0] = xmlfirstchild
 
@@ -423,6 +438,10 @@ def download_podcasts(settingsjson):
         Et.register_namespace('googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
         Et.register_namespace('atom',       'http://www.w3.org/2005/Atom')
         Et.register_namespace('itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
+        Et.register_namespace('media',      'http://search.yahoo.com/mrss/')
+        Et.register_namespace('sy',         'http://purl.org/rss/1.0/modules/syndication/')
+        Et.register_namespace('content',    'http://purl.org/rss/1.0/modules/content/')
+
 
         tree.write(settingsjson['webroot'] + 'rss/' + podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
