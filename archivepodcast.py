@@ -448,6 +448,7 @@ def download_podcasts(settingsjson):
         Et.register_namespace('podcast',    'https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md')
         Et.register_namespace('rawvoice',   'http://www.rawvoice.com/rawvoiceRssModule/')
         Et.register_namespace('spotify',    'http://www.spotify.com/ns/rss/')
+        Et.register_namespace('feedburner', 'http://rssnamespace.org/feedburner/ext/1.0')
 
         tree.write(settingsjson['webroot'] + 'rss/' + podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
