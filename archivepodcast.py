@@ -435,13 +435,19 @@ def download_podcasts(settingsjson):
         podcastxml[0] = xmlfirstchild
 
         tree = Et.ElementTree(podcastxml)
+        # These make the name spaces appear nicer in the generated XML
         Et.register_namespace('googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
         Et.register_namespace('atom',       'http://www.w3.org/2005/Atom')
         Et.register_namespace('itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
         Et.register_namespace('media',      'http://search.yahoo.com/mrss/')
         Et.register_namespace('sy',         'http://purl.org/rss/1.0/modules/syndication/')
         Et.register_namespace('content',    'http://purl.org/rss/1.0/modules/content/')
-
+        Et.register_namespace('wfw',        'http://wellformedweb.org/CommentAPI/')
+        Et.register_namespace('dc',         'http://purl.org/dc/elements/1.1/')
+        Et.register_namespace('slash',      'http://purl.org/rss/1.0/modules/slash/')
+        Et.register_namespace('podcast',    'https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md')
+        Et.register_namespace('rawvoice',   'http://www.rawvoice.com/rawvoiceRssModule/')
+        Et.register_namespace('spotify',    'http://www.spotify.com/ns/rss/')
 
         tree.write(settingsjson['webroot'] + 'rss/' + podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
 
