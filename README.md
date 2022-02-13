@@ -1,6 +1,6 @@
 # archivepodcast.py
 
-This Python script 
+This Python script mirrors a podcast, it is indended to be used alongside nginx to create a mirror of a podcast.
 
 ## How to do
 
