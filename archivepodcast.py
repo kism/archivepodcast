@@ -461,7 +461,7 @@ def create_html(settingsjson):
     htmlstring = htmlstring + websiteparttwo
     htmlstring = htmlstring + "<h1>" + settingsjson['webpagetitle'] + "</h1>\n"
     htmlstring = htmlstring + "<p>" + settingsjson['webpagedescription'] + "</p>\n"
-    htmlstring = htmlstring + '<p>For instructions on how to add a podcast url like that one to your particular podcast app, <a href="' + settingsjson['webpagepodcastguidelink'] + 'url">check out this helpful guide</a>.</p>\n'
+    htmlstring = htmlstring + '<p>For instructions on how to add a podcast url to a podcast app, <a href="' + settingsjson['webpagepodcastguidelink'] + 'url">check out this helpful guide</a>.</p>\n'
     for podcast in settingsjson['podcast']:
         htmlstring = htmlstring + "<h2>" + podcast['podcastnewname'] + "</h2>\n"
         htmlstring = htmlstring + "<p>" + podcast['podcastdescription'] + "</p>\n"
