@@ -494,7 +494,7 @@ def main(args):
     # download all the podcasts
     download_podcasts(settingsjson)
 
-    # download all the podcasts
+    # generate the html for the webroot
     create_html(settingsjson)
 
 
