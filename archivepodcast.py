@@ -194,7 +194,7 @@ def make_folder_structure(settingsjson):
         robotstxtpath = settingsjson['webroot'] + 'robots.txt'
         try:
             os.remove(robotstxtpath)
-        except FileNotFoundError: 
+        except FileNotFoundError:
             print("Creating: " + robotstxtpath)
         robotstxtfile = None
         robotstxtfile = open(robotstxtpath, "w")
@@ -409,6 +409,7 @@ def download_podcasts(settingsjson):
                         child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + '.mp3'
 
                     elif child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
+                        title = cleanup_file_name(title)
                         url = child.attrib.get('href')
                         for filetype in imageformats:
                             if filetype in url:
