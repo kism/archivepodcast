@@ -219,31 +219,15 @@ def cleanup_file_name(filename):
     filename = filename.replace('[Audio]', '')
     filename = filename.replace('[audio]', '')
     filename = filename.replace('AUDIO', '')
-    filename = filename.replace('Ep ', 'Ep. ')
-    filename = filename.replace('Ep: ', 'Ep. ')
-    filename = filename.replace('Episode ', 'Ep. ')
-    filename = filename.replace('Episode: ', 'Ep. ')
-    # Filesystem
-    filename = filename.replace('?', ' ')
-    filename = filename.replace('\\', ' ')
-    filename = filename.replace('/', ' ')
-    filename = filename.replace(':', ' ')
-    filename = filename.replace('*', ' ')
-    filename = filename.replace('"', ' ')
-    filename = filename.replace('<', ' ')
-    filename = filename.replace('>', ' ')
-    filename = filename.replace('(', ' ')
-    filename = filename.replace(')', ' ')
-    filename = filename.replace('|', ' ')
-    # HTML / HTTP
-    filename = filename.replace('&', ' ')
-    filename = filename.replace("'", ' ')
-    filename = filename.replace("_", ' ')
-    filename = filename.replace("[", ' ')
-    filename = filename.replace("]", ' ')
-    filename = filename.replace(".", ' ')
-    filename = filename.replace("#", ' ')
-    filename = filename.replace(";", ' ')
+    filename = filename.replace('Ep ', 'Ep ')
+    filename = filename.replace('Ep: ', 'Ep ')
+    filename = filename.replace('Episode ', 'Ep ')
+    filename = filename.replace('Episode: ', 'Ep ')
+
+    invalidcharacters = ['?', '\\', '/', ':', '*', '"', '<', '>', '(', ')', '|', '&', "'", "_", "[", "]", ".", "#", ";"]
+
+    for invalidcharacter in invalidcharacters:
+        filename = filename.replace(invalidcharacter, ' ')
 
     while '  ' in filename:
         filename = filename.replace('  ', ' ')
