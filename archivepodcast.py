@@ -219,12 +219,12 @@ def cleanup_file_name(filename):
     filename = filename.replace('[Audio]', '')
     filename = filename.replace('[audio]', '')
     filename = filename.replace('AUDIO', '')
-    filename = filename.replace('Ep ', 'Ep ')
+    filename = filename.replace('Ep. ', 'Ep ')
     filename = filename.replace('Ep: ', 'Ep ')
     filename = filename.replace('Episode ', 'Ep ')
     filename = filename.replace('Episode: ', 'Ep ')
 
-    invalidcharacters = ['?', '\\', '/', ':', '*', '"', '<', '>', '(', ')', '|', '&', "'", "_", "[", "]", ".", "#", ";"]
+    invalidcharacters = ['?', '\\', '/', ':', '*', '"', '$', '<', '>', '(', ')', '|', '&', "'", "_", "[", "]", ".", "#", ";"]
 
     for invalidcharacter in invalidcharacters:
         filename = filename.replace(invalidcharacter, ' ')
