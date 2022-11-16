@@ -384,8 +384,11 @@ def download_podcasts(settingsjson):
                     elif child.tag == 'enclosure':
                         title = cleanup_file_name(title)
                         url = child.attrib.get('url')
+                        # TODO FIX FIX FIX
                         if '.mp3' in url:
                             download_asset(url, title, settingsjson, podcast, '.mp3')
+                        elif '.wav' in url:
+                            download_asset(url, title, settingsjson, podcast, '.wav')
                         else:
                             url = ''
                             print("Skipping non-mp3 file:" + title)
@@ -405,6 +408,8 @@ def download_podcasts(settingsjson):
                         url = child.attrib.get('url')
                         if '.mp3' in url:
                             download_asset(url, title, settingsjson, podcast, '.mp3')
+                        elif '.wav' in url:
+                            download_asset(url, title, settingsjson, podcast, '.wav')
                         else:
                             url = ''
                             print("Skipping non-mp3 file:" + title)
