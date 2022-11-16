@@ -406,6 +406,7 @@ def download_podcasts(settingsjson):
                     elif child.tag == '{http://search.yahoo.com/mrss/}content':
                         title = cleanup_file_name(title)
                         url = child.attrib.get('url')
+                        # TODO FIX FIX FIX
                         if '.mp3' in url:
                             download_asset(url, title, settingsjson, podcast, '.mp3')
                         elif '.wav' in url:
