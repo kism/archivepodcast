@@ -225,6 +225,7 @@ def cleanup_file_name(filename):
     filename = filename.replace('Episode ', 'Ep ')
     filename = filename.replace('Episode: ', 'Ep ')
 
+    # Generate Slug
     invalidcharacters = ['?', '\\', '/', ':', '*', '"', '$', '<', '>', '(', ')', '|', '&', "'", "_", "[", "]", ".", "#", ";"]
 
     for invalidcharacter in invalidcharacters:
