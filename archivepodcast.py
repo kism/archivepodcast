@@ -12,6 +12,7 @@ import json
 
 debug = False
 imageformats = ['.webp', '.png', '.jpg', '.jpeg', '.gif']
+audioformats = ['.mp3', '.wav', '.m4a', '.flac']
 
 # A default settings config to be written to the file system if none exists at the expected path
 defaultjson = """
@@ -384,14 +385,13 @@ def download_podcasts(settingsjson):
                     elif child.tag == 'enclosure':
                         title = cleanup_file_name(title)
                         url = child.attrib.get('url')
-                        # TODO FIX FIX FIX
-                        if '.mp3' in url:
-                            download_asset(url, title, settingsjson, podcast, '.mp3')
-                        elif '.wav' in url:
-                            download_asset(url, title, settingsjson, podcast, '.wav')
+                        # TODO wav conversion here?
+                        for format in audioformats:
+                            if format in url:
+                                download_asset(url, title, settingsjson, podcast, format)
                         else:
                             url = ''
-                            print("Skipping non-mp3 file:" + title)
+                            print("Skipping non-audio file:" + title)
 
                         child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + '.mp3'
 
@@ -406,14 +406,14 @@ def download_podcasts(settingsjson):
                     elif child.tag == '{http://search.yahoo.com/mrss/}content':
                         title = cleanup_file_name(title)
                         url = child.attrib.get('url')
-                        # TODO FIX FIX FIX
-                        if '.mp3' in url:
-                            download_asset(url, title, settingsjson, podcast, '.mp3')
-                        elif '.wav' in url:
-                            download_asset(url, title, settingsjson, podcast, '.wav')
+                        # TODO wav conversion here?
+                        for format in audioformats:
+                            if format in url:
+                                download_asset(url, title, settingsjson, podcast, format)
                         else:
                             url = ''
-                            print("Skipping non-mp3 file:" + title)
+                            print("Skipping non-audio file:" + title)
+
 
                         child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + '.mp3'
 
