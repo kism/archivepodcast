@@ -8,7 +8,11 @@ This Python script mirrors a podcast, it is indended to be used alongside nginx 
 
 `cd archivepodcast`
 
-`pip3 install requests`
+`python3 -m venv env`
+
+`source env/bin/activate`
+
+`pip3 install -r requirements.txt`
 
 `python3 archivepodcast.py -c /path/to/settings.json`
 
@@ -19,5 +23,4 @@ If there is no file that exists at the specified path it will create it, if ther
 Multiple podcasts can be defined in the array.
 
 Most fields can be left blank and will just be filled with the original values, podcasturl and podcastnameoneword are required. I'd recommend setting the 'podcastnewname' value to indicate that the feed is a mirror/archive.
-
 
