@@ -1,5 +1,6 @@
 output/*
 rss/*
+env/*
 *.txt
 *.mp3
 *.jpg
