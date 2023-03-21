@@ -6,11 +6,12 @@ from urllib.error import HTTPError
 from datetime import datetime
 
 
-
 imageformats = ['.webp', '.png', '.jpg', '.jpeg', '.gif']
 audioformats = ['.mp3', '.wav', '.m4a', '.flac']
 
 # Download asset from url with appropiate file name
+
+
 def download_asset(url, title, settingsjson, podcast, extension='', filedatestring=''):
     spacer = ''
     if filedatestring != '':
@@ -41,6 +42,8 @@ def download_asset(url, title, settingsjson, podcast, extension='', filedatestri
         logging.info("Already downloaded: " + title + extension)
 
 # Standardise naming, fix everything that could cause something to be borked on the file system or in a url
+
+
 def cleanup_file_name(filename):
     filename = filename.encode('ascii', 'ignore')
     filename = filename.decode()
@@ -56,7 +59,8 @@ def cleanup_file_name(filename):
     filename = filename.replace('Episode: ', 'Ep ')
 
     # Generate Slug
-    invalidcharacters = ['?', '\\', '/', ':', '*', '"', '$', '<', '>', '(', ')', '|', '&', "'", "_", "[", "]", ".", "#", ";"]
+    invalidcharacters = ['?', '\\', '/', ':', '*', '"', '$', '<',
+                         '>', '(', ')', '|', '&', "'", "_", "[", "]", ".", "#", ";"]
 
     for invalidcharacter in invalidcharacters:
         filename = filename.replace(invalidcharacter, ' ')
@@ -71,6 +75,8 @@ def cleanup_file_name(filename):
     return filename
 
 # Parse the XML, Download all the assets
+
+
 def download_podcasts(settingsjson):
     for podcast in settingsjson['podcast']:
         response = None
@@ -81,15 +87,18 @@ def download_podcasts(settingsjson):
         try:
             response = requests.get(request, timeout=5)
         except:
-            logging.info("Real early failure on grabbing the podcast xml, weird")
+            logging.info(
+                "Real early failure on grabbing the podcast xml, weird")
             exit(1)
 
         if response is not None:
             if response.status_code != 200 and response.status_code != 400:
-                logging.info("Not a great web request, we got: " + str(response.status_code))
+                logging.info("Not a great web request, we got: " +
+                             str(response.status_code))
                 exit(1)
             else:
-                logging.debug("We got a pretty real response by the looks of it")
+                logging.debug(
+                    "We got a pretty real response by the looks of it")
                 logging.debug(str(response))
         else:
             logging.info("Failure, no sign of a response.")
@@ -130,7 +139,8 @@ def download_podcasts(settingsjson):
 
             # Remake Atom Tags
             elif channel.tag == '{http://www.w3.org/2005/Atom}link':
-                channel.attrib['href'] = settingsjson['inetpath'] + 'rss/' + podcast['podcastnameoneword']
+                channel.attrib['href'] = settingsjson['inetpath'] + \
+                    'rss/' + podcast['podcastnameoneword']
                 channel.text = ' '  # here me out...
 
             # Remake Apple Tags
@@ -161,8 +171,11 @@ def download_podcasts(settingsjson):
 
                 for filetype in imageformats:
                     if filetype in url:
-                        download_asset(url, title, settingsjson, podcast, filetype)
-                        channel.attrib['href'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + filetype
+                        download_asset(url, title, settingsjson,
+                                       podcast, filetype)
+                        channel.attrib['href'] = settingsjson['inetpath'] + 'content/' + \
+                            podcast['podcastnameoneword'] + \
+                            '/' + title + filetype
 
                 channel.text = ' '
 
@@ -186,8 +199,11 @@ def download_podcasts(settingsjson):
 
                         for filetype in imageformats:
                             if filetype in url:
-                                download_asset(url, title, settingsjson, podcast, filetype)
-                                child.text = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + filetype
+                                download_asset(
+                                    url, title, settingsjson, podcast, filetype)
+                                child.text = settingsjson['inetpath'] + 'content/' + \
+                                    podcast['podcastnameoneword'] + \
+                                    '/' + title + filetype
                             # else:
                             #     logging.info("Skipping non image file:" + title)
 
@@ -210,11 +226,13 @@ def download_podcasts(settingsjson):
                         originaldate = str(child.text)
                         filedate = datetime(1970, 1, 1)
                         try:
-                            filedate = datetime.strptime(originaldate, '%a, %d %b %Y %H:%M:%S %Z')
+                            filedate = datetime.strptime(
+                                originaldate, '%a, %d %b %Y %H:%M:%S %Z')
                         except:
                             pass
                         try:
-                            filedate = datetime.strptime(originaldate, '%a, %d %b %Y %H:%M:%S %z')
+                            filedate = datetime.strptime(
+                                originaldate, '%a, %d %b %Y %H:%M:%S %z')
                         except:
                             pass
                         filedatestring = filedate.strftime("%Y%m%d")
@@ -228,9 +246,12 @@ def download_podcasts(settingsjson):
                         # TODO wav conversion here?
                         for format in audioformats:
                             if format in url:
-                                download_asset(url, title, settingsjson, podcast, format, filedatestring)
+                                download_asset(
+                                    url, title, settingsjson, podcast, format, filedatestring)
                                 # Set path of audio file
-                                child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + format
+                                child.attrib['url'] = settingsjson['inetpath'] + 'content/' + \
+                                    podcast['podcastnameoneword'] + \
+                                    '/' + title + format
 
                     # Episode Image
                     elif child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
@@ -240,9 +261,12 @@ def download_podcasts(settingsjson):
                             url = ''
                         for filetype in imageformats:
                             if filetype in url:
-                                download_asset(url, title, settingsjson, podcast, filetype, filedatestring)
+                                download_asset(
+                                    url, title, settingsjson, podcast, filetype, filedatestring)
                                 # Set path of image
-                                child.attrib['href'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + filetype
+                                child.attrib['href'] = settingsjson['inetpath'] + 'content/' + \
+                                    podcast['podcastnameoneword'] + \
+                                    '/' + title + filetype
                     # Episode Audio, TODO WHAT IS THIS YAHOO BULLSHIT, DO I NEED IT????
                     # elif child.tag == '{http://search.yahoo.com/mrss/}content':
                     #     title = cleanup_file_name(title)
@@ -266,18 +290,27 @@ def download_podcasts(settingsjson):
 
         tree = Et.ElementTree(podcastxml)
         # These make the name spaces appear nicer in the generated XML
-        Et.register_namespace('googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
+        Et.register_namespace(
+            'googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
         Et.register_namespace('atom',       'http://www.w3.org/2005/Atom')
-        Et.register_namespace('itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
+        Et.register_namespace(
+            'itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
         Et.register_namespace('media',      'http://search.yahoo.com/mrss/')
-        Et.register_namespace('sy',         'http://purl.org/rss/1.0/modules/syndication/')
-        Et.register_namespace('content',    'http://purl.org/rss/1.0/modules/content/')
-        Et.register_namespace('wfw',        'http://wellformedweb.org/CommentAPI/')
+        Et.register_namespace(
+            'sy',         'http://purl.org/rss/1.0/modules/syndication/')
+        Et.register_namespace(
+            'content',    'http://purl.org/rss/1.0/modules/content/')
+        Et.register_namespace(
+            'wfw',        'http://wellformedweb.org/CommentAPI/')
         Et.register_namespace('dc',         'http://purl.org/dc/elements/1.1/')
-        Et.register_namespace('slash',      'http://purl.org/rss/1.0/modules/slash/')
-        Et.register_namespace('podcast',    'https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md')
-        Et.register_namespace('rawvoice',   'http://www.rawvoice.com/rawvoiceRssModule/')
+        Et.register_namespace(
+            'slash',      'http://purl.org/rss/1.0/modules/slash/')
+        Et.register_namespace(
+            'podcast',    'https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md')
+        Et.register_namespace(
+            'rawvoice',   'http://www.rawvoice.com/rawvoiceRssModule/')
         Et.register_namespace('spotify',    'http://www.spotify.com/ns/rss/')
-        Et.register_namespace('feedburner', 'http://rssnamespace.org/feedburner/ext/1.0')
+        Et.register_namespace(
+            'feedburner', 'http://rssnamespace.org/feedburner/ext/1.0')
 
         return tree
