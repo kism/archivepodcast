@@ -25,10 +25,8 @@
         {% for podcast in settingsjson['podcast'] -%}
             <h2>{{ podcast['podcastnewname'] }}</h2>
             <p>{{ podcast['podcastdescription'] }}</p>
-
             <input type="text" value="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}" id="{{ podcast['podcastnameoneword']}}">
             <button class="button" onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')" id="{{ podcast['podcastnameoneword']}}_button">Copy url</button>
-
         {% endfor %}
 
 
