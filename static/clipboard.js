@@ -1,4 +1,5 @@
-function myFunction(buttonname) {
+function grabtoclipboard(buttonname) {
+    console.log("User clicked: " + buttonname);
     // Get the text field
     var copyText = document.getElementById(buttonname);
 
@@ -10,5 +11,5 @@ function myFunction(buttonname) {
     navigator.clipboard.writeText(copyText.value);
 
     // Alert the copied text
-    console.log("Copied the text: " + copyText.value);
+    console.log("Copied the text: " + copyText.value + " to clipboard");
   }

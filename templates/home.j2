@@ -6,48 +6,10 @@
         {{ settingsjson['webpagetitle'] }}
     </title>
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
+    <link rel="stylesheet" href="static/podcasto.css" />
     <script src="static/clipboard.js"></script>
 </head>
 
-<style>
-    body {
-    font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
-        "Segoe UI Emoji", "Segoe UI Symbol";
-    font-size: 18px;
-    font-weight: 500;
-    background-color: rgb(26, 26, 26);
-    color: rgb(200, 200, 200);
-    line-height: 1.5;
-    }
-    h1,
-    h2 {
-    font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
-    line-height: 1.2;
-    color: rgb(220, 220, 220);
-    }
-    h1 {
-    font-size: 40px;
-    font-weight: 700;
-    margin: 20px 0 16px;
-    }
-    h2 {
-    font-size: 24px;
-    font-weight: 600;
-    margin: 20px 0 16px;
-    }
-    p {
-    margin: 0;
-    margin-bottom: 16px;
-    margin-top: -8px;
-    }
-    a:link {
-    color: rgb(0, 128, 128);
-    }
-    a:visited {
-    color: rgb(128, 0, 64);
-    }
-</style>
 
 <body>
     <main>
@@ -61,18 +23,12 @@
         {% for podcast in settingsjson['podcast'] -%}
             <h2>{{ podcast['podcastnewname'] }}</h2>
             <p>{{ podcast['podcastdescription'] }}</p>
-            <p><a href="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}">{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}</a></p>
+
+            <input type="text" value="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}" id="{{ podcast['podcastnameoneword']}}">
+            <button onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')">Copy url</button>
+
+            <!-- <p><a href="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}">{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}</a></p> -->
         {% endfor %}
-
-
-
-
-
-
-
-
-
-
 
 
 
