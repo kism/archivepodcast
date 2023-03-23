@@ -24,3 +24,8 @@ Multiple podcasts can be defined in the array.
 
 Most fields can be left blank and will just be filled with the original values, podcasturl and podcastnameoneword are required. I'd recommend setting the 'podcastnewname' value to indicate that the feed is a mirror/archive.
 
+## TODO
+
+Redo whole readme with new selfhosted version
+fix the colour of the buttons on click
+pylint hell
