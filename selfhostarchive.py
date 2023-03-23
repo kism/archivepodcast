@@ -10,6 +10,7 @@ app = Flask(__name__)                 # Flask app object
 
 podcastxml = {}
 
+
 @app.route('/')
 def home():  # Flask Home
     return render_template('home.j2', settingsjson=settingsjson)
@@ -17,7 +18,7 @@ def home():  # Flask Home
 
 @app.route('/rss/<string:feed>', methods=['GET'])
 def rss(feed):
-    print("Feed " + feed)
+    logging.info("Sending xml feed: " + feed)
     xml = 'no podcast here, check your url'
     try:
         xml = podcastxml[feed]
@@ -28,18 +29,29 @@ def rss(feed):
 
 def podcastloop(settingsjson):
     global podcastxml
+    tree = None
     while True:
         # download all the podcasts
         for podcast in settingsjson['podcast']:
-            tree = download_podcasts(settingsjson)
-            if tree:
-                tree.write(settingsjson['webroot'] + 'rss/' +
-                           podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
-                # print(type(tree))
-                # print(type(tree.getroot()))
-                podcastxml.update({podcast['podcastnameoneword'] : Et.tostring(tree.getroot(), encoding='utf-8', method='xml', xml_declaration=True)})
+            if podcast['live'] == True:
+                tree = download_podcasts(podcast, settingsjson)
+                if tree:
+                    tree.write(settingsjson['webroot'] + 'rss/' +
+                               podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
+
+                    podcastxml.update({podcast['podcastnameoneword']: Et.tostring(
+                        tree.getroot(), encoding='utf-8', method='xml', xml_declaration=True)})
+                else:
+                    logging.info("XML Write Failure")
             else:
-                logging.info("XML Write Failure")
+                try:
+                    tree = Et.parse(settingsjson['webroot'] + 'rss/' +
+                                    podcast['podcastnameoneword'])
+
+                    podcastxml.update({podcast['podcastnameoneword']: Et.tostring(
+                            tree.getroot(), encoding='utf-8', method='xml', xml_declaration=True)})
+                except FileNotFoundError:
+                    logging.error("Cannot find xml file " + podcast['podcastnameoneword'] + ' at ' + settingsjson['webroot'] + 'rss/' + podcast['podcastnameoneword'])
 
         logging.info("Sleeping")
         time.sleep(3600)

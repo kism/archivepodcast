@@ -175,7 +175,7 @@ def main(args):
 
     # download all the podcasts
     for podcast in settingsjson['podcast']:
-        tree = download_podcasts(settingsjson)
+        tree = download_podcasts(podcast, settingsjson)
         if tree:
             tree.write(settingsjson['webroot'] + 'rss/' + podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
         else:
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     loglevel = logging.INFO
     if args.debug:
         loglevel = logging.DEBUG
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=loglevel) #TODO FIXME TODO FIXME
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=loglevel)
 
     logging.debug("Script args: " + str(args))
     main(args)
