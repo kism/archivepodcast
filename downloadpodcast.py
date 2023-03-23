@@ -7,8 +7,8 @@ from urllib.error import HTTPError
 from datetime import datetime
 from sys import platform
 
-imageformats = ['.webp', '.png', '.jpg', '.jpeg', '.gif']
-audioformats = ['.mp3', '.wav', '.m4a', '.flac']
+imageformats = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
+audioformats = [".mp3", ".wav", ".m4a", ".flac"]
 
 # A default settings config to be written to the file system if none exists at the expected path
 defaultjson = """
@@ -37,7 +37,7 @@ def get_settings(args):  # Load settings from settings.json
 
     settingsjson = None
     settingserror = False
-    settingspath = ''
+    settingspath = ""
 
     if args.settingspath:
         settingspath = args.settingspath
@@ -67,139 +67,182 @@ def get_settings(args):  # Load settings from settings.json
     try:
         # Iterate through the first level default settings json in this file, if any of the keys arent in settings.json throw an error
         for setting in json.loads(defaultjson).keys():
-            if settingsjson[setting] == '':
+            if settingsjson[setting] == "":
                 settingserror = True
                 logging.info(setting + " not set")
     except KeyError:
         settingserror = True
-        logging.info("Looks like settings json doesnt match the expecting schema format, make a backup, remove the original file, run the script again and have a look at the default settings.json file")
+        logging.error(
+            "Looks like settings json doesnt match the expecting schema format, make a backup, remove the original file, run the script again and have a look at the default settings.json file"
+        )
 
     if platform != "win32":
-        if settingsjson['webroot'][-1] != '/':
-            logging.info("Put a forward slash at the end of the webroot")
+        if settingsjson["webroot"][-1] != "/":
+            logging.error("Put a forward slash at the end of the webroot")
             exit(1)
     else:
-        if settingsjson['webroot'][-1] != '\\':
-            logging.info(
-                "Put a back slash at the end of the webroot, probably I havent tested on windows lmao")
+        if settingsjson["webroot"][-1] != "\\":
+            logging.error(
+                "Put a back slash at the end of the webroot, probably I havent tested on windows lmao"
+            )
             exit(1)
 
     try:
-        for idx, podcast in enumerate(settingsjson['podcast']):
-            logging.debug('Podcast entry: ' + str(podcast))
+        for idx, podcast in enumerate(settingsjson["podcast"]):
+            logging.debug("Podcast entry: " + str(podcast))
             try:
-                if podcast['podcasturl'] == '':
-                    logging.info(
-                        '"podcasturl"         not defined in podcast entry ' + str(idx + 1))
+                if podcast["podcasturl"] == "":
+                    logging.error(
+                        '"podcasturl"         not defined in podcast entry '
+                        + str(idx + 1)
+                    )
                     settingserror = True
-                if podcast['podcastnameoneword'] == '':
-                    logging.info(
-                        '"podcastnameoneword" not defined in podcast entry ' + str(idx + 1))
+                if podcast["podcastnameoneword"] == "":
+                    logging.error(
+                        '"podcastnameoneword" not defined in podcast entry '
+                        + str(idx + 1)
+                    )
+                    settingserror = True
+                if podcast["live"] == "":
+                    logging.error(
+                        '"live" not defined in podcast entry '
+                        + str(idx + 1)
+                    )
                     settingserror = True
             except:
-                logging.info(
-                    "Issue with podcast entry in settings json: " + str(podcast))
+                logging.error(
+                    "Issue with podcast entry in settings json: " + str(podcast)
+                )
                 settingserror = True
     except KeyError:
         settingserror = True
 
     if settingserror:
-        logging.info("Invalid config, exiting, check " + settingspath)
+        logging.error("Invalid config, exiting, check " + settingspath)
         exit(1)
 
     return settingsjson
 
 
 # Download asset from url with appropiate file name
-def download_asset(url, title, settingsjson, podcast, extension='', filedatestring=''):
-    spacer = ''
-    if filedatestring != '':
-        spacer = '-'
+def download_asset(url, title, settingsjson, podcast, extension="", filedatestring=""):
+    spacer = ""
+    if filedatestring != "":
+        spacer = "-"
 
-    filepath = settingsjson['webroot'] + 'content/' + \
-        podcast['podcastnameoneword'] + '/' + \
-        filedatestring + spacer + title + extension
+    filepath = (
+        settingsjson["webroot"]
+        + "content/"
+        + podcast["podcastnameoneword"]
+        + "/"
+        + filedatestring
+        + spacer
+        + title
+        + extension
+    )
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         if True:
             try:
                 logging.info("Downloading: " + url)
-                headers = {'user-agent': 'Mozilla/5.0'}
+                headers = {"user-agent": "Mozilla/5.0"}
                 r = requests.get(url, headers=headers)
 
-                if (r.status_code == 200):
-                    with open(filepath, 'wb') as f:
+                if r.status_code == 200:
+                    with open(filepath, "wb") as f:
                         f.write(r.content)
                         logging.info("\033[92mSuccess!\033[0m")
                 else:
                     logging.info("HTTP ERROR: " + str(r.content))
 
             except HTTPError as err:
-                logging.info("\033[91mDownload Failed\033[0m" + ' ' + str(err))
+                logging.info("\033[91mDownload Failed\033[0m" + " " + str(err))
 
     else:
         logging.info("Already downloaded: " + title + extension)
+
 
 # Standardise naming, fix everything that could cause something to be borked on the file system or in a url
 
 
 def cleanup_file_name(filename):
-    filename = filename.encode('ascii', 'ignore')
+    filename = filename.encode("ascii", "ignore")
     filename = filename.decode()
 
     # Standardise
-    filename = filename.replace('[AUDIO]', '')
-    filename = filename.replace('[Audio]', '')
-    filename = filename.replace('[audio]', '')
-    filename = filename.replace('AUDIO', '')
-    filename = filename.replace('Ep. ', 'Ep ')
-    filename = filename.replace('Ep: ', 'Ep ')
-    filename = filename.replace('Episode ', 'Ep ')
-    filename = filename.replace('Episode: ', 'Ep ')
+    filename = filename.replace("[AUDIO]", "")
+    filename = filename.replace("[Audio]", "")
+    filename = filename.replace("[audio]", "")
+    filename = filename.replace("AUDIO", "")
+    filename = filename.replace("Ep. ", "Ep ")
+    filename = filename.replace("Ep: ", "Ep ")
+    filename = filename.replace("Episode ", "Ep ")
+    filename = filename.replace("Episode: ", "Ep ")
 
     # Generate Slug
-    invalidcharacters = ['?', '\\', '/', ':', '*', '"', '$', '<',
-                         '>', '(', ')', '|', '&', "'", "_", "[", "]", ".", "#", ";"]
+    invalidcharacters = [
+        "?",
+        "\\",
+        "/",
+        ":",
+        "*",
+        '"',
+        "$",
+        "<",
+        ">",
+        "(",
+        ")",
+        "|",
+        "&",
+        "'",
+        "_",
+        "[",
+        "]",
+        ".",
+        "#",
+        ";",
+    ]
 
     for invalidcharacter in invalidcharacters:
-        filename = filename.replace(invalidcharacter, ' ')
+        filename = filename.replace(invalidcharacter, " ")
 
-    while '  ' in filename:
-        filename = filename.replace('  ', ' ')
+    while "  " in filename:
+        filename = filename.replace("  ", " ")
 
     filename = filename.strip()
-    filename = filename.replace(' ', '-')
+    filename = filename.replace(" ", "-")
 
-    logging.debug('\033[92mClean Filename\033[0m: ' + "'" + filename + "'")
+    logging.debug("\033[92mClean Filename\033[0m: " + "'" + filename + "'")
     return filename
 
 
-def download_podcasts(podcast, settingsjson):  # Parse the XML, Download all the assets
+# Parse the XML, Download all the assets
+def download_podcasts(podcast, settingsjson):
     response = None
 
     # lets fetch the original podcast xml
-    request = podcast['podcasturl']
+    request = podcast["podcasturl"]
 
     try:
         response = requests.get(request, timeout=5)
     except:
-        logging.info(
-            "Real early failure on grabbing the podcast xml, weird")
+        logging.info("Real early failure on grabbing the podcast xml, weird")
         exit(1)
 
     if response is not None:
         if response.status_code != 200 and response.status_code != 400:
-            logging.info("Not a great web request, we got: " +
-                            str(response.status_code))
+            logging.info(
+                "Not a great web request, we got: " + str(response.status_code)
+            )
             exit(1)
         else:
-            logging.debug(
-                "We got a pretty real response by the looks of it")
+            logging.debug("We got a pretty real response by the looks of it")
             logging.debug(str(response))
     else:
         logging.info("Failure, no sign of a response.")
         logging.debug(
-            "Probably an issue with the code. Not patreon catching onto you pirating a premium podcast.")
+            "Probably an issue with the code. Not patreon catching onto you pirating a premium podcast."
+        )
         exit(1)
 
     # We have the xml
@@ -209,160 +252,193 @@ def download_podcasts(podcast, settingsjson):  # Parse the XML, Download all the
     xmlfirstchild = podcastxml[0]
 
     # It's time to iterate through the lad, we overwrite as necessary from the settings in settings.json
-    title = ''
-    url = ''
+    title = ""
+    url = ""
 
     for channel in xmlfirstchild:  # Dont complain
         logging.info("\033[47m\033[30mFound XML item \033[0m")
-        logging.debug('XML tag: ' + channel.tag)
+        logging.debug("XML tag: " + channel.tag)
 
         # Handle URL, override
-        if channel.tag == 'link':
+        if channel.tag == "link":
             logging.info("Podcast link: " + str(channel.text))
-            channel.text = settingsjson['inetpath']
+            channel.text = settingsjson["inetpath"]
 
         # Handle Podcast Title, override
-        elif channel.tag == 'title':
+        elif channel.tag == "title":
             logging.info("Podcast title: " + str(channel.text))
-            if podcast['podcastnewname'] == '':
-                podcast['podcastnewname'] = channel.text
-            channel.text = podcast['podcastnewname']
+            if podcast["podcastnewname"] == "":
+                podcast["podcastnewname"] = channel.text
+            channel.text = podcast["podcastnewname"]
 
         # Handle Podcast Description, override
-        elif channel.tag == 'description':
+        elif channel.tag == "description":
             logging.info("Podcast description: " + str(channel.text))
-            channel.text = podcast['podcastdescription']
+            channel.text = podcast["podcastdescription"]
 
         # Remake Atom Tags
-        elif channel.tag == '{http://www.w3.org/2005/Atom}link':
-            channel.attrib['href'] = settingsjson['inetpath'] + \
-                'rss/' + podcast['podcastnameoneword']
-            channel.text = ' '  # here me out...
+        elif channel.tag == "{http://www.w3.org/2005/Atom}link":
+            channel.attrib["href"] = (
+                settingsjson["inetpath"] + "rss/" + podcast["podcastnameoneword"]
+            )
+            channel.text = " "  # here me out...
 
         # Remake Apple Tags
-        elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}owner':
+        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}owner":
             for child in channel:
-                if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}name':
-                    if podcast['podcastnewname'] == '':
-                        podcast['podcastnewname'] = child.text
-                    child.text = podcast['podcastnewname']
-                if child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}email':
-                    if podcast['contactemail'] == '':
-                        podcast['contactemail'] = child.text
-                    child.text = podcast['contactemail']
+                if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}name":
+                    if podcast["podcastnewname"] == "":
+                        podcast["podcastnewname"] = child.text
+                    child.text = podcast["podcastnewname"]
+                if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}email":
+                    if podcast["contactemail"] == "":
+                        podcast["contactemail"] = child.text
+                    child.text = podcast["contactemail"]
 
-        elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}author':
-            if podcast['podcastnewname'] == '':
-                podcast['podcastnewname'] = channel.text
-            channel.text = podcast['podcastnewname']
+        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}author":
+            if podcast["podcastnewname"] == "":
+                podcast["podcastnewname"] = channel.text
+            channel.text = podcast["podcastnewname"]
 
-        elif channel.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
-            if podcast['podcastnewname'] == '':
-                podcast['podcastnewname'] = channel.text
-            title = podcast['podcastnewname']
+        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
+            if podcast["podcastnewname"] == "":
+                podcast["podcastnewname"] = channel.text
+            title = podcast["podcastnewname"]
             title = cleanup_file_name(title)
-            url = channel.attrib.get('href')
+            url = channel.attrib.get("href")
             if url == None:
-                url = ''
+                url = ""
 
             for filetype in imageformats:
                 if filetype in url:
-                    download_asset(url, title, settingsjson,
-                                    podcast, filetype)
-                    channel.attrib['href'] = settingsjson['inetpath'] + 'content/' + \
-                        podcast['podcastnameoneword'] + \
-                        '/' + title + filetype
+                    download_asset(url, title, settingsjson, podcast, filetype)
+                    channel.attrib["href"] = (
+                        settingsjson["inetpath"]
+                        + "content/"
+                        + podcast["podcastnameoneword"]
+                        + "/"
+                        + title
+                        + filetype
+                    )
 
-            channel.text = ' '
+            channel.text = " "
 
         # Handle Image
-        elif channel.tag == 'image':
+        elif channel.tag == "image":
             for child in channel:
-                logging.debug('image > XML tag: ' + child.tag)
-                if child.tag == 'title':
+                logging.debug("image > XML tag: " + child.tag)
+                if child.tag == "title":
                     logging.info("Title: " + str(child.text))
-                    child.text = podcast['podcastnewname']
+                    child.text = podcast["podcastnewname"]
 
-                elif child.tag == 'link':
-                    child.text = settingsjson['inetpath']
+                elif child.tag == "link":
+                    child.text = settingsjson["inetpath"]
 
-                elif child.tag == 'url':
-                    title = podcast['podcastnewname']
+                elif child.tag == "url":
+                    title = podcast["podcastnewname"]
                     title = cleanup_file_name(title)
                     url = child.text
                     if url == None:
-                        url = ''
+                        url = ""
 
                     for filetype in imageformats:
                         if filetype in url:
-                            download_asset(
-                                url, title, settingsjson, podcast, filetype)
-                            child.text = settingsjson['inetpath'] + 'content/' + \
-                                podcast['podcastnameoneword'] + \
-                                '/' + title + filetype
+                            download_asset(url, title, settingsjson, podcast, filetype)
+                            child.text = (
+                                settingsjson["inetpath"]
+                                + "content/"
+                                + podcast["podcastnameoneword"]
+                                + "/"
+                                + title
+                                + filetype
+                            )
                         # else:
                         #     logging.info("Skipping non image file:" + title)
 
                 else:
-                    logging.debug('Unhandled XML tag, leaving as-is')
+                    logging.debug("Unhandled XML tag, leaving as-is")
 
-            channel.text = ' '  # here me out...
+            channel.text = " "  # here me out...
 
         # Handle Episode
-        elif channel.tag == 'item':
-            filedatestring = '00000000'
+        elif channel.tag == "item":
+            filedatestring = "00000000"
             for child in channel:
-                logging.debug('item > XML tag: ' + child.tag)
+                logging.debug("item > XML tag: " + child.tag)
                 # Episode Title
-                if child.tag == 'title':
+                if child.tag == "title":
                     title = str(child.text)
                     logging.info("Title: " + title)
                 # Episode Date
-                elif child.tag == 'pubDate':
+                elif child.tag == "pubDate":
                     originaldate = str(child.text)
                     filedate = datetime(1970, 1, 1)
                     try:
                         filedate = datetime.strptime(
-                            originaldate, '%a, %d %b %Y %H:%M:%S %Z')
+                            originaldate, "%a, %d %b %Y %H:%M:%S %Z"
+                        )
                     except:
                         pass
                     try:
                         filedate = datetime.strptime(
-                            originaldate, '%a, %d %b %Y %H:%M:%S %z')
+                            originaldate, "%a, %d %b %Y %H:%M:%S %z"
+                        )
                     except:
                         pass
                     filedatestring = filedate.strftime("%Y%m%d")
 
                 # Episode Content (Enclosure)
-                elif child.tag == 'enclosure':
+                elif child.tag == "enclosure":
                     title = cleanup_file_name(title)
-                    url = child.attrib.get('url')
+                    url = child.attrib.get("url")
                     if url == None:
-                        url = ''
+                        url = ""
                     # TODO wav conversion here?
                     for format in audioformats:
                         if format in url:
                             download_asset(
-                                url, title, settingsjson, podcast, format, filedatestring)
+                                url,
+                                title,
+                                settingsjson,
+                                podcast,
+                                format,
+                                filedatestring,
+                            )
                             # Set path of audio file
-                            child.attrib['url'] = settingsjson['inetpath'] + 'content/' + \
-                                podcast['podcastnameoneword'] + \
-                                '/' + title + format
+                            child.attrib["url"] = (
+                                settingsjson["inetpath"]
+                                + "content/"
+                                + podcast["podcastnameoneword"]
+                                + "/"
+                                + title
+                                + format
+                            )
 
                 # Episode Image
-                elif child.tag == '{http://www.itunes.com/dtds/podcast-1.0.dtd}image':
+                elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
                     title = cleanup_file_name(title)
-                    url = child.attrib.get('href')
+                    url = child.attrib.get("href")
                     if url == None:
-                        url = ''
+                        url = ""
                     for filetype in imageformats:
                         if filetype in url:
                             download_asset(
-                                url, title, settingsjson, podcast, filetype, filedatestring)
+                                url,
+                                title,
+                                settingsjson,
+                                podcast,
+                                filetype,
+                                filedatestring,
+                            )
                             # Set path of image
-                            child.attrib['href'] = settingsjson['inetpath'] + 'content/' + \
-                                podcast['podcastnameoneword'] + \
-                                '/' + title + filetype
+                            child.attrib["href"] = (
+                                settingsjson["inetpath"]
+                                + "content/"
+                                + podcast["podcastnameoneword"]
+                                + "/"
+                                + title
+                                + filetype
+                            )
                 # Episode Audio, TODO WHAT IS THIS YAHOO BULLSHIT, DO I NEED IT????
                 # elif child.tag == '{http://search.yahoo.com/mrss/}content':
                 #     title = cleanup_file_name(title)
@@ -377,36 +453,32 @@ def download_podcasts(podcast, settingsjson):  # Parse the XML, Download all the
                 #             child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + format
 
                 else:
-                    logging.debug('Unhandled XML tag, leaving as-is')
+                    logging.debug("Unhandled XML tag, leaving as-is")
 
         else:
-            logging.debug('Unhandled XML tag, leaving as-is')
+            logging.debug("Unhandled XML tag, leaving as-is")
 
     podcastxml[0] = xmlfirstchild
 
     tree = Et.ElementTree(podcastxml)
     # These make the name spaces appear nicer in the generated XML
     Et.register_namespace(
-        'googleplay', 'http://www.google.com/schemas/play-podcasts/1.0')
-    Et.register_namespace('atom',       'http://www.w3.org/2005/Atom')
+        "googleplay", "http://www.google.com/schemas/play-podcasts/1.0"
+    )
+    Et.register_namespace("atom", "http://www.w3.org/2005/Atom")
+    Et.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+    Et.register_namespace("media", "http://search.yahoo.com/mrss/")
+    Et.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
+    Et.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
+    Et.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
+    Et.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
+    Et.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
     Et.register_namespace(
-        'itunes',     'http://www.itunes.com/dtds/podcast-1.0.dtd')
-    Et.register_namespace('media',      'http://search.yahoo.com/mrss/')
-    Et.register_namespace(
-        'sy',         'http://purl.org/rss/1.0/modules/syndication/')
-    Et.register_namespace(
-        'content',    'http://purl.org/rss/1.0/modules/content/')
-    Et.register_namespace(
-        'wfw',        'http://wellformedweb.org/CommentAPI/')
-    Et.register_namespace('dc',         'http://purl.org/dc/elements/1.1/')
-    Et.register_namespace(
-        'slash',      'http://purl.org/rss/1.0/modules/slash/')
-    Et.register_namespace(
-        'podcast',    'https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md')
-    Et.register_namespace(
-        'rawvoice',   'http://www.rawvoice.com/rawvoiceRssModule/')
-    Et.register_namespace('spotify',    'http://www.spotify.com/ns/rss/')
-    Et.register_namespace(
-        'feedburner', 'http://rssnamespace.org/feedburner/ext/1.0')
+        "podcast",
+        "https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md",
+    )
+    Et.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
+    Et.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
+    Et.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
 
     return tree
