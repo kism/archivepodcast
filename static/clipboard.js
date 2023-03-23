@@ -12,4 +12,11 @@ function grabtoclipboard(buttonname) {
 
     // Alert the copied text
     console.log("Copied the text: " + copyText.value + " to clipboard");
+
+    document.getElementById(buttonname + "_button").innerHTML = "Copied!"
+    setTimeout(resettext, 2000, buttonname)
   }
+
+function resettext(buttonname) {
+    document.getElementById(buttonname + "_button").innerHTML = "Copy URL"
+}

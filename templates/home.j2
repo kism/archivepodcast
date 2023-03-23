@@ -2,9 +2,11 @@
 <html lang="en">
 
 <head>
+    <meta charset="utf-8">
     <title>
         {{ settingsjson['webpagetitle'] }}
     </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
     <link rel="stylesheet" href="static/podcasto.css" />
     <script src="static/clipboard.js"></script>
@@ -25,9 +27,8 @@
             <p>{{ podcast['podcastdescription'] }}</p>
 
             <input type="text" value="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}" id="{{ podcast['podcastnameoneword']}}">
-            <button onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')">Copy url</button>
+            <button class="button" onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')" id="{{ podcast['podcastnameoneword']}}_button">Copy url</button>
 
-            <!-- <p><a href="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}">{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}</a></p> -->
         {% endfor %}
 
 
