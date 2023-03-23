@@ -1,19 +1,33 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, Blueprint
+from flask import Flask, render_template, Blueprint, Response
 from downloadpodcast import *
+import xml.etree.ElementTree as Et
 import argparse
 import time
 import threading
 
 app = Flask(__name__)                 # Flask app object
 
+podcastxml = {}
 
 @app.route('/')
 def home():  # Flask Home
     return render_template('home.j2', settingsjson=settingsjson)
 
 
+@app.route('/rss/<string:feed>', methods=['GET'])
+def rss(feed):
+    print("Feed " + feed)
+    xml = 'no podcast here, check your url'
+    try:
+        xml = podcastxml[feed]
+    except:
+        pass
+    return Response(xml, mimetype='application/rss+xml; charset=utf-8')
+
+
 def podcastloop(settingsjson):
+    global podcastxml
     while True:
         # download all the podcasts
         for podcast in settingsjson['podcast']:
@@ -21,6 +35,9 @@ def podcastloop(settingsjson):
             if tree:
                 tree.write(settingsjson['webroot'] + 'rss/' +
                            podcast['podcastnameoneword'], encoding='utf-8', xml_declaration=True)
+                # print(type(tree))
+                # print(type(tree.getroot()))
+                podcastxml.update({podcast['podcastnameoneword'] : Et.tostring(tree.getroot(), encoding='utf-8', method='xml', xml_declaration=True)})
             else:
                 logging.info("XML Write Failure")
 

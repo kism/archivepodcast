@@ -30,6 +30,7 @@ defaultjson = """
 }
 """
 
+
 def get_settings(args):  # Load settings from settings.json
     logging.info("\033[47m\033[30m Loading settings file\033[0m")
 
@@ -95,7 +96,8 @@ def get_settings(args):  # Load settings from settings.json
                         '"podcastnameoneword" not defined in podcast entry ' + str(idx + 1))
                     settingserror = True
             except:
-                logging.info("Issue with podcast entry in settings json: " + str(podcast))
+                logging.info(
+                    "Issue with podcast entry in settings json: " + str(podcast))
                 settingserror = True
     except KeyError:
         settingserror = True
@@ -105,7 +107,6 @@ def get_settings(args):  # Load settings from settings.json
         exit(1)
 
     return settingsjson
-
 
 
 # Download asset from url with appropiate file name
@@ -171,10 +172,8 @@ def cleanup_file_name(filename):
     logging.debug('\033[92mClean Filename\033[0m: ' + "'" + filename + "'")
     return filename
 
-# Parse the XML, Download all the assets
 
-
-def download_podcasts(settingsjson):
+def download_podcasts(settingsjson):  # Parse the XML, Download all the assets
     for podcast in settingsjson['podcast']:
         response = None
 
