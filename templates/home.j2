@@ -19,7 +19,7 @@
 
         <p>{{ settingsjson['webpagedescription'] }}</p>
 
-        <p>For instructions on how to add a podcast url to a podcast app, <a href="{{ webpagepodcastguidelink }}">check out this helpful guide</a>.</p>
+        <p>For instructions on how to add a podcast url to a podcast app, <a href="{{ settingsjson['webpagepodcastguidelink'] }}">check out this helpful guide</a>.</p>
 
 
         {% for podcast in settingsjson['podcast'] -%}
