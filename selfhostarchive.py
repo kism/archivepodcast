@@ -74,7 +74,7 @@ def make_folder_structure():  # Eeeeehh TODO clean this up because lol robots.tx
         sys.exit(1)
 
 
-def podcastloop():
+def podcast_loop():
     """Loop through defined podcasts, download and store the xml"""
     tree = None
     while True:
@@ -124,9 +124,12 @@ def podcastloop():
 
 def main():
     """Main, globals have been defined"""
+
+    make_folder_structure()
+
     # Start Thread
     thread = threading.Thread(
-        target=podcastloop,
+        target=podcast_loop,
     )
     thread.start()
 
