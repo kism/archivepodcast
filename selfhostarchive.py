@@ -11,7 +11,7 @@ from flask import Flask, render_template, Blueprint, Response
 from downloadpodcast import get_settings, download_podcasts
 
 
-app = Flask(__name__)  # Flask app object
+app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
 
 
@@ -31,6 +31,16 @@ def rss(feed):
     except TypeError:
         pass
     return Response(xml, mimetype="application/rss+xml; charset=utf-8")
+
+
+@app.route("/robots.txt")
+def static_from_root():
+    """Serve robots.txt"""
+    response = Response(
+        response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain"
+    )
+    response.headers["Content-Type"] = "text/plain; charset=utf-8"
+    return response
 
 
 def podcastloop():
@@ -84,7 +94,9 @@ def podcastloop():
 def main():
     """Main, globals have been defined"""
     # Start Thread
-    thread = threading.Thread(target=podcastloop, )
+    thread = threading.Thread(
+        target=podcastloop,
+    )
     thread.start()
 
     # Finish Creating App
