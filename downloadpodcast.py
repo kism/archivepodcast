@@ -233,14 +233,14 @@ def download_podcasts(podcast, settingsjson):
         response = requests.get(request, timeout=5)
     except ValueError:
         logging.info("Real early failure on grabbing the podcast xml, weird")
-        exit(1)
+        return
 
     if response is not None:
         if response.status_code != 200 and response.status_code != 400:
             logging.info(
                 "Not a great web request, we got: %s", str(response.status_code)
             )
-            exit(1)
+            return
         else:
             logging.debug("We got a pretty real response by the looks of it")
             logging.debug(str(response))
@@ -249,7 +249,7 @@ def download_podcasts(podcast, settingsjson):
         logging.debug(
             "Probably an issue with the code. Or cloudflare ruining our day maybe?"
         )
-        exit(1)
+        return
 
     # We have the xml
     podcastxml = Et.fromstring(response.content)
@@ -416,6 +416,8 @@ def download_podcasts(podcast, settingsjson):
                                 + "content/"
                                 + podcast["podcastnameoneword"]
                                 + "/"
+                                + filedatestring
+                                + "-"
                                 + title
                                 + audioformat
                             )
@@ -442,6 +444,8 @@ def download_podcasts(podcast, settingsjson):
                                 + "content/"
                                 + podcast["podcastnameoneword"]
                                 + "/"
+                                + filedatestring
+                                + "-"
                                 + title
                                 + filetype
                             )
