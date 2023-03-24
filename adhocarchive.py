@@ -106,7 +106,7 @@ def make_folder_structure(settingsjson):
             pass
         except PermissionError:
             permissionserror = True
-            logging.info("You do not have permission to create folder: " + folder)
+            logging.info("You do not have permission to create folder: %s", folder)
 
     # Create robots.txt
     robotstxtpath = ""
@@ -116,14 +116,14 @@ def make_folder_structure(settingsjson):
             # delete and remake to catch potential permissions errors (webroot)
             os.remove(robotstxtpath)
         except FileNotFoundError:
-            logging.info("Creating: " + robotstxtpath)
+            logging.info("Creating: %s", robotstxtpath)
         robotstxtfile = None
         robotstxtfile = open(robotstxtpath, "w", encoding="ascii")
         robotstxtfile.write("User-agent: *\nDisallow: /")
         robotstxtfile.close()
     except PermissionError:
         permissionserror = True
-        logging.info("You do not have permission to create file: " + robotstxtpath)
+        logging.info("You do not have permission to create file: %s", robotstxtpath)
 
     if permissionserror:
         logging.info(
@@ -166,7 +166,10 @@ def create_html(settingsjson):
     logging.info("Make sure to set this in the server{} section of nginx.conf:")
     for podcast in settingsjson["podcast"]:
         logging.info(
-            NGINXINSTRUCTIONSONE + podcast["podcastnameoneword"] + NGINXINSTRUCTIONSTWO
+            "%s %s %s",
+            NGINXINSTRUCTIONSONE,
+            podcast["podcastnameoneword"],
+            NGINXINSTRUCTIONSTWO,
         )
 
     logging.info("Done!")
@@ -196,7 +199,7 @@ def main():
     create_html(settingsjson)
 
 
-if __name__ == "__main__": # Handle Const Globals Here
+if __name__ == "__main__":  # Handle Const Globals Here
     print("\033[47m\033[30madhocarchive.py\033[0m")
     parser = argparse.ArgumentParser(description="Mirror / rehost a podcast")
     parser.add_argument(
@@ -212,5 +215,5 @@ if __name__ == "__main__": # Handle Const Globals Here
         LOGLEVEL = logging.DEBUG
     logging.basicConfig(format="%(levelname)s:%(message)s", level=LOGLEVEL)
 
-    logging.debug("Script args: " + str(args))
+    logging.debug("Script args: %s", str(args))
     main()

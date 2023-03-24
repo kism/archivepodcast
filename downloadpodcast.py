@@ -51,12 +51,12 @@ def get_settings(args):
     else:
         settingspath = "settings.json"
 
-    logging.info("Path: " + str(settingspath))
+    logging.info("Path: %s", str(settingspath))
 
     try:
         settingsjsonfile = open(settingspath, "r", encoding="utf-8")
     except FileNotFoundError:  # If no settings.json, create it
-        logging.info("Settings json doesnt exist at: " + settingspath)
+        logging.info("Settings json doesnt exist at: %s", settingspath)
         logging.info("Creating empty config, please fill it out.\n")
         settingsjsonfile = open(settingspath, "w", encoding="utf-8")
         settingsjsonfile.write(DEFAULTJSON)
@@ -77,7 +77,7 @@ def get_settings(args):
         for setting in json.loads(DEFAULTJSON).keys():
             if settingsjson[setting] == "":
                 settingserror = True
-                logging.info(setting + " not set")
+                logging.info("Setting: %s not set", setting)
     except KeyError:
         settingserror = True
         logging.error(
@@ -95,37 +95,39 @@ def get_settings(args):
             logging.error(
                 "Put a back slash at the end of the webroot (Windows not tested)"
             )
-            exit(1)
+            sys.exit(1)
 
     try:
         for idx, podcast in enumerate(settingsjson["podcast"]):
-            logging.debug("Podcast entry: " + str(podcast))
+            logging.debug("Podcast entry: %s", str(podcast))
             try:
                 if podcast["podcasturl"] == "":
                     logging.error(
-                        '"podcasturl"         not defined in podcast entry '
-                        + str(idx + 1)
+                        '"podcasturl"         not defined in podcast entry %s',
+                        str(idx + 1),
                     )
                     settingserror = True
                 if podcast["podcastnameoneword"] == "":
                     logging.error(
-                        '"podcastnameoneword" not defined in podcast entry '
-                        + str(idx + 1)
+                        '"podcastnameoneword" not defined in podcast entry %s',
+                        str(idx + 1),
                     )
                     settingserror = True
                 if podcast["live"] == "":
-                    logging.error('"live" not defined in podcast entry ' + str(idx + 1))
+                    logging.error(
+                        '"live" not defined in podcast entry %s', str(idx + 1)
+                    )
                     settingserror = True
             except ValueError:
                 logging.error(
-                    "Issue with podcast entry in settings json: " + str(podcast)
+                    "Issue with podcast entry in settings json: %s", str(podcast)
                 )
                 settingserror = True
     except KeyError:
         settingserror = True
 
     if settingserror:
-        logging.error("Invalid config, exiting, check " + settingspath)
+        logging.error("Invalid config, exiting, check %s", settingspath)
         exit(1)
 
     return settingsjson
@@ -150,7 +152,7 @@ def download_asset(url, title, settingsjson, podcast, extension="", filedatestri
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         try:
-            logging.info("Downloading: " + url)
+            logging.info("Downloading: %s", url)
             headers = {"user-agent": "Mozilla/5.0"}
             req = requests.get(url, headers=headers, timeout=5)
 
@@ -159,10 +161,10 @@ def download_asset(url, title, settingsjson, podcast, extension="", filedatestri
                     assetfile.write(req.content)
                     logging.info("\033[92mSuccess!\033[0m")
             else:
-                logging.info("HTTP ERROR: " + str(req.content))
+                logging.info("HTTP ERROR: %s", str(req.content))
 
         except HTTPError as err:
-            logging.info("\033[91mDownload Failed\033[0m" + " " + str(err))
+            logging.info("\033[91mDownload Failed\033[0m %s", str(err))
 
     else:
         logging.info("Already downloaded: " + title + extension)
@@ -216,7 +218,7 @@ def cleanup_file_name(filename):
     filename = filename.strip()
     filename = filename.replace(" ", "-")
 
-    logging.debug("\033[92mClean Filename\033[0m: " + "'" + filename + "'")
+    logging.debug("\033[92mClean Filename\033[0m: '%s'",  filename)
     return filename
 
 
@@ -236,7 +238,7 @@ def download_podcasts(podcast, settingsjson):
     if response is not None:
         if response.status_code != 200 and response.status_code != 400:
             logging.info(
-                "Not a great web request, we got: " + str(response.status_code)
+                "Not a great web request, we got: %s", str(response.status_code)
             )
             exit(1)
         else:
@@ -261,23 +263,23 @@ def download_podcasts(podcast, settingsjson):
 
     for channel in xmlfirstchild:  # Dont complain
         logging.info("\033[47m\033[30mFound XML item \033[0m")
-        logging.debug("XML tag: " + channel.tag)
+        logging.debug("XML tag: %s", channel.tag)
 
         # Handle URL, override
         if channel.tag == "link":
-            logging.info("Podcast link: " + str(channel.text))
+            logging.info("Podcast link: %s", str(channel.text))
             channel.text = settingsjson["inetpath"]
 
         # Handle Podcast Title, override
         elif channel.tag == "title":
-            logging.info("Podcast title: " + str(channel.text))
+            logging.info("Podcast title: %s", str(channel.text))
             if podcast["podcastnewname"] == "":
                 podcast["podcastnewname"] = channel.text
             channel.text = podcast["podcastnewname"]
 
         # Handle Podcast Description, override
         elif channel.tag == "description":
-            logging.info("Podcast description: " + str(channel.text))
+            logging.info("Podcast description: %s", str(channel.text))
             channel.text = podcast["podcastdescription"]
 
         # Remake Atom Tags
@@ -330,9 +332,9 @@ def download_podcasts(podcast, settingsjson):
         # Handle Image
         elif channel.tag == "image":
             for child in channel:
-                logging.debug("image > XML tag: " + child.tag)
+                logging.debug("image > XML tag: %s", child.tag)
                 if child.tag == "title":
-                    logging.info("Title: " + str(child.text))
+                    logging.info("Title: %s", str(child.text))
                     child.text = podcast["podcastnewname"]
 
                 elif child.tag == "link":
@@ -368,11 +370,11 @@ def download_podcasts(podcast, settingsjson):
         elif channel.tag == "item":
             filedatestring = "00000000"
             for child in channel:
-                logging.debug("item > XML tag: " + child.tag)
+                logging.debug("item > XML tag: %s", child.tag)
                 # Episode Title
                 if child.tag == "title":
                     title = str(child.text)
-                    logging.info("Title: " + title)
+                    logging.info("Title: %s", title)
                 # Episode Date
                 elif child.tag == "pubDate":
                     originaldate = str(child.text)

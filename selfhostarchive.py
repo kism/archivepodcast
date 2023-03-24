@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Self hosted podcast archiver"""
 import xml.etree.ElementTree as Et
 import argparse
 import time
@@ -23,7 +24,7 @@ def home():
 @app.route("/rss/<string:feed>", methods=["GET"])
 def rss(feed):
     """Send RSS Feed"""
-    logging.info("Sending xml feed: " + feed)
+    logging.info("Sending xml feed: %s", feed)
     xml = "no podcast here, check your url"
     try:
         xml = PODCASTXML[feed]
@@ -34,7 +35,6 @@ def rss(feed):
 
 def podcastloop():
     """Loop through defined podcasts, download and store the xml"""
-    global PODCASTXML
     tree = None
     while True:
         for podcast in settingsjson["podcast"]:
