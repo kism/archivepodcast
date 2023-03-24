@@ -1,4 +1,4 @@
-# archivepodcast.py
+# archivepodcast.py THIS IS BROKEN RN AND I BORKED THE BRANCHES
 
 This Python script mirrors a podcast, it is indended to be used alongside nginx to create a mirror of a podcast.
 
