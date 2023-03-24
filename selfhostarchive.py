@@ -1,37 +1,44 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, Blueprint, Response
-from downloadpodcast import *
 import xml.etree.ElementTree as Et
 import argparse
 import time
 import threading
+import logging
+
+from flask import Flask, render_template, Blueprint, Response
+
+from downloadpodcast import get_settings, download_podcasts
+
 
 app = Flask(__name__)  # Flask app object
-podcastxml = {}
+PODCASTXML = {}
 
 
 @app.route("/")
-def home():  # Flask Home
+def home():
+    """Flask Home"""
     return render_template("home.j2", settingsjson=settingsjson)
 
 
 @app.route("/rss/<string:feed>", methods=["GET"])
 def rss(feed):
+    """Send RSS Feed"""
     logging.info("Sending xml feed: " + feed)
     xml = "no podcast here, check your url"
     try:
-        xml = podcastxml[feed]
-    except:
+        xml = PODCASTXML[feed]
+    except TypeError:
         pass
     return Response(xml, mimetype="application/rss+xml; charset=utf-8")
 
 
-def podcastloop(settingsjson):
-    global podcastxml
+def podcastloop():
+    """Loop through defined podcasts, download and store the xml"""
+    global PODCASTXML
     tree = None
     while True:
         for podcast in settingsjson["podcast"]:
-            if podcast["live"] == True:  # download all the podcasts
+            if podcast["live"] is True:  # download all the podcasts
                 tree = download_podcasts(podcast, settingsjson)
                 if tree:  # Write xml to disk
                     tree.write(
@@ -43,7 +50,7 @@ def podcastloop(settingsjson):
                     )
                 else:
                     logging.error("XML Download Failure")
-            else:  # If we are serving a podcast that is no longer being served "not live", load it from a file
+            else:  # Serving a podcast that we can't currently download?, load it from file
                 try:
                     tree = Et.parse(
                         settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"]
@@ -58,8 +65,8 @@ def podcastloop(settingsjson):
                         + podcast["podcastnameoneword"]
                     )
 
-            if tree != None:
-                podcastxml.update(
+            if tree is not None:
+                PODCASTXML.update(
                     {
                         podcast["podcastnameoneword"]: Et.tostring(
                             tree.getroot(),
@@ -74,10 +81,10 @@ def podcastloop(settingsjson):
         time.sleep(3600)
 
 
-def main(args, settingsjson):
-
+def main():
+    """Main, globals have been defined"""
     # Start Thread
-    thread = threading.Thread(target=podcastloop, args=(settingsjson,))
+    thread = threading.Thread(target=podcastloop, )
     thread.start()
 
     # Finish Creating App
@@ -122,13 +129,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    loglevel = logging.INFO
+    LOGLEVEL = logging.INFO
     if args.debug:
-        loglevel = logging.DEBUG
-    logging.basicConfig(format="%(levelname)s:%(message)s", level=loglevel)
+        LOGLEVEL = logging.DEBUG
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=LOGLEVEL)
 
     args = parser.parse_args()
 
     settingsjson = get_settings(args)
 
-    main(args, settingsjson)
+    main()
