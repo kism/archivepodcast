@@ -6,6 +6,7 @@
 import argparse
 import logging
 import os
+import sys
 
 from downloadpodcast import get_settings, download_podcasts
 
@@ -129,7 +130,7 @@ def make_folder_structure(settingsjson):
         logging.info(
             "Run this this script as a different user. ex: nginx, apache, root"
         )
-        exit(1)
+        sys.exit(1)
 
 
 def create_html(settingsjson):

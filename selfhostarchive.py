@@ -3,6 +3,8 @@
 import xml.etree.ElementTree as Et
 import argparse
 import time
+import os
+import sys
 import threading
 import logging
 
@@ -41,6 +43,35 @@ def static_from_root():
     )
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     return response
+
+
+def make_folder_structure():  # Eeeeehh TODO clean this up because lol robots.txt
+    """Ensure that webbroot folder structure exists"""
+    permissionserror = False
+    folders = []
+    folders.append(settingsjson["webroot"])
+    folders.append(settingsjson["webroot"] + "/rss")
+    folders.append(settingsjson["webroot"] + "/content")
+
+    for entry in settingsjson["podcast"]:
+        folders.append(
+            settingsjson["webroot"] + "/content/" + entry["podcastnameoneword"]
+        )
+
+    for folder in folders:
+        try:
+            os.mkdir(folder)
+        except FileExistsError:
+            pass
+        except PermissionError:
+            permissionserror = True
+            logging.info("You do not have permission to create folder: %s", folder)
+
+    if permissionserror:
+        logging.info(
+            "Run this this script as a different user. ex: nginx, apache, root"
+        )
+        sys.exit(1)
 
 
 def podcastloop():
