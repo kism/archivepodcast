@@ -500,19 +500,15 @@ def setup_logger(args):
         if args.loglevel in LOGLEVELS:
             loglevel = args.loglevel
         else:
-            print("INVALID LOG LEVEL, Valid choices: " + loglevel)
+            print("INVALID LOG LEVEL, Valid choices: ")
+            for logginglevel in LOGLEVELS:
+                print(logginglevel, end=", ")
+            print("\nDefaulting to ERROR")
+
+    logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", level=loglevel)
 
     logger = logging.getLogger()
     formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
-
-    consolehandler = logging.StreamHandler()
-    consolehandler.setLevel(loglevel)
-
-    # add formatter to ch
-    consolehandler.setFormatter(formatter)
-
-    # add ch to logger
-    logger.addHandler(consolehandler)
 
     try:
         if args.logfile:
