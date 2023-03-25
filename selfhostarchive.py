@@ -179,7 +179,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-lf",
-        "--loglogfile",
+        "--logfile",
         type=str,
         dest="logfile",
         help="Log file full path",
