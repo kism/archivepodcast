@@ -218,7 +218,7 @@ def cleanup_file_name(filename):
     filename = filename.strip()
     filename = filename.replace(" ", "-")
 
-    logging.debug("\033[92mClean Filename\033[0m: '%s'",  filename)
+    logging.debug("\033[92mClean Filename\033[0m: '%s'", filename)
     return filename
 
 
@@ -307,8 +307,9 @@ def download_podcasts(podcast, settingsjson):
             channel.text = podcast["podcastnewname"]
 
         elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
-            channel.text = settingsjson['inetpath'] + "rss/" + podcast["podcastnameoneword"]
-
+            channel.text = (
+                settingsjson["inetpath"] + "rss/" + podcast["podcastnameoneword"]
+            )
 
         elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
             if podcast["podcastnewname"] == "":
@@ -398,7 +399,10 @@ def download_podcasts(podcast, settingsjson):
                     filedatestring = filedate.strftime("%Y%m%d")
 
                 # Episode Content (Enclosure)
-                elif child.tag == "enclosure":
+                elif (
+                    child.tag == "enclosure"
+                    or "{http://search.yahoo.com/mrss/}content" in child.tag
+                ):
                     title = cleanup_file_name(title)
                     url = child.attrib.get("url")
                     if url is None:
@@ -453,18 +457,6 @@ def download_podcasts(podcast, settingsjson):
                                 + title
                                 + filetype
                             )
-                # Episode Audio, TODO WHAT IS THIS YAHOO BULLSHIT, DO I NEED IT????
-                # elif child.tag == '{http://search.yahoo.com/mrss/}content':
-                #     title = cleanup_file_name(title)
-                #     url = child.attrib.get('url')
-                #     if url == None:
-                #         url = ''
-                #     # TODO wav conversion here?
-                #     for format in audioformats:
-                #         if format in url:
-                #             download_asset(url, title, settingsjson, podcast, format, filedatestring)
-                #             # Set path of audio file
-                #             child.attrib['url'] = settingsjson['inetpath'] + 'content/' + podcast['podcastnameoneword'] + '/' + title + format
 
                 else:
                     logging.debug("Unhandled XML tag, leaving as-is")
