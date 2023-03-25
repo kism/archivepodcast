@@ -28,4 +28,4 @@ Most fields can be left blank and will just be filled with the original values, 
 
 Redo whole readme with new selfhosted version
 production mode
-unbreak root logging
+do monitoring
