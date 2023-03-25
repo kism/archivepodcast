@@ -128,7 +128,7 @@ def get_settings(args):
 
     if settingserror:
         logging.error("Invalid config, exiting, check %s", settingspath)
-        exit(1)
+        sys.exit(1)
 
     return settingsjson
 
@@ -305,6 +305,10 @@ def download_podcasts(podcast, settingsjson):
             if podcast["podcastnewname"] == "":
                 podcast["podcastnewname"] = channel.text
             channel.text = podcast["podcastnewname"]
+
+        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
+            channel.text = settingsjson['inetpath'] + "rss/" + podcast["podcastnameoneword"]
+
 
         elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
             if podcast["podcastnewname"] == "":
