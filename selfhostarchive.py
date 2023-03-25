@@ -15,6 +15,7 @@ from downloadpodcast import get_settings, download_podcasts
 
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
+LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 @app.route("/")
@@ -141,7 +142,7 @@ def main():
         static_folder=settingsjson["webroot"] + "/content",
     )
     app.register_blueprint(blueprint)
-    app.run(host=args.WEBADDRESS, port=args.WEBPORT)
+    app.run(host=args.webaddress, port=args.webport)
 
     # Cleanup
     thread.join()
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         "-wa",
         "--webaddress",
         type=str,
-        dest="WEBADDRESS",
+        dest="webaddress",
         help="(WebUI) Web address to listen on, default is 0.0.0.0",
         default="0.0.0.0",
     )
@@ -163,7 +164,7 @@ if __name__ == "__main__":
         "-wp",
         "--webport",
         type=int,
-        dest="WEBPORT",
+        dest="webport",
         help="(WebUI) Web port to listen on, default is 5000",
         default=5000,
     )
@@ -171,16 +172,41 @@ if __name__ == "__main__":
         "-c", type=str, dest="settingspath", help="Config path /path/to/settings.json"
     )
     parser.add_argument(
-        "--debug", dest="debug", action="store_true", help="Show debug output"
+        "--loglevel",
+        type=str,
+        dest="loglevel",
+        help="Logging Level",
+    )
+    parser.add_argument(
+        "-lf",
+        "--loglogfile",
+        type=str,
+        dest="logfile",
+        help="Log file full path",
     )
     args = parser.parse_args()
 
-    LOGLEVEL = logging.INFO
-    if args.debug:
-        LOGLEVEL = logging.DEBUG
-    logging.basicConfig(format="%(levelname)s:%(message)s", level=LOGLEVEL)
+    # APP LOGGING
+    LOGLEVEL = logging.ERROR
+    if args.loglevel:
+        args.loglevel = args.loglevel.upper()
+        if args.loglevel in LOGLEVELS:
+            LOGLEVEL = args.loglevel
+        else:
+            print("INVALID LOG LEVEL, Valid choices: " + LOGLEVEL)
 
-    args = parser.parse_args()
+    if args.logfile:
+        try:
+            logging.basicConfig(
+                filename=args.logfile,
+                encoding="utf-8",
+                format="%(levelname)s:%(name)s:%(message)s",
+                level=LOGLEVEL,
+            )
+        except IsADirectoryError:
+            print("You are trying to log to a directory, try a file")
+    else:
+        logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", level=LOGLEVEL)
 
     settingsjson = get_settings(args)
 

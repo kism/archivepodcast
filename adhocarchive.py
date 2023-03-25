@@ -135,7 +135,7 @@ def make_folder_structure(settingsjson):
 
 def create_html(settingsjson):
     """Use string manipulation to create webpage, clean!"""
-    logging.info("\033[47m\033[30mGenerating HTML\033[0m")
+    logging.info("Generating HTML")
     htmlstring = ""
     htmlstring = htmlstring + WEBSITEPARTONE
     htmlstring = htmlstring + settingsjson["webpagetitle"]
@@ -201,7 +201,7 @@ def main():
 
 
 if __name__ == "__main__":  # Handle Const Globals Here
-    print("\033[47m\033[30madhocarchive.py\033[0m")
+    print("adhocarchive.py")
     parser = argparse.ArgumentParser(description="Mirror / rehost a podcast")
     parser.add_argument(
         "-c", type=str, dest="settingspath", help="Config path /path/to/settings.json"

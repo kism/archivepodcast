@@ -40,7 +40,7 @@ DEFAULTJSON = """
 
 def get_settings(args):
     """Load settings from settings.json"""
-    logging.info("\033[47m\033[30m Loading settings file\033[0m")
+    logging.info("Loading settings file")
 
     settingsjson = None
     settingserror = False
@@ -159,12 +159,12 @@ def download_asset(url, title, settingsjson, podcast, extension="", filedatestri
             if req.status_code == 200:
                 with open(filepath, "wb") as assetfile:
                     assetfile.write(req.content)
-                    logging.info("\033[92mSuccess!\033[0m")
+                    logging.info("Success!")
             else:
                 logging.info("HTTP ERROR: %s", str(req.content))
 
         except HTTPError as err:
-            logging.info("\033[91mDownload Failed\033[0m %s", str(err))
+            logging.info("Download Failed %s", str(err))
 
     else:
         logging.info("Already downloaded: " + title + extension)
@@ -218,7 +218,7 @@ def cleanup_file_name(filename):
     filename = filename.strip()
     filename = filename.replace(" ", "-")
 
-    logging.debug("\033[92mClean Filename\033[0m: '%s'", filename)
+    logging.debug("Clean Filename: '%s'", filename)
     return filename
 
 
@@ -262,7 +262,7 @@ def download_podcasts(podcast, settingsjson):
     url = ""
 
     for channel in xmlfirstchild:  # Dont complain
-        logging.info("\033[47m\033[30mFound XML item \033[0m")
+        logging.info("Found XML item")
         logging.debug("XML tag: %s", channel.tag)
 
         # Handle URL, override

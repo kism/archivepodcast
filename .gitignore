@@ -6,6 +6,7 @@ rss/*
 *.xml
 *.json
 *.html
+*.log
 
 ## PYTHON
 
