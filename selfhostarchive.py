@@ -169,7 +169,7 @@ if __name__ == "__main__":
         default=5000,
     )
     parser.add_argument(
-        "-c", type=str, dest="settingspath", help="Config path /path/to/settings.json"
+        "-c", "--config", type=str, dest="settingspath", help="Config path /path/to/settings.json"
     )
     parser.add_argument(
         "--loglevel",
