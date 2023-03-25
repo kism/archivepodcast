@@ -26,6 +26,10 @@ Most fields can be left blank and will just be filled with the original values, 
 
 ## TODO
 
-Redo whole readme with new selfhosted version
-production mode
-do monitoring
+* ~~flask version~~
+* ~~nice copy button with javascript~~
+* ~~log to file~~
+* ~~fix logging~~
+* Redo whole readme with new selfhosted version
+* production mode
+* do monitoring
