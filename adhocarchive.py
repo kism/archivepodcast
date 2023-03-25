@@ -8,7 +8,7 @@ import logging
 import os
 import sys
 
-from downloadpodcast import get_settings, download_podcasts
+from downloadpodcast import get_settings, download_podcasts, setup_logger
 
 # import xml.etree.ElementTree as Et
 
@@ -209,12 +209,22 @@ if __name__ == "__main__":  # Handle Const Globals Here
     parser.add_argument(
         "--debug", dest="debug", action="store_true", help="Show debug output"
     )
+    parser.add_argument(
+        "--loglevel",
+        type=str,
+        dest="loglevel",
+        help="Logging Level",
+    )
+    parser.add_argument(
+        "-lf",
+        "--logfile",
+        type=str,
+        dest="logfile",
+        help="Log file full path",
+    )
     args = parser.parse_args()
 
-    LOGLEVEL = logging.INFO
-    if args.debug:
-        LOGLEVEL = logging.DEBUG
-    logging.basicConfig(format="%(levelname)s:%(message)s", level=LOGLEVEL)
+    setup_logger(args)
 
     logging.debug("Script args: %s", str(args))
     main()

@@ -27,6 +27,5 @@ Most fields can be left blank and will just be filled with the original values, 
 ## TODO
 
 Redo whole readme with new selfhosted version
-fix the colour of the buttons on click
-pylint hell
-with that wild set of loops for downloading podcasts, uuuuuh maybe use 'in'
+production mode
+unbreak root logging

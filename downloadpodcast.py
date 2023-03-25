@@ -15,6 +15,8 @@ import requests
 
 imageformats = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
 audioformats = [".mp3", ".wav", ".m4a", ".flac"]
+LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
 
 # A default settings config to be written to the file system if none exists at the expected path
 DEFAULTJSON = """
@@ -488,3 +490,34 @@ def download_podcasts(podcast, settingsjson):
     Et.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
 
     return tree
+
+
+def setup_logger(args):
+    """APP LOGGING"""
+    loglevel = logging.ERROR
+    if args.loglevel:
+        args.loglevel = args.loglevel.upper()
+        if args.loglevel in LOGLEVELS:
+            loglevel = args.loglevel
+        else:
+            print("INVALID LOG LEVEL, Valid choices: " + loglevel)
+
+    logger = logging.getLogger()
+    formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
+
+    consolehandler = logging.StreamHandler()
+    consolehandler.setLevel(loglevel)
+
+    # add formatter to ch
+    consolehandler.setFormatter(formatter)
+
+    # add ch to logger
+    logger.addHandler(consolehandler)
+
+    try:
+        if args.logfile:
+            filehandler = logging.FileHandler(args.logfile)
+            filehandler.setFormatter(formatter)
+            logger.addHandler(filehandler)
+    except IsADirectoryError:
+        print("You are trying to log to a directory, try a file")

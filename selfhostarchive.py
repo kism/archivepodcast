@@ -10,12 +10,11 @@ import logging
 
 from flask import Flask, render_template, Blueprint, Response
 
-from downloadpodcast import get_settings, download_podcasts
+from downloadpodcast import get_settings, download_podcasts, setup_logger
 
 
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
-LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 @app.route("/")
@@ -169,7 +168,11 @@ if __name__ == "__main__":
         default=5000,
     )
     parser.add_argument(
-        "-c", "--config", type=str, dest="settingspath", help="Config path /path/to/settings.json"
+        "-c",
+        "--config",
+        type=str,
+        dest="settingspath",
+        help="Config path /path/to/settings.json",
     )
     parser.add_argument(
         "--loglevel",
@@ -186,27 +189,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # APP LOGGING
-    LOGLEVEL = logging.ERROR
-    if args.loglevel:
-        args.loglevel = args.loglevel.upper()
-        if args.loglevel in LOGLEVELS:
-            LOGLEVEL = args.loglevel
-        else:
-            print("INVALID LOG LEVEL, Valid choices: " + LOGLEVEL)
-
-    if args.logfile:
-        try:
-            logging.basicConfig(
-                filename=args.logfile,
-                encoding="utf-8",
-                format="%(levelname)s:%(name)s:%(message)s",
-                level=LOGLEVEL,
-            )
-        except IsADirectoryError:
-            print("You are trying to log to a directory, try a file")
-    else:
-        logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", level=LOGLEVEL)
+    setup_logger(args)
 
     settingsjson = get_settings(args)
 
