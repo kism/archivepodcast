@@ -92,7 +92,7 @@ input[type="url"],
 input[type="password"],
 textarea,
 select {
-  height: 26px;
+  height: 23px;
   padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
   background-color: #464646;
   border: 1px solid #d1d1d1;
@@ -100,6 +100,9 @@ select {
   border-radius: 4px;
   box-shadow: none;
   box-sizing: border-box;
+  width: 250px;
+  margin-top : 3px;
+  margin-bottom : 3px;
 }
 /* Removes awkward default styles on some inputs for iOS */
 input[type="email"],
