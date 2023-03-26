@@ -31,5 +31,5 @@ Most fields can be left blank and will just be filled with the original values, 
 * ~~log to file~~
 * ~~fix logging~~
 * Redo whole readme with new selfhosted version
-* production mode
+* ~~production mode~~
 * do monitoring
