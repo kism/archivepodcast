@@ -10,6 +10,13 @@ import logging
 
 from flask import Flask, render_template, Blueprint, Response
 
+try:
+    from waitress import serve
+    HASWAITRESS = True
+except ImportError:
+    HASWAITRESS = False
+
+
 from downloadpodcast import get_settings, download_podcasts, setup_logger
 
 
@@ -141,7 +148,11 @@ def main():
         static_folder=settingsjson["webroot"] + "/content",
     )
     app.register_blueprint(blueprint)
-    app.run(host=args.webaddress, port=args.webport)
+
+    if args.production and HASWAITRESS:
+        serve(app, host=args.webaddress, port=args.webport)
+    else: # Run with the flask debug service
+        app.run(host=args.webaddress, port=args.webport)
 
     # Cleanup
     thread.join()
@@ -186,6 +197,12 @@ if __name__ == "__main__":
         type=str,
         dest="logfile",
         help="Log file full path",
+    )
+    parser.add_argument(
+        "--production",
+        action='store_true',
+        dest="production",
+        help="Run the server with waitress instead of flask debug server",
     )
     args = parser.parse_args()
 
