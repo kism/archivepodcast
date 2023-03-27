@@ -1,4 +1,4 @@
-# archivepodcast.py THIS IS BROKEN RN AND I BORKED THE BRANCHES
+# archivepodcast.py
 
 This Python script mirrors a podcast, it is indended to be used alongside nginx to create a mirror of a podcast.
 
@@ -32,4 +32,5 @@ Most fields can be left blank and will just be filled with the original values, 
 * ~~fix logging~~
 * Redo whole readme with new selfhosted version
 * ~~production mode~~
-* do monitoring
+* ~~do monitoring~~
+* check that logging without logfile still works
