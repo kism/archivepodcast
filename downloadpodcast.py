@@ -154,7 +154,7 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         + filedatestring
         + spacer
         + title
-        + ".mp3"
+        + ".wav"
     )
 
     mp3filepath = (
@@ -165,7 +165,7 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         + filedatestring
         + spacer
         + title
-        + ".wav"
+        + ".mp3"
     )
 
     path = Path("ffmpeg")
