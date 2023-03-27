@@ -177,11 +177,12 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         if HASPYDUB and path.is_file():
             download_asset(url, title, settingsjson, podcast, extension, filedatestring)
 
-            logging.error("Converting episode %s to mp3", title)
+            logging.info("Converting episode %s to mp3", title)
             sound = AudioSegment.from_wav(wavfilepath)
             sound.export(mp3filepath, format="wav")
 
             # Remove wav since we are done with it
+            logging.info("Removing wav version of %s", title)
             if os.path.exists(wavfilepath):
                 os.remove(wavfilepath)
 
