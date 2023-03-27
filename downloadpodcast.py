@@ -180,7 +180,11 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
             logging.error("Converting episode %s to mp3", title)
             sound = AudioSegment.from_wav(wavfilepath)
             sound.export(mp3filepath, format="wav")
-            # TODO OS REMOVE WAV
+
+            # Remove wav since we are done with it
+            if os.path.exists(wavfilepath):
+                os.remove(wavfilepath)
+
         else:
             if not HASPYDUB:
                 logging.error("pydub pip package not installed")
@@ -468,7 +472,6 @@ def download_podcasts(podcast, settingsjson):
                     url = child.attrib.get("url")
                     if url is None:
                         url = ""
-                    # TODO wav conversion here?
                     for audioformat in audioformats:
                         if audioformat in url:
                             if audioformat == ".wav":
@@ -481,7 +484,7 @@ def download_podcasts(podcast, settingsjson):
                                     filedatestring,
                                 )
                                 audioformat = ".mp3"
-                                child.attrib["type"] = ("audio/mpeg")
+                                child.attrib["type"] = "audio/mpeg"
                             else:
                                 download_asset(
                                     url,
