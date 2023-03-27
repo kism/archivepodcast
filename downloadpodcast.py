@@ -179,7 +179,7 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
             sound.export(mp3filepath, format="wav")
         else:
             if not HASPYDUB:
-                logging.error("ffmpeg pip package not installed")
+                logging.error("pydub pip package not installed")
             if not path.is_file():
                 logging.error("ffmpeg not on path")
             logging.error("Cannot convert wav to mp3!")
