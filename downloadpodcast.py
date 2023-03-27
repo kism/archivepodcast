@@ -146,6 +146,8 @@ def get_settings(args):
 def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring=""):
     """Convert podcasts that have wav episodes :/"""
     spacer = ""
+    if filedatestring != "":
+        spacer = "-"
     wavfilepath = (
         settingsjson["webroot"]
         + "content/"
