@@ -177,8 +177,10 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         if HASPYDUB and path.is_file():
             download_asset(url, title, settingsjson, podcast, extension, filedatestring)
 
+            logging.error("Converting episode %s to mp3", title)
             sound = AudioSegment.from_wav(wavfilepath)
             sound.export(mp3filepath, format="wav")
+            # TODO OS REMOVE WAV
         else:
             if not HASPYDUB:
                 logging.error("pydub pip package not installed")
@@ -469,9 +471,7 @@ def download_podcasts(podcast, settingsjson):
                     # TODO wav conversion here?
                     for audioformat in audioformats:
                         if audioformat in url:
-                            if (
-                                audioformat == ".wav"
-                            ):  # Convert! download_asset will skip without checking filename
+                            if audioformat == ".wav":
                                 handle_wav(
                                     url,
                                     title,
@@ -480,6 +480,8 @@ def download_podcasts(podcast, settingsjson):
                                     audioformat,
                                     filedatestring,
                                 )
+                                audioformat = ".mp3"
+                                child.attrib["type"] = ("audio/mpeg")
                             else:
                                 download_asset(
                                     url,
@@ -489,17 +491,17 @@ def download_podcasts(podcast, settingsjson):
                                     audioformat,
                                     filedatestring,
                                 )
-                                # Set path of audio file
-                                child.attrib["url"] = (
-                                    settingsjson["inetpath"]
-                                    + "content/"
-                                    + podcast["podcastnameoneword"]
-                                    + "/"
-                                    + filedatestring
-                                    + "-"
-                                    + title
-                                    + audioformat
-                                )
+                            # Set path of audio file
+                            child.attrib["url"] = (
+                                settingsjson["inetpath"]
+                                + "content/"
+                                + podcast["podcastnameoneword"]
+                                + "/"
+                                + filedatestring
+                                + "-"
+                                + title
+                                + audioformat
+                            )
 
                 # Episode Image
                 elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
