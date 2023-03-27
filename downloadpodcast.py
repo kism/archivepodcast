@@ -9,9 +9,9 @@ import sys
 from urllib.error import HTTPError
 from datetime import datetime
 from sys import platform
+from pathlib import Path
 
 import requests
-
 
 try:
     import ffmpeg
@@ -168,16 +168,23 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         + ".wav"
     )
 
+    path = Path("ffmpeg")
+
     # if the asset hasn't already been downloaded and converted
     if not os.path.isfile(mp3filepath):
-        if HASFFMPEG:
+        if HASFFMPEG and path.is_file():
             download_asset(url, title, settingsjson, podcast, extension, filedatestring)
 
             stream = ffmpeg.input(wavfilepath)
             stream = ffmpeg.output(stream, mp3filepath)
             ffmpeg.run(stream)
         else:
-            logging.error("ffmpeg pip package not installed, can't install wav")
+            if not HASFFMPEG:
+                logging.error("ffmpeg pip package not installed")
+            if not path.is_file():
+                logging.error("ffmpeg not on path")
+            logging.error("Cannot convert wav to mp3!")
+
         return
 
 
