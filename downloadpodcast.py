@@ -13,6 +13,14 @@ from sys import platform
 import requests
 
 
+try:
+    import ffmpeg
+
+    HASFFMPEG = True
+except ImportError:
+    HASFFMPEG = False
+
+
 imageformats = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
 audioformats = [".mp3", ".wav", ".m4a", ".flac"]
 LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -133,6 +141,44 @@ def get_settings(args):
         sys.exit(1)
 
     return settingsjson
+
+
+def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring=""):
+    """Convert podcasts that have wav episodes :/"""
+    spacer = ""
+    wavfilepath = (
+        settingsjson["webroot"]
+        + "content/"
+        + podcast["podcastnameoneword"]
+        + "/"
+        + filedatestring
+        + spacer
+        + title
+        + ".mp3"
+    )
+
+    mp3filepath = (
+        settingsjson["webroot"]
+        + "content/"
+        + podcast["podcastnameoneword"]
+        + "/"
+        + filedatestring
+        + spacer
+        + title
+        + ".wav"
+    )
+
+    # if the asset hasn't already been downloaded and converted
+    if not os.path.isfile(mp3filepath):
+        if HASFFMPEG:
+            download_asset(url, title, settingsjson, podcast, extension, filedatestring)
+
+            stream = ffmpeg.input(wavfilepath)
+            stream = ffmpeg.output(stream, mp3filepath)
+            ffmpeg.run(stream)
+        else:
+            logging.error("ffmpeg pip package not installed, can't install wav")
+        return
 
 
 def download_asset(url, title, settingsjson, podcast, extension="", filedatestring=""):
@@ -376,14 +422,10 @@ def download_podcasts(podcast, settingsjson):
         # Handle Episode
         elif channel.tag == "item":
             filedatestring = "00000000"
+
+            # Episode Date, need to do this before dealing with real data
             for child in channel:
-                logging.debug("item > XML tag: %s", child.tag)
-                # Episode Title
-                if child.tag == "title":
-                    title = str(child.text)
-                    logging.info("Title: %s", title)
-                # Episode Date
-                elif child.tag == "pubDate":
+                if child.tag == "pubDate":
                     originaldate = str(child.text)
                     filedate = datetime(1970, 1, 1)
                     try:
@@ -400,6 +442,13 @@ def download_podcasts(podcast, settingsjson):
                         pass
                     filedatestring = filedate.strftime("%Y%m%d")
 
+            for child in channel:
+                logging.debug("item > XML tag: %s", child.tag)
+                # Episode Title
+                if child.tag == "title":
+                    title = str(child.text)
+                    logging.info("Title: %s", title)
+
                 # Episode Content (Enclosure)
                 elif (
                     child.tag == "enclosure"
@@ -412,25 +461,37 @@ def download_podcasts(podcast, settingsjson):
                     # TODO wav conversion here?
                     for audioformat in audioformats:
                         if audioformat in url:
-                            download_asset(
-                                url,
-                                title,
-                                settingsjson,
-                                podcast,
-                                audioformat,
-                                filedatestring,
-                            )
-                            # Set path of audio file
-                            child.attrib["url"] = (
-                                settingsjson["inetpath"]
-                                + "content/"
-                                + podcast["podcastnameoneword"]
-                                + "/"
-                                + filedatestring
-                                + "-"
-                                + title
-                                + audioformat
-                            )
+                            if (
+                                audioformat == ".wav"
+                            ):  # Convert! download_asset will skip without checking filename
+                                handle_wav(
+                                    url,
+                                    title,
+                                    settingsjson,
+                                    podcast,
+                                    audioformat,
+                                    filedatestring,
+                                )
+                            else:
+                                download_asset(
+                                    url,
+                                    title,
+                                    settingsjson,
+                                    podcast,
+                                    audioformat,
+                                    filedatestring,
+                                )
+                                # Set path of audio file
+                                child.attrib["url"] = (
+                                    settingsjson["inetpath"]
+                                    + "content/"
+                                    + podcast["podcastnameoneword"]
+                                    + "/"
+                                    + filedatestring
+                                    + "-"
+                                    + title
+                                    + audioformat
+                                )
 
                 # Episode Image
                 elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
