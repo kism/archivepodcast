@@ -1,4 +1,4 @@
 flask
 requests
 waitress
-ffmpeg-python
+pydub

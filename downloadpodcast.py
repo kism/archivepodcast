@@ -14,11 +14,11 @@ from pathlib import Path
 import requests
 
 try:
-    import ffmpeg
+    from pydub import AudioSegment
 
-    HASFFMPEG = True
+    HASPYDUB = True
 except ImportError:
-    HASFFMPEG = False
+    HASPYDUB = False
 
 
 imageformats = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
@@ -172,14 +172,13 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
 
     # if the asset hasn't already been downloaded and converted
     if not os.path.isfile(mp3filepath):
-        if HASFFMPEG and path.is_file():
+        if HASPYDUB and path.is_file():
             download_asset(url, title, settingsjson, podcast, extension, filedatestring)
 
-            stream = ffmpeg.input(wavfilepath)
-            stream = ffmpeg.output(stream, mp3filepath)
-            ffmpeg.run(stream)
+            sound = AudioSegment.from_wav(wavfilepath)
+            sound.export(mp3filepath, format="wav")
         else:
-            if not HASFFMPEG:
+            if not HASPYDUB:
                 logging.error("ffmpeg pip package not installed")
             if not path.is_file():
                 logging.error("ffmpeg not on path")
