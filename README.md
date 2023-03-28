@@ -35,3 +35,4 @@ Most fields can be left blank and will just be filled with the original values, 
 * ~~do monitoring~~
 * check that logging without logfile still works
 * more safety when handling containers, failure might reveal original URL
+* hotreaload settings.json
