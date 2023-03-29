@@ -37,3 +37,4 @@ Most fields can be left blank and will just be filled with the original values, 
 * more safety when handling containers, failure might reveal original URL
 * hotreaload settings.json
 * & and other symbol safety in the html
+* be okay with no value for url in settings if reading the archiveed rss
