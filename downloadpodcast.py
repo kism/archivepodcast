@@ -6,6 +6,7 @@ import os
 import json
 import logging
 import sys
+import html
 from urllib.error import HTTPError
 from datetime import datetime
 from sys import platform
@@ -99,7 +100,7 @@ def get_settings(args):
     if platform != "win32":
         if settingsjson["webroot"][-1] != "/":
             logging.error("Put a forward slash at the end of the webroot")
-            exit(1)
+            sys.exit(1)
     else:
         if settingsjson["webroot"][-1] != "\\":
             logging.error(
@@ -107,11 +108,18 @@ def get_settings(args):
             )
             sys.exit(1)
 
+    settingsjson["webpagetitle"] = html.escape(settingsjson["webpagetitle"])
+    settingsjson["webpagedescription"] = html.escape(settingsjson["webpagedescription"])
+
     try:
         for idx, podcast in enumerate(settingsjson["podcast"]):
             logging.debug("Podcast entry: %s", str(podcast))
             try:
-                if podcast["podcasturl"] == "":
+                podcast["podcastnewname"] = html.escape(podcast["podcastnewname"])
+                podcast["podcastdescription"] = html.escape(
+                    podcast["podcastdescription"]
+                )
+                if podcast["podcasturl"] == "" and podcast["live"] is False:
                     logging.error(
                         '"podcasturl"         not defined in podcast entry %s',
                         str(idx + 1),
@@ -123,7 +131,7 @@ def get_settings(args):
                         str(idx + 1),
                     )
                     settingserror = True
-                if podcast["live"] == "":
+                if podcast["live"] == "":  # is this logic cooked?
                     logging.error(
                         '"live" not defined in podcast entry %s', str(idx + 1)
                     )
@@ -230,7 +238,7 @@ def download_asset(url, title, settingsjson, podcast, extension="", filedatestri
             logging.info("Download Failed %s", str(err))
 
     else:
-        logging.info("Already downloaded: " + title + extension)
+        logging.debug("Already downloaded: " + title + extension)
 
 
 def cleanup_file_name(filename):
@@ -316,6 +324,7 @@ def download_podcasts(podcast, settingsjson):
 
     # We have the xml
     podcastxml = Et.fromstring(response.content)
+    logging.info("Processing Podcast XML")
     logging.debug(str(podcastxml))
 
     xmlfirstchild = podcastxml[0]
@@ -325,12 +334,12 @@ def download_podcasts(podcast, settingsjson):
     url = ""
 
     for channel in xmlfirstchild:  # Dont complain
-        logging.info("Found XML item")
+        logging.debug("Found XML item")
         logging.debug("XML tag: %s", channel.tag)
 
         # Handle URL, override
         if channel.tag == "link":
-            logging.info("Podcast link: %s", str(channel.text))
+            logging.debug("Podcast link: %s", str(channel.text))
             channel.text = settingsjson["inetpath"]
 
         # Handle Podcast Title, override
@@ -342,7 +351,7 @@ def download_podcasts(podcast, settingsjson):
 
         # Handle Podcast Description, override
         elif channel.tag == "description":
-            logging.info("Podcast description: %s", str(channel.text))
+            logging.debug("Podcast description: %s", str(channel.text))
             channel.text = podcast["podcastdescription"]
 
         # Remake Atom Tags
@@ -402,7 +411,7 @@ def download_podcasts(podcast, settingsjson):
             for child in channel:
                 logging.debug("image > XML tag: %s", child.tag)
                 if child.tag == "title":
-                    logging.info("Title: %s", str(child.text))
+                    logging.debug("Title: %s", str(child.text))
                     child.text = podcast["podcastnewname"]
 
                 elif child.tag == "link":
@@ -462,7 +471,7 @@ def download_podcasts(podcast, settingsjson):
                 # Episode Title
                 if child.tag == "title":
                     title = str(child.text)
-                    logging.info("Title: %s", title)
+                    logging.debug("Title: %s", title)
 
                 # Episode Content (Enclosure)
                 elif (
@@ -471,6 +480,9 @@ def download_podcasts(podcast, settingsjson):
                 ):
                     title = cleanup_file_name(title)
                     url = child.attrib.get("url")
+                    child.attrib[
+                        "url"
+                    ] = ""  # Default to prevent unchanged url on error
                     if url is None:
                         url = ""
                     for audioformat in audioformats:

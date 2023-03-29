@@ -12,6 +12,7 @@ from flask import Flask, render_template, Blueprint, Response
 
 try:
     from waitress import serve
+
     HASWAITRESS = True
 except ImportError:
     HASWAITRESS = False
@@ -22,6 +23,7 @@ from downloadpodcast import get_settings, download_podcasts, setup_logger
 
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
+settingsjson = None
 
 
 @app.route("/")
@@ -83,6 +85,10 @@ def make_folder_structure():  # Eeeeehh TODO clean this up because lol robots.tx
 
 def podcast_loop():
     """Loop through defined podcasts, download and store the xml"""
+    global settingsjson
+    settingsjson = get_settings(args)
+    make_folder_structure()
+
     tree = None
     while True:
         for podcast in settingsjson["podcast"]:
@@ -132,8 +138,6 @@ def podcast_loop():
 def main():
     """Main, globals have been defined"""
 
-    make_folder_structure()
-
     # Start Thread
     thread = threading.Thread(
         target=podcast_loop,
@@ -151,7 +155,7 @@ def main():
 
     if args.production and HASWAITRESS:
         serve(app, host=args.webaddress, port=args.webport)
-    else: # Run with the flask debug service
+    else:  # Run with the flask debug service
         app.run(host=args.webaddress, port=args.webport)
 
     # Cleanup
@@ -200,14 +204,14 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--production",
-        action='store_true',
+        action="store_true",
         dest="production",
         help="Run the server with waitress instead of flask debug server",
     )
     args = parser.parse_args()
 
-    setup_logger(args)
-
     settingsjson = get_settings(args)
+
+    setup_logger(args)
 
     main()
