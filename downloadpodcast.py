@@ -445,7 +445,10 @@ def download_podcasts(podcast, settingsjson):
                         #     logging.info("Skipping non image file:" + title)
 
                 else:
-                    logging.debug("Unhandled XML tag, leaving as-is")
+                    logging.debug(
+                        "Unhandled XML tag %s, (under child.tag) leaving as-is",
+                        child.tag,
+                    )
 
             channel.text = " "  # here me out...
 
@@ -553,10 +556,15 @@ def download_podcasts(podcast, settingsjson):
                             )
 
                 else:
-                    logging.debug("Unhandled XML tag, leaving as-is")
+                    logging.debug(
+                        "Unhandled XML tag %s, (under child.tag) leaving as-is",
+                        child.tag,
+                    )
 
         else:
-            logging.debug("Unhandled XML tag, leaving as-is")
+            logging.debug(
+                "Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag
+            )
 
     podcastxml[0] = xmlfirstchild
 

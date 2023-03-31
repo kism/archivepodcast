@@ -10,15 +10,6 @@ import sys
 
 from downloadpodcast import get_settings, download_podcasts, setup_logger
 
-# import xml.etree.ElementTree as Et
-
-# from sys import platform
-# from datetime import datetime
-# from urllib.error import HTTPError
-
-
-# debug = False
-
 WEBSITEPARTONE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -158,7 +149,7 @@ def create_html(settingsjson):
 
     htmlstring = htmlstring + WEBSITEPARTTHREE
 
-    logging.info("Writing HTML: %s index.html", settingsjson["webroot"])
+    logging.info("Writing HTML: %sindex.html", settingsjson["webroot"])
     indexhtmlfile = None
     indexhtmlfile = open(settingsjson["webroot"] + "index.html", "w", encoding="utf-8")
     indexhtmlfile.write(htmlstring)
@@ -167,7 +158,7 @@ def create_html(settingsjson):
     logging.info("Make sure to set this in the server{} section of nginx.conf:")
     for podcast in settingsjson["podcast"]:
         logging.info(
-            "%s %s %s",
+            "%s%s%s",
             NGINXINSTRUCTIONSONE,
             podcast["podcastnameoneword"],
             NGINXINSTRUCTIONSTWO,
