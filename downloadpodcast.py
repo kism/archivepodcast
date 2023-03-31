@@ -5,7 +5,6 @@ import xml.etree.ElementTree as Et
 import os
 import json
 import logging
-import sys
 import html
 from urllib.error import HTTPError
 from datetime import datetime
@@ -53,9 +52,10 @@ def get_settings(args):
     """Load settings from settings.json"""
     logging.info("Loading settings file")
 
-    settingsjson = None
     settingserror = False
+    settingsjson = None
     settingspath = ""
+    err = "no error defined?"
 
     if args.settingspath:
         settingspath = args.settingspath
@@ -76,9 +76,10 @@ def get_settings(args):
 
     try:
         settingsjson = json.loads(settingsjsonfile.read())
-    except ValueError:
-        logging.info("Malformed json in settings.json, check the syntax")
-        sys.exit(1)
+    except ValueError as exc:
+        err = "Malformed json in settings.json, check the syntax"
+        logging.error(err)
+        raise ValueError(err) from exc
 
     settingsjsonfile.close()
 
@@ -87,26 +88,28 @@ def get_settings(args):
         # if any of the keys arent in settings.json throw an error
         for setting in json.loads(DEFAULTJSON).keys():
             if settingsjson[setting] == "":
-                settingserror = True
-                logging.info("Setting: %s not set", setting)
-    except KeyError:
-        settingserror = True
-        logging.error(
+                err = ("Setting: %s not set", setting)
+                logging.error(err)
+                raise ValueError(err)
+    except KeyError as exc:
+        err = (
             "Looks like settings json doesnt match the expecting schema format, "
             "make a backup, remove the original file, run the script again "
             "and have a look at the default settings.json file"
         )
+        logging.error(err)
+        raise KeyError(err) from exc
 
     if platform != "win32":
         if settingsjson["webroot"][-1] != "/":
-            logging.error("Put a forward slash at the end of the webroot")
-            sys.exit(1)
+            err = "Put a forward slash at the end of the webroot"
+            logging.error(err)
+            raise ValueError(err)
     else:
         if settingsjson["webroot"][-1] != "\\":
-            logging.error(
-                "Put a back slash at the end of the webroot (Windows not tested)"
-            )
-            sys.exit(1)
+            err = "Put a back slash at the end of the webroot (Windows not tested)"
+            logging.error(err)
+            raise ValueError(err)
 
     settingsjson["webpagetitle"] = html.escape(settingsjson["webpagetitle"])
     settingsjson["webpagedescription"] = html.escape(settingsjson["webpagedescription"])
@@ -145,8 +148,9 @@ def get_settings(args):
         settingserror = True
 
     if settingserror:
-        logging.error("Invalid config, exiting, check %s", settingspath)
-        sys.exit(1)
+        err = "Invalid config, exiting, check %s", settingspath
+        logging.error(err)
+        raise ValueError(err)
 
     return settingsjson
 
@@ -421,6 +425,8 @@ def download_podcasts(podcast, settingsjson):
                     title = podcast["podcastnewname"]
                     title = cleanup_file_name(title)
                     url = child.text
+                    # Default to prevent unchanged url on error
+                    child.text = ""
                     if url is None:
                         url = ""
 
@@ -480,9 +486,8 @@ def download_podcasts(podcast, settingsjson):
                 ):
                     title = cleanup_file_name(title)
                     url = child.attrib.get("url")
-                    child.attrib[
-                        "url"
-                    ] = ""  # Default to prevent unchanged url on error
+                    # Default to prevent unchanged url on error
+                    child.attrib["url"] = ""
                     if url is None:
                         url = ""
                     for audioformat in audioformats:

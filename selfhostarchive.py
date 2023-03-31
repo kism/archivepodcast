@@ -7,6 +7,7 @@ import os
 import sys
 import threading
 import logging
+import signal
 
 from flask import Flask, render_template, Blueprint, Response
 
@@ -85,9 +86,6 @@ def make_folder_structure():  # Eeeeehh TODO clean this up because lol robots.tx
 
 def podcast_loop():
     """Loop through defined podcasts, download and store the xml"""
-    global settingsjson
-    settingsjson = get_settings(args)
-    make_folder_structure()
 
     tree = None
     while True:
@@ -135,6 +133,17 @@ def podcast_loop():
         time.sleep(3600)
 
 
+def reload_settings(signalNumber, frame):
+    """Handle Sighup"""
+    global settingsjson
+    logging.debug("Handle Sighup %s %s", signalNumber, frame)
+
+    settingsjson = get_settings(args)
+    make_folder_structure()
+
+    return
+
+
 def main():
     """Main, globals have been defined"""
 
@@ -163,6 +172,8 @@ def main():
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGHUP, reload_settings)
+
     parser = argparse.ArgumentParser(
         description="Mirror / rehost a podcast, self hoasted with Flask!"
     )
@@ -211,7 +222,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     settingsjson = get_settings(args)
+    make_folder_structure()
 
     setup_logger(args)
+
+    logging.info("Self Hosted Podcast Archive running! PID: %s", os.getpid())
 
     main()

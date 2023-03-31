@@ -40,4 +40,4 @@ Most fields can be left blank and will just be filled with the original values, 
 * ~~be okay with no value for url in settings if reading the archiveed rss~~
 * ~~add fonts~~
 * fix error handling on reading settings file
-* url safety for images
+* ~~url safety for images~~
