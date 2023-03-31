@@ -132,18 +132,24 @@ def podcast_loop():
 def reload_settings(signalNumber, frame):
     """Handle Sighup"""
     global settingsjson
+    settingserror = False
     logging.debug("Handle Sighup %s %s", signalNumber, frame)
     logging.info("Got SIGHUP, Reloading Config")
 
     try:
         settingsjson = get_settings(args)
     except (FileNotFoundError, ValueError):
+        settingserror = True
         logging.error("Reload failed, keeping old config")
 
     try:
         make_folder_structure()
     except PermissionError:
+        settingserror = True
         logging.error("Failure creating new folder structure")
+
+    if not settingserror:
+        logging.info("Loaded config successfully!")
 
     return
 
