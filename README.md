@@ -39,5 +39,5 @@ Most fields can be left blank and will just be filled with the original values, 
 * ~~& and other symbol safety in the html~~
 * ~~be okay with no value for url in settings if reading the archiveed rss~~
 * ~~add fonts~~
-* fix error handling on reading settings file
+* ~~fix error handling on reading settings file~~
 * ~~url safety for images~~
