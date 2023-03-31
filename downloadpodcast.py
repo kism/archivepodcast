@@ -66,13 +66,14 @@ def get_settings(args):
 
     try:
         settingsjsonfile = open(settingspath, "r", encoding="utf-8")
-    except FileNotFoundError:  # If no settings.json, create it
-        logging.info("Settings json doesnt exist at: %s", settingspath)
-        logging.info("Creating empty config, please fill it out.\n")
+    except FileNotFoundError as exc:  # If no settings.json, create it
+        err = ("Settings json doesnt exist at: %s. Creating empty config, please fill it out.", settingspath)
+        logging.error(err)
         settingsjsonfile = open(settingspath, "w", encoding="utf-8")
         settingsjsonfile.write(DEFAULTJSON)
         settingsjsonfile.close()
         settingsjsonfile = open(settingspath, "r", encoding="utf-8")
+        raise FileNotFoundError(err) from exc
 
     try:
         settingsjson = json.loads(settingsjsonfile.read())

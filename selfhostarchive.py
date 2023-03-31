@@ -214,7 +214,7 @@ if __name__ == "__main__":
         "--loglevel",
         type=str,
         dest="loglevel",
-        help="Logging Level",
+        help="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     )
     parser.add_argument(
         "-lf",
