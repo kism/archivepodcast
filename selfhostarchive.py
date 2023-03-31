@@ -4,7 +4,6 @@ import xml.etree.ElementTree as Et
 import argparse
 import time
 import os
-import sys
 import threading
 import logging
 import signal
@@ -36,7 +35,7 @@ def home():
 @app.route("/rss/<string:feed>", methods=["GET"])
 def rss(feed):
     """Send RSS Feed"""
-    logging.info("Sending xml feed: %s", feed)
+    logging.debug("Sending xml feed: %s", feed)
     xml = "no podcast here, check your url"
     try:
         xml = PODCASTXML[feed]
@@ -57,7 +56,6 @@ def static_from_root():
 
 def make_folder_structure():  # Eeeeehh TODO clean this up because lol robots.txt
     """Ensure that webbroot folder structure exists"""
-    permissionserror = False
     folders = []
     folders.append(settingsjson["webroot"])
     folders.append(settingsjson["webroot"] + "/rss")
@@ -73,15 +71,13 @@ def make_folder_structure():  # Eeeeehh TODO clean this up because lol robots.tx
             os.mkdir(folder)
         except FileExistsError:
             pass
-        except PermissionError:
-            permissionserror = True
-            logging.info("You do not have permission to create folder: %s", folder)
-
-    if permissionserror:
-        logging.info(
-            "Run this this script as a different user. ex: nginx, apache, root"
-        )
-        sys.exit(1)
+        except PermissionError as exc:
+            err = ("You do not have permission to create folder: %s", folder)
+            logging.error(err)
+            logging.error(
+                "Run this this script as a different user. ex: nginx, apache, root"
+            )
+            raise PermissionError(err) from exc
 
 
 def podcast_loop():
@@ -137,9 +133,17 @@ def reload_settings(signalNumber, frame):
     """Handle Sighup"""
     global settingsjson
     logging.debug("Handle Sighup %s %s", signalNumber, frame)
+    logging.info("Got SIGHUP, Reloading Config")
 
-    settingsjson = get_settings(args)
-    make_folder_structure()
+    try:
+        settingsjson = get_settings(args)
+    except (FileNotFoundError, ValueError):
+        logging.error("Reload failed, keeping old config")
+
+    try:
+        make_folder_structure()
+    except PermissionError:
+        logging.error("Failure creating new folder structure")
 
     return
 
@@ -221,11 +225,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    settingsjson = get_settings(args)
-    make_folder_structure()
-
     setup_logger(args)
 
     logging.info("Self Hosted Podcast Archive running! PID: %s", os.getpid())
+
+    settingsjson = get_settings(args)
+    make_folder_structure()
 
     main()
