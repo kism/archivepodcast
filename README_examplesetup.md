@@ -14,6 +14,7 @@ pip3 install -r requirements.txt
 adduser podcasto --shell=/bin/false --no-create-home
 touch /var/log/archivepodcast.log
 chown podcasto:podcasto /var/log/archivepodcast.log
+chown -R podcasto:podcasto /opt/archivepodcast
 ```
 ## Create Config
 
