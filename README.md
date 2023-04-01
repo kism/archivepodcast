@@ -59,15 +59,22 @@ In an array called podcast, there is an object per podcast for the options
 
 ## Running Adhoc Script to backup a podcast
 
-This will...
+This will generate a new RSS feed and save it and all the podcasts content to the specified webroot folder. If you:
+* Set the webroot to the nginx webroot 
+* Follow the instructions from the script on setting the right media type for the RSS feeds
+* Run the script on a cron job so new episodes get downloaded.
 
 `python3 adhocarchive.py --help` will get you all the arguements that you should know about.
 
-`python3 adhocarchive.py -c settings.json`
+`python3 adhocarchive.py -c settings.json --loglevel INFO`
 
 ## Running the standalone version to archive and re-host the podcast
 
-This will...
+This will run a webapp on http://localhost:5000 (configurable) that will:
+* Run persistently
+* Host RSS feeds of the podcasts
+* If `"live" : true` in settings json is set it will look for and download new episodes every hour
+* If you send it a SIGHUP command it will reload the configuration, be sure to check the logs to see if it was successful.
 
 `python3 selfhostarchive.py --help` will get you all the arguements that you should know about.
 
