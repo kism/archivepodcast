@@ -78,7 +78,7 @@ This will run a webapp on http://localhost:5000 (configurable) that will:
 
 `python3 selfhostarchive.py -c settings.json --production`
 
-### Running standalone version
+### Example standalone version install
 Example install in /opt, with systemd, logging, log rotation, nginx reverse proxy
 
 #### Clone, install requirements, create service account
