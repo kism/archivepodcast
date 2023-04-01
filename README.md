@@ -8,15 +8,13 @@ In theory this works in windows however I havent tested it, it ~should be able t
 
 ## Setup
 
-`git clone https://github.com/kism/archivepodcast.git`
-
-`cd archivepodcast`
-
-`python3 -m venv env`
-
-`source env/bin/activate`
-
-`pip3 install -r requirements.txt`
+```
+git clone https://github.com/kism/archivepodcast.git
+cd archivepodcast
+python3 -m venv env
+source env/bin/activate
+pip3 install -r requirements.txt
+```
 
 If you want to convert WAV episodes to mp3, ensure that you have ffmpeg installed and the program will handle it automatically.
 
@@ -60,7 +58,7 @@ In an array called podcast, there is an object per podcast for the options
 ## Running Adhoc Script to backup a podcast
 
 This will generate a new RSS feed and save it and all the podcasts content to the specified webroot folder. If you:
-* Set the webroot to the nginx webroot 
+* Set the webroot to the nginx webroot
 * Follow the instructions from the script on setting the right media type for the RSS feeds
 * Run the script on a cron job so new episodes get downloaded.
 
@@ -80,24 +78,76 @@ This will run a webapp on http://localhost:5000 (configurable) that will:
 
 `python3 selfhostarchive.py -c settings.json --production`
 
+### Running standalone version
+Example install in /opt, with systemd, logging, log rotation, nginx reverse proxy
 
+#### Clone, install requirements, create service account
 
+```
+cd /opt
+git clone https://github.com/kism/archivepodcast.git
+cd archivepodcast
+python3 -m venv env
+source env/bin/activate
+pip3 install -r requirements.txt
+adduser podcasto --shell=/bin/false --no-create-home
+touch /var/log/archivepodcast.log
+chown podcasto:podcasto /var/log/archivepodcast.log
+```
+#### Create Config
 
+Run the program once manually to create the default settings.json and then fill it in.
+```
+cd /opt/archivepodcast
+/opt/archivepodcast/env/bin/python3 selfhostarchive.py --config settings.json
+vim settings.json
+```
+#### Systemd service
 
-## TODO
+`vim /etc/systemd/system/archivepodcast.service`
+```
+[Unit]
+Description=Podcast Archiving Webapp
+After=network.target
 
-* ~~flask version~~
-* ~~nice copy button with javascript~~
-* ~~log to file~~
-* ~~fix logging~~
-* Redo whole readme with new selfhosted version
-* ~~production mode~~
-* ~~do monitoring~~
-* ~~check that logging without logfile still works~~
-* ~~more safety when handling containers, failure might reveal original URL~~
-* ~~hotreaload settings.json~~
-* ~~& and other symbol safety in the html~~
-* ~~be okay with no value for url in settings if reading the archiveed rss~~
-* ~~add fonts~~
-* ~~fix error handling on reading settings file~~
-* ~~url safety for images~~
+[Service]
+User=podcasto
+WorkingDirectory=/opt/archivepodcast
+ExecStart=/opt/archivepodcast/env/bin/python3 selfhostarchive.py --config settings.json --logfile /var/log/archivepodcast.log --loglevel INFO --production
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+You can use `systemctl reload archivepodcast` to reload the config, check the log to make sure it worked.
+
+#### Logrotate
+
+`vim /etc/logrotate.d/archivepodcast`
+```
+/var/log/archivepodcast.log
+{
+    rotate 6
+    daily
+    missingok
+    dateext
+    copytruncate
+    notifempty
+    compress
+}
+```
+
+#### Nginx Reverse Proxy
+
+I wont go into detail on nginx reverse proxys, I add this as a server with my domain name. Then use certbot & certbot nginx plugin to setup https.
+
+```
+server {
+    server_name yourdomain.com;
+    location / {
+        proxy_pass http://localhost:5000/;
+    }
+}
+```
