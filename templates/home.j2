@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>
-        {{ settingsjson['webpagetitle'] }}
+        {{ settingsjson['webpagetitle']|e }}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
@@ -15,12 +15,12 @@
 
 <body>
     <main>
-        <h1>{{ settingsjson['webpagetitle'] }}</h1>
-        <p>{{ settingsjson['webpagedescription'] }}</p>
+        <h1>{{ settingsjson['webpagetitle']|e }}</h1>
+        <p>{{ settingsjson['webpagedescription']|e }}</p>
         <p>For instructions on how to add a podcast url to a podcast app, <a href="{{ settingsjson['webpagepodcastguidelink'] }}">check out this helpful guide</a>.</p>
         {% for podcast in settingsjson['podcast'] -%}
-            <h2>{{ podcast['podcastnewname'] }}</h2>
-            <p>{{ podcast['podcastdescription'] }}</p>
+            <h2>{{ podcast['podcastnewname']|e }}</h2>
+            <p>{{ podcast['podcastdescription']|e }}</p>
             <input type="text" readonly="readonly" value="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}" id="{{ podcast['podcastnameoneword']}}">
             <button class="button" onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')" id="{{ podcast['podcastnameoneword']}}_button">Copy url</button>
         {% endfor %}
