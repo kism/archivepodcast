@@ -84,3 +84,4 @@ An example guide on setting up the standalone version with all features can be f
 
 * ~~Reload the non-live rss on SIGHUP~~
 * Do url path validation on the json fields that affect the url?
+* Does lon-live rss actually ret reloaded on SIGHUP lmao
