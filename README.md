@@ -81,7 +81,4 @@ This will run a webapp on http://localhost:5000 (configurable) that will:
 An example guide on setting up the standalone version with all features can be found here [here](README_examplesetup.md).
 
 ## TODO
-
-* ~~Reload the non-live rss on SIGHUP~~
 * Do url path validation on the json fields that affect the url?
-* Does non-live rss actually ret reloaded on SIGHUP lmao
