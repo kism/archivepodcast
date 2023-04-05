@@ -1,11 +1,12 @@
 output/*
 rss/*
+content/*
 *.mp3
 *.jpg
 *.psd
 *.xml
-*.json
-*.html
+/*.json
+/*.html
 *.log
 
 ## PYTHON
