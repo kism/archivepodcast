@@ -1,8 +1,8 @@
-# archivepodcast.py
+# archivepodcast
 
 This is a python project that both
-* Works as an adhoc way to archive a podcast from a RSS feed
-* Works as a Flask webapp to archive and re-host a podcast from a RSS feed
+* `adhocarchive.py` Works as an adhoc way to archive a podcast from a RSS feed
+* `selfhostarchive.py` Works as a Flask webapp to archive and re-host a podcast from a RSS feed
 
 In theory this works in windows however I havent tested it, it ~should be able to handle windows file paths fine.
 
@@ -84,4 +84,4 @@ An example guide on setting up the standalone version with all features can be f
 
 * ~~Reload the non-live rss on SIGHUP~~
 * Do url path validation on the json fields that affect the url?
-* Does lon-live rss actually ret reloaded on SIGHUP lmao
+* Does non-live rss actually ret reloaded on SIGHUP lmao
