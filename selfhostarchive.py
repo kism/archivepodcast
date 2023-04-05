@@ -80,51 +80,55 @@ def make_folder_structure():  # Eeeeehh TODO clean this up because lol robots.tx
             raise PermissionError(err) from exc
 
 
-def podcast_loop():
+def grab_podcasts():
     """Loop through defined podcasts, download and store the xml"""
-
     tree = None
-    while True:
-        for podcast in settingsjson["podcast"]:
-            if podcast["live"] is True:  # download all the podcasts
-                tree = download_podcasts(podcast, settingsjson)
-                if tree:  # Write xml to disk
-                    tree.write(
-                        settingsjson["webroot"]
-                        + "rss/"
-                        + podcast["podcastnameoneword"],
-                        encoding="utf-8",
-                        xml_declaration=True,
-                    )
-                else:
-                    logging.error("XML Download Failure")
-            else:  # Serving a podcast that we can't currently download?, load it from file
-                try:
-                    tree = Et.parse(
-                        settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"]
-                    )
-                except FileNotFoundError:
-                    logging.error(
-                        "Cannot find xml file "
-                        + podcast["podcastnameoneword"]
-                        + " at "
-                        + settingsjson["webroot"]
-                        + "rss/"
-                        + podcast["podcastnameoneword"]
-                    )
-
-            if tree is not None:
-                PODCASTXML.update(
-                    {
-                        podcast["podcastnameoneword"]: Et.tostring(
-                            tree.getroot(),
-                            encoding="utf-8",
-                            method="xml",
-                            xml_declaration=True,
-                        )
-                    }
+    for podcast in settingsjson["podcast"]:
+        if podcast["live"] is True:  # download all the podcasts
+            tree = download_podcasts(podcast, settingsjson)
+            if tree:  # Write xml to disk
+                tree.write(
+                    settingsjson["webroot"]
+                    + "rss/"
+                    + podcast["podcastnameoneword"],
+                    encoding="utf-8",
+                    xml_declaration=True,
+                )
+            else:
+                logging.error("XML Download Failure")
+        else:  # Serving a podcast that we can't currently download?, load it from file
+            try:
+                tree = Et.parse(
+                    settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"]
+                )
+            except FileNotFoundError:
+                logging.error(
+                    "Cannot find xml file "
+                    + podcast["podcastnameoneword"]
+                    + " at "
+                    + settingsjson["webroot"]
+                    + "rss/"
+                    + podcast["podcastnameoneword"]
                 )
 
+        if tree is not None:
+            PODCASTXML.update(
+                {
+                    podcast["podcastnameoneword"]: Et.tostring(
+                        tree.getroot(),
+                        encoding="utf-8",
+                        method="xml",
+                        xml_declaration=True,
+                    )
+                }
+            )
+
+
+def podcast_loop():
+    """Main loop, grabs new podcasts every hour"""
+
+    while True:
+        grab_podcasts()
         logging.info("Sleeping")
         time.sleep(3600)
 
@@ -150,6 +154,7 @@ def reload_settings(signalNumber, frame):
 
     if not settingserror:
         logging.info("Loaded config successfully!")
+        grab_podcasts() # No point grabbing podcasts adhoc if loading the config fails
 
     return
 

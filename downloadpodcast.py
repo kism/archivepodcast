@@ -67,7 +67,10 @@ def get_settings(args):
     try:
         settingsjsonfile = open(settingspath, "r", encoding="utf-8")
     except FileNotFoundError as exc:  # If no settings.json, create it
-        err = ("Settings json doesnt exist at: %s. Creating empty config, please fill it out.", settingspath)
+        err = (
+            "Settings json doesnt exist at: %s. Creating empty config, please fill it out.",
+            settingspath,
+        )
         logging.error(err)
         settingsjsonfile = open(settingspath, "w", encoding="utf-8")
         settingsjsonfile.write(DEFAULTJSON)
@@ -112,6 +115,7 @@ def get_settings(args):
             logging.error(err)
             raise ValueError(err)
 
+    # FIXME
     settingsjson["webpagetitle"] = html.escape(settingsjson["webpagetitle"])
     settingsjson["webpagedescription"] = html.escape(settingsjson["webpagedescription"])
 
@@ -119,6 +123,7 @@ def get_settings(args):
         for idx, podcast in enumerate(settingsjson["podcast"]):
             logging.debug("Podcast entry: %s", str(podcast))
             try:
+                # FIXME
                 podcast["podcastnewname"] = html.escape(podcast["podcastnewname"])
                 podcast["podcastdescription"] = html.escape(
                     podcast["podcastdescription"]
