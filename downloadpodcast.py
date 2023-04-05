@@ -5,7 +5,6 @@ import xml.etree.ElementTree as Et
 import os
 import json
 import logging
-import html
 from urllib.error import HTTPError
 from datetime import datetime
 from sys import platform
@@ -115,19 +114,10 @@ def get_settings(args):
             logging.error(err)
             raise ValueError(err)
 
-    # FIXME
-    settingsjson["webpagetitle"] = html.escape(settingsjson["webpagetitle"])
-    settingsjson["webpagedescription"] = html.escape(settingsjson["webpagedescription"])
-
     try:
         for idx, podcast in enumerate(settingsjson["podcast"]):
             logging.debug("Podcast entry: %s", str(podcast))
             try:
-                # FIXME
-                podcast["podcastnewname"] = html.escape(podcast["podcastnewname"])
-                podcast["podcastdescription"] = html.escape(
-                    podcast["podcastdescription"]
-                )
                 if podcast["podcasturl"] == "" and podcast["live"] is False:
                     logging.error(
                         '"podcasturl"         not defined in podcast entry %s',
