@@ -82,4 +82,5 @@ An example guide on setting up the standalone version with all features can be f
 
 ## TODO
 
-Reload the non-live rss on SIGHUP
+* ~~Reload the non-live rss on SIGHUP~~
+* Do url path validation on the json fields that affect the url?
