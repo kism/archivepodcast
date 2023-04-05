@@ -79,3 +79,7 @@ This will run a webapp on http://localhost:5000 (configurable) that will:
 `python3 selfhostarchive.py -c settings.json --production`
 
 An example guide on setting up the standalone version with all features can be found here [here](README_examplesetup.md).
+
+## TODO
+
+Reload the non-live rss on SIGHUP
