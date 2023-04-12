@@ -128,6 +128,7 @@ def podcast_loop():
     """Main loop, grabs new podcasts every hour"""
 
     while True:
+        logging.info("Waking up, looking for new episodes")
         grab_podcasts()
         logging.info("Sleeping")
         time.sleep(3600)
