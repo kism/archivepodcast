@@ -126,12 +126,12 @@ def grab_podcasts():
 
 def podcast_loop():
     """Main loop, grabs new podcasts every hour"""
-
+    logging.info("Startup complete, looking for podcast episodes")
     while True:
-        logging.info("Waking up, looking for new episodes")
         grab_podcasts()
         logging.info("Sleeping")
         time.sleep(3600)
+        logging.info("Waking up, looking for new episodes")
 
 
 def reload_settings(signalNumber, frame):
