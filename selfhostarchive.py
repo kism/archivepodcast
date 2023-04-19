@@ -40,9 +40,9 @@ def rss(feed):
     try:
         xml = PODCASTXML[feed]
     except TypeError:
-        return Response("500 on this request, the developer probably messed something up", status=500)
+        return Response("500 on this request. The developer probably messed something up", status=500)
     except KeyError:
-        return Response("404 on this one, feed not found, you know you can copy and paste yeah?", status=404)
+        return Response("404 on this one. Feed not found, you know you can copy and paste yeah?", status=404)
     return Response(xml, mimetype="application/rss+xml; charset=utf-8")
 
 
