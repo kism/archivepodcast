@@ -37,12 +37,15 @@ def rss(feed):
     """Send RSS Feed"""
     logging.debug("Sending xml feed: %s", feed)
     xml = "no podcast here, check your url"
+    returncode = 200
     try:
         xml = PODCASTXML[feed]
     except TypeError:
-        return Response("500 on this request. The developer probably messed something up", status=500)
+        returncode = 500
+        return render_template("error.j2", errorcode=str(returncode), errortext="The developer probably messed something up", settingsjson=settingsjson), returncode
     except KeyError:
-        return Response("404 on this one. Feed not found, you know you can copy and paste yeah?", status=404)
+        returncode = 404
+        return render_template("error.j2", errorcode=str(returncode), errortext="Feed not found, you know you can copy and paste yeah?", settingsjson=settingsjson), returncode
     return Response(xml, mimetype="application/rss+xml; charset=utf-8")
 
 
@@ -246,4 +249,8 @@ if __name__ == "__main__":
     settingsjson = get_settings(args)
     make_folder_structure()
 
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nExiting due to KeyboardInterrupt! 👋")
+        os._exit(130)
