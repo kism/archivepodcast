@@ -13,8 +13,13 @@ from pathlib import Path
 import requests
 
 try:
+    print("Trying to load pydub w/ffmpeg")
     from pydub import AudioSegment
-    print("Loaded pydub python package, if there is a warning above, make sure ffmpeg is installed")
+
+    print("If if there is a warning about ffmpeg above, install ffmpeg")
+    print(
+        "Optional for when a podcast runner is dumb enough to accidently upload a wav\n"
+    )
     HASPYDUB = True
 except ImportError:
     HASPYDUB = False
@@ -201,7 +206,9 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
                 logging.error("ffmpeg not on path")
             logging.error("Cannot convert wav to mp3!")
 
-        return
+        newlength = os.stat(mp3filepath.st_size)
+
+        return newlength
 
 
 def download_asset(url, title, settingsjson, podcast, extension="", filedatestring=""):
@@ -492,7 +499,8 @@ def download_podcasts(podcast, settingsjson):
                     for audioformat in audioformats:
                         if audioformat in url:
                             if audioformat == ".wav":
-                                handle_wav(
+                                # Download the wav, and get the new length of the file for the xml
+                                newlength = handle_wav(
                                     url,
                                     title,
                                     settingsjson,
@@ -502,6 +510,9 @@ def download_podcasts(podcast, settingsjson):
                                 )
                                 audioformat = ".mp3"
                                 child.attrib["type"] = "audio/mpeg"
+                                # Recalculate file size for the xml
+                                child.attrib["length"] = newlength
+
                             else:
                                 download_asset(
                                     url,

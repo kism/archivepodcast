@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Self hosted podcast archiver"""
+
 import xml.etree.ElementTree as Et
 import argparse
 import time
 import os
+import sys
 import threading
 import logging
 import signal
@@ -17,9 +19,9 @@ try:
 except ImportError:
     HASWAITRESS = False
 
-
 from downloadpodcast import get_settings, download_podcasts, setup_logger
 
+print("Starting selfhostarchive.py strong, unphased.\n")
 
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
@@ -42,10 +44,26 @@ def rss(feed):
         xml = PODCASTXML[feed]
     except TypeError:
         returncode = 500
-        return render_template("error.j2", errorcode=str(returncode), errortext="The developer probably messed something up", settingsjson=settingsjson), returncode
+        return (
+            render_template(
+                "error.j2",
+                errorcode=str(returncode),
+                errortext="The developer probably messed something up",
+                settingsjson=settingsjson,
+            ),
+            returncode,
+        )
     except KeyError:
         returncode = 404
-        return render_template("error.j2", errorcode=str(returncode), errortext="Feed not found, you know you can copy and paste yeah?", settingsjson=settingsjson), returncode
+        return (
+            render_template(
+                "error.j2",
+                errorcode=str(returncode),
+                errortext="Feed not found, you know you can copy and paste yeah?",
+                settingsjson=settingsjson,
+            ),
+            returncode,
+        )
     return Response(xml, mimetype="application/rss+xml; charset=utf-8")
 
 
@@ -93,9 +111,7 @@ def grab_podcasts():
             tree = download_podcasts(podcast, settingsjson)
             if tree:  # Write xml to disk
                 tree.write(
-                    settingsjson["webroot"]
-                    + "rss/"
-                    + podcast["podcastnameoneword"],
+                    settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"],
                     encoding="utf-8",
                     xml_declaration=True,
                 )
@@ -160,7 +176,7 @@ def reload_settings(signalNumber, frame):
 
     if not settingserror:
         logging.info("Loaded config successfully!")
-        grab_podcasts() # No point grabbing podcasts adhoc if loading the config fails
+        grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
 
     return
 
@@ -253,4 +269,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nExiting due to KeyboardInterrupt! 👋")
-        os._exit(130)
+        sys.exit(130)
