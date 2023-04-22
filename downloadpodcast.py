@@ -14,13 +14,17 @@ import requests
 try:
     print("Trying to load pydub w/ffmpeg")
     from pydub import AudioSegment
-
-    print("If if there is a warning about ffmpeg above, install ffmpeg")
     print(
-        "Optional for when a podcast runner is dumb enough to accidently upload a wav\n"
+        "If if there is a warning about ffmpeg above, install ffmpeg, or remove pydub"
     )
     HASPYDUB = True
 except ImportError:
+    print("Pydub not found")
+    print(
+        "Optional for when a podcast runner is dumb enough to accidently upload a wav."
+    )
+    print("Pydub also requires ffmpeg to installed\n")
+    print("pip3 install pydub")
     HASPYDUB = False
 
 
@@ -192,8 +196,6 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
             sound = AudioSegment.from_wav(wavfilepath)
             sound.export(mp3filepath, format="wav")
 
-            newlength = os.stat(mp3filepath.st_size)
-
             # Remove wav since we are done with it
             logging.info("Removing wav version of %s", title)
             if os.path.exists(wavfilepath):
@@ -204,6 +206,8 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
                 logging.error("pydub pip package not installed")
 
             logging.error("Cannot convert wav to mp3!")
+
+    newlength = os.stat(mp3filepath.st_size)
 
     return newlength
 
