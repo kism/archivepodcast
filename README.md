@@ -84,5 +84,5 @@ An example guide on setting up the standalone version with all features can be f
 * Do url path validation on the json fields that affect the url?
 * Calulate the size of mp3 in cases where it gets converted from a wav
 * ~~Fix keyerror when an invalid rss is hit~~
-* fix creation of base settings.json
-* fix finding ffmpeg
+* ~~fix creation of base settings.json~~
+* ~~fix finding ffmpeg~~

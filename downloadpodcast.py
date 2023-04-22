@@ -14,7 +14,7 @@ import requests
 
 try:
     from pydub import AudioSegment
-
+    print("Loaded pydub python package, if there is a warning above, make sure ffmpeg is installed")
     HASPYDUB = True
 except ImportError:
     HASPYDUB = False
@@ -144,9 +144,9 @@ def get_settings(args):
         settingserror = True
 
     if settingserror:
-        err = "Invalid config, exiting, check %s", settingspath
+        err = "Invalid config, exiting, check " + settingspath
         logging.error(err)
-        raise ValueError(err)
+        raise ValueError(str(err))
 
     return settingsjson
 

@@ -6,6 +6,7 @@ content/*
 *.psd
 *.xml
 /*.json
+/*.json*
 /*.html
 *.log
 
