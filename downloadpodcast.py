@@ -194,7 +194,7 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
 
             logging.info("Converting episode %s to mp3", title)
             sound = AudioSegment.from_wav(wavfilepath)
-            sound.export(mp3filepath, format="wav")
+            sound.export(mp3filepath, format="mp3")
             logging.info("Done")
 
             # Remove wav since we are done with it
@@ -210,7 +210,7 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
 
             logging.error("Cannot convert wav to mp3!")
 
-    newlength = os.stat(mp3filepath.st_size)
+    newlength = os.stat(mp3filepath).st_size
 
     return newlength
 
@@ -515,7 +515,7 @@ def download_podcasts(podcast, settingsjson):
                                 audioformat = ".mp3"
                                 child.attrib["type"] = "audio/mpeg"
                                 # Recalculate file size for the xml
-                                child.attrib["length"] = newlength
+                                child.attrib["length"] = str(newlength)
 
                             else:
                                 download_asset(
