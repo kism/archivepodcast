@@ -8,7 +8,6 @@ import logging
 from urllib.error import HTTPError
 from datetime import datetime
 from sys import platform
-from pathlib import Path
 
 import requests
 
@@ -158,6 +157,7 @@ def get_settings(args):
 
 def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring=""):
     """Convert podcasts that have wav episodes :/"""
+    newlength = 0
     spacer = ""
     if filedatestring != "":
         spacer = "-"
@@ -183,16 +183,16 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         + ".mp3"
     )
 
-    path = Path("ffmpeg")
-
     # if the asset hasn't already been downloaded and converted
     if not os.path.isfile(mp3filepath):
-        if HASPYDUB and path.is_file():
+        if HASPYDUB:
             download_asset(url, title, settingsjson, podcast, extension, filedatestring)
 
             logging.info("Converting episode %s to mp3", title)
             sound = AudioSegment.from_wav(wavfilepath)
             sound.export(mp3filepath, format="wav")
+
+            newlength = os.stat(mp3filepath.st_size)
 
             # Remove wav since we are done with it
             logging.info("Removing wav version of %s", title)
@@ -202,13 +202,10 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         else:
             if not HASPYDUB:
                 logging.error("pydub pip package not installed")
-            if not path.is_file():
-                logging.error("ffmpeg not on path")
+
             logging.error("Cannot convert wav to mp3!")
 
-        newlength = os.stat(mp3filepath.st_size)
-
-        return newlength
+    return newlength
 
 
 def download_asset(url, title, settingsjson, podcast, extension="", filedatestring=""):
