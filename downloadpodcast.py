@@ -605,7 +605,7 @@ def download_podcasts(podcast, settingsjson):
 
 def setup_logger(args):
     """APP LOGGING"""
-    loglevel = logging.ERROR
+    loglevel = logging.INFO
     if args.loglevel:
         args.loglevel = args.loglevel.upper()
         if args.loglevel in LOGLEVELS:
@@ -614,7 +614,7 @@ def setup_logger(args):
             print("INVALID LOG LEVEL, Valid choices: ")
             for logginglevel in LOGLEVELS:
                 print(logginglevel, end=", ")
-            print("\nDefaulting to ERROR")
+            print("\nDefaulting to INFO")
 
     logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", level=loglevel)
 
