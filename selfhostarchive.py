@@ -77,7 +77,7 @@ def static_from_root():
     return response
 
 
-def make_folder_structure():  # Eeeeehh TODO clean this up because lol robots.txt
+def make_folder_structure():
     """Ensure that webbroot folder structure exists"""
     folders = []
     folders.append(settingsjson["webroot"])
@@ -177,8 +177,6 @@ def reload_settings(signalNumber, frame):
     if not settingserror:
         logging.info("Loaded config successfully!")
         grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
-
-    return
 
 
 def main():
