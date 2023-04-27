@@ -87,3 +87,5 @@ An example guide on setting up the standalone version with all features can be f
 * ~~Fix keyerror when an invalid rss is hit~~
 * ~~fix creation of base settings.json~~
 * ~~fix finding ffmpeg~~
+* ~~reduce prod waitress logging to WARNING~~
+* try create log file
