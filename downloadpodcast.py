@@ -14,6 +14,7 @@ import requests
 try:
     print("Trying to load pydub w/ffmpeg")
     from pydub import AudioSegment
+
     print(
         "If if there is a warning about ffmpeg above, install ffmpeg, or remove pydub"
     )
@@ -202,7 +203,6 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
             if os.path.exists(wavfilepath):
                 os.remove(wavfilepath)
             logging.info("Done")
-
 
         else:
             if not HASPYDUB:
@@ -616,10 +616,15 @@ def setup_logger(args):
                 print(logginglevel, end=", ")
             print("\nDefaulting to INFO")
 
-    logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", level=loglevel)
+    logging.basicConfig(
+        format="%(asctime)s:%(levelname)s:%(name)s:%(message)s", level=loglevel
+    )
+
+    if args.production:
+        logging.getLogger("waitress").setLevel(logging.WARNING)
 
     logger = logging.getLogger()
-    formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
+    formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s:%(message)s")
 
     try:
         if args.logfile:
