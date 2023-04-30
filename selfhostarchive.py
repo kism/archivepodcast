@@ -4,6 +4,7 @@
 import xml.etree.ElementTree as Et
 import argparse
 import time
+import datetime
 import os
 import sys
 import threading
@@ -148,10 +149,25 @@ def grab_podcasts():
 def podcast_loop():
     """Main loop, grabs new podcasts every hour"""
     logging.info("Startup complete, looking for podcast episodes")
+
     while True:
-        grab_podcasts()
-        logging.info("Sleeping")
-        time.sleep(3600)
+        # We do a broad try/except here since god knows what http errors seem to happen at random
+        # If there is something uncaught in the grab podcasts function it will crash the scraping
+        # part of this program and it will need to be restarted, this avoids it.
+        try:
+            grab_podcasts()
+        # pylint: disable=broad-exception-caught
+        except Exception as exc:
+            logging.error(str(exc))
+
+        # Calculate time until next run
+        now = datetime.datetime.now()
+        seconds_until_next_run = (3600 + 1200) - ((now.minute * 60) + now.second)
+        if seconds_until_next_run > 3600:
+            seconds_until_next_run -= 3600
+
+        logging.info("Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
+        time.sleep(seconds_until_next_run)
         logging.info("Waking up, looking for new episodes")
 
 
@@ -183,9 +199,7 @@ def main():
     """Main, globals have been defined"""
 
     # Start Thread
-    thread = threading.Thread(
-        target=podcast_loop,
-    )
+    thread = threading.Thread(target=podcast_loop, daemon=True)
     thread.start()
 
     # Finish Creating App
@@ -201,6 +215,8 @@ def main():
         serve(app, host=args.webaddress, port=args.webport)
     else:  # Run with the flask debug service
         app.run(host=args.webaddress, port=args.webport)
+
+    print("\nWebapp Stopped\nPress ^C (again) to exit")
 
     # Cleanup
     thread.join()
