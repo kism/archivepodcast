@@ -10,7 +10,6 @@
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
     <link rel="stylesheet" href="static/podcasto.css" />
     <script src="static/clipboard.js"></script>
-    <script defer src="static/links.js"></script>
 </head>
 
 
@@ -22,7 +21,7 @@
         {% for podcast in settingsjson['podcast'] -%}
             <h2>{{ podcast['podcastnewname']|e }}</h2>
             <p>{{ podcast['podcastdescription']|e }}</p>
-            <input type="text" readonly="readonly" value="rss/{{ podcast['podcastnameoneword']}}" id="{{ podcast['podcastnameoneword']}}" autocomplete="off">
+            <input type="text" readonly="readonly" value="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}" id="{{ podcast['podcastnameoneword']}}">
             <button class="button" onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')" id="{{ podcast['podcastnameoneword']}}_button">Copy url</button>
         {% endfor %}
     </main>
