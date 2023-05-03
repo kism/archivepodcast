@@ -50,6 +50,7 @@ def invalid_route(e):
         returncode,
     )
 
+
 @app.route("/rss/<string:feed>", methods=["GET"])
 def rss(feed):
     """Send RSS Feed"""
