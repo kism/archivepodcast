@@ -34,12 +34,25 @@ def home():
     """Flask Home"""
     return render_template("home.j2", settingsjson=settingsjson)
 
+@app.errorhandler(404)
+def invalid_route(e):
+    """404 Handler"""
+    returncode = 404
+    return (
+        render_template(
+            "error.j2",
+            errorcode=str(returncode),
+            errortext="Page not found, how did you even?",
+            settingsjson=settingsjson,
+        ),
+        returncode,
+    )
 
 @app.route("/rss/<string:feed>", methods=["GET"])
 def rss(feed):
     """Send RSS Feed"""
     logging.debug("Sending xml feed: %s", feed)
-    xml = "no podcast here, check your url"
+    xml = ""
     returncode = 200
     try:
         xml = PODCASTXML[feed]
