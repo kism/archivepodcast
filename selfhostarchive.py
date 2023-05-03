@@ -34,7 +34,9 @@ def home():
     """Flask Home"""
     return render_template("home.j2", settingsjson=settingsjson)
 
+
 @app.errorhandler(404)
+# pylint: disable=unused-argument
 def invalid_route(e):
     """404 Handler"""
     returncode = 404
