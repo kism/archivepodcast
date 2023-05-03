@@ -631,5 +631,10 @@ def setup_logger(args):
             filehandler = logging.FileHandler(args.logfile)
             filehandler.setFormatter(formatter)
             logger.addHandler(filehandler)
-    except IsADirectoryError:
-        print("You are trying to log to a directory, try a file")
+    except IsADirectoryError as exc:
+        err = "You are trying to log to a directory, try a file"
+        raise IsADirectoryError(err) from exc
+
+    except PermissionError as exc:
+        err = "The user running this does not have access to the file: " + args.logfile
+        raise IsADirectoryError(err) from exc
