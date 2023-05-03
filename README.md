@@ -91,5 +91,6 @@ An example guide on setting up the standalone version with all features can be f
 * ~~fix finding ffmpeg~~
 * ~~reduce prod waitress logging to WARNING~~
 * ~~try create log file~~
-* real 404
+* ~~real 404~~
 * add example settings to README_examplesetup.md
+* undo that javascript I did today lmao
