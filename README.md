@@ -33,7 +33,11 @@ Most fields can be left blank and will just be filled with the original values, 
 
 `"webpagepodcastguidelink"` A link to a guide on adding rss manually to a podcast app, the generatated default has one that I like prefilled.
 
-`"inetpath"` The url of the server, in the case of running the flask version it will be `"http://localhost:5000/"`
+`"inetpath"`
+* In selfhostarchive.py: The url of the server only affects the podcast metadata in the rss xml.
+* In adhocarchive.py: reguired to generate correct html
+* Technically optional for the selfhosted version, but will fail validation.
+* In the case of running the flask version locally it will be `"http://localhost:5000/"`, in a production environment it will be the websites url, ex: `"https://mycoolpodcastarchive.com/"`
 
 `"webroot"` The folder to download to and serve the podcast files from
 * If using standalone version set this to your nginx webroot
