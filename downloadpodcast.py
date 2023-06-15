@@ -185,6 +185,14 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         + ".mp3"
     )
 
+
+    # If we need do download and convert a wav there is a small chance
+    # the user has had ffmpeg issues, remove existing files to play it safe
+    if os.path.exists(mp3filepath):
+        os.remove(mp3filepath)
+    if os.path.exists(wavfilepath):
+        os.remove(wavfilepath)
+
     # if the asset hasn't already been downloaded and converted
     if not os.path.isfile(mp3filepath):
         if HASPYDUB:
