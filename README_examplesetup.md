@@ -8,9 +8,7 @@ Example install in /opt, with systemd, logging, log rotation, nginx reverse prox
 cd /opt
 git clone https://github.com/kism/archivepodcast.git
 cd archivepodcast
-python3 -m venv env
-source env/bin/activate
-pip3 install -r requirements.txt
+pipenv install --dev
 adduser podcasto --shell=/bin/false --no-create-home
 touch /var/log/archivepodcast.log
 chown podcasto:podcasto /var/log/archivepodcast.log
@@ -35,7 +33,7 @@ After=network.target
 [Service]
 User=podcasto
 WorkingDirectory=/opt/archivepodcast
-ExecStart=/opt/archivepodcast/env/bin/python3 selfhostarchive.py --config settings.json --logfile /var/log/archivepodcast.log --loglevel INFO --production
+ExecStart=/usr/sbin/pipenv run python3 selfhostarchive.py --config settings.json --logfile /var/log/archivepodcast.log --loglevel INFO --production
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 

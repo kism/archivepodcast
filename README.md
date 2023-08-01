@@ -8,12 +8,21 @@ In theory this works in windows however I havent tested it, it ~should be able t
 
 ## Setup
 
+Install prereqs
+
+```bash
+apt install python-pipenv
+dnf install python-pipenv
+pacman -Syyu python-pipenv
 ```
+
+Clone and create the pipenv
+
+```bash
 git clone https://github.com/kism/archivepodcast.git
 cd archivepodcast
-python3 -m venv env
-source env/bin/activate
-pip3 install -r requirements.txt
+pipenv install --dev
+pipenv shell
 ```
 
 If you want to convert WAV episodes to mp3, ensure that you have ffmpeg installed and the program will handle it automatically.
