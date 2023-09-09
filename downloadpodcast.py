@@ -272,6 +272,8 @@ def cleanup_file_name(filename):
 
     # Generate Slug
     invalidcharacters = [
+        "!",
+        ",",
         "?",
         "\\",
         "/",
@@ -321,7 +323,7 @@ def download_podcasts(podcast, settingsjson):
         return
 
     if response is not None:
-        if response.status_code != 200 and response.status_code != 400:
+        if response.status_code not in (200, 400):
             logging.info(
                 "Not a great web request, we got: %s", str(response.status_code)
             )
@@ -595,10 +597,6 @@ def download_podcasts(podcast, settingsjson):
     Et.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
     Et.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
     Et.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
-    Et.register_namespace(
-        "podcast",
-        "https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md",
-    )
     Et.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
     Et.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
     Et.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")

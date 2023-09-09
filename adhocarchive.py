@@ -83,12 +83,16 @@ def make_folder_structure(settingsjson):
     permissionserror = False
     folders = []
     folders.append(settingsjson["webroot"])
-    folders.append(settingsjson["webroot"] + "/rss")
-    folders.append(settingsjson["webroot"] + "/content")
+    folders.append(settingsjson["webroot"] + os.sep + "rss")
+    folders.append(settingsjson["webroot"] + os.sep + "content")
 
     for entry in settingsjson["podcast"]:
         folders.append(
-            settingsjson["webroot"] + "/content/" + entry["podcastnameoneword"]
+            settingsjson["webroot"]
+            + os.sep
+            + "content"
+            + os.sep
+            + entry["podcastnameoneword"]
         )
 
     for folder in folders:
