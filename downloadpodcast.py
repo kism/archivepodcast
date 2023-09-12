@@ -265,6 +265,7 @@ def cleanup_file_name(filename):
     filename = filename.replace("[Audio]", "")
     filename = filename.replace("[audio]", "")
     filename = filename.replace("AUDIO", "")
+    filename = filename.replace("(Audio Only)", "")
     filename = filename.replace("Ep. ", "Ep ")
     filename = filename.replace("Ep: ", "Ep ")
     filename = filename.replace("Episode ", "Ep ")
