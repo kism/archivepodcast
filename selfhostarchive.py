@@ -11,7 +11,7 @@ import threading
 import logging
 import signal
 
-from flask import Flask, render_template, Blueprint, Response
+from flask import Flask, render_template, Blueprint, Response, send_from_directory
 
 try:
     from waitress import serve
@@ -93,6 +93,10 @@ def static_from_root():
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     return response
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 def make_folder_structure():
     """Ensure that webbroot folder structure exists"""
