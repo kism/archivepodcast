@@ -272,6 +272,9 @@ def cleanup_file_name(filename):
 
     # Generate Slug
     invalidcharacters = [
+        "^",
+        "~",
+        "`",
         "!",
         ",",
         "?",
