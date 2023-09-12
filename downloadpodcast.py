@@ -274,14 +274,13 @@ def cleanup_file_name(filename):
     filename = filename.replace("Episode: ", "Ep ")
 
     # Generate Slug, everything that isnt alphanumeric is now a hyphen, TODO tolower?
-    filename = re.sub(r'[^a-zA-Z0-9-]', '-', filename)
+    filename = re.sub(r'[^a-zA-Z0-9-]', ' ', filename)
 
-    for invalidcharacter in invalidcharacters:
-        filename = filename.replace(invalidcharacter, " ")
-
+    # Remove excess spaces
     while "  " in filename:
         filename = filename.replace("  ", " ")
 
+    # Replace spaces with hyphens
     filename = filename.strip()
     filename = filename.replace(" ", "-")
 
