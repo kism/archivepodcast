@@ -5,6 +5,7 @@ import xml.etree.ElementTree as Et
 import os
 import json
 import logging
+import re
 from urllib.error import HTTPError
 from datetime import datetime
 from sys import platform
@@ -266,39 +267,14 @@ def cleanup_file_name(filename):
     filename = filename.replace("[audio]", "")
     filename = filename.replace("AUDIO", "")
     filename = filename.replace("(Audio Only)", "")
+    filename = filename.replace("(Audio only)", "")
     filename = filename.replace("Ep. ", "Ep ")
     filename = filename.replace("Ep: ", "Ep ")
     filename = filename.replace("Episode ", "Ep ")
     filename = filename.replace("Episode: ", "Ep ")
 
-    # Generate Slug
-    invalidcharacters = [
-        "^",
-        "~",
-        "`",
-        "!",
-        ",",
-        "?",
-        "\\",
-        "/",
-        ":",
-        "*",
-        '"',
-        "$",
-        "<",
-        ">",
-        "(",
-        ")",
-        "|",
-        "&",
-        "'",
-        "_",
-        "[",
-        "]",
-        ".",
-        "#",
-        ";",
-    ]
+    # Generate Slug, everything that isnt alphanumeric is now a hyphen, TODO tolower?
+    filename = re.sub(r'[^a-zA-Z0-9-]', '-', filename)
 
     for invalidcharacter in invalidcharacters:
         filename = filename.replace(invalidcharacter, " ")
