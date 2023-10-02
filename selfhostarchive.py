@@ -71,16 +71,29 @@ def rss(feed):
             returncode,
         )
     except KeyError:
-        returncode = 404
-        return (
-            render_template(
-                "error.j2",
-                errorcode=str(returncode),
-                errortext="Feed not found, you know you can copy and paste yeah?",
-                settingsjson=settingsjson,
-            ),
-            returncode,
-        )
+        try:
+            tree = Et.parse(
+                settingsjson["webroot"] + "rss/" + feed
+            )
+            xml = Et.tostring(
+                        tree.getroot(),
+                        encoding="utf-8",
+                        method="xml",
+                        xml_declaration=True,
+                    )
+            print("Warning: Feed not live, sending cached version")
+
+        except FileNotFoundError:
+            returncode = 404
+            return (
+                render_template(
+                    "error.j2",
+                    errorcode=str(returncode),
+                    errortext="Feed not found, you know you can copy and paste yeah?",
+                    settingsjson=settingsjson,
+                ),
+                returncode,
+            )
     return Response(xml, mimetype="application/rss+xml; charset=utf-8")
 
 
