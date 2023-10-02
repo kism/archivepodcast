@@ -81,7 +81,7 @@ def rss(feed):
                         method="xml",
                         xml_declaration=True,
                     )
-            print("Warning: Feed not live, sending cached version")
+            logging.warning("Feed not live, sending cached version")
 
         except FileNotFoundError:
             returncode = 404
