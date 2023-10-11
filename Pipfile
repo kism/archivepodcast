@@ -9,7 +9,6 @@ requests = "*"
 waitress = "*"
 pydub = "*"
 
-
 [dev-packages]
 black = "*"
 pylint = "*"
