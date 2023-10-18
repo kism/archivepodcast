@@ -238,7 +238,8 @@ def download_asset(url, title, settingsjson, podcast, extension="", filedatestri
 
     if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
         try:
-            logging.info("Downloading: %s", url)
+            logging.debug("Downloading: %s", url)
+            logging.info("Downloading asset to: %s", filepath)
             headers = {"user-agent": "Mozilla/5.0"}
             req = requests.get(url, headers=headers, timeout=5)
 
