@@ -250,7 +250,8 @@ def main():
     app.register_blueprint(blueprint)
 
     if args.production and HASWAITRESS:
-        serve(app, host=args.webaddress, port=args.webport)
+        # Maybe use os.cpu_count() ?
+        serve(app, host=args.webaddress, port=args.webport, threads=16)
     else:  # Run with the flask debug service
         app.run(host=args.webaddress, port=args.webport)
 
