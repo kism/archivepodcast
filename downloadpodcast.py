@@ -298,7 +298,7 @@ def download_podcasts(podcast, settingsjson):
 
     try:
         response = requests.get(request, timeout=5)
-    except ValueError:
+    except ValueError: # NameResolutionError ?
         logging.info("Real early failure on grabbing the podcast xml, weird")
         return
 
