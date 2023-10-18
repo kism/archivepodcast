@@ -231,6 +231,8 @@ def reload_settings(signalNumber, frame):
     if not settingserror:
         logging.info("Loaded config successfully!")
         grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
+    
+    logging.info("Finished adhoc config reload")
 
 
 def main():
