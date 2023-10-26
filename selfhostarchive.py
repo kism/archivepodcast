@@ -11,7 +11,11 @@ import threading
 import logging
 import signal
 
+# import urllib3
+
 from flask import Flask, render_template, Blueprint, Response, send_from_directory
+
+# from urllib3 import exceptions
 
 try:
     from waitress import serve
@@ -27,6 +31,7 @@ print("Starting selfhostarchive.py strong, unphased.\n")
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
 settingsjson = None
+args = None
 
 
 @app.route("/")
@@ -72,15 +77,13 @@ def rss(feed):
         )
     except KeyError:
         try:
-            tree = Et.parse(
-                settingsjson["webroot"] + "rss/" + feed
-            )
+            tree = Et.parse(settingsjson["webroot"] + "rss/" + feed)
             xml = Et.tostring(
-                        tree.getroot(),
-                        encoding="utf-8",
-                        method="xml",
-                        xml_declaration=True,
-                    )
+                tree.getroot(),
+                encoding="utf-8",
+                method="xml",
+                xml_declaration=True,
+            )
             logging.warning("Feed not live, sending cached version")
 
         except FileNotFoundError:
@@ -106,11 +109,16 @@ def static_from_root():
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     return response
 
-@app.route('/favicon.ico')
+
+@app.route("/favicon.ico")
 def favicon():
     """Return the favicon"""
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    return send_from_directory(
+        os.path.join(app.root_path, "static"),
+        "favicon.ico",
+        mimetype="image/vnd.microsoft.icon",
+    )
+
 
 def make_folder_structure():
     """Ensure that webbroot folder structure exists"""
@@ -147,16 +155,24 @@ def grab_podcasts():
     tree = None
     for podcast in settingsjson["podcast"]:
         if podcast["live"] is True:  # download all the podcasts
-            tree = download_podcasts(podcast, settingsjson)
-            if tree:  # Write xml to disk
+            try:
+                tree = download_podcasts(podcast, settingsjson)
+
+                # Write xml to disk
                 tree.write(
                     settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"],
                     encoding="utf-8",
                     xml_declaration=True,
                 )
-            else:
-                logging.error("XML Download Failure")
-        else:  # Serving a podcast that we can't currently download?, load it from file
+
+            except:  # TODO LMAO MAKE A REAL EXCEPTION
+                logging.error("XML Download Failure, attempting to host cached version")
+                # logging.error(str(exc))
+                tree = None
+
+        if (
+            tree is None
+        ):  # Serving a podcast that we can't currently download?, load it from file
             try:
                 tree = Et.parse(
                     settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"]
@@ -231,7 +247,7 @@ def reload_settings(signalNumber, frame):
     if not settingserror:
         logging.info("Loaded config successfully!")
         grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
-    
+
     logging.info("Finished adhoc config reload")
 
 
