@@ -154,6 +154,7 @@ def grab_podcasts():
     """Loop through defined podcasts, download and store the xml"""
     tree = None
     for podcast in settingsjson["podcast"]:
+        logging.info("Processing settings entry: " + podcast["podcastnewname"])
         if podcast["live"] is True:  # download all the podcasts
             try:
                 tree = download_podcasts(podcast, settingsjson)
@@ -202,6 +203,7 @@ def grab_podcasts():
 
 def podcast_loop():
     """Main loop, grabs new podcasts every hour"""
+    time.sleep(3)
     logging.info("Startup complete, looking for podcast episodes")
 
     while True:
