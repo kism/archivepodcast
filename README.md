@@ -50,9 +50,6 @@ Most fields can be left blank and will just be filled with the original values, 
 
 `"webroot"` The folder to download to and serve the podcast files from
 
-* If using standalone version set this to your nginx webroot
-* If using the standalone version set this to whichever folder you want
-
 ### Podcast Settings
 
 In an array called podcast, there is an object per podcast for the options
@@ -69,19 +66,7 @@ In an array called podcast, there is an object per podcast for the options
 
 `"contactemail"` Override the contact email of the podcast
 
-## Running Adhoc Script to backup a podcast
-
-This will generate a new RSS feed and save it and all the podcasts content to the specified webroot folder. If you:
-
-* Set the webroot to the nginx webroot
-* Follow the instructions from the script on setting the right media type for the RSS feeds
-* Run the script on a cron job so new episodes get downloaded.
-
-`python3 archiveadhoc.py --help` will get you all the arguements that you should know about.
-
-`python3 archiveadhoc.py -c settings.json --loglevel INFO`
-
-## Running the standalone version to archive and re-host the podcast
+## Running archivepodcast webapp
 
 This will run a webapp on <http://localhost:5000> (configurable) that will:
 
@@ -94,18 +79,4 @@ This will run a webapp on <http://localhost:5000> (configurable) that will:
 
 `python3 archiveselfhost.py -c settings.json --production`
 
-An example guide on setting up the standalone version with all features can be found here [here](README_examplesetup.md).
-
-## TODO
-
-* ~~Do url path validation on the json fields that affect the url?~~
-* ~~Other ports?, get url in javascript~~
-* ~~Calulate the size of mp3 in cases where it gets converted from a wav~~
-* ~~Fix keyerror when an invalid rss is hit~~
-* ~~fix creation of base settings.json~~
-* ~~fix finding ffmpeg~~
-* ~~reduce prod waitress logging to WARNING~~
-* ~~try create log file~~
-* ~~real 404~~
-* ~~add example settings to README_examplesetup.md~~
-* ~~undo that javascript I did today lmao~~
+An example guide on setting it up start to finish, with all features can be found here [here](README_examplesetup.md).

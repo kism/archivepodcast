@@ -7,25 +7,32 @@ import logging
 import re
 from urllib.error import HTTPError
 from datetime import datetime
+from shutil import which # shockingly this works on windows
 
 import requests
 
-try:
-    logging.debug("Trying to load pydub w/ffmpeg")
-    from pydub import AudioSegment
-
-    logging.info(
-        "If if there is a warning about ffmpeg above, install ffmpeg, or remove pydub"
-    )
-    HASPYDUB = True
-except ImportError:
-    logging.warning("Pydub not found")
+HASPYDUB = False
+if which("ffmpeg") is not None:
+    try:
+        logging.debug("Trying to load pydub w/ffmpeg")
+        from pydub import AudioSegment
+        HASPYDUB = True
+    except ImportError:
+        logging.warning("pydub not found")
+        logging.warning("It should have installed if you are using pipenv")
+        logging.warning(
+            "pydub also requires ffmpeg to installed (not a python package)"
+        )
+else:
     logging.warning(
-        "Optional for when a podcast runner is dumb enough to accidently upload a wav."
+        "Not loading pydub since ffmpeg is not installed on this system (and in the PATH)"
     )
-    logging.warning("Pydub also requires ffmpeg to installed\n")
-    logging.warning("It should have installed if you are using pipenv")
-    HASPYDUB = False
+
+if not HASPYDUB:
+    logging.warning(
+        "pydub is optional for when a podcast runner is dumb enough to accidently upload a wav. "
+        "The script will convert it to a mp3."
+    )
 
 
 imageformats = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
@@ -148,7 +155,7 @@ def cleanup_file_name(filename):
     filename = filename.replace("Episode ", "Ep ")
     filename = filename.replace("Episode: ", "Ep ")
 
-    # Generate Slug, everything that isnt alphanumeric is now a hyphen, TODO tolower?
+    # Generate Slug, everything that isnt alphanumeric is now a hyphen
     filename = re.sub(r"[^a-zA-Z0-9-]", " ", filename)
 
     # Remove excess spaces

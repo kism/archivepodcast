@@ -13,9 +13,9 @@ import signal
 from flask import Flask, render_template, Blueprint, Response, send_from_directory
 from waitress import serve
 
-from podcastsettings import get_settings # pylint: disable=import-error
-from podcastargparser import create_arg_parser # pylint: disable=import-error
-from podcastlogging import setup_logger # pylint: disable=import-error
+from podcastsettings import get_settings  # pylint: disable=import-error
+from podcastargparser import create_arg_parser  # pylint: disable=import-error
+from podcastlogging import setup_logger  # pylint: disable=import-error
 
 parser = create_arg_parser()
 args = parser.parse_args()
@@ -29,6 +29,7 @@ PODCASTXML = {}
 settingsjson = None
 
 # --- Why do I program like this, we are done with imports and vars
+
 
 @app.route("/")
 def home():
@@ -173,7 +174,7 @@ def grab_podcasts():
                 )
                 tree = None
         else:
-            logging.info("\"live\": false, in settings so not fetching new episodes")
+            logging.info('"live": false, in settings so not fetching new episodes')
 
         # Serving a podcast that we can't currently download?, load it from file
         if tree is None:
@@ -205,7 +206,9 @@ def grab_podcasts():
 
 def podcast_loop():
     """Main loop, grabs new podcasts every hour"""
-    time.sleep(3) # lol, this is because I want the output to start after the web server comes up
+    time.sleep(
+        3
+    )  # lol, this is because I want the output to start after the web server comes up
     logging.info("Startup complete, looking for podcast episodes")
 
     while True:
@@ -271,12 +274,13 @@ def main():
     )
     app.register_blueprint(blueprint)
 
+    logging.info("Webapp address: http://%s:%s", args.webaddress, args.webport)
     if args.production:
         # Maybe use os.cpu_count() ?
-        logging.info("Starting webapp in production mode")
+        logging.info("Starting webapp in production mode (waitress)")
         serve(app, host=args.webaddress, port=args.webport, threads=16)
     else:  # Run with the flask debug service
-        logging.info("Starting webapp in debug mode")
+        logging.info("Starting webapp in debug mode (werkzeug)")
         app.run(host=args.webaddress, port=args.webport)
 
     print("\nWebapp Stopped\nPress ^C (again) to exit")

@@ -1,5 +1,5 @@
 
-# Example standalone version install
+# Example install
 Example install in /opt, with systemd, logging, log rotation, nginx reverse proxy
 
 ## Clone, install requirements, create service account
