@@ -2,7 +2,6 @@
 """Self hosted podcast archiver"""
 
 import xml.etree.ElementTree as Et
-import argparse
 import time
 import datetime
 import os
@@ -12,26 +11,27 @@ import logging
 import signal
 
 # import urllib3
-
-from flask import Flask, render_template, Blueprint, Response, send_from_directory
-
 # from urllib3 import exceptions
 
-try:
-    from waitress import serve
+from flask import Flask, render_template, Blueprint, Response, send_from_directory
+from waitress import serve
 
-    HASWAITRESS = True
-except ImportError:
-    HASWAITRESS = False
+from podcastlogging import setup_logger
+from podcastsettings import get_settings
+from podcastargparser import create_arg_parser
 
-from downloadpodcast import get_settings, download_podcasts, setup_logger
+parser = create_arg_parser()
+args = parser.parse_args()
+setup_logger(args)
 
-print("Starting selfhostarchive.py strong, unphased.\n")
+# Weird place to have an import, we need the logger running first
+from podcastdownload import download_podcasts  # pylint: disable=wrong-import-position
 
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
 settingsjson = None
-args = None
+
+# --- Why do I program like this, we are done with imports and vars
 
 
 @app.route("/")
@@ -122,6 +122,7 @@ def favicon():
 
 def make_folder_structure():
     """Ensure that webbroot folder structure exists"""
+    logging.debug("Checking folder structure")
     folders = []
     folders.append(settingsjson["webroot"])
     folders.append(settingsjson["webroot"] + os.sep + "rss")
@@ -154,39 +155,33 @@ def grab_podcasts():
     """Loop through defined podcasts, download and store the xml"""
     tree = None
     for podcast in settingsjson["podcast"]:
-        logging.info("Processing settings entry: " + podcast["podcastnewname"])
+        logging.info("Processing settings entry: %s", podcast["podcastnewname"])
+
+        rssfilepath = settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"]
+
         if podcast["live"] is True:  # download all the podcasts
             try:
                 tree = download_podcasts(podcast, settingsjson)
-
                 # Write xml to disk
                 tree.write(
-                    settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"],
+                    rssfilepath,
                     encoding="utf-8",
                     xml_declaration=True,
                 )
+                logging.debug("Wrote rss to disk: %s", rssfilepath)
 
             except:  # TODO LMAO MAKE A REAL EXCEPTION
-                logging.error("XML Download Failure, attempting to host cached version")
+                logging.error("RSS XML Download Failure, attempting to host cached version")
                 # logging.error(str(exc))
                 tree = None
 
-        if (
-            tree is None
-        ):  # Serving a podcast that we can't currently download?, load it from file
+        # Serving a podcast that we can't currently download?, load it from file
+        if tree is None:
+            logging.info("Loading rss from file: %s", rssfilepath)
             try:
-                tree = Et.parse(
-                    settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"]
-                )
+                tree = Et.parse(rssfilepath)
             except FileNotFoundError:
-                logging.error(
-                    "Cannot find xml file "
-                    + podcast["podcastnameoneword"]
-                    + " at "
-                    + settingsjson["webroot"]
-                    + "rss/"
-                    + podcast["podcastnameoneword"]
-                )
+                logging.error("Cannot find rss xml file: %s", rssfilepath)
 
         if tree is not None:
             PODCASTXML.update(
@@ -199,6 +194,13 @@ def grab_podcasts():
                     )
                 }
             )
+            logging.info(
+                "Hosted: %srss/%s",
+                settingsjson["inetpath"],
+                podcast["podcastnameoneword"],
+            )
+        else:
+            logging.error("Unable to host podcast, something is wrong")
 
 
 def podcast_loop():
@@ -269,7 +271,7 @@ def main():
     )
     app.register_blueprint(blueprint)
 
-    if args.production and HASWAITRESS:
+    if args.production:
         # Maybe use os.cpu_count() ?
         serve(app, host=args.webaddress, port=args.webport, threads=16)
     else:  # Run with the flask debug service
@@ -284,55 +286,7 @@ def main():
 if __name__ == "__main__":
     signal.signal(signal.SIGHUP, reload_settings)
 
-    parser = argparse.ArgumentParser(
-        description="Mirror / rehost a podcast, self hoasted with Flask!"
-    )
-    parser.add_argument(
-        "-wa",
-        "--webaddress",
-        type=str,
-        dest="webaddress",
-        help="(WebUI) Web address to listen on, default is 0.0.0.0",
-        default="0.0.0.0",
-    )
-    parser.add_argument(
-        "-wp",
-        "--webport",
-        type=int,
-        dest="webport",
-        help="(WebUI) Web port to listen on, default is 5000",
-        default=5000,
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        dest="settingspath",
-        help="Config path /path/to/settings.json",
-    )
-    parser.add_argument(
-        "--loglevel",
-        type=str,
-        dest="loglevel",
-        help="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-    )
-    parser.add_argument(
-        "-lf",
-        "--logfile",
-        type=str,
-        dest="logfile",
-        help="Log file full path",
-    )
-    parser.add_argument(
-        "--production",
-        action="store_true",
-        dest="production",
-        help="Run the server with waitress instead of flask debug server",
-    )
-    args = parser.parse_args()
-
-    setup_logger(args)
-
+    logging.info("Starting selfhostarchive.py strong, unphased.")
     logging.info("Self Hosted Podcast Archive running! PID: %s", os.getpid())
 
     settingsjson = get_settings(args)

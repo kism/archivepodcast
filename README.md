@@ -2,8 +2,7 @@
 
 This is a python project that both
 
-* `adhocarchive.py` Works as an adhoc way to archive a podcast from a RSS feed
-* `selfhostarchive.py` Works as a Flask webapp to archive and re-host a podcast from a RSS feed
+* `archivepodcast.py` Works as a Flask webapp to archive and re-host a podcast from a RSS feed
 
 In theory this works in windows however I havent tested it, it ~should be able to handle windows file paths fine.
 
@@ -78,9 +77,9 @@ This will generate a new RSS feed and save it and all the podcasts content to th
 * Follow the instructions from the script on setting the right media type for the RSS feeds
 * Run the script on a cron job so new episodes get downloaded.
 
-`python3 adhocarchive.py --help` will get you all the arguements that you should know about.
+`python3 archiveadhoc.py --help` will get you all the arguements that you should know about.
 
-`python3 adhocarchive.py -c settings.json --loglevel INFO`
+`python3 archiveadhoc.py -c settings.json --loglevel INFO`
 
 ## Running the standalone version to archive and re-host the podcast
 
@@ -91,9 +90,9 @@ This will run a webapp on <http://localhost:5000> (configurable) that will:
 * If `"live" : true` in settings json is set it will look for and download new episodes every hour
 * If you send it a SIGHUP command it will reload the configuration, be sure to check the logs to see if it was successful.
 
-`python3 selfhostarchive.py --help` will get you all the arguements that you should know about.
+`python3 archiveselfhost.py --help` will get you all the arguements that you should know about.
 
-`python3 selfhostarchive.py -c settings.json --production`
+`python3 archiveselfhost.py -c settings.json --production`
 
 An example guide on setting up the standalone version with all features can be found here [here](README_examplesetup.md).
 
@@ -108,5 +107,5 @@ An example guide on setting up the standalone version with all features can be f
 * ~~reduce prod waitress logging to WARNING~~
 * ~~try create log file~~
 * ~~real 404~~
-* add example settings to README_examplesetup.md
-* undo that javascript I did today lmao
+* ~~add example settings to README_examplesetup.md~~
+* ~~undo that javascript I did today lmao~~

@@ -19,7 +19,7 @@ chown -R podcasto:podcasto /opt/archivepodcast
 Run the program once manually to create the default settings.json and then fill it in.
 ```
 cd /opt/archivepodcast
-/opt/archivepodcast/env/bin/python3 selfhostarchive.py --config settings.json
+/opt/archivepodcast/env/bin/python3 archivepodcast.py --config settings.json
 vim settings.json
 ```
 ## Systemd service
@@ -33,7 +33,7 @@ After=network.target
 [Service]
 User=podcasto
 WorkingDirectory=/opt/archivepodcast
-ExecStart=/usr/sbin/pipenv run python3 selfhostarchive.py --config settings.json --logfile /var/log/archivepodcast.log --loglevel INFO --production
+ExecStart=/usr/sbin/pipenv run python3 archivepodcast.py --config settings.json --logfile /var/log/archivepodcast.log --loglevel INFO --production
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 
