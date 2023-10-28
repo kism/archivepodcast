@@ -194,7 +194,7 @@ def download_podcasts(podcast, settingsjson):
 
     # We have the xml
     podcastxml = Et.fromstring(response.content)
-    logging.info("Processing Podcast XML")
+    logging.info("Downloaded RSS XML, Processing")
     logging.debug(str(podcastxml))
 
     xmlfirstchild = podcastxml[0]

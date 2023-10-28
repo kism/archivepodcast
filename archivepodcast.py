@@ -172,6 +172,8 @@ def grab_podcasts():
                     "RSS XML Download Failure, attempting to host cached version"
                 )
                 tree = None
+        else:
+            logging.info("`\"live\": false` in settings so not fetching new episodes")
 
         # Serving a podcast that we can't currently download?, load it from file
         if tree is None:
