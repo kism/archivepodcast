@@ -16,9 +16,9 @@ import signal
 from flask import Flask, render_template, Blueprint, Response, send_from_directory
 from waitress import serve
 
-from podcastlogging import setup_logger
 from podcastsettings import get_settings
 from podcastargparser import create_arg_parser
+from podcastlogging import setup_logger
 
 parser = create_arg_parser()
 args = parser.parse_args()
@@ -170,9 +170,11 @@ def grab_podcasts():
                 )
                 logging.debug("Wrote rss to disk: %s", rssfilepath)
 
-            except:  # TODO LMAO MAKE A REAL EXCEPTION
-                logging.error("RSS XML Download Failure, attempting to host cached version")
-                # logging.error(str(exc))
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logging.error(str(exc))
+                logging.error(
+                    "RSS XML Download Failure, attempting to host cached version"
+                )
                 tree = None
 
         # Serving a podcast that we can't currently download?, load it from file
