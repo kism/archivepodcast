@@ -13,9 +13,9 @@ import signal
 from flask import Flask, render_template, Blueprint, Response, send_from_directory
 from waitress import serve
 
-from podcastsettings import get_settings  # pylint: disable=import-error
-from podcastargparser import create_arg_parser  # pylint: disable=import-error
-from podcastlogging import setup_logger  # pylint: disable=import-error
+from podcastsettings import get_settings
+from podcastargparser import create_arg_parser
+from podcastlogging import setup_logger
 
 parser = create_arg_parser()
 args = parser.parse_args()
@@ -29,7 +29,6 @@ PODCASTXML = {}
 settingsjson = None
 
 # --- Why do I program like this, we are done with imports and vars
-
 
 @app.route("/")
 def home():
