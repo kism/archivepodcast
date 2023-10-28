@@ -13,6 +13,3 @@ pydub = "*"
 black = "*"
 pylint = "*"
 pylance = "*"
-
-[requires]
-python_version = "3.11"
