@@ -30,7 +30,6 @@ settingsjson = None
 
 # --- Why do I program like this, we are done with imports and vars
 
-
 @app.route("/")
 def home():
     """Flask Home"""
