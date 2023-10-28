@@ -149,8 +149,8 @@ def make_folder_structure():
 
 def grab_podcasts():
     """Loop through defined podcasts, download and store the xml"""
-    tree = None
     for podcast in settingsjson["podcast"]:
+        tree = None
         logging.info("Processing settings entry: %s", podcast["podcastnewname"])
 
         rssfilepath = settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"]
@@ -271,7 +271,7 @@ def main():
 
     if args.production:
         # Maybe use os.cpu_count() ?
-        logging.info("Starting webapp in procuction mode")
+        logging.info("Starting webapp in production mode")
         serve(app, host=args.webaddress, port=args.webport, threads=16)
     else:  # Run with the flask debug service
         logging.info("Starting webapp in debug mode")
