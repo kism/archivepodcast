@@ -1,10 +1,11 @@
 
 # Example install
+
 Example install in /opt, with systemd, logging, log rotation, nginx reverse proxy
 
 ## Clone, install requirements, create service account
 
-```
+```bash
 cd /opt
 git clone https://github.com/kism/archivepodcast.git
 cd archivepodcast
@@ -14,18 +15,24 @@ touch /var/log/archivepodcast.log
 chown podcasto:podcasto /var/log/archivepodcast.log
 chown -R podcasto:podcasto /opt/archivepodcast
 ```
+
 ## Create Config
 
 Run the program once manually to create the default settings.json and then fill it in.
-```
+
+```bash
 cd /opt/archivepodcast
 /opt/archivepodcast/env/bin/python3 archivepodcast.py --config settings.json
 vim settings.json
 ```
+
 ## Systemd service
 
-`vim /etc/systemd/system/archivepodcast.service`
+```bash
+vim /etc/systemd/system/archivepodcast.service
 ```
+
+```text
 [Unit]
 Description=Podcast Archiving Webapp
 After=network.target
@@ -45,8 +52,11 @@ You can use `systemctl reload archivepodcast` to reload the config, check the lo
 
 ## Logrotate
 
-`vim /etc/logrotate.d/archivepodcast`
+```bash
+vim /etc/logrotate.d/archivepodcast
 ```
+
+```text
 /var/log/archivepodcast.log
 {
     rotate 6
@@ -63,7 +73,7 @@ You can use `systemctl reload archivepodcast` to reload the config, check the lo
 
 I wont go into detail on nginx reverse proxys, I add this as a server with my domain name. Then use certbot & certbot nginx plugin to setup https.
 
-```
+```text
 server {
     server_name yourdomain.com;
     location / {
