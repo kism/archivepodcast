@@ -10,15 +10,12 @@ import threading
 import logging
 import signal
 
-# import urllib3
-# from urllib3 import exceptions
-
 from flask import Flask, render_template, Blueprint, Response, send_from_directory
 from waitress import serve
 
-from podcastsettings import get_settings
-from podcastargparser import create_arg_parser
-from podcastlogging import setup_logger
+from podcastsettings import get_settings # pylint: disable=import-error
+from podcastargparser import create_arg_parser # pylint: disable=import-error
+from podcastlogging import setup_logger # pylint: disable=import-error
 
 parser = create_arg_parser()
 args = parser.parse_args()
