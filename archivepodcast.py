@@ -203,7 +203,7 @@ def grab_podcasts():
 
 def podcast_loop():
     """Main loop, grabs new podcasts every hour"""
-    time.sleep(3)
+    time.sleep(3) # lol, this is because I want the output to start after the web server comes up
     logging.info("Startup complete, looking for podcast episodes")
 
     while True:
@@ -271,8 +271,10 @@ def main():
 
     if args.production:
         # Maybe use os.cpu_count() ?
+        logging.info("Starting webapp in procuction mode")
         serve(app, host=args.webaddress, port=args.webport, threads=16)
     else:  # Run with the flask debug service
+        logging.info("Starting webapp in debug mode")
         app.run(host=args.webaddress, port=args.webport)
 
     print("\nWebapp Stopped\nPress ^C (again) to exit")
