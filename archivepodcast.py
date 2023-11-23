@@ -120,6 +120,10 @@ def make_folder_structure():
     """Ensure that webbroot folder structure exists"""
     logging.debug("Checking folder structure")
     folders = []
+
+    while settingsjson["webroot"].endswith('/'):
+        settingsjson["webroot"] = settingsjson["webroot"][:-1]
+
     folders.append(settingsjson["webroot"])
     folders.append(settingsjson["webroot"] + os.sep + "rss")
     folders.append(settingsjson["webroot"] + os.sep + "content")
@@ -139,10 +143,10 @@ def make_folder_structure():
         except FileExistsError:
             pass
         except PermissionError as exc:
-            err = ("You do not have permission to create folder: %s", folder)
+            err = "You do not have permission to create folder: " + folder
             logging.error(err)
             logging.error(
-                "Run this this script as a different user. ex: nginx, apache, root"
+                "Run this this script as a different user probably. ex: nginx, apache, root"
             )
             raise PermissionError(err) from exc
 
