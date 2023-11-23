@@ -121,9 +121,6 @@ def make_folder_structure():
     logging.debug("Checking folder structure")
     folders = []
 
-    while settingsjson["webroot"].endswith('/'):
-        settingsjson["webroot"] = settingsjson["webroot"][:-1]
-
     folders.append(settingsjson["webroot"])
     folders.append(settingsjson["webroot"] + os.sep + "rss")
     folders.append(settingsjson["webroot"] + os.sep + "content")
