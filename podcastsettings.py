@@ -2,7 +2,7 @@
 
 import logging
 import json
-import platform
+# import platform
 import os
 
 # A default settings config to be written to the file system if none exists at the expected path
@@ -13,6 +13,8 @@ DEFAULTJSON = """
     "webpagepodcastguidelink": "https://medium.com/@joshmuccio/how-to-manually-add-a-rss-feed-to-your-podcast-app-on-desktop-ios-android-478d197a3770",
     "inetpath": "http://localhost:5000/",
     "webroot": "output/",
+    "storagebackend": "local",
+    "s3domain": "https://optional_only_for_s3_storage_backend/",
     "podcast": [
         {
             "podcasturl": "",
@@ -25,6 +27,8 @@ DEFAULTJSON = """
     ]
 }
 """
+
+VALIDSTORAGEBACKENDS = ['local','s3']
 
 def get_settings(args):
     """Load settings from settings.json"""
@@ -82,13 +86,9 @@ def get_settings(args):
         logging.error(err)
         raise KeyError(err) from exc
 
-    if platform != "win32":
-        if settingsjson["webroot"][-1] != "/":
-            settingsjson["webroot"] = settingsjson["webroot"] + "/"
-    else:
-        if settingsjson["webroot"][-1] != "\\":
-            logging.warning("I never tested this on windows")
-            settingsjson["webroot"] = settingsjson["webroot"] + "\\"
+    if settingsjson['storagebackend'] not in VALIDSTORAGEBACKENDS:
+        settingserror = True
+        logging.error("storagebackend selected %s not in %s", settingsjson['storagebackend'],str(VALIDSTORAGEBACKENDS))
 
     try:
         for idx, podcast in enumerate(settingsjson["podcast"]):

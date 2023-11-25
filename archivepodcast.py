@@ -10,7 +10,14 @@ import threading
 import logging
 import signal
 
-from flask import Flask, render_template, Blueprint, Response, send_from_directory
+from flask import (
+    Flask,
+    render_template,
+    Blueprint,
+    Response,
+    send_from_directory,
+    redirect,
+)
 from waitress import serve
 
 from podcastsettings import get_settings
@@ -30,10 +37,27 @@ settingsjson = None
 
 # --- Why do I program like this, we are done with imports and vars
 
+
 @app.route("/")
 def home():
     """Flask Home"""
     return render_template("home.j2", settingsjson=settingsjson)
+
+
+@app.route("/content/<path:path>")
+def send_content(path):
+    """Serve Content"""
+    if settingsjson["storagebackend"] == "s3":
+        newpath = (
+            settingsjson["s3domain"]
+            + "content/"
+            + path.replace(settingsjson["webroot"], "")
+        )
+        print(newpath)
+        return redirect(newpath, code=307)
+    else:
+        print("sending from local")
+        return send_from_directory(settingsjson["webroot"] + "/content", path)
 
 
 @app.errorhandler(404)
@@ -122,8 +146,8 @@ def make_folder_structure():
     folders = []
 
     folders.append(settingsjson["webroot"])
-    folders.append(settingsjson["webroot"] + os.sep + "rss")
-    folders.append(settingsjson["webroot"] + os.sep + "content")
+    folders.append(settingsjson["webroot"] + "rss")
+    folders.append(settingsjson["webroot"] + "content")
 
     for entry in settingsjson["podcast"]:
         folders.append(
@@ -269,9 +293,8 @@ def main():
     blueprint = Blueprint(
         "site",
         __name__,
-        static_url_path="/content",
-        static_folder=settingsjson["webroot"] + "/content",
     )
+
     app.register_blueprint(blueprint)
 
     logging.info("Webapp address: http://%s:%s", args.webaddress, args.webport)
