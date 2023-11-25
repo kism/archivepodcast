@@ -34,6 +34,7 @@ from podcastdownload import download_podcasts  # pylint: disable=wrong-import-po
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
 settingsjson = None
+s3pathscache = []
 
 # --- Why do I program like this, we are done with imports and vars
 
@@ -182,7 +183,7 @@ def grab_podcasts():
 
         if podcast["live"] is True:  # download all the podcasts
             try:
-                tree = download_podcasts(podcast, settingsjson)
+                tree = download_podcasts(podcast, settingsjson, s3pathscache)
                 # Write xml to disk
                 tree.write(
                     rssfilepath,

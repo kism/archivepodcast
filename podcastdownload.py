@@ -14,6 +14,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 
 HASPYDUB = False
+s3pathscache = None
 
 if which("ffmpeg") is not None:
     try:
@@ -42,33 +43,56 @@ if not HASPYDUB:
 imageformats = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
 audioformats = [".mp3", ".wav", ".m4a", ".flac"]
 
+content_types = {
+    ".webp": "image/webp",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".m4a": "audio/mpeg",
+    ".flac": "audio/flac",
+}
 
-def check_path(settingsjson, filepath, s3=None):
+def check_path_exists(settingsjson, filepath, s3=None):
     """Check the path, s3 or local"""
+    fileexists = False
+
     if settingsjson["storagebackend"] == "s3":
         s3filepath = filepath.replace(settingsjson["webroot"], "")
-        print(s3filepath)
 
-    try:
-        # Head object to check if file exists
-        s3.head_object(Bucket=settingsjson['s3bucket'], Key=s3filepath)
-        print(f"File '{s3filepath}' exists in the S3 bucket '{settingsjson['s3bucket']}'")
-        return True
-    except ClientError as e:
-        if e.response['Error']['Code'] == '404':
-            print(f"File '{s3filepath}' does not exist in the S3 bucket '{settingsjson['s3bucket']}'")
-            return False
+        if s3filepath not in s3pathscache:
+            try:
+                # Head object to check if file exists
+                s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
+                logging.debug(
+                    "File %s exists in the S3 bucket %s",
+                    s3filepath,
+                    settingsjson["s3bucket"],
+                )
+                s3pathscache.append(s3filepath)
+                fileexists = True
+
+            except ClientError as e:
+                if e.response["Error"]["Code"] == "404":
+                    logging.debug(
+                        "File %s does not exist in the S3 bucket %s",
+                        s3filepath,
+                        settingsjson["s3bucket"],
+                    )
+                else:
+                    logging.error("s3 check file exists errored out?")
+
         else:
-            print(f"An error occurred: {e}")
-            return False
-
-
-
-
+            logging.debug("s3 path %s exists in cache, skipping", s3filepath)
+            fileexists = True
 
     else:
         if os.path.isfile(filepath):
             return True
+
+    return fileexists
 
 
 def handle_wav(
@@ -108,7 +132,7 @@ def handle_wav(
         os.remove(mp3filepath)
 
     # if the asset hasn't already been downloaded and converted
-    if check_path(settingsjson, mp3filepath, s3=s3):
+    if not check_path_exists(settingsjson, mp3filepath, s3=s3):
         if HASPYDUB:
             download_asset(
                 url, title, settingsjson, podcast, extension, filedatestring, s3=s3
@@ -155,7 +179,7 @@ def download_asset(
         + extension
     )
 
-    if check_path(
+    if not check_path_exists(
         settingsjson, filepath, s3=s3
     ):  # if the asset hasn't already been downloaded
         try:
@@ -173,6 +197,27 @@ def download_asset(
 
         except HTTPError as err:
             logging.info("Download Failed %s", str(err))
+
+        # For if we are using s3 as a backend
+        if extension != ".wav" and settingsjson["storagebackend"] == "s3":
+            content_type = content_types[extension]
+
+            # Set the right content type
+            s3path = filepath.replace(settingsjson["webroot"], "")
+            try:
+                # Upload the file
+                s3.upload_file(
+                    filepath,
+                    settingsjson["s3bucket"],
+                    s3path,
+                    ExtraArgs={"ContentType": content_type},
+                )
+                logging.info("s3 Upload Successful, removing local file")
+                os.remove(filepath)
+            except FileNotFoundError:
+                logging.error("Could not upload to s3, the source file was not found")
+            except NoCredentialsError:
+                logging.error("s3 Credentials not available")
 
     else:
         logging.debug("Already downloaded: " + title + extension)
@@ -210,9 +255,11 @@ def cleanup_file_name(filename):
     return filename
 
 
-def download_podcasts(podcast, settingsjson):
+def download_podcasts(podcast, settingsjson, in_s3pathscache):
     """Parse the XML, Download all the assets, this is main"""
     response = None
+    global s3pathscache
+    s3pathscache = in_s3pathscache
 
     s3 = None
     if settingsjson["storagebackend"] == "s3":

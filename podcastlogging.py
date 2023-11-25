@@ -6,6 +6,7 @@ LOGLEVELSSTRING = ""
 for logginglevel in LOGLEVELS:
     LOGLEVELSSTRING = LOGLEVELSSTRING + logginglevel + " "
 
+
 def setup_logger(args):
     """APP LOGGING"""
     invalid_log_level = False
@@ -23,6 +24,10 @@ def setup_logger(args):
 
     if args.production:
         logging.getLogger("waitress").setLevel(logging.WARNING)
+
+    logging.getLogger("botocore").setLevel(logging.WARNING)
+    logging.getLogger("s3transfer").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     logger = logging.getLogger()
     formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s:%(message)s")
@@ -43,4 +48,6 @@ def setup_logger(args):
     logging.info("---")
     logging.info("Logger started")
     if invalid_log_level:
-        logging.warning("Invalid logging level: %s, defaulting to INFO", {args.loglevel})
+        logging.warning(
+            "Invalid logging level: %s, defaulting to INFO", {args.loglevel}
+        )
