@@ -15,6 +15,10 @@ DEFAULTJSON = """
     "webroot": "output/",
     "storagebackend": "local",
     "s3domain": "https://optional_only_for_s3_storage_backend/",
+    "s3apiurl": "",
+    "s3bucket": "",
+    "s3accesskeyid": "",
+    "s3secretaccesskey": "",
     "podcast": [
         {
             "podcasturl": "",

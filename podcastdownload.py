@@ -7,15 +7,19 @@ import logging
 import re
 from urllib.error import HTTPError
 from datetime import datetime
-from shutil import which # shockingly this works on windows
+from shutil import which  # shockingly this works on windows
 
 import requests
+import boto3
+from botocore.exceptions import NoCredentialsError, ClientError
 
 HASPYDUB = False
+
 if which("ffmpeg") is not None:
     try:
         logging.debug("Trying to load pydub w/ffmpeg")
         from pydub import AudioSegment
+
         HASPYDUB = True
     except ImportError:
         logging.warning("pydub not found")
@@ -39,7 +43,37 @@ imageformats = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
 audioformats = [".mp3", ".wav", ".m4a", ".flac"]
 
 
-def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring=""):
+def check_path(settingsjson, filepath, s3=None):
+    """Check the path, s3 or local"""
+    if settingsjson["storagebackend"] == "s3":
+        s3filepath = filepath.replace(settingsjson["webroot"], "")
+        print(s3filepath)
+
+    try:
+        # Head object to check if file exists
+        s3.head_object(Bucket=settingsjson['s3bucket'], Key=s3filepath)
+        print(f"File '{s3filepath}' exists in the S3 bucket '{settingsjson['s3bucket']}'")
+        return True
+    except ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            print(f"File '{s3filepath}' does not exist in the S3 bucket '{settingsjson['s3bucket']}'")
+            return False
+        else:
+            print(f"An error occurred: {e}")
+            return False
+
+
+
+
+
+    else:
+        if os.path.isfile(filepath):
+            return True
+
+
+def handle_wav(
+    url, title, settingsjson, podcast, extension="", filedatestring="", s3=None
+):
     """Convert podcasts that have wav episodes :/"""
     newlength = 0
     spacer = ""
@@ -74,9 +108,11 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         os.remove(mp3filepath)
 
     # if the asset hasn't already been downloaded and converted
-    if not os.path.isfile(mp3filepath):
+    if check_path(settingsjson, mp3filepath, s3=s3):
         if HASPYDUB:
-            download_asset(url, title, settingsjson, podcast, extension, filedatestring)
+            download_asset(
+                url, title, settingsjson, podcast, extension, filedatestring, s3=s3
+            )
 
             logging.info("Converting episode %s to mp3", title)
             sound = AudioSegment.from_wav(wavfilepath)
@@ -100,7 +136,9 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
     return newlength
 
 
-def download_asset(url, title, settingsjson, podcast, extension="", filedatestring=""):
+def download_asset(
+    url, title, settingsjson, podcast, extension="", filedatestring="", s3=None
+):
     """Download asset from url with appropiate file name"""
     spacer = ""
     if filedatestring != "":
@@ -117,7 +155,9 @@ def download_asset(url, title, settingsjson, podcast, extension="", filedatestri
         + extension
     )
 
-    if not os.path.isfile(filepath):  # if the asset hasn't already been downloaded
+    if check_path(
+        settingsjson, filepath, s3=s3
+    ):  # if the asset hasn't already been downloaded
         try:
             logging.debug("Downloading: %s", url)
             logging.info("Downloading asset to: %s", filepath)
@@ -171,8 +211,17 @@ def cleanup_file_name(filename):
 
 
 def download_podcasts(podcast, settingsjson):
-    """Parse the XML, Download all the assets"""
+    """Parse the XML, Download all the assets, this is main"""
     response = None
+
+    s3 = None
+    if settingsjson["storagebackend"] == "s3":
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=settingsjson["s3apiurl"],
+            aws_access_key_id=settingsjson["s3accesskeyid"],
+            aws_secret_access_key=settingsjson["s3secretaccesskey"],
+        )
 
     # lets fetch the original podcast xml
     request = podcast["podcasturl"]
@@ -271,7 +320,7 @@ def download_podcasts(podcast, settingsjson):
 
             for filetype in imageformats:
                 if filetype in url:
-                    download_asset(url, title, settingsjson, podcast, filetype)
+                    download_asset(url, title, settingsjson, podcast, filetype, s3=s3)
                     channel.attrib["href"] = (
                         settingsjson["inetpath"]
                         + "content/"
@@ -305,7 +354,9 @@ def download_podcasts(podcast, settingsjson):
 
                     for filetype in imageformats:
                         if filetype in url:
-                            download_asset(url, title, settingsjson, podcast, filetype)
+                            download_asset(
+                                url, title, settingsjson, podcast, filetype, s3=s3
+                            )
                             child.text = (
                                 settingsjson["inetpath"]
                                 + "content/"
@@ -377,6 +428,7 @@ def download_podcasts(podcast, settingsjson):
                                     podcast,
                                     audioformat,
                                     filedatestring,
+                                    s3=s3,
                                 )
                                 audioformat = ".mp3"
                                 child.attrib["type"] = "audio/mpeg"
@@ -391,6 +443,7 @@ def download_podcasts(podcast, settingsjson):
                                     podcast,
                                     audioformat,
                                     filedatestring,
+                                    s3=s3,
                                 )
                             # Set path of audio file
                             child.attrib["url"] = (
@@ -419,6 +472,7 @@ def download_podcasts(podcast, settingsjson):
                                 podcast,
                                 filetype,
                                 filedatestring,
+                                s3=s3,
                             )
                             # Set path of image
                             child.attrib["href"] = (

@@ -8,6 +8,7 @@ flask = "*"
 requests = "*"
 waitress = "*"
 pydub = "*"
+boto3 = "*"
 
 [dev-packages]
 black = "*"
