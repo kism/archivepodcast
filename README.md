@@ -2,7 +2,7 @@
 
 This is a python project that both
 
-* `archivepodcast.py` Works as a Flask webapp to archive and re-host a podcast from a RSS feed
+- `archivepodcast.py` Works as a Flask webapp to archive and re-host a podcast from a RSS feed
 
 In theory this works in windows however I havent tested it, it ~should be able to handle windows file paths fine.
 
@@ -45,8 +45,8 @@ Most fields can be left blank and will just be filled with the original values, 
 
 `"inetpath"`
 
-* Required for building the xml rss feed.
-* In the case of running the flask version locally it will be `"http://localhost:5000/"`, in a production environment it will be the websites url, ex: `"https://mycoolpodcastarchive.com/"`
+- Required for building the xml rss feed.
+- In the case of running the flask version locally it will be `"http://localhost:5000/"`, in a production environment it will be the websites url, ex: `"https://mycoolpodcastarchive.com/"`
 
 `"webroot"` The folder to download to and serve the podcast files from
 
@@ -70,13 +70,18 @@ In an array called podcast, there is an object per podcast for the options
 
 This will run a webapp on <http://localhost:5000> (configurable) that will:
 
-* Run persistently
-* Host RSS feeds of the podcasts
-* If `"live" : true` in settings json is set it will look for and download new episodes every hour
-* If you send it a SIGHUP command it will reload the configuration, be sure to check the logs to see if it was successful.
+- Run persistently
+- Host RSS feeds of the podcasts
+- If `"live" : true` in settings json is set it will look for and download new episodes every hour
+- If you send it a SIGHUP command it will reload the configuration, be sure to check the logs to see if it was successful.
 
 `python3 archiveselfhost.py --help` will get you all the arguements that you should know about.
 
 `python3 archiveselfhost.py -c settings.json --production`
 
 An example guide on setting it up start to finish, with all features can be found here [here](README_examplesetup.md).
+
+### TODO
+
+- Update readme
+- Upload rss and pages to s3 for a laugh
