@@ -236,6 +236,9 @@ def podcast_loop():
     )  # lol, this is because I want the output to start after the web server comes up
     logging.info("Startup complete, looking for podcast episodes")
 
+    if settingsjson["storagebackend"] == "s3":
+        logging.info("Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow")
+
     while True:
         # We do a broad try/except here since god knows what http errors seem to happen at random
         # If there is something uncaught in the grab podcasts function it will crash the scraping
@@ -317,7 +320,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGHUP, reload_settings)
 
     logging.info("Starting selfhostarchive.py strong, unphased.")
-    logging.info("Self Hosted Podcast Archive running! PID: %s", os.getpid())
+    logging.info("Podcast Archive running! PID: %s", os.getpid())
 
     settingsjson = get_settings(args)
     make_folder_structure()
