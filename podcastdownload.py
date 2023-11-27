@@ -369,7 +369,7 @@ def download_podcasts(podcast, settingsjson, in_s3pathscache):
                 if filetype in url:
                     download_asset(url, title, settingsjson, podcast, filetype, s3=s3)
                     channel.attrib["href"] = (
-                        settingsjson["inetpath"]
+                        settingsjson["cdndomain"]
                         + "content/"
                         + podcast["podcastnameoneword"]
                         + "/"
@@ -405,7 +405,7 @@ def download_podcasts(podcast, settingsjson, in_s3pathscache):
                                 url, title, settingsjson, podcast, filetype, s3=s3
                             )
                             child.text = (
-                                settingsjson["inetpath"]
+                                settingsjson["cdndomain"]
                                 + "content/"
                                 + podcast["podcastnameoneword"]
                                 + "/"
@@ -494,7 +494,7 @@ def download_podcasts(podcast, settingsjson, in_s3pathscache):
                                 )
                             # Set path of audio file
                             child.attrib["url"] = (
-                                settingsjson["inetpath"]
+                                settingsjson["cdndomain"]
                                 + "content/"
                                 + podcast["podcastnameoneword"]
                                 + "/"
@@ -523,7 +523,7 @@ def download_podcasts(podcast, settingsjson, in_s3pathscache):
                             )
                             # Set path of image
                             child.attrib["href"] = (
-                                settingsjson["inetpath"]
+                                settingsjson["cdndomain"]
                                 + "content/"
                                 + podcast["podcastnameoneword"]
                                 + "/"

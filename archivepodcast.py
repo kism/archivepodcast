@@ -50,7 +50,7 @@ def send_content(path):
     """Serve Content"""
     if settingsjson["storagebackend"] == "s3":
         newpath = (
-            settingsjson["s3domain"]
+            settingsjson["cdndomain"]
             + "content/"
             + path.replace(settingsjson["webroot"], "")
         )
