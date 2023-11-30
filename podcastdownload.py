@@ -14,6 +14,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 
 HASPYDUB = False
+s3 = None
 s3pathscache = None
 
 if which("ffmpeg") is not None:
@@ -54,6 +55,7 @@ content_types = {
     ".m4a": "audio/mpeg",
     ".flac": "audio/flac",
 }
+
 
 def check_path_exists(settingsjson, filepath, s3=None):
     """Check the path, s3 or local"""
@@ -202,7 +204,6 @@ def download_asset(
         if extension != ".wav" and settingsjson["storagebackend"] == "s3":
             content_type = content_types[extension]
 
-            # Set the right content type
             s3path = filepath.replace(settingsjson["webroot"], "")
             try:
                 # Upload the file
@@ -255,20 +256,13 @@ def cleanup_file_name(filename):
     return filename
 
 
-def download_podcasts(podcast, settingsjson, in_s3pathscache):
+def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
     """Parse the XML, Download all the assets, this is main"""
     response = None
     global s3pathscache
+    global s3
     s3pathscache = in_s3pathscache
-
-    s3 = None
-    if settingsjson["storagebackend"] == "s3":
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=settingsjson["s3apiurl"],
-            aws_access_key_id=settingsjson["s3accesskeyid"],
-            aws_secret_access_key=settingsjson["s3secretaccesskey"],
-        )
+    s3 = in_s3
 
     # lets fetch the original podcast xml
     request = podcast["podcasturl"]

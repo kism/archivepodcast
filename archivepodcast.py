@@ -10,6 +10,9 @@ import threading
 import logging
 import signal
 
+import boto3
+from botocore.exceptions import NoCredentialsError, ClientError
+
 from flask import (
     Flask,
     render_template,
@@ -34,6 +37,7 @@ from podcastdownload import download_podcasts  # pylint: disable=wrong-import-po
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
 settingsjson = None
+s3 = None
 s3pathscache = []
 
 # --- Why do I program like this, we are done with imports and vars
@@ -183,7 +187,7 @@ def grab_podcasts():
 
         if podcast["live"] is True:  # download all the podcasts
             try:
-                tree = download_podcasts(podcast, settingsjson, s3pathscache)
+                tree = download_podcasts(podcast, settingsjson, s3, s3pathscache)
                 # Write xml to disk
                 tree.write(
                     rssfilepath,
@@ -237,7 +241,9 @@ def podcast_loop():
     logging.info("Startup complete, looking for podcast episodes")
 
     if settingsjson["storagebackend"] == "s3":
-        logging.info("Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow")
+        logging.info(
+            "Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow"
+        )
 
     while True:
         # We do a broad try/except here since god knows what http errors seem to happen at random
@@ -324,6 +330,14 @@ if __name__ == "__main__":
 
     settingsjson = get_settings(args)
     make_folder_structure()
+
+    if settingsjson["storagebackend"] == "s3":
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=settingsjson["s3apiurl"],
+            aws_access_key_id=settingsjson["s3accesskeyid"],
+            aws_secret_access_key=settingsjson["s3secretaccesskey"],
+        )
 
     try:
         main()
