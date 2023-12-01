@@ -64,9 +64,6 @@ def send_content(path):
             + path.replace(settingsjson["webroot"], "")
         )
         response = redirect(newpath, code=302)
-        response.headers[
-            "Cache-Control"
-        ] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
         response = send_from_directory(settingsjson["webroot"] + "/content", path)
 
