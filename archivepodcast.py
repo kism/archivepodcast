@@ -337,8 +337,7 @@ def upload_static():
         rootwebpage.write(rendered_output)
 
     if settingsjson["storagebackend"] == "s3":
-        logging.info("Uploading static pages to s3")
-
+        logging.info("Uploading static pages to s3 in the background")
         try:
             for item in [
                 "/clipboard.js",
@@ -360,6 +359,8 @@ def upload_static():
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging.error("Unhandled s3 Error: %s", exc)
+
+    logging.info("Done uploading static pages to s3")
 
 
 def main():
