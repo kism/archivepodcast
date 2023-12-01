@@ -85,6 +85,8 @@ def check_path_exists(settingsjson, filepath, s3=None):
                     )
                 else:
                     logging.error("s3 check file exists errored out?")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logging.error("Unhandled s3 Error: %s", exc)
 
         else:
             logging.debug("s3 path %s exists in cache, skipping", s3filepath)
@@ -217,8 +219,8 @@ def download_asset(
                 os.remove(filepath)
             except FileNotFoundError:
                 logging.error("Could not upload to s3, the source file was not found")
-            except NoCredentialsError:
-                logging.error("s3 Credentials not available")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logging.error("Unhandled s3 Error: %s", exc)
 
     else:
         logging.debug("Already downloaded: " + title + extension)

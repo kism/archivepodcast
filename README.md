@@ -84,7 +84,5 @@ An example guide on setting it up start to finish, with all features can be foun
 ### TODO
 
 - Update readme
-- Upload rss and pages to s3 for a laugh
 - Have some logic for the 404 page when using s3 as a backend
-- Cache-Control: max-age=10800
 

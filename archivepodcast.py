@@ -11,7 +11,10 @@ import logging
 import signal
 
 import boto3
-from botocore.exceptions import NoCredentialsError, ClientError
+
+# from botocore.exceptions import NoCredentialsError, ClientError
+
+from jinja2 import Environment, FileSystemLoader
 
 from flask import (
     Flask,
@@ -52,17 +55,22 @@ def home():
 @app.route("/content/<path:path>")
 def send_content(path):
     """Serve Content"""
+    response = None
+
     if settingsjson["storagebackend"] == "s3":
         newpath = (
             settingsjson["cdndomain"]
             + "content/"
             + path.replace(settingsjson["webroot"], "")
         )
-        print(newpath)
-        return redirect(newpath, code=307)
+        response = redirect(newpath, code=302)
+        response.headers[
+            "Cache-Control"
+        ] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
-        print("sending from local")
-        return send_from_directory(settingsjson["webroot"] + "/content", path)
+        response = send_from_directory(settingsjson["webroot"] + "/content", path)
+
+    return response
 
 
 @app.errorhandler(404)
@@ -181,7 +189,13 @@ def grab_podcasts():
     """Loop through defined podcasts, download and store the xml"""
     for podcast in settingsjson["podcast"]:
         tree = None
+        previousfeed = ""
         logging.info("Processing settings entry: %s", podcast["podcastnewname"])
+
+        try:  # If the var exists, we set it
+            previousfeed = PODCASTXML[podcast["podcastnameoneword"]]
+        except KeyError:
+            pass
 
         rssfilepath = settingsjson["webroot"] + "rss/" + podcast["podcastnameoneword"]
 
@@ -229,6 +243,24 @@ def grab_podcasts():
                 settingsjson["inetpath"],
                 podcast["podcastnameoneword"],
             )
+
+            # Upload to s3 if we are in s3 mode
+            if (
+                settingsjson["storagebackend"] == "s3"
+                and previousfeed != PODCASTXML[podcast["podcastnameoneword"]]
+            ):
+                try:
+                    # Upload the file
+                    s3.put_object(
+                        Body=PODCASTXML[podcast["podcastnameoneword"]],
+                        Bucket=settingsjson["s3bucket"],
+                        Key="rss/" + podcast["podcastnameoneword"],
+                        ContentType="application/rss+xml",
+                    )
+                    logging.info("Uploaded feed to s3")
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logging.error("Unhandled s3 Error: %s", exc)
+
         else:
             logging.error("Unable to host podcast, something is wrong")
 
@@ -253,7 +285,7 @@ def podcast_loop():
             grab_podcasts()
         # pylint: disable=broad-exception-caught
         except Exception as exc:
-            logging.error(str(exc))
+            logging.error("Error that broke grab_podcasts(): %s", str(exc))
 
         # Calculate time until next run
         now = datetime.datetime.now()
@@ -294,6 +326,41 @@ def reload_settings(signalNumber, frame):
 
 def main():
     """Main, globals have been defined"""
+
+    # Render backup of html
+    env = Environment(loader=FileSystemLoader("."))
+    template = env.get_template("templates/home.j2")
+    rendered_output = template.render(settingsjson=settingsjson)
+
+    with open(
+        settingsjson["webroot"] + os.sep + "index.html", "w", encoding="utf-8"
+    ) as rootwebpage:
+        rootwebpage.write(rendered_output)
+
+    if settingsjson["storagebackend"] == "s3":
+        logging.info("Uploading static pages to s3")
+
+        try:
+            for item in [
+                "/clipboard.js",
+                "/favicon.ico",
+                "/podcasto.css",
+                "/fonts/fira-code-v12-latin-600.woff2",
+                "/fonts/fira-code-v12-latin-700.woff2",
+                "/fonts/noto-sans-display-v10-latin-500.woff2",
+            ]:
+                s3.upload_file(
+                    "static" + item, settingsjson["s3bucket"], "static" + item
+                )
+
+            s3.put_object(
+                Body=rendered_output,
+                Bucket=settingsjson["s3bucket"],
+                Key="index.html",
+                ContentType="text/html",
+            )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logging.error("Unhandled s3 Error: %s", exc)
 
     # Start Thread
     thread = threading.Thread(target=podcast_loop, daemon=True)
