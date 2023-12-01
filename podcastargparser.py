@@ -2,6 +2,7 @@
 
 import argparse
 
+
 def create_arg_parser():
     """Create an arg parser object"""
     parser = argparse.ArgumentParser(

@@ -2,6 +2,7 @@
 
 import logging
 import json
+
 # import platform
 import os
 
@@ -32,7 +33,8 @@ DEFAULTJSON = """
 }
 """
 
-VALIDSTORAGEBACKENDS = ['local','s3']
+VALIDSTORAGEBACKENDS = ["local", "s3"]
+
 
 def get_settings(args):
     """Load settings from settings.json"""
@@ -90,9 +92,13 @@ def get_settings(args):
         logging.error(err)
         raise KeyError(err) from exc
 
-    if settingsjson['storagebackend'] not in VALIDSTORAGEBACKENDS:
+    if settingsjson["storagebackend"] not in VALIDSTORAGEBACKENDS:
         settingserror = True
-        logging.error("storagebackend selected %s not in %s", settingsjson['storagebackend'],str(VALIDSTORAGEBACKENDS))
+        logging.error(
+            "storagebackend selected %s not in %s",
+            settingsjson["storagebackend"],
+            str(VALIDSTORAGEBACKENDS),
+        )
 
     try:
         for idx, podcast in enumerate(settingsjson["podcast"]):
@@ -128,12 +134,11 @@ def get_settings(args):
         logging.error(err)
         raise ValueError(str(err))
 
-
     # Help the user a bit if they make innocent mistakes
-    if settingsjson['inetpath'][-1] != '/':
-        settingsjson['inetpath'] += '/'
+    if settingsjson["inetpath"][-1] != "/":
+        settingsjson["inetpath"] += "/"
 
-    if settingsjson['webroot'][-1] != os.sep:
-        settingsjson['webroot'] += os.sep
+    if settingsjson["webroot"][-1] != os.sep:
+        settingsjson["webroot"] += os.sep
 
     return settingsjson

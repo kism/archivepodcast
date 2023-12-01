@@ -324,9 +324,8 @@ def reload_settings(signalNumber, frame):
     logging.info("Finished adhoc config reload")
 
 
-def main():
-    """Main, globals have been defined"""
-
+def upload_static():
+    """Function to upload static to s3 and copy index.html"""
     # Render backup of html
     env = Environment(loader=FileSystemLoader("."))
     template = env.get_template("templates/home.j2")
@@ -362,8 +361,16 @@ def main():
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging.error("Unhandled s3 Error: %s", exc)
 
-    # Start Thread
+
+def main():
+    """Main, globals have been defined"""
+
+    # Start thread: podcast backup loop
     thread = threading.Thread(target=podcast_loop, daemon=True)
+    thread.start()
+
+    # Start thread: upload static (wastes time otherwise, doesn't affect anything)
+    thread = threading.Thread(target=upload_static, daemon=True)
     thread.start()
 
     # Finish Creating App
