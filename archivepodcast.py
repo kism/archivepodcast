@@ -52,7 +52,7 @@ def home():
     return render_template("home.j2", settingsjson=settingsjson)
 
 @app.route("/index.html")
-def home():
+def home_indexhtml():
     """Flask Home, s3 backup compatible"""
     # This ensures that if you transparently redirect / to /index.html
     # for using in cloudflare r2 storage it will work
