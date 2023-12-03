@@ -159,7 +159,13 @@ def handle_wav(
 
             logging.error("Cannot convert wav to mp3!")
 
-    newlength = os.stat(mp3filepath).st_size
+
+    if settingsjson["storagebackend"] == "s3":
+        s3filepath = mp3filepath.replace(settingsjson["webroot"], "")
+        response = s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
+        newlength = response['ContentLength']
+    else:
+        newlength = os.stat(mp3filepath).st_size
 
     return newlength
 
