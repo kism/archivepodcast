@@ -69,7 +69,7 @@ def check_path_exists(settingsjson, filepath, s3=None):
                 # Head object to check if file exists
                 s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
                 logging.debug(
-                    "File %s exists in the S3 bucket %s",
+                    "File %s exists in the s3 bucket %s",
                     s3filepath,
                     settingsjson["s3bucket"],
                 )
@@ -79,7 +79,7 @@ def check_path_exists(settingsjson, filepath, s3=None):
             except ClientError as e:
                 if e.response["Error"]["Code"] == "404":
                     logging.debug(
-                        "File %s does not exist in the S3 bucket %s",
+                        "File %s does not exist in the s3 bucket %s",
                         s3filepath,
                         settingsjson["s3bucket"],
                     )
