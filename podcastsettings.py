@@ -38,8 +38,6 @@ VALIDSTORAGEBACKENDS = ["local", "s3"]
 
 def get_settings(args):
     """Load settings from settings.json"""
-    logging.info("Loading settings file")
-
     settingserror = False
     settingsjson = None
     settingspath = ""
@@ -50,7 +48,7 @@ def get_settings(args):
     else:
         settingspath = "settings.json"
 
-    logging.info("Path: %s", str(settingspath))
+    logging.info("Settings path: %s", str(settingspath))
 
     try:
         settingsjsonfile = open(settingspath, "r", encoding="utf-8")
