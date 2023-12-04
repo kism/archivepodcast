@@ -365,11 +365,9 @@ def upload_static():
                 Key="index.html",
                 ContentType="text/html",
             )
+            logging.info("Done uploading static pages to s3")
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging.error("Unhandled s3 Error: %s", exc)
-
-    logging.info("Done uploading static pages to s3")
-
 
 def main():
     """Main, globals have been defined"""
