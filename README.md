@@ -87,4 +87,3 @@ An example guide on setting it up start to finish, with all features can be foun
 - Have some logic for the 404 page when using s3 as a backend
 - Add emoji to logging
 - Copy robots.txt to s3
-- uploading to s3 message
