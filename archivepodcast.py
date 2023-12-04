@@ -196,7 +196,7 @@ def grab_podcasts():
     for podcast in settingsjson["podcast"]:
         tree = None
         previousfeed = ""
-        logging.info("Processing settings entry: %s", podcast["podcastnewname"])
+        logging.info("📜 Processing settings entry: %s", podcast["podcastnewname"])
 
         try:  # If the var exists, we set it
             previousfeed = PODCASTXML[podcast["podcastnameoneword"]]
@@ -303,7 +303,7 @@ def podcast_loop():
 
         logging.info("Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
         time.sleep(seconds_until_next_run)
-        logging.info("Waking up, looking for new episodes")
+        logging.info("🌄 Waking up, looking for new episodes")
 
 
 def reload_settings(signalNumber, frame):
