@@ -84,6 +84,4 @@ An example guide on setting it up start to finish, with all features can be foun
 ### TODO
 
 - Update readme
-- Fix logic to not upload feeds to s3 every time
-- If cdn url empty?
 - Docker?

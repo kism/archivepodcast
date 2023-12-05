@@ -256,26 +256,10 @@ def grab_podcasts():
                 podcast["podcastnameoneword"],
             )
 
-            # FIXME FIXME TEMP TODO FIXME
-            if previousfeed != "":
-                logging.info("aaa")
-
-                prevfeedlist = previousfeed.splitlines()
-                logging.info(prevfeedlist[0])
-                logging.info(prevfeedlist[1])
-
-                logging.info("bbb")
-
-                newfeedlist = PODCASTXML[podcast["podcastnameoneword"]].splitlines()
-                logging.info(newfeedlist[0])
-                logging.info(newfeedlist[1])
-            else:
-                previousfeed = "a\na\na\na"
-
             # Upload to s3 if we are in s3 mode
             if (
                 settingsjson["storagebackend"] == "s3"
-                and previousfeed.splitlines()[1] != PODCASTXML[podcast["podcastnameoneword"]].splitlines()[1]
+                and previousfeed != PODCASTXML[podcast["podcastnameoneword"]] # This doesn't work when feed has build dates times on it, patreon for one
             ):
                 try:
                     # Upload the file
