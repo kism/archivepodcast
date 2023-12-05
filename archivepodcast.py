@@ -273,7 +273,7 @@ def grab_podcasts():
             # Upload to s3 if we are in s3 mode
             if (
                 settingsjson["storagebackend"] == "s3"
-                and previousfeed != PODCASTXML[podcast["podcastnameoneword"]]
+                and previousfeed.splitlines()[1] != PODCASTXML[podcast["podcastnameoneword"]].splitlines()[1]
             ):
                 try:
                     # Upload the file
