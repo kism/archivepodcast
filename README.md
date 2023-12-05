@@ -87,3 +87,4 @@ An example guide on setting it up start to finish, with all features can be foun
 - Copy robots.txt to s3
 - Fix logic to not upload feeds to s3 every time
 - If cdn url empty?
+- Docker?
