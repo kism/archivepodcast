@@ -263,16 +263,12 @@ def grab_podcasts():
                 prevfeedlist = previousfeed.splitlines()
                 logging.info(prevfeedlist[0])
                 logging.info(prevfeedlist[1])
-                logging.info(prevfeedlist[-2])
-                logging.info(prevfeedlist[-1])
 
                 logging.info("bbb")
 
                 newfeedlist = PODCASTXML[podcast["podcastnameoneword"]].splitlines()
                 logging.info(newfeedlist[0])
                 logging.info(newfeedlist[1])
-                logging.info(newfeedlist[-2])
-                logging.info(newfeedlist[-1])
 
             # Upload to s3 if we are in s3 mode
             if (
