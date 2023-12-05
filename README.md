@@ -84,6 +84,5 @@ An example guide on setting it up start to finish, with all features can be foun
 ### TODO
 
 - Update readme
-- Have some logic for the 404 page when using s3 as a backend
-- Add emoji to logging
 - Copy robots.txt to s3
+- Fix logic to not upload feeds to s3 every time
