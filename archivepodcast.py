@@ -259,8 +259,9 @@ def grab_podcasts():
 
 
             # FIXME FIXME TEMP TODO FIXME
-            output_list = [li for li in difflib.ndiff(previousfeed, PODCASTXML[podcast["podcastnameoneword"]]) if li[0] != ' ']
-            logging.info(output_list)
+            if previousfeed != "":
+                output_list = [li for li in difflib.ndiff(previousfeed, PODCASTXML[podcast["podcastnameoneword"]]) if li[0] != ' ']
+                logging.info(output_list)
 
 
             # Upload to s3 if we are in s3 mode
