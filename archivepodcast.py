@@ -9,6 +9,7 @@ import sys
 import threading
 import logging
 import signal
+import difflib
 
 import boto3
 
@@ -51,6 +52,7 @@ def home():
     """Flask Home"""
     return render_template("home.j2", settingsjson=settingsjson)
 
+
 @app.route("/index.html")
 def home_indexhtml():
     """Flask Home, s3 backup compatible"""
@@ -59,6 +61,7 @@ def home_indexhtml():
     # If the vm goes down you can change the main domain dns to point to r2
     # and everything should work.
     return render_template("home.j2", settingsjson=settingsjson)
+
 
 @app.route("/content/<path:path>")
 def send_content(path):
@@ -72,7 +75,9 @@ def send_content(path):
             + path.replace(settingsjson["webroot"], "")
         )
         response = redirect(newpath, code=302)
-        response.headers['Cache-Control'] = 'public, max-age=10800'  # 10800 seconds = 3 hours
+        response.headers[
+            "Cache-Control"
+        ] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
         response = send_from_directory(settingsjson["webroot"] + "/content", path)
 
@@ -123,7 +128,9 @@ def rss(feed):
                 method="xml",
                 xml_declaration=True,
             )
-            logging.warning("Feed \"%s\" not live, sending cached version from disk",feed)
+            logging.warning(
+                'Feed "%s" not live, sending cached version from disk', feed
+            )
 
         except FileNotFoundError:
             returncode = 404
@@ -250,6 +257,12 @@ def grab_podcasts():
                 podcast["podcastnameoneword"],
             )
 
+
+            # FIXME FIXME TEMP TODO FIXME
+            output_list = [li for li in difflib.ndiff(previousfeed, PODCASTXML[podcast["podcastnameoneword"]]) if li[0] != ' ']
+            logging.info(output_list)
+
+
             # Upload to s3 if we are in s3 mode
             if (
                 settingsjson["storagebackend"] == "s3"
@@ -264,7 +277,7 @@ def grab_podcasts():
                         ContentType="application/rss+xml",
                     )
                     logging.info(
-                        "Uploaded feed \"%s\" to s3", podcast["podcastnameoneword"]
+                        'Uploaded feed "%s" to s3', podcast["podcastnameoneword"]
                     )
                 except Exception as exc:  # pylint: disable=broad-exception-caught
                     logging.error("Unhandled s3 Error: %s", exc)
@@ -365,9 +378,18 @@ def upload_static():
                 Key="index.html",
                 ContentType="text/html",
             )
+
+            s3.put_object(
+                Body="User-Agent: *\nDisallow: /\n",
+                Bucket=settingsjson["s3bucket"],
+                Key="robots.txt",
+                ContentType="text/plain",
+            )
+
             logging.info("Done uploading static pages to s3")
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging.error("Unhandled s3 Error: %s", exc)
+
 
 def main():
     """Main, globals have been defined"""
