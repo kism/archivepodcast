@@ -104,7 +104,7 @@ def handle_wav(
 ):
     """Convert podcasts that have wav episodes :/"""
     newlength = 0
-    spacer = ""
+    spacer = "" # This logic can be removed since wavs will always have a date
     if filedatestring != "":
         spacer = "-"
     wavfilepath = (
@@ -206,10 +206,10 @@ def download_asset(
                 logging.info("HTTP ERROR: %s", str(req.content))
 
         except HTTPError as err:
-            logging.info("Download Failed %s", str(err))
+            logging.error("Download Failed %s", str(err))
 
         # For if we are using s3 as a backend
-        if extension != ".wav" and settingsjson["storagebackend"] == "s3":
+        if extension != ".wav" and settingsjson["storagebackend"] == "s3": # wav logic since this gets called in handlewav
             content_type = content_types[extension]
 
             s3path = filepath.replace(settingsjson["webroot"], "")
@@ -222,7 +222,8 @@ def download_asset(
                     ExtraArgs={"ContentType": content_type},
                 )
                 logging.info("s3 Upload Successful, removing local file")
-                os.remove(filepath)
+                if filedatestring != "": # This means that the cover image is never removed from the filesystem
+                    os.remove(filepath)
             except FileNotFoundError:
                 logging.error("Could not upload to s3, the source file was not found")
             except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -369,7 +370,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
             for filetype in imageformats:
                 if filetype in url:
-                    download_asset(url, title, settingsjson, podcast, filetype, s3=s3)
+                    download_asset(url, title, settingsjson, podcast, filetype, s3=s3) # TODO FIX FOR S3
                     channel.attrib["href"] = (
                         settingsjson["inetpath"]
                         + "content/"
@@ -403,7 +404,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
                     for filetype in imageformats:
                         if filetype in url:
-                            download_asset(
+                            download_asset( # TODO FIX FOR S3
                                 url, title, settingsjson, podcast, filetype, s3=s3
                             )
                             child.text = (
