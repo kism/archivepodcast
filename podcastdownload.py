@@ -61,7 +61,7 @@ def check_path_exists(settingsjson, filepath, s3=None):
     """Check the path, s3 or local"""
     fileexists = False
 
-    if settingsjson["storagebackend"] == "s3":
+    if s3 is not None:
         s3filepath = filepath.replace(settingsjson["webroot"], "")
 
         if s3filepath not in s3pathscache:
@@ -192,21 +192,22 @@ def download_asset(
     if not check_path_exists(
         settingsjson, filepath, s3=s3
     ):  # if the asset hasn't already been downloaded
-        try:
-            logging.debug("Downloading: %s", url)
-            logging.info("Downloading asset to: %s", filepath)
-            headers = {"user-agent": "Mozilla/5.0"}
-            req = requests.get(url, headers=headers, timeout=5)
-
-            if req.status_code == 200:
-                with open(filepath, "wb") as assetfile:
-                    assetfile.write(req.content)
-                    logging.info("Success!")
-            else:
-                logging.info("HTTP ERROR: %s", str(req.content))
-
-        except HTTPError as err:
-            logging.error("Download Failed %s", str(err))
+        if filedatestring != "" and not check_path_exists(settingsjson, filepath, s3=None): # logic to upload replacement art if needed
+            try:
+                logging.debug("Downloading: %s", url)
+                logging.info("Downloading asset to: %s", filepath)
+                headers = {"user-agent": "Mozilla/5.0"}
+                req = requests.get(url, headers=headers, timeout=5)
+    
+                if req.status_code == 200:
+                    with open(filepath, "wb") as assetfile:
+                        assetfile.write(req.content)
+                        logging.info("Success!")
+                else:
+                    logging.info("HTTP ERROR: %s", str(req.content))
+    
+            except HTTPError as err:
+                logging.error("Download Failed %s", str(err))
 
         # For if we are using s3 as a backend
         if extension != ".wav" and settingsjson["storagebackend"] == "s3": # wav logic since this gets called in handlewav
