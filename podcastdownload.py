@@ -223,7 +223,7 @@ def download_asset(
                     ExtraArgs={"ContentType": content_type},
                 )
                 if filedatestring == "": # This means that the cover image is never removed from the filesystem
-                    logging.info("s3 upload successful, not removing podcast title art (this is intended)")
+                    logging.info("s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)")
                 else:
                     logging.info("s3 upload successful, removing local file")
                     os.remove(filepath)
