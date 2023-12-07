@@ -84,5 +84,4 @@ An example guide on setting it up start to finish, with all features can be foun
 ### TODO
 
 - Update readme
-- fix logic with main podcast cover image
 - Docker?
