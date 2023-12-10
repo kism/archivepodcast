@@ -27,6 +27,7 @@ body {
     "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 18px;
   font-weight: 500;
+  max-width: 700px;
   background-color: rgb(26, 26, 26);
   color: rgb(200, 200, 200);
   line-height: 1.5;
