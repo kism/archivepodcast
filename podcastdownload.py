@@ -10,8 +10,9 @@ from datetime import datetime
 from shutil import which  # shockingly this works on windows
 
 import requests
-import boto3
-from botocore.exceptions import NoCredentialsError, ClientError
+
+# import boto3
+# from botocore.exceptions import NoCredentialsError, ClientError
 
 HASPYDUB = False
 s3 = None
@@ -159,11 +160,10 @@ def handle_wav(
 
             logging.error("Cannot convert wav to mp3!")
 
-
     if settingsjson["storagebackend"] == "s3":
         s3filepath = mp3filepath.replace(settingsjson["webroot"], "")
         response = s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
-        newlength = response['ContentLength']
+        newlength = response["ContentLength"]
     else:
         newlength = os.stat(mp3filepath).st_size
 

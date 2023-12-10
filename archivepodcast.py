@@ -11,11 +11,7 @@ import logging
 import signal
 
 import boto3
-
-# from botocore.exceptions import NoCredentialsError, ClientError
-
 from jinja2 import Environment, FileSystemLoader
-
 from flask import (
     Flask,
     render_template,
@@ -259,7 +255,10 @@ def grab_podcasts():
             # Upload to s3 if we are in s3 mode
             if (
                 settingsjson["storagebackend"] == "s3"
-                and previousfeed != PODCASTXML[podcast["podcastnameoneword"]] # This doesn't work when feed has build dates times on it, patreon for one
+                and previousfeed
+                != PODCASTXML[
+                    podcast["podcastnameoneword"]
+                ]  # This doesn't work when feed has build dates times on it, patreon for one
             ):
                 try:
                     # Upload the file

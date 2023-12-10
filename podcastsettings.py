@@ -34,6 +34,7 @@ DEFAULTJSON = """
 """
 
 VALIDSTORAGEBACKENDS = ["local", "s3"]
+S3SETTINGS = ["cdndomain", "s3apiurl", "s3bucket", "s3accesskeyid", "s3secretaccesskey"]
 
 
 def get_settings(args):
@@ -77,8 +78,14 @@ def get_settings(args):
         # Iterate through the first level default settings json in this file,
         # if any of the keys arent in settings.json throw an error
         for setting in json.loads(DEFAULTJSON).keys():
-            if settingsjson[setting] == "":
-                err = ("Setting: %s not set", setting)
+            if settingsjson[setting] == "" and (
+                (
+                    settingsjson["storagebackend"] == "local"
+                    and setting not in S3SETTINGS
+                )
+                or (settingsjson["storagebackend"] == "s3")
+            ):
+                err = "Setting: " + setting + " not set"
                 logging.error(err)
                 raise ValueError(err)
     except KeyError as exc:
