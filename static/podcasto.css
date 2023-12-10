@@ -1,33 +1,30 @@
 /* noto-sans-display-500 - latin */
 @font-face {
-  font-family: 'Noto Sans Display';
+  font-family: "Noto Sans Display";
   font-style: normal;
   font-weight: 500;
-  src: local(''),
-       url('fonts/noto-sans-display-v10-latin-500.woff2') format('woff2'); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""),
+    url("fonts/noto-sans-display-v10-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 /* fira-code-600 - latin */
 @font-face {
-  font-family: 'Fira Code';
+  font-family: "Fira Code";
   font-style: normal;
   font-weight: 600;
-  src: local(''),
-       url('fonts/fira-code-v12-latin-600.woff2') format('woff2'); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("fonts/fira-code-v12-latin-600.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 /* fira-code-700 - latin */
 @font-face {
-  font-family: 'Fira Code';
+  font-family: "Fira Code";
   font-style: normal;
   font-weight: 700;
-  src: local(''),
-       url('fonts/fira-code-v12-latin-700.woff2') format('woff2'); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("fonts/fira-code-v12-latin-700.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 
-
-
 body {
-  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 18px;
   font-weight: 500;
   background-color: rgb(26, 26, 26);
@@ -63,10 +60,9 @@ a:visited {
 }
 
 ::selection {
-    color: rgb(200, 200, 200);
-    background: #008080;
-  }
-
+  color: rgb(200, 200, 200);
+  background: #008080;
+}
 
 /* BUTTON */
 .button,
@@ -91,7 +87,7 @@ input[type="button"] {
   border: 1px solid #bbb;
   cursor: pointer;
   box-sizing: border-box;
-  min-width: 100px
+  min-width: 100px;
 }
 .button:hover,
 button:hover,
@@ -128,8 +124,8 @@ select {
   box-shadow: none;
   box-sizing: border-box;
   width: 250px;
-  margin-top : 3px;
-  margin-bottom : 3px;
+  margin-top: 3px;
+  margin-bottom: 3px;
 }
 /* Removes awkward default styles on some inputs for iOS */
 input[type="email"],

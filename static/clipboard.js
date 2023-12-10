@@ -1,22 +1,22 @@
 function grabtoclipboard(buttonname) {
-    console.log("User clicked: " + buttonname);
-    // Get the text field
-    var copyText = document.getElementById(buttonname);
+  console.log("User clicked: " + buttonname);
+  // Get the text field
+  var copyText = document.getElementById(buttonname);
 
-    // Select the text field
-    copyText.select();
-    copyText.setSelectionRange(0, 99999); // For mobile devices
+  // Select the text field
+  copyText.select();
+  copyText.setSelectionRange(0, 99999); // For mobile devices
 
-     // Copy the text inside the text field
-    navigator.clipboard.writeText(copyText.value);
+  // Copy the text inside the text field
+  navigator.clipboard.writeText(copyText.value);
 
-    // Alert the copied text
-    console.log("Copied the text: " + copyText.value + " to clipboard");
+  // Alert the copied text
+  console.log("Copied the text: " + copyText.value + " to clipboard");
 
-    document.getElementById(buttonname + "_button").innerHTML = "Copied!"
-    setTimeout(resettext, 2000, buttonname)
-  }
+  document.getElementById(buttonname + "_button").innerHTML = "Copied!";
+  setTimeout(resettext, 2000, buttonname);
+}
 
 function resettext(buttonname) {
-    document.getElementById(buttonname + "_button").innerHTML = "Copy URL"
+  document.getElementById(buttonname + "_button").innerHTML = "Copy URL";
 }
