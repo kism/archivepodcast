@@ -12,7 +12,7 @@ from shutil import which  # shockingly this works on windows
 import requests
 
 # import boto3
-# from botocore.exceptions import NoCredentialsError, ClientError
+from botocore.exceptions import ClientError
 
 HASPYDUB = False
 s3 = None
