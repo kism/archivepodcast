@@ -1,5 +1,5 @@
 
-# Example install
+# Example install using local (disk) storage
 
 Example install in /opt, with systemd, logging, log rotation, nginx reverse proxy
 
@@ -18,7 +18,7 @@ chown -R podcasto:podcasto /opt/archivepodcast
 
 ## Create Config
 
-Run the program once manually to create the default settings.json and then fill it in.
+Run the program once manually to create the default settings.json and then fill it in. You can ignore the cdn address and s3 settings.
 
 ```bash
 cd /opt/archivepodcast

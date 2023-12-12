@@ -79,9 +79,8 @@ This will run a webapp on <http://localhost:5000> (configurable) that will:
 
 `python3 archiveselfhost.py -c settings.json --production`
 
-An example guide on setting it up start to finish, with all features can be found here [here](README_examplesetup.md).
+An example guide on setting it up start to finish, with all features and saving episodes do disk can be found here [here](README_local.md). There are others for if you want to use s3 to host assets, or even host the whole thing on s3.
 
 ### TODO
 
-- Update readme
 - Docker?
