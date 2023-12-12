@@ -11,8 +11,7 @@ from shutil import which  # shockingly this works on windows
 
 import requests
 
-# import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError # No need to import boto3 since the object just gets passed in
 
 HASPYDUB = False
 s3 = None
