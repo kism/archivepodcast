@@ -23,7 +23,7 @@ def setup_logger(args):
     )
 
     if args.production:
-        logging.getLogger("waitress").setLevel(logging.WARNING)
+        logging.getLogger("waitress").setLevel(logging.INFO)
 
     logging.getLogger("botocore").setLevel(logging.WARNING)
     logging.getLogger("s3transfer").setLevel(logging.WARNING)

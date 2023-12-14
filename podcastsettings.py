@@ -143,7 +143,7 @@ def get_settings(args):
     if settingsjson["inetpath"][-1] != "/":
         settingsjson["inetpath"] += "/"
 
-    if settingsjson["cdndomain"][-1] != "/":
+    if settingsjson["cdndomain"] != "" and settingsjson["cdndomain"][-1] != "/":
         settingsjson["cdndomain"] += "/"
 
     if settingsjson["webroot"][-1] != os.sep:
