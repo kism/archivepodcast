@@ -193,6 +193,21 @@ def make_folder_structure():
             raise PermissionError(err) from exc
 
 
+def get_s3_credential():
+    """Function to get a s3 credential if one is needed"""
+    # So this is called at the start of the separate threads to get a s3 cred
+    # if needed, it is done outside of the main thread to avoid waiting for the
+    # s3 credential when starting up the http server. Saves 1.4 seconds~
+    global s3
+    if settingsjson["storagebackend"] == "s3" and not s3:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=settingsjson["s3apiurl"],
+            aws_access_key_id=settingsjson["s3accesskeyid"],
+            aws_secret_access_key=settingsjson["s3secretaccesskey"],
+        )
+
+
 def grab_podcasts():
     """Loop through defined podcasts, download and store the xml"""
     for podcast in settingsjson["podcast"]:
@@ -280,6 +295,7 @@ def grab_podcasts():
 
 def podcast_loop():
     """Main loop, grabs new podcasts every hour"""
+    get_s3_credential()
     time.sleep(
         3
     )  # lol, this is because I want the output to start after the web server comes up
@@ -339,6 +355,7 @@ def reload_settings(signalNumber, frame):
 
 def upload_static():
     """Function to upload static to s3 and copy index.html"""
+    get_s3_credential()
     # Render backup of html
     env = Environment(loader=FileSystemLoader("."))
     template = env.get_template("templates/home.j2")
@@ -425,14 +442,6 @@ if __name__ == "__main__":
 
     settingsjson = get_settings(args)
     make_folder_structure()
-
-    if settingsjson["storagebackend"] == "s3":
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=settingsjson["s3apiurl"],
-            aws_access_key_id=settingsjson["s3accesskeyid"],
-            aws_secret_access_key=settingsjson["s3secretaccesskey"],
-        )
 
     try:
         main()
