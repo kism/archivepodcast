@@ -285,7 +285,7 @@ def grab_podcasts():
                         ContentType="application/rss+xml",
                     )
                     logging.info(
-                        '⛅ Uploaded feed "%s" to s3', podcast["podcastnameoneword"]
+                        '📄⛅ Uploaded feed "%s" to s3', podcast["podcastnameoneword"]
                     )
                 except Exception as exc:  # pylint: disable=broad-exception-caught
                     logging.error("⛅❌ Unhandled s3 Error: %s", exc)
