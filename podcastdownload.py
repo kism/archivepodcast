@@ -222,14 +222,14 @@ def download_asset(
                     ExtraArgs={"ContentType": content_type},
                 )
                 if filedatestring == "": # This means that the cover image is never removed from the filesystem
-                    logging.info("s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)")
+                    logging.info("☁ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)")
                 else:
-                    logging.info("s3 upload successful, removing local file")
+                    logging.info("☁ s3 upload successful, removing local file")
                     os.remove(filepath)
             except FileNotFoundError:
-                logging.error("Could not upload to s3, the source file was not found")
+                logging.error("☁ Could not upload to s3, the source file was not found")
             except Exception as exc:  # pylint: disable=broad-exception-caught
-                logging.error("Unhandled s3 Error: %s", exc)
+                logging.error("☁ Unhandled s3 Error: %s", exc)
 
     else:
         logging.debug("Already downloaded: " + title + extension)
