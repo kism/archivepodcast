@@ -324,7 +324,7 @@ def podcast_loop():
             seconds_until_next_run -= 3600
 
         logging.info(
-            "🛌  Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)
+            "🛌 Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)
         ))
         time.sleep(seconds_until_next_run)
         logging.info("🌄 Waking up, looking for new episodes")
