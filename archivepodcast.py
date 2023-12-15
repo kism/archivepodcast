@@ -206,6 +206,7 @@ def get_s3_credential():
             aws_access_key_id=settingsjson["s3accesskeyid"],
             aws_secret_access_key=settingsjson["s3secretaccesskey"],
         )
+        logging.info("Authenticated s3")
 
 
 def grab_podcasts():
@@ -295,10 +296,10 @@ def grab_podcasts():
 
 def podcast_loop():
     """Main loop, grabs new podcasts every hour"""
-    get_s3_credential()
     time.sleep(
         3
     )  # lol, this is because I want the output to start after the web server comes up
+    get_s3_credential()
     logging.info("Startup complete, looking for podcast episodes")
 
     if settingsjson["storagebackend"] == "s3":
