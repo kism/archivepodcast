@@ -49,13 +49,13 @@ def get_settings(args):
     else:
         settingspath = "settings.json"
 
-    logging.info("Settings path: %s", str(settingspath))
+    logging.info("🙋 Settings path: %s", str(settingspath))
 
     try:
         settingsjsonfile = open(settingspath, "r", encoding="utf-8")
     except FileNotFoundError as exc:  # If no settings.json, create it
         err = (
-            "Settings json doesnt exist at: %s. Creating empty config, please fill it out.",
+            "❌ Settings json doesnt exist at: %s. Creating empty config, please fill it out.",
             settingspath,
         )
         logging.error(err)
@@ -68,7 +68,7 @@ def get_settings(args):
     try:
         settingsjson = json.loads(settingsjsonfile.read())
     except ValueError as exc:
-        err = "Malformed json in settings.json, check the syntax"
+        err = "❌ Malformed json in settings.json, check the syntax"
         logging.error(err)
         raise ValueError(err) from exc
 
@@ -100,7 +100,7 @@ def get_settings(args):
     if settingsjson["storagebackend"] not in VALIDSTORAGEBACKENDS:
         settingserror = True
         logging.error(
-            "storagebackend selected %s not in %s",
+            "❌ storagebackend selected %s not in %s",
             settingsjson["storagebackend"],
             str(VALIDSTORAGEBACKENDS),
         )
@@ -111,24 +111,24 @@ def get_settings(args):
             try:
                 if podcast["podcasturl"] == "" and podcast["live"] is False:
                     logging.error(
-                        '"podcasturl"         not defined in podcast entry %s',
+                        '❌ "podcasturl"         not defined in podcast entry %s',
                         str(idx + 1),
                     )
                     settingserror = True
                 if podcast["podcastnameoneword"] == "":
                     logging.error(
-                        '"podcastnameoneword" not defined in podcast entry %s',
+                        '❌ "podcastnameoneword" not defined in podcast entry %s',
                         str(idx + 1),
                     )
                     settingserror = True
                 if podcast["live"] == "":  # is this logic cooked?
                     logging.error(
-                        '"live" not defined in podcast entry %s', str(idx + 1)
+                        '❌ "live" not defined in podcast entry %s', str(idx + 1)
                     )
                     settingserror = True
             except ValueError:
                 logging.error(
-                    "Issue with podcast entry in settings json: %s", str(podcast)
+                    "❌ Issue with podcast entry in settings json: %s", str(podcast)
                 )
                 settingserror = True
     except KeyError:
