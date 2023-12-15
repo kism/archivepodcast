@@ -263,7 +263,7 @@ def grab_podcasts():
                 }
             )
             logging.info(
-                "Hosted: %srss/%s",
+                "📄 Hosted: %srss/%s",
                 settingsjson["inetpath"],
                 podcast["podcastnameoneword"],
             )
