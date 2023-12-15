@@ -241,11 +241,11 @@ def grab_podcasts():
                 )
                 tree = None
         else:
-            logging.info('"live": false, in settings so not fetching new episodes')
+            logging.info('📄 "live": false, in settings so not fetching new episodes')
 
         # Serving a podcast that we can't currently download?, load it from file
         if tree is None:
-            logging.info("Loading rss from file: %s", rssfilepath)
+            logging.info("📄 Loading rss from file: %s", rssfilepath)
             try:
                 tree = Et.parse(rssfilepath)
             except FileNotFoundError:
