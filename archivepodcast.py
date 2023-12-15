@@ -351,6 +351,8 @@ def reload_settings(signalNumber, frame):
         logging.info("Loaded config successfully!")
         grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
 
+    upload_static() # Ensure the static files are updated (inetaddress change)
+    
     logging.info("Finished adhoc config reload")
 
 
@@ -368,7 +370,7 @@ def upload_static():
         rootwebpage.write(rendered_output)
 
     if settingsjson["storagebackend"] == "s3":
-        logging.info("Uploading static pages to s3 in the background")
+        logging.info("☁ Uploading static pages to s3 in the background")
         try:
             for item in [
                 "/clipboard.js",
@@ -396,9 +398,9 @@ def upload_static():
                 ContentType="text/plain",
             )
 
-            logging.info("Done uploading static pages to s3")
+            logging.info("☁ Done uploading static pages to s3")
         except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging.error("Unhandled s3 Error: %s", exc)
+            logging.error("☁ Unhandled s3 Error: %s", exc)
 
 
 def main():
