@@ -17,7 +17,7 @@ HASPYDUB = False
 s3 = None
 s3pathscache = None
 
-if which("ffmpeg") is not None:
+if which("ffmpeg") is not None: 
     try:
         logging.debug("Trying to load pydub w/ffmpeg")
         from pydub import AudioSegment
@@ -151,7 +151,7 @@ def handle_wav(
             logging.info("♻ Removing wav version of %s", title)
             if os.path.exists(wavfilepath):
                 os.remove(wavfilepath)
-            logging.info("Done")
+            logging.info("♻ Done")
 
         else:
             if not HASPYDUB:
