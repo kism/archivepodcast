@@ -84,9 +84,9 @@ def check_path_exists(settingsjson, filepath, s3=None):
                         settingsjson["s3bucket"],
                     )
                 else:
-                    logging.error("s3 check file exists errored out?")
+                    logging.error("⛅❌ s3 check file exists errored out?")
             except Exception as exc:  # pylint: disable=broad-exception-caught
-                logging.error("Unhandled s3 Error: %s", exc)
+                logging.error("⛅❌ Unhandled s3 Error: %s", exc)
 
         else:
             logging.debug("s3 path %s exists in cache, skipping", s3filepath)
@@ -155,9 +155,9 @@ def handle_wav(
 
         else:
             if not HASPYDUB:
-                logging.error("pydub pip package not installed")
+                logging.error("❌ pydub pip package not installed")
 
-            logging.error("Cannot convert wav to mp3!")
+            logging.error("❌ Cannot convert wav to mp3!")
 
     if settingsjson["storagebackend"] == "s3":
         s3filepath = mp3filepath.replace(settingsjson["webroot"], "")
@@ -203,10 +203,10 @@ def download_asset(
                         assetfile.write(req.content)
                         logging.info("Success!")
                 else:
-                    logging.error("HTTP ERROR: %s", str(req.content))
+                    logging.error("❌ HTTP ERROR: %s", str(req.content))
     
             except HTTPError as err:
-                logging.error("Download Failed %s", str(err))
+                logging.error("❌ Download Failed %s", str(err))
 
         # For if we are using s3 as a backend
         if extension != ".wav" and settingsjson["storagebackend"] == "s3": # wav logic since this gets called in handlewav
