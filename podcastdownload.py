@@ -11,13 +11,15 @@ from shutil import which  # shockingly this works on windows
 
 import requests
 
-from botocore.exceptions import ClientError # No need to import boto3 since the object just gets passed in
+from botocore.exceptions import (
+    ClientError,
+)  # No need to import boto3 since the object just gets passed in
 
 HASPYDUB = False
 s3 = None
 s3pathscache = None
 
-if which("ffmpeg") is not None: 
+if which("ffmpeg") is not None:
     try:
         logging.debug("Trying to load pydub w/ffmpeg")
         from pydub import AudioSegment
@@ -104,7 +106,7 @@ def handle_wav(
 ):
     """Convert podcasts that have wav episodes :/"""
     newlength = 0
-    spacer = "" # This logic can be removed since wavs will always have a date
+    spacer = ""  # This logic can be removed since wavs will always have a date
     if filedatestring != "":
         spacer = "-"
     wavfilepath = (
@@ -191,25 +193,29 @@ def download_asset(
     if not check_path_exists(
         settingsjson, filepath, s3=s3
     ):  # if the asset hasn't already been downloaded
-        if filedatestring != "" and not check_path_exists(settingsjson, filepath, s3=None): # logic to upload replacement art if needed
+        if filedatestring != "" and not check_path_exists(
+            settingsjson, filepath, s3=None
+        ):  # logic to upload replacement art if needed
             try:
                 logging.debug("Downloading: %s", url)
                 logging.info("💾 Downloading asset to: %s", filepath)
                 headers = {"user-agent": "Mozilla/5.0"}
                 req = requests.get(url, headers=headers, timeout=5)
-    
+
                 if req.status_code == 200:
                     with open(filepath, "wb") as assetfile:
                         assetfile.write(req.content)
                         logging.info("💾 Success!")
                 else:
                     logging.error("❌ HTTP ERROR: %s", str(req.content))
-    
+
             except HTTPError as err:
                 logging.error("❌ Download Failed %s", str(err))
 
         # For if we are using s3 as a backend
-        if extension != ".wav" and settingsjson["storagebackend"] == "s3": # wav logic since this gets called in handlewav
+        if (
+            extension != ".wav" and settingsjson["storagebackend"] == "s3"
+        ):  # wav logic since this gets called in handlewav
             content_type = content_types[extension]
 
             s3path = filepath.replace(settingsjson["webroot"], "")
@@ -221,13 +227,19 @@ def download_asset(
                     s3path,
                     ExtraArgs={"ContentType": content_type},
                 )
-                if filedatestring == "": # This means that the cover image is never removed from the filesystem
-                    logging.info("⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)")
+                if (
+                    filedatestring == ""
+                ):  # This means that the cover image is never removed from the filesystem
+                    logging.info(
+                        "⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)"
+                    )
                 else:
                     logging.info("⛅ s3 upload successful, removing local file")
                     os.remove(filepath)
             except FileNotFoundError:
-                logging.error("⛅❌ Could not upload to s3, the source file was not found")
+                logging.error(
+                    "⛅❌ Could not upload to s3, the source file was not found"
+                )
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logging.error("⛅❌ Unhandled s3 Error: %s", exc)
 
@@ -372,7 +384,9 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
             for filetype in imageformats:
                 if filetype in url:
-                    download_asset(url, title, settingsjson, podcast, filetype, s3=s3) # TODO FIX FOR S3
+                    download_asset(
+                        url, title, settingsjson, podcast, filetype, s3=s3
+                    )  # TODO FIX FOR S3
                     channel.attrib["href"] = (
                         settingsjson["inetpath"]
                         + "content/"
@@ -406,7 +420,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
                     for filetype in imageformats:
                         if filetype in url:
-                            download_asset( # TODO FIX FOR S3
+                            download_asset(  # TODO FIX FOR S3
                                 url, title, settingsjson, podcast, filetype, s3=s3
                             )
                             child.text = (
