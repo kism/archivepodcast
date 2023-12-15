@@ -281,7 +281,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
     try:
         response = requests.get(request, timeout=5)
     except ValueError:  # NameResolutionError ?
-        logging.info("Real early failure on grabbing the podcast xml, weird")
+        logging.error("❌ Real early failure on grabbing the podcast xml, weird")
         return
 
     if response is not None:
@@ -302,7 +302,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
     # We have the xml
     podcastxml = Et.fromstring(response.content)
-    logging.info("Downloaded RSS XML, Processing")
+    logging.info("📄 Downloaded RSS XML, Processing")
     logging.debug(str(podcastxml))
 
     xmlfirstchild = podcastxml[0]
@@ -322,7 +322,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
         # Handle Podcast Title, override
         elif channel.tag == "title":
-            logging.info("Podcast title: %s", str(channel.text))
+            logging.info("📄 Podcast title: %s", str(channel.text))
             if podcast["podcastnewname"] == "":
                 podcast["podcastnewname"] = channel.text
             channel.text = podcast["podcastnewname"]
