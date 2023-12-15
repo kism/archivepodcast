@@ -300,7 +300,7 @@ def podcast_loop():
         3
     )  # lol, this is because I want the output to start after the web server comes up
     get_s3_credential()
-    logging.info("🙋‍  Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
+    logging.info("🙋‍ Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
 
     if settingsjson["storagebackend"] == "s3":
         logging.info(
@@ -323,7 +323,7 @@ def podcast_loop():
         if seconds_until_next_run > 3600:
             seconds_until_next_run -= 3600
 
-        logging.info("🛌 Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
+        logging.info("🛏  Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
         time.sleep(seconds_until_next_run)
         logging.info("🌄 Waking up, looking for new episodes")
 
@@ -333,7 +333,7 @@ def reload_settings(signalNumber, frame):
     global settingsjson
     settingserror = False
     logging.debug("Handle Sighup %s %s", signalNumber, frame)
-    logging.info("🙋‍  Got SIGHUP, Reloading Config")
+    logging.info("🙋‍ Got SIGHUP, Reloading Config")
 
     try:
         settingsjson = get_settings(args)
@@ -348,12 +348,12 @@ def reload_settings(signalNumber, frame):
         logging.error("❌ Failure creating new folder structure")
 
     if not settingserror:
-        logging.info("🙋‍  Loaded config successfully!")
+        logging.info("🙋‍ Loaded config successfully!")
         grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
 
-    upload_static() # Ensure the static files are updated (inetaddress change)
-    
-    logging.info("🙋‍  Finished adhoc config reload")
+    upload_static()  # Ensure the static files are updated (inetaddress change)
+
+    logging.info("🙋‍ Finished adhoc config reload")
 
 
 def upload_static():
@@ -422,13 +422,13 @@ def main():
 
     app.register_blueprint(blueprint)
 
-    logging.info("🙋‍  Webapp address: http://%s:%s", args.webaddress, args.webport)
+    logging.info("🙋‍ Webapp address: http://%s:%s", args.webaddress, args.webport)
     if args.production:
         # Maybe use os.cpu_count() ?
-        logging.info("🙋‍  Starting webapp in production mode (waitress)")
+        logging.info("🙋‍ Starting webapp in production mode (waitress)")
         serve(app, host=args.webaddress, port=args.webport, threads=16)
     else:  # Run with the flask debug service
-        logging.info("🙋‍  Starting webapp in debug mode (werkzeug)")
+        logging.info("🙋‍ Starting webapp in debug mode (werkzeug)")
         app.run(host=args.webaddress, port=args.webport)
 
     print("\nWebapp Stopped\nPress ^C (again) to exit")
@@ -440,8 +440,8 @@ def main():
 if __name__ == "__main__":
     signal.signal(signal.SIGHUP, reload_settings)
 
-    logging.info("🙋‍  Starting selfhostarchive.py strong, unphased.")
-    logging.info("🙋‍  Podcast Archive running! PID: %s", os.getpid())
+    logging.info("🙋‍ Starting selfhostarchive.py strong, unphased.")
+    logging.info("🙋‍ Podcast Archive running! PID: %s", os.getpid())
 
     settingsjson = get_settings(args)
     make_folder_structure()
