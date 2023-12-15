@@ -124,7 +124,7 @@ def rss(feed):
                 xml_declaration=True,
             )
             logging.warning(
-                'Feed "%s" not live, sending cached version from disk', feed
+                '⚠ Feed "%s" not live, sending cached version from disk', feed
             )
 
         except FileNotFoundError:
@@ -188,7 +188,7 @@ def make_folder_structure():
             err = "❌ You do not have permission to create folder: " + folder
             logging.error(err)
             logging.error(
-                "Run this this script as a different user probably. ex: nginx, apache, root"
+                "❌ Run this this script as a different user probably, or check permissions of the webroot."
             )
             raise PermissionError(err) from exc
 
@@ -235,9 +235,9 @@ def grab_podcasts():
                 logging.debug("Wrote rss to disk: %s", rssfilepath)
 
             except Exception as exc:  # pylint: disable=broad-exception-caught
-                logging.error("❌" + str(exc))
+                logging.error("❌ " + str(exc))
                 logging.error(
-                    "RSS XML Download Failure, attempting to host cached version"
+                    "❌ RSS XML Download Failure, attempting to host cached version"
                 )
                 tree = None
         else:
