@@ -45,9 +45,9 @@ def setup_logger(args):
         err = "The user running this does not have access to the file: " + args.logfile
         raise IsADirectoryError(err) from exc
 
-    logging.info("----------")
+    logging.info(" ----------")
     logging.info("🙋 Logger started")
     if invalid_log_level:
         logging.warning(
-            "⚠ Invalid logging level: %s, defaulting to INFO", {args.loglevel}
+            "❗ Invalid logging level: %s, defaulting to INFO", {args.loglevel}
         )
