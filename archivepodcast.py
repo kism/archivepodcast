@@ -300,7 +300,7 @@ def podcast_loop():
         3
     )  # lol, this is because I want the output to start after the web server comes up
     get_s3_credential()
-    logging.info("Startup complete, looking for podcast episodes")
+    logging.info("Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
 
     if settingsjson["storagebackend"] == "s3":
         logging.info(
