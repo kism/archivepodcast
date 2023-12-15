@@ -24,19 +24,19 @@ if which("ffmpeg") is not None:
 
         HASPYDUB = True
     except ImportError:
-        logging.warning("pydub not found")
-        logging.warning("It should have installed if you are using pipenv")
+        logging.warning("⚠ pydub not found")
+        logging.warning("⚠ It should have installed if you are using pipenv")
         logging.warning(
-            "pydub also requires ffmpeg to installed (not a python package)"
+            "⚠ pydub also requires ffmpeg to installed (not a python package)"
         )
 else:
     logging.warning(
-        "Not loading pydub since ffmpeg is not installed on this system (and in the PATH)"
+        "⚠ Not loading pydub since ffmpeg is not installed on this system (and in the PATH)"
     )
 
 if not HASPYDUB:
     logging.warning(
-        "pydub is optional for when a podcast runner is dumb enough to accidently upload a wav. "
+        "⚠ pydub is optional for when a podcast runner is dumb enough to accidently upload a wav. "
         "The script will convert it to a mp3."
     )
 
@@ -142,13 +142,13 @@ def handle_wav(
                 url, title, settingsjson, podcast, extension, filedatestring, s3=s3
             )
 
-            logging.info("Converting episode %s to mp3", title)
+            logging.info("♻ Converting episode %s to mp3", title)
             sound = AudioSegment.from_wav(wavfilepath)
             sound.export(mp3filepath, format="mp3")
-            logging.info("Done")
+            logging.info("♻ Done")
 
             # Remove wav since we are done with it
-            logging.info("Removing wav version of %s", title)
+            logging.info("♻ Removing wav version of %s", title)
             if os.path.exists(wavfilepath):
                 os.remove(wavfilepath)
             logging.info("Done")
@@ -201,7 +201,7 @@ def download_asset(
                 if req.status_code == 200:
                     with open(filepath, "wb") as assetfile:
                         assetfile.write(req.content)
-                        logging.info("Success!")
+                        logging.info("💾 Success!")
                 else:
                     logging.error("❌ HTTP ERROR: %s", str(req.content))
     
