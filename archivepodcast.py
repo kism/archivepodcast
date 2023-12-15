@@ -185,7 +185,7 @@ def make_folder_structure():
         except FileExistsError:
             pass
         except PermissionError as exc:
-            err = "You do not have permission to create folder: " + folder
+            err = "❌ You do not have permission to create folder: " + folder
             logging.error(err)
             logging.error(
                 "Run this this script as a different user probably. ex: nginx, apache, root"
@@ -206,7 +206,7 @@ def get_s3_credential():
             aws_access_key_id=settingsjson["s3accesskeyid"],
             aws_secret_access_key=settingsjson["s3secretaccesskey"],
         )
-        logging.info("Authenticated s3")
+        logging.info("⛅ Authenticated s3")
 
 
 def grab_podcasts():
@@ -235,7 +235,7 @@ def grab_podcasts():
                 logging.debug("Wrote rss to disk: %s", rssfilepath)
 
             except Exception as exc:  # pylint: disable=broad-exception-caught
-                logging.error(str(exc))
+                logging.error("❌" + str(exc))
                 logging.error(
                     "RSS XML Download Failure, attempting to host cached version"
                 )
@@ -249,7 +249,7 @@ def grab_podcasts():
             try:
                 tree = Et.parse(rssfilepath)
             except FileNotFoundError:
-                logging.error("Cannot find rss xml file: %s", rssfilepath)
+                logging.error("❌ Cannot find rss xml file: %s", rssfilepath)
 
         if tree is not None:
             PODCASTXML.update(
@@ -285,13 +285,13 @@ def grab_podcasts():
                         ContentType="application/rss+xml",
                     )
                     logging.info(
-                        'Uploaded feed "%s" to s3', podcast["podcastnameoneword"]
+                        '⛅ Uploaded feed "%s" to s3', podcast["podcastnameoneword"]
                     )
                 except Exception as exc:  # pylint: disable=broad-exception-caught
-                    logging.error("Unhandled s3 Error: %s", exc)
+                    logging.error("⛅❌ Unhandled s3 Error: %s", exc)
 
         else:
-            logging.error("Unable to host podcast, something is wrong")
+            logging.error("❌ Unable to host podcast, something is wrong")
 
 
 def podcast_loop():
@@ -304,7 +304,7 @@ def podcast_loop():
 
     if settingsjson["storagebackend"] == "s3":
         logging.info(
-            "Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow"
+            "⛅ Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow"
         )
 
     while True:
@@ -315,7 +315,7 @@ def podcast_loop():
             grab_podcasts()
         # pylint: disable=broad-exception-caught
         except Exception as exc:
-            logging.error("Error that broke grab_podcasts(): %s", str(exc))
+            logging.error("❌ Error that broke grab_podcasts(): %s", str(exc))
 
         # Calculate time until next run
         now = datetime.datetime.now()
@@ -323,7 +323,7 @@ def podcast_loop():
         if seconds_until_next_run > 3600:
             seconds_until_next_run -= 3600
 
-        logging.info("Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
+        logging.info("🛌 Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
         time.sleep(seconds_until_next_run)
         logging.info("🌄 Waking up, looking for new episodes")
 
@@ -339,13 +339,13 @@ def reload_settings(signalNumber, frame):
         settingsjson = get_settings(args)
     except (FileNotFoundError, ValueError):
         settingserror = True
-        logging.error("Reload failed, keeping old config")
+        logging.error("❌ Reload failed, keeping old config")
 
     try:
         make_folder_structure()
     except PermissionError:
         settingserror = True
-        logging.error("Failure creating new folder structure")
+        logging.error("❌ Failure creating new folder structure")
 
     if not settingserror:
         logging.info("Loaded config successfully!")
@@ -370,7 +370,7 @@ def upload_static():
         rootwebpage.write(rendered_output)
 
     if settingsjson["storagebackend"] == "s3":
-        logging.info("☁ Uploading static pages to s3 in the background")
+        logging.info("⛅ Uploading static pages to s3 in the background")
         try:
             for item in [
                 "/clipboard.js",
@@ -398,9 +398,9 @@ def upload_static():
                 ContentType="text/plain",
             )
 
-            logging.info("☁ Done uploading static pages to s3")
+            logging.info("⛅ Done uploading static pages to s3")
         except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging.error("☁ Unhandled s3 Error: %s", exc)
+            logging.error("⛅❌ Unhandled s3 Error: %s", exc)
 
 
 def main():
