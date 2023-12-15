@@ -194,7 +194,7 @@ def download_asset(
         if filedatestring != "" and not check_path_exists(settingsjson, filepath, s3=None): # logic to upload replacement art if needed
             try:
                 logging.debug("Downloading: %s", url)
-                logging.info("Downloading asset to: %s", filepath)
+                logging.info("💾 Downloading asset to: %s", filepath)
                 headers = {"user-agent": "Mozilla/5.0"}
                 req = requests.get(url, headers=headers, timeout=5)
     
@@ -203,7 +203,7 @@ def download_asset(
                         assetfile.write(req.content)
                         logging.info("Success!")
                 else:
-                    logging.info("HTTP ERROR: %s", str(req.content))
+                    logging.error("HTTP ERROR: %s", str(req.content))
     
             except HTTPError as err:
                 logging.error("Download Failed %s", str(err))
@@ -222,14 +222,14 @@ def download_asset(
                     ExtraArgs={"ContentType": content_type},
                 )
                 if filedatestring == "": # This means that the cover image is never removed from the filesystem
-                    logging.info("☁ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)")
+                    logging.info("⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)")
                 else:
-                    logging.info("☁ s3 upload successful, removing local file")
+                    logging.info("⛅ s3 upload successful, removing local file")
                     os.remove(filepath)
             except FileNotFoundError:
-                logging.error("☁ Could not upload to s3, the source file was not found")
+                logging.error("⛅❌ Could not upload to s3, the source file was not found")
             except Exception as exc:  # pylint: disable=broad-exception-caught
-                logging.error("☁ Unhandled s3 Error: %s", exc)
+                logging.error("⛅❌ Unhandled s3 Error: %s", exc)
 
     else:
         logging.debug("Already downloaded: " + title + extension)
@@ -286,15 +286,15 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
     if response is not None:
         if response.status_code not in (200, 400):
-            logging.info(
-                "Not a great web request, we got: %s", str(response.status_code)
+            logging.error(
+                "❌ Not a great web request, we got: %s", str(response.status_code)
             )
             return
         else:
             logging.debug("We got a pretty real response by the looks of it")
             logging.debug(str(response))
     else:
-        logging.info("Failure, no sign of a response.")
+        logging.error("❌ Failure, no sign of a response.")
         logging.debug(
             "Probably an issue with the code. Or cloudflare ruining our day maybe?"
         )
@@ -417,8 +417,6 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
                                 + title
                                 + filetype
                             )
-                        # else:
-                        #     logging.info("Skipping non image file:" + title)
 
                 else:
                     logging.debug(
