@@ -26,19 +26,19 @@ if which("ffmpeg") is not None:
 
         HASPYDUB = True
     except ImportError:
-        logging.warning("⚠ pydub not found")
-        logging.warning("⚠ It should have installed if you are using pipenv")
+        logging.warning("❗ pydub not found")
+        logging.warning("❗ It should have installed if you are using pipenv")
         logging.warning(
-            "⚠ pydub also requires ffmpeg to installed (not a python package)"
+            "❗ pydub also requires ffmpeg to installed (not a python package)"
         )
 else:
     logging.warning(
-        "⚠ Not loading pydub since ffmpeg is not installed on this system (and in the PATH)"
+        "❗ Not loading pydub since ffmpeg is not installed on this system (and in the PATH)"
     )
 
 if not HASPYDUB:
     logging.warning(
-        "⚠ pydub is optional for when a podcast runner is dumb enough to accidently upload a wav. "
+        "❗ pydub is optional for when a podcast runner is dumb enough to accidently upload a wav. "
         "The script will convert it to a mp3."
     )
 
