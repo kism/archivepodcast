@@ -83,5 +83,4 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ### TODO
 
-- Docker?
-- Restructure so s3 creds don't holdup flask
+- Docker
