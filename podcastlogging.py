@@ -1,6 +1,9 @@
 """Specifically this is just common logging functions for both archive programs"""
+
+# 🐍 Standard Modules
 import logging
 
+# 🌏 Globals
 LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 LOGLEVELSSTRING = ""
 for logginglevel in LOGLEVELS:

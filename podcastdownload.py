@@ -1,6 +1,7 @@
 """Set of functions to download podcasts to a directory"""
 # and return xml that can be served to download them
 
+# 🐍 Standard Modules
 import xml.etree.ElementTree as Et
 import os
 import logging
@@ -9,12 +10,13 @@ from urllib.error import HTTPError
 from datetime import datetime
 from shutil import which  # shockingly this works on windows
 
+# 🐍 Pip
 import requests
-
 from botocore.exceptions import (
     ClientError,
 )  # No need to import boto3 since the object just gets passed in
 
+# 🌏 Globals
 HASPYDUB = False
 s3 = None
 s3pathscache = None

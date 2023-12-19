@@ -1,11 +1,13 @@
 """Get settings for archivepodcast"""
 
+# 🐍 Standard Modules
 import logging
 import json
-
-# import platform
 import os
 
+# 🌏 Globals
+VALIDSTORAGEBACKENDS = ["local", "s3"]
+S3SETTINGS = ["cdndomain", "s3apiurl", "s3bucket", "s3accesskeyid", "s3secretaccesskey"]
 # A default settings config to be written to the file system if none exists at the expected path
 DEFAULTJSON = """
 {
@@ -32,9 +34,6 @@ DEFAULTJSON = """
     ]
 }
 """
-
-VALIDSTORAGEBACKENDS = ["local", "s3"]
-S3SETTINGS = ["cdndomain", "s3apiurl", "s3bucket", "s3accesskeyid", "s3secretaccesskey"]
 
 
 def get_settings(args):

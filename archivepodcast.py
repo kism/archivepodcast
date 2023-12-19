@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Self hosted podcast archiver"""
 
+# 🐍 Standard Modules
 import xml.etree.ElementTree as Et
 import time
 import datetime
@@ -10,6 +11,7 @@ import threading
 import logging
 import signal
 
+# 🐍 Pip
 import boto3
 from jinja2 import Environment, FileSystemLoader
 from flask import (
@@ -22,6 +24,7 @@ from flask import (
 )
 from waitress import serve
 
+# 🐍 Local, archivepodcast
 from podcastsettings import get_settings
 from podcastargparser import create_arg_parser
 from podcastlogging import setup_logger
@@ -31,8 +34,10 @@ args = parser.parse_args()
 setup_logger(args)
 
 # Weird place to have an import, we need the logger running first
+# 🐍 Local, archivepodcast
 from podcastdownload import download_podcasts  # pylint: disable=wrong-import-position
 
+# 🌏 Globals
 app = Flask(__name__, static_folder="static")  # Flask app object
 PODCASTXML = {}
 settingsjson = None
