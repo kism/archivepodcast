@@ -75,9 +75,9 @@ This will run a webapp on <http://localhost:5000> (configurable) that will:
 - If `"live" : true` in settings json is set it will look for and download new episodes every hour
 - If you send it a SIGHUP command it will reload the configuration, be sure to check the logs to see if it was successful.
 
-`python3 archiveselfhost.py --help` will get you all the arguements that you should know about.
+`python3 archivepodcast/archivepodcast.py --help` will get you all the arguements that you should know about.
 
-`python3 archiveselfhost.py -c settings.json --production`
+`python3 archivepodcast/archivepodcast.py -c settings.json --production`
 
 An example guide on setting it up start to finish, with all features and saving episodes do disk can be found here [here](README_local.md). There are others for if you want to use s3 to host assets, or even host the whole thing on s3.
 

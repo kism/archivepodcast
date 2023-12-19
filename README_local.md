@@ -20,9 +20,10 @@ chown -R podcasto:podcasto /opt/archivepodcast
 
 Run the program once manually to create the default settings.json and then fill it in. You can ignore the cdn address and s3 settings.
 
+# FIXME FIXME
 ```bash
 cd /opt/archivepodcast
-/opt/archivepodcast/env/bin/python3 archivepodcast.py --config settings.json
+/opt/archivepodcast/env/bin/python3 archivepodcast/archivepodcast.py --config settings.json
 vim settings.json
 ```
 
@@ -32,6 +33,8 @@ vim settings.json
 vim /etc/systemd/system/archivepodcast.service
 ```
 
+
+# FIXME FIXME # FIXME FIXME
 ```text
 [Unit]
 Description=Podcast Archiving Webapp
