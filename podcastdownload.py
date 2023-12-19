@@ -98,7 +98,7 @@ def check_path_exists(settingsjson, filepath, s3=None):
 
     else:
         if os.path.isfile(filepath):
-            return True
+            fileexists = True
 
     return fileexists
 
