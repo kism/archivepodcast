@@ -207,10 +207,10 @@ def download_asset(
                         assetfile.write(req.content)
                         logging.info("💾 Success!")
                 else:
-                    logging.error("❌ HTTP ERROR: %s", str(req.content))
+                    logging.error("💾❌ HTTP ERROR: %s", str(req.content))
 
             except HTTPError as err:
-                logging.error("❌ Download Failed %s", str(err))
+                logging.error("💾❌ Download Failed %s", str(err))
 
         # For if we are using s3 as a backend
         if (
@@ -231,10 +231,10 @@ def download_asset(
                     filedatestring == ""
                 ):  # This means that the cover image is never removed from the filesystem
                     logging.info(
-                        "⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)"
+                        "💾⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)"
                     )
                 else:
-                    logging.info("⛅ s3 upload successful, removing local file")
+                    logging.info("💾⛅ s3 upload successful, removing local file")
                     os.remove(filepath)
             except FileNotFoundError:
                 logging.error(
