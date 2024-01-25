@@ -84,3 +84,4 @@ An example guide on setting it up start to finish, with all features and saving 
 ### TODO
 
 - Docker
+- If about page exists in webroot, upload to s3, template it in

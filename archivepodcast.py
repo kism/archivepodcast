@@ -43,6 +43,7 @@ PODCASTXML = {}
 settingsjson = None
 s3 = None
 s3pathscache = []
+aboutpage = False
 
 # --- Why do I program like this, we are done with imports and vars
 
@@ -62,6 +63,16 @@ def home_indexhtml():
     # and everything should work.
     return render_template("home.j2", settingsjson=settingsjson)
 
+@app.route("/about.html")
+def home_abouthtml():
+    """Flask Home, s3 backup compatible"""
+    if aboutpage:
+        return send_from_directory(settingsjson["webroot"], "about.html")
+    returncode = 404
+    return (
+        generate_404(),
+        returncode,
+    )
 
 @app.route("/content/<path:path>")
 def send_content(path):
@@ -83,19 +94,13 @@ def send_content(path):
 
     return response
 
-
 @app.errorhandler(404)
 # pylint: disable=unused-argument
 def invalid_route(e):
     """404 Handler"""
     returncode = 404
     return (
-        render_template(
-            "error.j2",
-            errorcode=str(returncode),
-            errortext="Page not found, how did you even?",
-            settingsjson=settingsjson,
-        ),
+        generate_404(),
         returncode,
     )
 
@@ -164,6 +169,18 @@ def favicon():
         "favicon.ico",
         mimetype="image/vnd.microsoft.icon",
     )
+
+
+def generate_404():
+    """We use the 404 template in a couple places"""
+    returncode = 404
+    render = render_template(
+            "error.j2",
+            errorcode=str(returncode),
+            errortext="Page not found, how did you even?",
+            settingsjson=settingsjson,
+        )
+    return render
 
 
 def make_folder_structure():
@@ -305,7 +322,8 @@ def podcast_loop():
         3
     )  # lol, this is because I want the output to start after the web server comes up
     get_s3_credential()
-    logging.info("🙋 Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
+    logging.info(
+        "🙋 Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
 
     if settingsjson["storagebackend"] == "s3":
         logging.info(
@@ -328,9 +346,7 @@ def podcast_loop():
         if seconds_until_next_run > 3600:
             seconds_until_next_run -= 3600
 
-        logging.info(
-            "🛌 Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)
-        ))
+        logging.info("🛌 Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
         time.sleep(seconds_until_next_run)
         logging.info("🌄 Waking up, looking for new episodes")
 
@@ -366,6 +382,13 @@ def reload_settings(signalNumber, frame):
 def upload_static():
     """Function to upload static to s3 and copy index.html"""
     get_s3_credential()
+
+    # Check if about.html exists, affects index.html so it's first.
+    if os.path.exists(settingsjson["webroot"] + os.sep + "about.html"):
+        global aboutpage
+        aboutpage = True
+        logging.debug("Aboutpage exists!")
+
     # Render backup of html
     env = Environment(loader=FileSystemLoader("."))
     template = env.get_template("templates/home.j2")
@@ -389,6 +412,11 @@ def upload_static():
             ]:
                 s3.upload_file(
                     "static" + item, settingsjson["s3bucket"], "static" + item
+                )
+
+            if aboutpage:
+                s3.upload_file(
+                    settingsjson["webroot"] + os.sep + "about.html", settingsjson["s3bucket"], "about.html"
                 )
 
             s3.put_object(
