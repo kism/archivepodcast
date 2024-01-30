@@ -16,13 +16,21 @@
     <main>
         <h1>{{ settingsjson['webpagetitle']|e }}</h1>
         <p>{{ settingsjson['webpagedescription']|e }}</p>
-        <p>For instructions on how to add a podcast url to a podcast app, <a href="{{ settingsjson['webpagepodcastguidelink'] }}">check out this helpful guide</a>.</p>
+        <p>For instructions on how to add a podcast url to a podcast app, <a
+                href="{{ settingsjson['webpagepodcastguidelink'] }}">check out this helpful guide</a>.</p>
         {% for podcast in settingsjson['podcast'] -%}
-            <h2>{{ podcast['podcastnewname']|e }}</h2>
-            <p>{{ podcast['podcastdescription']|e }}</p>
-            <input type="text" readonly="readonly" value="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}" id="{{ podcast['podcastnameoneword']}}">
-            <button class="button" onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')" id="{{ podcast['podcastnameoneword']}}_button">Copy url</button>
+        <h2>{{ podcast['podcastnewname']|e }}</h2>
+        <p>{{ podcast['podcastdescription']|e }}</p>
+        <input type="text" readonly="readonly"
+            value="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}"
+            id="{{ podcast['podcastnameoneword']}}">
+        <button class="button" onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')"
+            id="{{ podcast['podcastnameoneword']}}_button">Copy url</button>
         {% endfor %}
+        {% if aboutpage %}
+        <hr>
+        <a href="/about.html">About</a>
+        {% endif %}
     </main>
 </body>
 

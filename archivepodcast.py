@@ -51,7 +51,7 @@ aboutpage = False
 @app.route("/")
 def home():
     """Flask Home"""
-    return render_template("home.j2", settingsjson=settingsjson)
+    return render_template("home.j2", settingsjson=settingsjson, aboutpage=aboutpage)
 
 
 @app.route("/index.html")
@@ -61,7 +61,8 @@ def home_indexhtml():
     # for using in cloudflare r2 storage it will work
     # If the vm goes down you can change the main domain dns to point to r2
     # and everything should work.
-    return render_template("home.j2", settingsjson=settingsjson)
+    return render_template("home.j2", settingsjson=settingsjson, aboutpage=aboutpage)
+
 
 @app.route("/about.html")
 def home_abouthtml():
@@ -73,6 +74,7 @@ def home_abouthtml():
         generate_404(),
         returncode,
     )
+
 
 @app.route("/content/<path:path>")
 def send_content(path):
@@ -93,6 +95,7 @@ def send_content(path):
         response = send_from_directory(settingsjson["webroot"] + "/content", path)
 
     return response
+
 
 @app.errorhandler(404)
 # pylint: disable=unused-argument
@@ -175,11 +178,11 @@ def generate_404():
     """We use the 404 template in a couple places"""
     returncode = 404
     render = render_template(
-            "error.j2",
-            errorcode=str(returncode),
-            errortext="Page not found, how did you even?",
-            settingsjson=settingsjson,
-        )
+        "error.j2",
+        errorcode=str(returncode),
+        errortext="Page not found, how did you even?",
+        settingsjson=settingsjson,
+    )
     return render
 
 
@@ -207,10 +210,12 @@ def make_folder_structure():
         except FileExistsError:
             pass
         except PermissionError as exc:
-            err = "❌ You do not have permission to create folder: " + folder
+            emoji = "❌"
+            err = emoji + " You do not have permission to create folder: " + folder
             logging.error(err)
             logging.error(
-                "❌ Run this this script as a different user probably, or check permissions of the webroot."
+                "%s Run this this script as a different user probably, or check permissions of the webroot.",
+                emoji,
             )
             raise PermissionError(err) from exc
 
@@ -257,9 +262,11 @@ def grab_podcasts():
                 logging.debug("Wrote rss to disk: %s", rssfilepath)
 
             except Exception as exc:  # pylint: disable=broad-exception-caught
-                logging.error("❌ " + str(exc))
+                emoji = "❌"
+                logging.error("%s %s", emoji, str(exc))
                 logging.error(
-                    "❌ RSS XML Download Failure, attempting to host cached version"
+                    "%s RSS XML Download Failure, attempting to host cached version",
+                    emoji,
                 )
                 tree = None
         else:
@@ -323,11 +330,15 @@ def podcast_loop():
     )  # lol, this is because I want the output to start after the web server comes up
     get_s3_credential()
     logging.info(
-        "🙋 Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
+        ""
+        + "🙋 Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly."
+    )
 
     if settingsjson["storagebackend"] == "s3":
+        emoji = "⛅"
         logging.info(
-            "⛅ Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow"
+            "%s Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow",
+            emoji,
         )
 
     while True:
@@ -346,7 +357,10 @@ def podcast_loop():
         if seconds_until_next_run > 3600:
             seconds_until_next_run -= 3600
 
-        logging.info("🛌 Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
+        emoji = "🛌"  # un-upset black
+        logging.info(
+            "%s Sleeping for ~%s minutes", emoji, str(int(seconds_until_next_run / 60))
+        )
         time.sleep(seconds_until_next_run)
         logging.info("🌄 Waking up, looking for new episodes")
 
@@ -392,7 +406,7 @@ def upload_static():
     # Render backup of html
     env = Environment(loader=FileSystemLoader("."))
     template = env.get_template("templates/home.j2")
-    rendered_output = template.render(settingsjson=settingsjson)
+    rendered_output = template.render(settingsjson=settingsjson, aboutpage=aboutpage)
 
     with open(
         settingsjson["webroot"] + os.sep + "index.html", "w", encoding="utf-8"
@@ -416,7 +430,9 @@ def upload_static():
 
             if aboutpage:
                 s3.upload_file(
-                    settingsjson["webroot"] + os.sep + "about.html", settingsjson["s3bucket"], "about.html"
+                    settingsjson["webroot"] + os.sep + "about.html",
+                    settingsjson["s3bucket"],
+                    "about.html",
                 )
 
             s3.put_object(
