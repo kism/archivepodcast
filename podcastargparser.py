@@ -31,6 +31,7 @@ def create_arg_parser():
         type=str,
         dest="settingspath",
         help="Config path /path/to/settings.json",
+        default="settings.json"
     )
     parser.add_argument(
         "--loglevel",

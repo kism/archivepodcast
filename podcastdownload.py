@@ -386,9 +386,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
             for filetype in imageformats:
                 if filetype in url:
-                    download_asset(
-                        url, title, settingsjson, podcast, filetype, s3=s3
-                    )
+                    download_asset(url, title, settingsjson, podcast, filetype, s3=s3)
                     channel.attrib["href"] = (
                         settingsjson["inetpath"]
                         + "content/"
