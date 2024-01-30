@@ -210,7 +210,7 @@ def make_folder_structure():
         except FileExistsError:
             pass
         except PermissionError as exc:
-            emoji = "❌"
+            emoji = "❌" # un-upset black
             err = emoji + " You do not have permission to create folder: " + folder
             logging.error(err)
             logging.error(
@@ -262,7 +262,7 @@ def grab_podcasts():
                 logging.debug("Wrote rss to disk: %s", rssfilepath)
 
             except Exception as exc:  # pylint: disable=broad-exception-caught
-                emoji = "❌"
+                emoji = "❌" # un-upset black
                 logging.error("%s %s", emoji, str(exc))
                 logging.error(
                     "%s RSS XML Download Failure, attempting to host cached version",
@@ -335,7 +335,7 @@ def podcast_loop():
     )
 
     if settingsjson["storagebackend"] == "s3":
-        emoji = "⛅"
+        emoji = "⛅" # un-upset black
         logging.info(
             "%s Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow",
             emoji,
