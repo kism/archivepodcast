@@ -40,13 +40,8 @@ def get_settings(args):
     """Load settings from settings.json"""
     settingserror = False
     settingsjson = None
-    settingspath = ""
+    settingspath = args.settingspath
     err = "no error defined?"
-
-    if args.settingspath:
-        settingspath = args.settingspath
-    else:
-        settingspath = "settings.json"
 
     logging.info("🙋 Settings path: %s", str(settingspath))
 
@@ -54,8 +49,9 @@ def get_settings(args):
         settingsjsonfile = open(settingspath, "r", encoding="utf-8")
     except FileNotFoundError as exc:  # If no settings.json, create it
         err = (
-            "❌ Settings json doesnt exist at: %s. Creating empty config, please fill it out.",
-            settingspath,
+            "❌ Settings json doesnt exist at: "
+            + settingspath
+            + ", Creating empty config, please fill it out."
         )
         logging.error(err)
         settingsjsonfile = open(settingspath, "w", encoding="utf-8")
