@@ -29,9 +29,8 @@
         {% endfor %}
         {% if aboutpage %}
         <footer>
-        <hr>
-        <a href="/about.html">About</a>
-        {{ settingsjson['webpagecontact']|e }}
+            <hr>
+            <a href="/about.html">About</a>, Contact: {{ settingsjson['webpagecontact']|e }}
         </footer>
         {% endif %}
     </main>
