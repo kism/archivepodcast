@@ -30,7 +30,7 @@
         {% if aboutpage %}
         <footer>
             <hr>
-            <a href="/about.html">About</a>, Contact: {{ settingsjson['webpagecontact']|e }}
+            <a href="/about.html">About</a>, Contact: <a href="mailto:{{ settingsjson['webpagecontact']|e }}">{{ settingsjson['webpagecontact']|e }}</a>
         </footer>
         {% endif %}
     </main>
