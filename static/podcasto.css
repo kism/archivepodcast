@@ -74,6 +74,11 @@ a:visited {
   background: #008080;
 }
 
+footer {
+  font-size: smaller;
+  margin-top: 16px;
+}
+
 /* BUTTON */
 .button,
 button,
