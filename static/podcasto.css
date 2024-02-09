@@ -21,13 +21,12 @@
   src: local(""), url("fonts/fira-code-v12-latin-700.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 
-
 @media screen and (max-width: 430px) {
   body {
-    padding-left: 4px !important;
+    padding-left: 4px;
+    padding-right: 4px;
   }
 }
-
 
 body {
   font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont,
@@ -40,6 +39,7 @@ body {
   color: rgb(200, 200, 200);
   line-height: 1.5;
   padding-left: 15px;
+  padding-right: 15px;
 }
 h1,
 h2 {
