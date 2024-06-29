@@ -163,24 +163,44 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
 
             logging.error("❌ Cannot convert wav to mp3!")
 
-    try:
-        if settingsjson["storagebackend"] == "s3":
-            s3filepath = mp3filepath.replace(settingsjson["webroot"], "")
-            debugmessage = f"Checking length of s3 object: { s3filepath }"
-            logging.debug(debugmessage)
-            response = s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
-            newlength = response["ContentLength"]
-    except ClientError as err:
-        debugmessage = f"Issue checking ContentLength of { s3filepath }, error is { err }"
-        logging.warning(debugmessage)
-
-    if not newlength:
+    if settingsjson["storagebackend"] == "s3":
+        upload_asset_s3(settingsjson, mp3filepath, extension, filedatestring)
+        s3filepath = mp3filepath.replace(settingsjson["webroot"], "")
+        debugmessage = f"Checking length of s3 object: { s3filepath }"
+        logging.debug(debugmessage)
+        response = s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
+        newlength = response["ContentLength"]
+    else:
         newlength = os.stat(mp3filepath).st_size
 
     debugmessage = f"Length of converted wav file { s3filepath }: { newlength }"
     logging.debug(debugmessage)
 
     return newlength
+
+def upload_asset_s3(settingsjson, filepath, extension, filedatestring):
+    content_type = content_types[extension]
+
+    s3path = filepath.replace(settingsjson["webroot"], "")
+    try:
+        # Upload the file
+        s3.upload_file(
+            filepath,
+            settingsjson["s3bucket"],
+            s3path,
+            ExtraArgs={"ContentType": content_type},
+        )
+        if filedatestring == "":  # This means that the cover image is never removed from the filesystem
+            logging.info(
+                "💾⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)"
+            )
+        else:
+            logging.info("💾⛅ s3 upload successful, removing local file")
+            os.remove(filepath)
+    except FileNotFoundError:
+        logging.error("⛅❌ Could not upload to s3, the source file was not found: %s", filepath)
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logging.error("⛅❌ Unhandled s3 Error: %s", exc)
 
 
 def download_asset(url, title, settingsjson, podcast, extension="", filedatestring="", s3=None):
@@ -221,31 +241,9 @@ def download_asset(url, title, settingsjson, podcast, extension="", filedatestri
                 logging.error("💾❌ Download Failed %s", str(err))
 
         # For if we are using s3 as a backend
-        if (
-            extension != ".wav" and settingsjson["storagebackend"] == "s3"
-        ):  # wav logic since this gets called in handlewav
-            content_type = content_types[extension]
-
-            s3path = filepath.replace(settingsjson["webroot"], "")
-            try:
-                # Upload the file
-                s3.upload_file(
-                    filepath,
-                    settingsjson["s3bucket"],
-                    s3path,
-                    ExtraArgs={"ContentType": content_type},
-                )
-                if filedatestring == "":  # This means that the cover image is never removed from the filesystem
-                    logging.info(
-                        "💾⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)"
-                    )
-                else:
-                    logging.info("💾⛅ s3 upload successful, removing local file")
-                    os.remove(filepath)
-            except FileNotFoundError:
-                logging.error("⛅❌ Could not upload to s3, the source file was not found: %s", filepath)
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                logging.error("⛅❌ Unhandled s3 Error: %s", exc)
+        # wav logic since this gets called in handlewav
+        if extension != ".wav" and settingsjson["storagebackend"] == "s3":
+            upload_asset_s3(settingsjson, filepath, extension, filedatestring)
 
     else:
         logging.debug("Already downloaded: " + title + extension)
