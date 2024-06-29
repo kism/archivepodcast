@@ -261,9 +261,9 @@ def grab_podcasts():
                 )
                 logging.debug("Wrote rss to disk: %s", rssfilepath)
 
-            except Exception as exc:  # pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught
                 emoji = "❌" # un-upset black
-                logging.error("%s %s", emoji, str(exc))
+                logging.exception("%s", emoji)
                 logging.error(
                     "%s RSS XML Download Failure, attempting to host cached version",
                     emoji,

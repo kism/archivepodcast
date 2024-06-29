@@ -30,13 +30,9 @@ if which("ffmpeg") is not None:
     except ImportError:
         logging.warning("❗ pydub not found")
         logging.warning("❗ It should have installed if you are using pipenv")
-        logging.warning(
-            "❗ pydub also requires ffmpeg to installed (not a python package)"
-        )
+        logging.warning("❗ pydub also requires ffmpeg to installed (not a python package)")
 else:
-    logging.warning(
-        "❗ Not loading pydub since ffmpeg is not installed on this system (and in the PATH)"
-    )
+    logging.warning("❗ Not loading pydub since ffmpeg is not installed on this system (and in the PATH)")
 
 if not HASPYDUB:
     logging.warning(
@@ -93,7 +89,7 @@ def check_path_exists(settingsjson, filepath, s3=None):
                 logging.error("⛅❌ Unhandled s3 Error: %s", exc)
 
         else:
-            logging.debug("s3 path %s exists in cache, skipping", s3filepath)
+            logging.debug("s3 path %s exists in s3pathscache, skipping", s3filepath)
             fileexists = True
 
     else:
@@ -103,11 +99,9 @@ def check_path_exists(settingsjson, filepath, s3=None):
     return fileexists
 
 
-def handle_wav(
-    url, title, settingsjson, podcast, extension="", filedatestring="", s3=None
-):
+def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="", s3=None):
     """Convert podcasts that have wav episodes :/"""
-    newlength = 0
+    newlength = None
     spacer = ""  # This logic can be removed since wavs will always have a date
     if filedatestring != "":
         spacer = "-"
@@ -139,11 +133,17 @@ def handle_wav(
         os.remove(wavfilepath)
         os.remove(mp3filepath)
 
-    # if the asset hasn't already been downloaded and converted
+    # If the asset hasn't already been downloaded and converted
     if not check_path_exists(settingsjson, mp3filepath, s3=s3):
         if HASPYDUB:
             download_asset(
-                url, title, settingsjson, podcast, extension, filedatestring, s3=s3
+                url,
+                title,
+                settingsjson,
+                podcast,
+                extension,
+                filedatestring,
+                s3=s3,
             )
 
             logging.info("♻ Converting episode %s to mp3", title)
@@ -163,19 +163,27 @@ def handle_wav(
 
             logging.error("❌ Cannot convert wav to mp3!")
 
-    if settingsjson["storagebackend"] == "s3":
-        s3filepath = mp3filepath.replace(settingsjson["webroot"], "")
-        response = s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
-        newlength = response["ContentLength"]
-    else:
+    try:
+        if settingsjson["storagebackend"] == "s3":
+            s3filepath = mp3filepath.replace(settingsjson["webroot"], "")
+            debugmessage = f"Checking length of s3 object: { s3filepath }"
+            logging.debug(debugmessage)
+            response = s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
+            newlength = response["ContentLength"]
+    except ClientError as err:
+        debugmessage = f"Issue checking ContentLength of { s3filepath }, error is { err }"
+        logging.warning(debugmessage)
+
+    if not newlength:
         newlength = os.stat(mp3filepath).st_size
+
+    debugmessage = f"Length of converted wav file { s3filepath }: { newlength }"
+    logging.debug(debugmessage)
 
     return newlength
 
 
-def download_asset(
-    url, title, settingsjson, podcast, extension="", filedatestring="", s3=None
-):
+def download_asset(url, title, settingsjson, podcast, extension="", filedatestring="", s3=None):
     """Download asset from url with appropiate file name"""
     spacer = ""
     if filedatestring != "":
@@ -192,9 +200,7 @@ def download_asset(
         + extension
     )
 
-    if not check_path_exists(
-        settingsjson, filepath, s3=s3
-    ):  # if the asset hasn't already been downloaded
+    if not check_path_exists(settingsjson, filepath, s3=s3):  # if the asset hasn't already been downloaded
         if filedatestring != "" and not check_path_exists(
             settingsjson, filepath, s3=None
         ):  # logic to upload replacement art if needed
@@ -229,9 +235,7 @@ def download_asset(
                     s3path,
                     ExtraArgs={"ContentType": content_type},
                 )
-                if (
-                    filedatestring == ""
-                ):  # This means that the cover image is never removed from the filesystem
+                if filedatestring == "":  # This means that the cover image is never removed from the filesystem
                     logging.info(
                         "💾⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)"
                     )
@@ -239,9 +243,7 @@ def download_asset(
                     logging.info("💾⛅ s3 upload successful, removing local file")
                     os.remove(filepath)
             except FileNotFoundError:
-                logging.error(
-                    "⛅❌ Could not upload to s3, the source file was not found"
-                )
+                logging.error("⛅❌ Could not upload to s3, the source file was not found: %s", filepath)
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logging.error("⛅❌ Unhandled s3 Error: %s", exc)
 
@@ -300,18 +302,14 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
     if response is not None:
         if response.status_code not in (200, 400):
-            logging.error(
-                "❌ Not a great web request, we got: %s", str(response.status_code)
-            )
+            logging.error("❌ Not a great web request, we got: %s", str(response.status_code))
             return
         else:
             logging.debug("We got a pretty real response by the looks of it")
             logging.debug(str(response))
     else:
         logging.error("❌ Failure, no sign of a response.")
-        logging.debug(
-            "Probably an issue with the code. Or cloudflare ruining our day maybe?"
-        )
+        logging.debug("Probably an issue with the code. Or cloudflare ruining our day maybe?")
         return
 
     # We have the xml
@@ -348,9 +346,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
         # Remake Atom Tags
         elif channel.tag == "{http://www.w3.org/2005/Atom}link":
-            channel.attrib["href"] = (
-                settingsjson["inetpath"] + "rss/" + podcast["podcastnameoneword"]
-            )
+            channel.attrib["href"] = settingsjson["inetpath"] + "rss/" + podcast["podcastnameoneword"]
             channel.text = " "  # here me out...
 
         # Remake Apple Tags
@@ -371,9 +367,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
             channel.text = podcast["podcastnewname"]
 
         elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
-            channel.text = (
-                settingsjson["inetpath"] + "rss/" + podcast["podcastnameoneword"]
-            )
+            channel.text = settingsjson["inetpath"] + "rss/" + podcast["podcastnameoneword"]
 
         elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
             if podcast["podcastnewname"] == "":
@@ -388,12 +382,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
                 if filetype in url:
                     download_asset(url, title, settingsjson, podcast, filetype, s3=s3)
                     channel.attrib["href"] = (
-                        settingsjson["inetpath"]
-                        + "content/"
-                        + podcast["podcastnameoneword"]
-                        + "/"
-                        + title
-                        + filetype
+                        settingsjson["inetpath"] + "content/" + podcast["podcastnameoneword"] + "/" + title + filetype
                     )
 
             channel.text = " "
@@ -420,9 +409,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
 
                     for filetype in imageformats:
                         if filetype in url:
-                            download_asset(
-                                url, title, settingsjson, podcast, filetype, s3=s3
-                            )
+                            download_asset(url, title, settingsjson, podcast, filetype, s3=s3)
                             child.text = (
                                 settingsjson["inetpath"]
                                 + "content/"
@@ -450,15 +437,11 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
                     originaldate = str(child.text)
                     filedate = datetime(1970, 1, 1)
                     try:
-                        filedate = datetime.strptime(
-                            originaldate, "%a, %d %b %Y %H:%M:%S %Z"
-                        )
+                        filedate = datetime.strptime(originaldate, "%a, %d %b %Y %H:%M:%S %Z")
                     except ValueError:
                         pass
                     try:
-                        filedate = datetime.strptime(
-                            originaldate, "%a, %d %b %Y %H:%M:%S %z"
-                        )
+                        filedate = datetime.strptime(originaldate, "%a, %d %b %Y %H:%M:%S %z")
                     except ValueError:
                         pass
                     filedatestring = filedate.strftime("%Y%m%d")
@@ -471,10 +454,7 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
                     logging.debug("Title: %s", title)
 
                 # Episode Content (Enclosure)
-                elif (
-                    child.tag == "enclosure"
-                    or "{http://search.yahoo.com/mrss/}content" in child.tag
-                ):
+                elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in child.tag:
                     title = cleanup_file_name(title)
                     url = child.attrib.get("url")
                     # Default to prevent unchanged url on error
@@ -557,17 +537,13 @@ def download_podcasts(podcast, settingsjson, in_s3=None, in_s3pathscache=None):
                     )
 
         else:
-            logging.debug(
-                "Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag
-            )
+            logging.debug("Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag)
 
     podcastxml[0] = xmlfirstchild
 
     tree = Et.ElementTree(podcastxml)
     # These make the name spaces appear nicer in the generated XML
-    Et.register_namespace(
-        "googleplay", "http://www.google.com/schemas/play-podcasts/1.0"
-    )
+    Et.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
     Et.register_namespace("atom", "http://www.w3.org/2005/Atom")
     Et.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
     Et.register_namespace("media", "http://search.yahoo.com/mrss/")

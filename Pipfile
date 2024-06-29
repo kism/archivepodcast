@@ -11,6 +11,5 @@ pydub = "*"
 boto3 = "*"
 
 [dev-packages]
-black = "*"
-pylint = "*"
+ruff = "*"
 pylance = "*"
