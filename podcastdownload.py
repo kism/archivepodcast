@@ -157,6 +157,8 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
                 os.remove(wavfilepath)
             logging.info("♻ Done")
 
+            upload_asset_s3(settingsjson, mp3filepath, extension, filedatestring)
+
         else:
             if not HASPYDUB:
                 logging.error("❌ pydub pip package not installed")
@@ -164,7 +166,6 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
             logging.error("❌ Cannot convert wav to mp3!")
 
     if settingsjson["storagebackend"] == "s3":
-        upload_asset_s3(settingsjson, mp3filepath, extension, filedatestring)
         s3filepath = mp3filepath.replace(settingsjson["webroot"], "")
         debugmessage = f"Checking length of s3 object: { s3filepath }"
         logging.debug(debugmessage)
