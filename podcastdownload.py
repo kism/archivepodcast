@@ -171,10 +171,11 @@ def handle_wav(url, title, settingsjson, podcast, extension="", filedatestring="
         logging.debug(debugmessage)
         response = s3.head_object(Bucket=settingsjson["s3bucket"], Key=s3filepath)
         newlength = response["ContentLength"]
+        debugmessage = f"Length of converted wav file { s3filepath }: { newlength }"
     else:
         newlength = os.stat(mp3filepath).st_size
+        debugmessage = f"Length of converted wav file { mp3filepath }: { newlength }"
 
-    debugmessage = f"Length of converted wav file { s3filepath }: { newlength }"
     logging.debug(debugmessage)
 
     return newlength
