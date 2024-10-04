@@ -1,12 +1,9 @@
 {
     "recommendations": [
-        "eamodio.gitlens",
         "esbenp.prettier-vscode",
-        "ms-python.black-formatter",
-        "ms-python.pylint",
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "vscode-icons-team.vscode-icons",
-        "samuelcolvin.jinjahtml"
+        "samuelcolvin.jinjahtml",
+        "charliermarsh.ruff",
     ]
-}
+  }
