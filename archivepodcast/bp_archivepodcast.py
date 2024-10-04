@@ -1,5 +1,16 @@
-from flask import Flask, render_template, send_from_directory, redirect, Response
+import os
+import xml.etree.ElementTree as Et
 
+from flask import Blueprint, Flask, Response, current_app, redirect, render_template, send_from_directory
+
+from .logger import get_logger
+
+logger = get_logger(__name__)
+
+
+bp = Blueprint("ansibleinventorycmdb", __name__)
+
+about_page = False
 
 def generate_404():
     """We use the 404 template in a couple places"""
@@ -8,32 +19,34 @@ def generate_404():
         "error.j2",
         errorcode=str(returncode),
         errortext="Page not found, how did you even?",
-        settingsjson=settingsjson,
+        settingsjson=current_app.config["app"],
     )
     return render
 
 
-@app.route("/")
+@bp.route("/")
 def home():
     """Flask Home"""
-    return render_template("home.j2", settingsjson=settingsjson, aboutpage=aboutpage)
+    settings = current_app.config["app"]
+
+    return render_template("home.j2", settings=settings, about_page=about_page)
 
 
-@app.route("/index.html")
+@bp.route("/index.html")
 def home_indexhtml():
     """Flask Home, s3 backup compatible"""
     # This ensures that if you transparently redirect / to /index.html
     # for using in cloudflare r2 storage it will work
     # If the vm goes down you can change the main domain dns to point to r2
     # and everything should work.
-    return render_template("home.j2", settingsjson=settingsjson, aboutpage=aboutpage)
+    return render_template("home.j2", settingsjson=current_app.config["app"], about_page=about_page)
 
 
-@app.route("/about.html")
+@bp.route("/about.html")
 def home_abouthtml():
     """Flask Home, s3 backup compatible"""
     if aboutpage:
-        return send_from_directory(settingsjson["webroot"], "about.html")
+        return send_from_directory(current_app.instance_path, "about.html")
     returncode = 404
     return (
         generate_404(),
@@ -41,22 +54,22 @@ def home_abouthtml():
     )
 
 
-@app.route("/content/<path:path>")
+@bp.route("/content/<path:path>")
 def send_content(path):
     """Serve Content"""
     response = None
 
     if settingsjson["storagebackend"] == "s3":
-        newpath = settingsjson["cdndomain"] + "content/" + path.replace(settingsjson["webroot"], "")
+        newpath = settingsjson["cdndomain"] + "content/" + path.replace(current_app.instance_path, "")
         response = redirect(newpath, code=302)
         response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
-        response = send_from_directory(settingsjson["webroot"] + "/content", path)
+        response = send_from_directory(current_app.instance_path + "/content", path)
 
     return response
 
 
-@app.errorhandler(404)
+@bp.errorhandler(404)
 # pylint: disable=unused-argument
 def invalid_route(e):
     """404 Handler"""
@@ -67,10 +80,10 @@ def invalid_route(e):
     )
 
 
-@app.route("/rss/<string:feed>", methods=["GET"])
+@bp.route("/rss/<string:feed>", methods=["GET"])
 def rss(feed):
     """Send RSS Feed"""
-    logging.debug("Sending xml feed: %s", feed)
+    logger.debug("Sending xml feed: %s", feed)
     xml = ""
     returncode = 200
     try:
@@ -82,20 +95,20 @@ def rss(feed):
                 "error.j2",
                 errorcode=str(returncode),
                 errortext="The developer probably messed something up",
-                settingsjson=settingsjson,
+                settingsjson=current_app.config["app"],
             ),
             returncode,
         )
     except KeyError:
         try:
-            tree = Et.parse(settingsjson["webroot"] + "rss/" + feed)
+            tree = Et.parse(current_app.instance_path + "rss/" + feed)
             xml = Et.tostring(
                 tree.getroot(),
                 encoding="utf-8",
                 method="xml",
                 xml_declaration=True,
             )
-            logging.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
+            logger.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
 
         except FileNotFoundError:
             returncode = 404
@@ -111,7 +124,7 @@ def rss(feed):
     return Response(xml, mimetype="application/rss+xml; charset=utf-8")
 
 
-@app.route("/robots.txt")
+@bp.route("/robots.txt")
 def static_from_root():
     """Serve robots.txt"""
     response = Response(response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain")
@@ -119,11 +132,11 @@ def static_from_root():
     return response
 
 
-@app.route("/favicon.ico")
+@bp.route("/favicon.ico")
 def favicon():
-    """Return the favicon"""
+    """Return the favicon."""
     return send_from_directory(
-        os.path.join(app.root_path, "static"),
+        os.path.join(current_app.root_path, "archivepodcast", "static"),
         "favicon.ico",
         mimetype="image/vnd.microsoft.icon",
     )

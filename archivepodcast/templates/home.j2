@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>
-        {{ settingsjson['webpagetitle']|e }}
+        {{ settings['web_page']['tiltle']|e }}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
@@ -14,24 +14,24 @@
 
 <body>
     <main>
-        <h1>{{ settingsjson['webpagetitle']|e }}</h1>
-        <p>{{ settingsjson['webpagedescription']|e }}</p>
+        <h1>{{ settings['web_page']['tiltle']|e }}</h1>
+        <p>{{ settings['web_page']['description']|e }}</p>
         <p>For instructions on how to add a podcast url to a podcast app, <a
-                href="{{ settingsjson['webpagepodcastguidelink'] }}">check out this helpful guide</a>.</p>
-        {% for podcast in settingsjson['podcast'] -%}
-        <h2>{{ podcast['podcastnewname']|e }}</h2>
-        <p>{{ podcast['podcastdescription']|e }}</p>
+                href="{{ settings['web_page']['podcast_guide'] }}">check out this helpful guide</a>.</p>
+        {% for podcast in settings['podcasts'] -%}
+        <h2>{{ podcast['new_name']|e }}</h2>
+        <p>{{ podcast['description']|e }}</p>
         <input type="text" readonly="readonly"
-            value="{{settingsjson['inetpath']}}rss/{{ podcast['podcastnameoneword']}}"
-            id="{{ podcast['podcastnameoneword']}}">
-        <button class="button" onclick="grabtoclipboard('{{ podcast['podcastnameoneword']}}')"
-            id="{{ podcast['podcastnameoneword']}}_button">Copy url</button>
+            value="{{settings['inet_path']}}rss/{{ podcast['name_one_word']}}"
+            id="{{ podcast['name_one_word']}}">
+        <button class="button" onclick="grabtoclipboard('{{ podcast['name_one_word']}}')"
+            id="{{ podcast['name_one_word']}}_button">Copy url</button>
         {% endfor %}
-        {% if aboutpage %}
+        {% if about_page %}
         <footer>
             <hr>
-            <a href="/about.html">About</a> | Contact: <a href="mailto:{{ settingsjson['webpagecontact']|e }}">{{
-                settingsjson['webpagecontact']|e }}</a>
+            <a href="/about.html">About</a> | Contact: <a href="mailto:{{ settings['web_page']['contact']|e }}">{{
+                settings['web_page']['contact']|e }}</a>
         </footer>
         {% endif %}
     </main>

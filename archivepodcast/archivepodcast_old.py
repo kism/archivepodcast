@@ -50,39 +50,6 @@ aboutpage = False
 
 
 
-def make_folder_structure():
-    """Ensure that webbroot folder structure exists"""
-    logging.debug("Checking folder structure")
-    folders = []
-
-    folders.append(settingsjson["webroot"])
-    folders.append(settingsjson["webroot"] + "rss")
-    folders.append(settingsjson["webroot"] + "content")
-
-    for entry in settingsjson["podcast"]:
-        folders.append(
-            settingsjson["webroot"]
-            + os.sep
-            + "content"
-            + os.sep
-            + entry["podcastnameoneword"]
-        )
-
-    for folder in folders:
-        try:
-            os.mkdir(folder)
-        except FileExistsError:
-            pass
-        except PermissionError as exc:
-            emoji = "❌" # un-upset black
-            err = emoji + " You do not have permission to create folder: " + folder
-            logging.error(err)
-            logging.error(
-                "%s Run this this script as a different user probably, or check permissions of the webroot.",
-                emoji,
-            )
-            raise PermissionError(err) from exc
-
 
 def get_s3_credential():
     """Function to get a s3 credential if one is needed"""
