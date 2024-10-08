@@ -16,10 +16,7 @@ ap = None
 
 def initialise_archivepodcast() -> None:
     """Initialize the archivepodcast app."""
-    make_folder_structure()
-    """Main, globals have been defined"""
-
-    global ap
+    global ap  # noqa: PLW0603
     ap = PodcastArchiver(current_app.config["app"])
 
     # Start thread: podcast backup loop
@@ -34,34 +31,7 @@ def initialise_archivepodcast() -> None:
     thread.join()
 
 
-def make_folder_structure() -> None:
-    """Ensure that webbroot folder structure exists"""
-    logger.debug("Checking folder structure")
 
-    app_settings = current_app.config["app"]
-    folders = []
-
-    folders.append(current_app.instance_path)
-    folders.append(os.path.join(current_app.instance_path, "rss"))
-    folders.append(os.path.join(current_app.instance_path, "content"))
-
-    folders.extend(
-        os.path.join(current_app.instance_path, "content", entry["name_one_word"]) for entry in app_settings["podcast"]
-    )
-
-    for folder in folders:
-        try:
-            os.mkdir(folder)
-        except FileExistsError:
-            pass
-        except PermissionError as exc:
-            emoji = "❌"
-            err = emoji + " You do not have permission to create folder: " + folder
-            logger.exception(
-                "%s Run this this script as a different user probably, or check permissions of the webroot.",
-                emoji,
-            )
-            raise PermissionError(err) from exc
 
 
 def podcast_loop() -> None:

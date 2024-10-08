@@ -2,45 +2,13 @@
 """Self hosted podcast archiver"""
 
 # 🐍 Standard Modules
-import datetime
-import logger
 import os
 import signal
 import sys
-import threading
-import time
-import xml.etree.ElementTree as Et
 
-# 🐍 Pip
-import boto3
-from flask import (
-    Blueprint,
-    Flask,
-    Response,
-    redirect,
-    render_template,
-    send_from_directory,
-)
-from jinja2 import Environment, FileSystemLoader
-from podcastargparser import create_arg_parser
-from podcastlogger import setup_logger
+from .logger import get_logger
 
-# 🐍 Local, archivepodcast
-from podcastsettings import get_settings
-from waitress import serve
-
-parser = create_arg_parser()
-args = parser.parse_args()
-setup_logger(args)
-
-
-
-
-
-
-
-
-
+logger = get_logger(__name__)
 
 def reload_settings(signalNumber, frame):
     """Handle Sighup"""
@@ -68,10 +36,6 @@ def reload_settings(signalNumber, frame):
     upload_static()  # Ensure the static files are updated (inetaddress change)
 
     logger.info("🙋 Finished adhoc config reload")
-
-
-
-
 
 
 if __name__ == "__main__":

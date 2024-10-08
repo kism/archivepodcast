@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import boto3
 from flask import current_app
+from jinja2 import Environment, FileSystemLoader
 
 from .ap_downloader import PodcastDownloader
 from .logger import get_logger
@@ -24,13 +25,46 @@ class PodcastArchiver:
         """Initialise the ArchivePodcast object."""
         self.podcast_xml: dict[str, str] = {}
         self.s3: S3Client | None = None
-        self.load_settings(app_settings)
         self.load_s3()
+        self.about_page = False
+        self.settings = app_settings
         self.podcast_downloader = PodcastDownloader(app_settings=app_settings, s3=self.s3)
+
+        self.make_folder_structure()
+        self.upload_static()
 
     def load_settings(self, app_settings: dict) -> None:
         """Load the settings from the settings file."""
         self.settings = app_settings
+
+    def make_folder_structure(self) -> None:
+        """Ensure that webbroot folder structure exists."""
+        logger.debug("Checking folder structure")
+
+        folders = []
+
+        folders.append(current_app.instance_path)
+        folders.append(os.path.join(current_app.instance_path, "rss"))
+        folders.append(os.path.join(current_app.instance_path, "content"))
+
+        folders.extend(
+            os.path.join(current_app.instance_path, "content", entry["name_one_word"])
+            for entry in self.settings["podcast"]
+        )
+
+        for folder in folders:
+            try:
+                os.mkdir(folder)
+            except FileExistsError:
+                pass
+            except PermissionError as exc:
+                emoji = "❌"
+                err = emoji + " You do not have permission to create folder: " + folder
+                logger.exception(
+                    "%s Run this this script as a different user probably, or check permissions of the webroot.",
+                    emoji,
+                )
+                raise PermissionError(err) from exc
 
     def load_s3(self) -> None:
         """Function to get a s3 credential if one is needed."""
@@ -127,28 +161,26 @@ class PodcastArchiver:
             else:
                 logger.error("❌ Unable to host podcast, something is wrong")
 
+    def upload_static(self) -> None:
+        """Function to upload static to s3 and copy index.html."""
+        if not self.s3:
+            return
 
-
-    def upload_static(self):
-        """Function to upload static to s3 and copy index.html"""
-
-        # Check if about.html exists, affects index.html so it's first.
-        if os.path.exists(settingsjson["webroot"] + os.sep + "about.html"):
-            global aboutpage
-            aboutpage = True
+        if os.path.exists(
+            self.settings["web_root"] + os.sep + "about.html"
+        ):  # Check if about.html exists, affects index.html so it's first.
+            self.about_page = True
             logger.debug("About page exists!")
 
         # Render backup of html
-        env = Environment(loader=FileSystemLoader("."))
+        env = Environment(loader=FileSystemLoader("."), autoescape=True)
         template = env.get_template("templates/home.j2")
-        rendered_output = template.render(settingsjson=settingsjson, aboutpage=aboutpage)
+        rendered_output = template.render(settings=self.settings, about_page=self.about_page)
 
-        with open(
-            settingsjson["webroot"] + os.sep + "index.html", "w", encoding="utf-8"
-        ) as rootwebpage:
-            rootwebpage.write(rendered_output)
+        with open(self.settings["web_root"] + os.sep + "index.html", "w", encoding="utf-8") as root_web_page:
+            root_web_page.write(rendered_output)
 
-        if settingsjson["storagebackend"] == "s3":
+        if self.settings["storage_backend"] == "s3":
             logger.info("⛅ Uploading static pages to s3 in the background")
             try:
                 for item in [
@@ -159,31 +191,29 @@ class PodcastArchiver:
                     "/fonts/fira-code-v12-latin-700.woff2",
                     "/fonts/noto-sans-display-v10-latin-500.woff2",
                 ]:
-                    s3.upload_file(
-                        "static" + item, settingsjson["s3bucket"], "static" + item
-                    )
+                    self.s3.upload_file("static" + item, self.settings["s3"]["bucket"], "static" + item)
 
-                if aboutpage:
-                    s3.upload_file(
-                        settingsjson["webroot"] + os.sep + "about.html",
-                        settingsjson["s3bucket"],
+                if self.about_page:
+                    self.s3.upload_file(
+                        self.settings["web_root"] + os.sep + "about.html",
+                        self.settings["s3"]["bucket"],
                         "about.html",
                     )
 
-                s3.put_object(
+                self.s3.put_object(
                     Body=rendered_output,
-                    Bucket=settingsjson["s3bucket"],
+                    Bucket=self.settings["s3"]["bucket"],
                     Key="index.html",
                     ContentType="text/html",
                 )
 
-                s3.put_object(
+                self.s3.put_object(
                     Body="User-Agent: *\nDisallow: /\n",
-                    Bucket=settingsjson["s3bucket"],
+                    Bucket=self.settings["s3"]["bucket"],
                     Key="robots.txt",
                     ContentType="text/plain",
                 )
 
                 logger.info("⛅ Done uploading static pages to s3")
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                logger.error("⛅❌ Unhandled s3 Error: %s", exc)
+            except Exception:
+                logger.exception("⛅❌ Unhandled s3 Error")

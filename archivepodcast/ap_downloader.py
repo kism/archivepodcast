@@ -11,6 +11,8 @@ from shutil import which  # shockingly this works on windows
 from typing import TYPE_CHECKING
 from urllib.error import HTTPError
 
+
+
 import requests
 from botocore.exceptions import (
     ClientError,
