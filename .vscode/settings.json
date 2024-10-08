@@ -18,6 +18,8 @@
     "Archiver",
     "boto",
     "botocore",
+    "errorcode",
+    "errortext",
     "feedburner",
     "flac",
     "googleplay",

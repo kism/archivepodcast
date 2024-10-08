@@ -21,24 +21,26 @@ logger = get_logger(__name__)
 class PodcastArchiver:
     """ArchivePodcast object."""
 
-    def __init__(self, app_settings: dict) -> None:
+    def __init__(self, app_settings: dict, podcasts: list) -> None:
         """Initialise the ArchivePodcast object."""
         self.podcast_xml: dict[str, str] = {}
         self.s3: S3Client | None = None
         self.load_s3()
         self.about_page = False
         self.settings = app_settings
+        self.podcasts = podcasts
         self.podcast_downloader = PodcastDownloader(app_settings=app_settings, s3=self.s3)
 
         self.make_folder_structure()
         self.upload_static()
 
-    def load_settings(self, app_settings: dict) -> None:
+    def load_settings(self, app_settings: dict, podcasts: list) -> None:
         """Load the settings from the settings file."""
         self.settings = app_settings
+        self.podcasts = podcasts
 
     def make_folder_structure(self) -> None:
-        """Ensure that webbroot folder structure exists."""
+        """Ensure that web_root folder structure exists."""
         logger.debug("Checking folder structure")
 
         folders = []
@@ -61,7 +63,7 @@ class PodcastArchiver:
                 emoji = "❌"
                 err = emoji + " You do not have permission to create folder: " + folder
                 logger.exception(
-                    "%s Run this this script as a different user probably, or check permissions of the webroot.",
+                    "%s Run this this script as a different user probably, or check permissions of the web_root.",
                     emoji,
                 )
                 raise PermissionError(err) from exc
@@ -81,7 +83,7 @@ class PodcastArchiver:
 
     def grab_podcasts(self) -> None:
         """Loop through defined podcasts, download and store the xml."""
-        for podcast in self.settings["podcast"]:
+        for podcast in self.podcasts:
             tree = None
             previous_feed = ""
             logger.info("📜 Processing settings entry: %s", podcast["new_name"])

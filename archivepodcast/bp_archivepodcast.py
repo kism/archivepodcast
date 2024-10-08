@@ -1,8 +1,13 @@
+import datetime
 import os
+import threading
+import time
 import xml.etree.ElementTree as Et
+from http import HTTPStatus
 
 from flask import Blueprint, Flask, Response, current_app, redirect, render_template, send_from_directory
 
+from .ap_archiver import PodcastArchiver
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -10,58 +15,119 @@ logger = get_logger(__name__)
 
 bp = Blueprint("ansibleinventorycmdb", __name__)
 
-about_page = False
 
 
-def generate_404():
-    """We use the 404 template in a couple places"""
-    returncode = 404
+logger = get_logger(__name__)
+
+ap = None
+
+
+def initialise_archivepodcast() -> None:
+    """Initialize the archivepodcast app."""
+    global ap  # noqa: PLW0603
+    ap = PodcastArchiver(current_app.config["app"], current_app.config["podcast"])
+
+    # Start thread: podcast backup loop
+    thread = threading.Thread(target=podcast_loop, daemon=True)
+    thread.start()
+
+    # Start thread: upload static (wastes time otherwise, doesn't affect anything)
+    # thread = threading.Thread(target=upload_static, daemon=True) # TODO: NOT IMPLEMENTED
+    # thread.start()
+
+    # Cleanup
+    thread.join()
+
+
+
+
+
+def podcast_loop() -> None:
+    """Main loop, grabs new podcasts every hour."""
+    logger.info("🙋 Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
+
+    if ap is None:
+        logger.error("❌ ArchivePodcast object not initialized")
+        return
+
+    if ap.s3 is not None:
+        emoji = "⛅"  # un-upset black
+        logger.info(
+            "%s Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow",
+            emoji,
+        )
+
+    while True:
+        # We do a broad try/except here since god knows what http errors seem to happen at random
+        # If there is something uncaught in the grab podcasts function it will crash the scraping
+        # part of this program and it will need to be restarted, this avoids it.
+        try:
+            ap.grab_podcasts()
+        except Exception:
+            logger.exception("❌ Error that broke grab_podcasts()")
+
+        # Calculate time until next run
+        now = datetime.datetime.now()
+
+        one_hour_in_seconds = 3600
+        seconds_offset = 1200  # 20 minutes
+
+        seconds_until_next_run = (one_hour_in_seconds + seconds_offset) - ((now.minute * 60) + now.second)
+        if seconds_until_next_run > one_hour_in_seconds:
+            seconds_until_next_run -= one_hour_in_seconds
+
+        emoji = "🛌"  # un-upset black
+        logger.info("%s Sleeping for ~%s minutes", emoji, str(int(seconds_until_next_run / 60)))
+        time.sleep(seconds_until_next_run)
+        logger.info("🌄 Waking up, looking for new episodes")
+
+
+
+
+def generate_404() -> tuple[str, HTTPStatus]:
+    """We use the 404 template in a couple places."""
+    returncode = HTTPStatus.NOT_FOUND
     render = render_template(
         "error.j2",
-        errorcode=str(returncode),
-        errortext="Page not found, how did you even?",
-        settingsjson=current_app.config["app"],
+        error_code=str(returncode),
+        error_text="Page not found, how did you even?",
+        settings=current_app.config["app"],
     )
-    return render
+    return render, returncode
 
 
 @bp.route("/")
-def home():
-    """Flask Home"""
-    settings = current_app.config["app"]
-
-    return render_template("home.j2", settings=settings, about_page=about_page)
+def home() -> tuple[str, HTTPStatus]:
+    """Flask Home."""
+    return render_template("home.j2", settings=current_app.config["app"], about_page=about_page), HTTPStatus.OK
 
 
 @bp.route("/index.html")
-def home_indexhtml():
-    """Flask Home, s3 backup compatible"""
+def home_indexhtml() -> tuple[str, HTTPStatus]:
+    """Flask Home, s3 backup compatible."""
     # This ensures that if you transparently redirect / to /index.html
     # for using in cloudflare r2 storage it will work
     # If the vm goes down you can change the main domain dns to point to r2
     # and everything should work.
-    return render_template("home.j2", settingsjson=current_app.config["app"], about_page=about_page)
+    return render_template("home.j2", settings=current_app.config["app"], about_page=about_page), HTTPStatus.OK
 
 
 @bp.route("/about.html")
-def home_abouthtml():
-    """Flask Home, s3 backup compatible"""
-    if aboutpage:
-        return send_from_directory(current_app.instance_path, "about.html")
-    returncode = 404
-    return (
-        generate_404(),
-        returncode,
-    )
+def home_abouthtml() -> tuple[str, HTTPStatus]:
+    """Flask Home, s3 backup compatible."""
+
+    if os.path.exists(os.path.join(current_app.instance_path, "about.html")):
+        return send_from_directory(current_app.instance_path, "about.html"), HTTPStatus.OK
+    return generate_404()
 
 
 @bp.route("/content/<path:path>")
 def send_content(path):
-    """Serve Content"""
+    """Serve Content."""
     response = None
 
-    if settingsjson["storagebackend"] == "s3":
-        newpath = settingsjson["cdndomain"] + "content/" + path.replace(current_app.instance_path, "")
+    if current_app["storage_backend"] == "s3":
+        newpath = current_app["s3"]["cdn_domain"] + "content/" + path.replace(current_app.instance_path, "")
         response = redirect(newpath, code=302)
         response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
@@ -72,37 +138,34 @@ def send_content(path):
 
 @bp.errorhandler(404)
 # pylint: disable=unused-argument
-def invalid_route(e):
-    """404 Handler"""
-    returncode = 404
-    return (
-        generate_404(),
-        returncode,
-    )
+def invalid_route(e) -> tuple[str, HTTPStatus]:
+    """404 Handler."""
+    return generate_404()
 
 
 @bp.route("/rss/<string:feed>", methods=["GET"])
-def rss(feed):
-    """Send RSS Feed"""
+def rss(feed: str) -> tuple[str, HTTPStatus]:
+    """Send RSS Feed."""
     logger.debug("Sending xml feed: %s", feed)
     xml = ""
-    returncode = 200
+    returncode = HTTPStatus.OK
     try:
         xml = PODCASTXML[feed]
     except TypeError:
-        returncode = 500
+        returncode = HTTPStatus.INTERNAL_SERVER_ERROR
         return (
             render_template(
                 "error.j2",
-                errorcode=str(returncode),
-                errortext="The developer probably messed something up",
-                settingsjson=current_app.config["app"],
+                error_code=str(returncode),
+                error_text="The developer probably messed something up",
+                settings=current_app.config["app"],
+                podcasts=current_app.config["podcast"],
             ),
             returncode,
         )
     except KeyError:
         try:
-            tree = Et.parse(current_app.instance_path + "rss/" + feed)
+            tree = Et.parse(os.path.join(current_app.instance_path, "rss", feed))
             xml = Et.tostring(
                 tree.getroot(),
                 encoding="utf-8",
@@ -112,29 +175,30 @@ def rss(feed):
             logger.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
 
         except FileNotFoundError:
-            returncode = 404
+            returncode = HTTPStatus.NOT_FOUND
             return (
                 render_template(
                     "error.j2",
-                    errorcode=str(returncode),
-                    errortext="Feed not found, you know you can copy and paste yeah?",
-                    settingsjson=settingsjson,
+                    error_code=str(returncode),
+                    error_text="Feed not found, you know you can copy and paste yeah?",
+                    settings=current_app.config["app"],
+                    podcasts=current_app.config["podcast"],
                 ),
                 returncode,
             )
-    return Response(xml, mimetype="application/rss+xml; charset=utf-8")
+    return Response(xml, mimetype="application/rss+xml; charset=utf-8"), returncode
 
 
 @bp.route("/robots.txt")
-def static_from_root():
-    """Serve robots.txt"""
+def static_from_root() -> Response:
+    """Serve robots.txt."""
     response = Response(response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain")
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     return response
 
 
 @bp.route("/favicon.ico")
-def favicon():
+def favicon() -> Response:
     """Return the favicon."""
     return send_from_directory(
         os.path.join(current_app.root_path, "archivepodcast", "static"),
