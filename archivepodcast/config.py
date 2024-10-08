@@ -31,7 +31,7 @@ DEFAULT_CONFIG: dict[str, dict] = {
             "access_key_id": "",
             "secret_access_key": "",
         },
-        "podcasts": [
+        "podcast": [
             {
                 "url": "",
                 "new_name": "",

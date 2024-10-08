@@ -12,6 +12,7 @@ bp = Blueprint("ansibleinventorycmdb", __name__)
 
 about_page = False
 
+
 def generate_404():
     """We use the 404 template in a couple places"""
     returncode = 404

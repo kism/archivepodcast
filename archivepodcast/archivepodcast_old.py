@@ -3,7 +3,6 @@
 
 # 🐍 Standard Modules
 import datetime
-import logger
 import os
 import signal
 import sys
@@ -13,6 +12,7 @@ import xml.etree.ElementTree as Et
 
 # 🐍 Pip
 import boto3
+import logger
 from flask import (
     Blueprint,
     Flask,
@@ -46,31 +46,6 @@ s3pathscache = []
 aboutpage = False
 
 # --- Why do I program like this, we are done with imports and vars
-
-
-
-
-
-def get_s3_credential():
-    """Function to get a s3 credential if one is needed"""
-    # So this is called at the start of the separate threads to get a s3 cred
-    # if needed, it is done outside of the main thread to avoid waiting for the
-    # s3 credential when starting up the http server. Saves 1.4 seconds~
-    global s3
-    if settingsjson["storagebackend"] == "s3" and not s3:
-        s3 = boto3.client(
-            "s3",
-            endpoint_url=settingsjson["s3apiurl"],
-            aws_access_key_id=settingsjson["s3accesskeyid"],
-            aws_secret_access_key=settingsjson["s3secretaccesskey"],
-        )
-        logger.info("⛅ Authenticated s3")
-
-
-
-
-
-
 
 
 def reload_settings(signalNumber, frame):
@@ -116,9 +91,7 @@ def upload_static():
     template = env.get_template("templates/home.j2")
     rendered_output = template.render(settingsjson=settingsjson, aboutpage=aboutpage)
 
-    with open(
-        settingsjson["webroot"] + os.sep + "index.html", "w", encoding="utf-8"
-    ) as rootwebpage:
+    with open(settingsjson["webroot"] + os.sep + "index.html", "w", encoding="utf-8") as rootwebpage:
         rootwebpage.write(rendered_output)
 
     if settingsjson["storagebackend"] == "s3":
@@ -132,9 +105,7 @@ def upload_static():
                 "/fonts/fira-code-v12-latin-700.woff2",
                 "/fonts/noto-sans-display-v10-latin-500.woff2",
             ]:
-                s3.upload_file(
-                    "static" + item, settingsjson["s3bucket"], "static" + item
-                )
+                s3.upload_file("static" + item, settingsjson["s3bucket"], "static" + item)
 
             if aboutpage:
                 s3.upload_file(
@@ -160,9 +131,6 @@ def upload_static():
             logger.info("⛅ Done uploading static pages to s3")
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error("⛅❌ Unhandled s3 Error: %s", exc)
-
-
-
 
 
 if __name__ == "__main__":

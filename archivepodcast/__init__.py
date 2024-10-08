@@ -4,7 +4,7 @@ from pprint import pformat
 
 from flask import Flask, render_template
 
-from . import bp_archivepodcast, config, logger, ap_helpers
+from . import ap_helpers, bp_archivepodcast, config, logger
 
 __version__ = "1.1.0"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 

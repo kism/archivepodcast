@@ -1,23 +1,26 @@
-
 import datetime
+import os
+import threading
 import time
 
-import threading
 from flask import current_app
 
+from .ap_archiver import PodcastArchiver
 from .logger import get_logger
-
-import os
 
 logger = get_logger(__name__)
 
 about_page = True
+ap = None
 
 
 def initialise_archivepodcast() -> None:
     """Initialize the archivepodcast app."""
     make_folder_structure()
     """Main, globals have been defined"""
+
+    global ap
+    ap = PodcastArchiver(current_app.config["app"])
 
     # Start thread: podcast backup loop
     thread = threading.Thread(target=podcast_loop, daemon=True)
@@ -43,7 +46,7 @@ def make_folder_structure() -> None:
     folders.append(os.path.join(current_app.instance_path, "content"))
 
     folders.extend(
-        os.path.join(current_app.instance_path, "content", entry["name_one_word"]) for entry in app_settings["podcasts"]
+        os.path.join(current_app.instance_path, "content", entry["name_one_word"]) for entry in app_settings["podcast"]
     )
 
     for folder in folders:
@@ -61,13 +64,15 @@ def make_folder_structure() -> None:
             raise PermissionError(err) from exc
 
 
-def podcast_loop():
-    """Main loop, grabs new podcasts every hour"""
-    time.sleep(3)  # lol, this is because I want the output to start after the web server comes up
-    get_s3_credential()
-    logger.info("" + "🙋 Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
+def podcast_loop() -> None:
+    """Main loop, grabs new podcasts every hour."""
+    logger.info("🙋 Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
 
-    if settingsjson["storagebackend"] == "s3":
+    if ap is None:
+        logger.error("❌ ArchivePodcast object not initialized")
+        return
+
+    if ap.s3 is not None:
         emoji = "⛅"  # un-upset black
         logger.info(
             "%s Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow",
@@ -79,16 +84,19 @@ def podcast_loop():
         # If there is something uncaught in the grab podcasts function it will crash the scraping
         # part of this program and it will need to be restarted, this avoids it.
         try:
-            grab_podcasts()
-        # pylint: disable=broad-exception-caught
-        except Exception as exc:
-            logger.error("❌ Error that broke grab_podcasts(): %s", str(exc))
+            ap.grab_podcasts()
+        except Exception:
+            logger.exception("❌ Error that broke grab_podcasts()")
 
         # Calculate time until next run
         now = datetime.datetime.now()
-        seconds_until_next_run = (3600 + 1200) - ((now.minute * 60) + now.second)
-        if seconds_until_next_run > 3600:
-            seconds_until_next_run -= 3600
+
+        one_hour_in_seconds = 3600
+        seconds_offset = 1200  # 20 minutes
+
+        seconds_until_next_run = (one_hour_in_seconds + seconds_offset) - ((now.minute * 60) + now.second)
+        if seconds_until_next_run > one_hour_in_seconds:
+            seconds_until_next_run -= one_hour_in_seconds
 
         emoji = "🛌"  # un-upset black
         logger.info("%s Sleeping for ~%s minutes", emoji, str(int(seconds_until_next_run / 60)))

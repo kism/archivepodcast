@@ -18,7 +18,7 @@
         <p>{{ settings['web_page']['description']|e }}</p>
         <p>For instructions on how to add a podcast url to a podcast app, <a
                 href="{{ settings['web_page']['podcast_guide'] }}">check out this helpful guide</a>.</p>
-        {% for podcast in settings['podcasts'] -%}
+        {% for podcast in settings['podcast'] -%}
         <h2>{{ podcast['new_name']|e }}</h2>
         <p>{{ podcast['description']|e }}</p>
         <input type="text" readonly="readonly"

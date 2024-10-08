@@ -73,7 +73,7 @@ def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | Non
     logging.getLogger("waitress").setLevel(logging.INFO)  # Prod web server, info has useful info.
     logging.getLogger("werkzeug").setLevel(logging.DEBUG)  # Only will be used in dev, debug logs incoming requests.
     logging.getLogger("urllib3").setLevel(logging.WARNING)  # Bit noisy when set to info, used by requests module.
-    logging.getLogger("botocore").setLevel(logging.WARNING) # Can be noisy
+    logging.getLogger("botocore").setLevel(logging.WARNING)  # Can be noisy
 
     logger.info("Logger configuration set!")
 
