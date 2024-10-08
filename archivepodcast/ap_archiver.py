@@ -25,20 +25,20 @@ class PodcastArchiver:
         """Initialise the ArchivePodcast object."""
         self.podcast_xml: dict[str, str] = {}
         self.s3: S3Client | None = None
-        self.load_s3()
         self.about_page: str | None = None
-        self.settings = app_settings
-        self.podcasts = podcasts
-        self.podcast_downloader = PodcastDownloader(app_settings=app_settings, s3=self.s3)
 
-        self.make_about_page()
-        self.make_folder_structure()
-        self.upload_static()
+
+
 
     def load_settings(self, app_settings: dict, podcasts: list) -> None:
         """Load the settings from the settings file."""
         self.settings = app_settings
         self.podcasts = podcasts
+        self.load_s3()
+        self.podcast_downloader = PodcastDownloader(app_settings=app_settings, s3=self.s3)
+        self.make_about_page()
+        self.make_folder_structure()
+        self.upload_static()
 
     def get_rss_xml(self, feed: str) -> str:
         """Return the rss xml for a given feed."""

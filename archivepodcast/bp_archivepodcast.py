@@ -1,19 +1,24 @@
+"""Blueprint and helpers for the ArchivePodcast app."""
+
 import datetime
 import os
+import signal
 import threading
 import time
 import xml.etree.ElementTree as ET
 from http import HTTPStatus
+from types import FrameType
 
-from flask import Blueprint, Flask, Response, current_app, redirect, render_template, send_from_directory
+from flask import Blueprint, Response, current_app, render_template, send_from_directory
 
 from .ap_archiver import PodcastArchiver
+from .config import ArchivePodcastConfig
 from .logger import get_logger
 
 logger = get_logger(__name__)
 
 
-bp = Blueprint("ansibleinventorycmdb", __name__)
+bp = Blueprint("archivepodcast", __name__)
 
 
 logger = get_logger(__name__)
@@ -26,16 +31,42 @@ def initialise_archivepodcast() -> None:
     global ap  # noqa: PLW0603
     ap = PodcastArchiver(current_app.config["app"], current_app.config["podcast"])
 
+    signal.signal(signal.SIGHUP, reload_settings)
+
+    logger.info("🙋 Starting Podcast Archive strong, unphased.")
+    logger.info("🙋 Podcast Archive running! PID: %s", os.getpid())
+
     # Start thread: podcast backup loop
     thread = threading.Thread(target=podcast_loop, daemon=True)
     thread.start()
 
-    # Start thread: upload static (wastes time otherwise, doesn't affect anything)
-    # thread = threading.Thread(target=upload_static, daemon=True) # TODO: NOT IMPLEMENTED
-    # thread.start()
-
     # Cleanup
     thread.join()
+
+
+def reload_settings(signal_num: int, handler: FrameType | None) -> None:
+    """Handle Sighup."""
+    if not ap:
+        logger.error("❌ ArchivePodcast object not initialized")
+        return
+
+    logger.debug("Handle Sighup %s %s", signal_num, handler)
+    logger.info("🙋 Got SIGHUP, Reloading Config")
+
+    try:
+        ap_conf = ArchivePodcastConfig(instance_path=current_app.instance_path)  # Loads app config from disk
+
+        # Other sections handled by config.py
+        for key, value in ap_conf.items():
+            if key != "flask":
+                current_app.config[key] = value
+
+        ap.load_settings(current_app.config["app"], current_app.config["podcast"])
+        ap.grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
+
+        logger.info("🙋 Finished adhoc config reload")
+    except Exception:
+        logger.exception("❌ Error reloading config")
 
 
 def podcast_loop() -> None:
@@ -127,16 +158,15 @@ def home_about() -> Response:
 @bp.route("/content/<path:path>")
 def send_content(path: str) -> Response:
     """Serve Content."""
-    response = Response()
 
     if current_app.config["storage_backend"] == "s3":
         new_path = current_app.config["s3"]["cdn_domain"] + "content/" + path.replace(current_app.instance_path, "")
-        response = redirect(new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
+        response = current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
         response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
         response = send_from_directory(current_app.instance_path + "/content", path)
 
-    return response
+    return response  # type: ignore
 
 
 @bp.errorhandler(404)
@@ -210,6 +240,7 @@ def favicon() -> Response:
         "favicon.ico",
         mimetype="image/vnd.microsoft.icon",
     )
+
 
 def generate_not_initialized_error() -> Response:
     """Generate a 500 error."""

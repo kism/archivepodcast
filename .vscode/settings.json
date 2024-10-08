@@ -26,6 +26,7 @@
     "noto",
     "podcasto",
     "pydub",
-    "rawvoice"
+    "rawvoice",
+    "unphased"
   ]
 }
