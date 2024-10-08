@@ -26,11 +26,12 @@ class PodcastArchiver:
         self.podcast_xml: dict[str, str] = {}
         self.s3: S3Client | None = None
         self.load_s3()
-        self.about_page = False
+        self.about_page: str | None = None
         self.settings = app_settings
         self.podcasts = podcasts
         self.podcast_downloader = PodcastDownloader(app_settings=app_settings, s3=self.s3)
 
+        self.make_about_page()
         self.make_folder_structure()
         self.upload_static()
 
@@ -38,6 +39,20 @@ class PodcastArchiver:
         """Load the settings from the settings file."""
         self.settings = app_settings
         self.podcasts = podcasts
+
+    def get_rss_xml(self, feed: str) -> str:
+        """Return the rss xml for a given feed."""
+        return self.podcast_xml[feed]
+
+    def make_about_page(self) -> None:
+        """Create about page if needed."""
+        about_page_desired_path = os.path.join(current_app.instance_path, "about.html")
+
+        if os.path.exists(about_page_desired_path):  # Check if about.html exists, affects index.html so it's first.
+            with open(about_page_desired_path, encoding="utf-8") as about_page:
+                self.about_page = about_page.read()
+
+            logger.debug("About page exists!")
 
     def make_folder_structure(self) -> None:
         """Ensure that web_root folder structure exists."""
@@ -167,12 +182,6 @@ class PodcastArchiver:
         """Function to upload static to s3 and copy index.html."""
         if not self.s3:
             return
-
-        if os.path.exists(
-            self.settings["web_root"] + os.sep + "about.html"
-        ):  # Check if about.html exists, affects index.html so it's first.
-            self.about_page = True
-            logger.debug("About page exists!")
 
         # Render backup of html
         env = Environment(loader=FileSystemLoader("."), autoescape=True)
