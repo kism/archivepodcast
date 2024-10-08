@@ -3,11 +3,16 @@
 import contextlib
 import os
 import xml.etree.ElementTree as ET
+from typing import TYPE_CHECKING
 
 import boto3
 from flask import current_app
 
+from .ap_downloader import PodcastDownloader
 from .logger import get_logger
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
 
 logger = get_logger(__name__)
 
@@ -18,14 +23,16 @@ class PodcastArchiver:
     def __init__(self, app_settings: dict) -> None:
         """Initialise the ArchivePodcast object."""
         self.podcast_xml: dict[str, str] = {}
+        self.s3: S3Client | None = None
         self.load_settings(app_settings)
-        self.get_s3_credential()
+        self.load_s3()
+        self.podcast_downloader = PodcastDownloader(app_settings=app_settings, s3=self.s3)
 
     def load_settings(self, app_settings: dict) -> None:
         """Load the settings from the settings file."""
         self.settings = app_settings
 
-    def get_s3_credential(self) -> None:
+    def load_s3(self) -> None:
         """Function to get a s3 credential if one is needed."""
         if self.settings["storage_backend"] == "s3":
             self.s3 = boto3.client(
@@ -36,8 +43,7 @@ class PodcastArchiver:
             )
             logger.info("⛅ Authenticated s3")
         else:
-            self.s3 = None
-            logger.info("📦 Not using s3")
+            logger.info("⛅ Not using s3")
 
     def grab_podcasts(self) -> None:
         """Loop through defined podcasts, download and store the xml."""
@@ -52,23 +58,26 @@ class PodcastArchiver:
             rss_file_path = os.path.join(current_app.instance_path, "rss", podcast["name_one_word"])
 
             if podcast["live"] is True:  # download all the podcasts
-                try:
-                    tree = download_podcasts(podcast, self.settings, self.s3)
-                    # Write xml to disk
-                    tree.write(
-                        rss_file_path,
-                        encoding="utf-8",
-                        xml_declaration=True,
-                    )
-                    logger.debug("Wrote rss to disk: %s", rss_file_path)
+                tree = self.podcast_downloader.download_podcast(podcast)
+                if tree:
+                    try:
+                        # Write xml to disk
+                        tree.write(
+                            rss_file_path,
+                            encoding="utf-8",
+                            xml_declaration=True,
+                        )
+                        logger.debug("Wrote rss to disk: %s", rss_file_path)
 
-                except Exception:  # pylint: disable=broad-exception-caught
-                    emoji = "❌"  # un-upset black
-                    logger.exception(
-                        "%s RSS XML Download Failure, attempting to host cached version",
-                        emoji,
-                    )
-                    tree = None
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        emoji = "❌"  # un-upset black
+                        logger.exception(
+                            "%s RSS XML Download Failure, attempting to host cached version",
+                            emoji,
+                        )
+                        tree = None
+                else:
+                    logger.error("❌ Unable to download podcast, something is wrong")
             else:
                 logger.info('📄 "live": false, in settings so not fetching new episodes')
 
@@ -117,3 +126,64 @@ class PodcastArchiver:
 
             else:
                 logger.error("❌ Unable to host podcast, something is wrong")
+
+
+
+    def upload_static(self):
+        """Function to upload static to s3 and copy index.html"""
+
+        # Check if about.html exists, affects index.html so it's first.
+        if os.path.exists(settingsjson["webroot"] + os.sep + "about.html"):
+            global aboutpage
+            aboutpage = True
+            logger.debug("About page exists!")
+
+        # Render backup of html
+        env = Environment(loader=FileSystemLoader("."))
+        template = env.get_template("templates/home.j2")
+        rendered_output = template.render(settingsjson=settingsjson, aboutpage=aboutpage)
+
+        with open(
+            settingsjson["webroot"] + os.sep + "index.html", "w", encoding="utf-8"
+        ) as rootwebpage:
+            rootwebpage.write(rendered_output)
+
+        if settingsjson["storagebackend"] == "s3":
+            logger.info("⛅ Uploading static pages to s3 in the background")
+            try:
+                for item in [
+                    "/clipboard.js",
+                    "/favicon.ico",
+                    "/podcasto.css",
+                    "/fonts/fira-code-v12-latin-600.woff2",
+                    "/fonts/fira-code-v12-latin-700.woff2",
+                    "/fonts/noto-sans-display-v10-latin-500.woff2",
+                ]:
+                    s3.upload_file(
+                        "static" + item, settingsjson["s3bucket"], "static" + item
+                    )
+
+                if aboutpage:
+                    s3.upload_file(
+                        settingsjson["webroot"] + os.sep + "about.html",
+                        settingsjson["s3bucket"],
+                        "about.html",
+                    )
+
+                s3.put_object(
+                    Body=rendered_output,
+                    Bucket=settingsjson["s3bucket"],
+                    Key="index.html",
+                    ContentType="text/html",
+                )
+
+                s3.put_object(
+                    Body="User-Agent: *\nDisallow: /\n",
+                    Bucket=settingsjson["s3bucket"],
+                    Key="robots.txt",
+                    ContentType="text/plain",
+                )
+
+                logger.info("⛅ Done uploading static pages to s3")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.error("⛅❌ Unhandled s3 Error: %s", exc)

@@ -13,6 +13,7 @@ tomlkit = "^0.12"
 boto3 = "^1.0"
 pydub = "^0.25"
 requests = "^2.32.3"
+boto3-stubs = "^1.35.35"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"

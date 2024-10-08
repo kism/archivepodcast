@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from http import HTTPStatus
 from shutil import which  # shockingly this works on windows
+from typing import TYPE_CHECKING
 from urllib.error import HTTPError
 
 import requests
@@ -17,6 +18,10 @@ from botocore.exceptions import (
 from flask import current_app
 
 from .logger import get_logger
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
+
 
 logger = get_logger(__name__)
 
@@ -51,220 +56,19 @@ else:
 
 
 class PodcastDownloader:
-    def __init__(self, app_settings: dict, s3) -> None:
+    """PodcastDownloader object."""
+
+    def __init__(self, app_settings: dict, s3: S3Client) -> None:
+        """Initialise the PodcastDownloader object."""
         self.reload_settings(app_settings, s3)
 
-    def reload_settings(self, app_settings: dict, s3) -> None:
+    def reload_settings(self, app_settings: dict, s3: S3Client) -> None:
+        """Load/Reload settings of the app."""
         self.s3 = s3
         self.s3_paths_cache: list = []
         self.app_settings = app_settings
 
-    def _check_path_exists(self, file_path):
-        """Check the path, s3 or local."""
-        file_exists = False
-
-        if self.s3 is not None:
-            s3_file_path = file_path.replace(current_app.instance_path, "")
-
-            if s3_file_path not in self.s3_paths_cache:
-                try:
-                    # Head object to check if file exists
-                    self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
-                    logger.debug(
-                        "File %s exists in the s3 bucket %s",
-                        s3_file_path,
-                        self.app_settings["s3"]["bucket"],
-                    )
-                    self.s3_paths_cache.append(s3_file_path)
-                    file_exists = True
-
-                except ClientError as e:
-                    if e.response["Error"]["Code"] == "404":
-                        logger.debug(
-                            "File %s does not exist in the s3 bucket %s",
-                            s3_file_path,
-                            self.app_settings["s3"]["bucket"],
-                        )
-                    else:
-                        logger.exception("⛅❌ s3 check file exists errored out?")
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.exception("⛅❌ Unhandled s3 Error:")
-
-            else:
-                logger.debug("s3 path %s exists in s3_paths_cache, skipping", s3_file_path)
-                file_exists = True
-
-        elif os.path.isfile(file_path):
-            file_exists = True
-
-        return file_exists
-
-    def _handle_wav(self, url: str, title: str, podcast: dict, extension="", file_date_string=""):
-        """Convert podcasts that have wav episodes 😔."""
-        new_length = None
-        spacer = ""  # This logic can be removed since WAVs will always have a date
-        if file_date_string != "":
-            spacer = "-"
-        wav_file_path = os.path.join(
-            current_app.instance_path, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}.wav"
-        )
-
-        mp3_file_path = os.path.join(
-            current_app.instance_path, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}.mp3"
-        )
-
-        # If we need do download and convert a wav there is a small chance
-        # the user has had ffmpeg issues, remove existing files to play it safe
-        if os.path.exists(wav_file_path):
-            os.remove(wav_file_path)
-            os.remove(mp3_file_path)
-
-        # If the asset hasn't already been downloaded and converted
-        if not self._check_path_exists(mp3_file_path):
-            if PYDUB_LOADED:
-                self._download_asset(
-                    url,
-                    title,
-                    podcast,
-                    extension,
-                    file_date_string,
-                )
-
-                logger.info("♻ Converting episode %s to mp3", title)
-                sound = AudioSegment.from_wav(wav_file_path)
-                sound.export(mp3_file_path, format="mp3")
-                logger.info("♻ Done")
-
-                # Remove wav since we are done with it
-                logger.info("♻ Removing wav version of %s", title)
-                if os.path.exists(wav_file_path):
-                    os.remove(wav_file_path)
-                logger.info("♻ Done")
-
-                self._upload_asset_s3(mp3_file_path, extension, file_date_string)
-
-            else:
-                if not PYDUB_LOADED:
-                    logger.error("❌ pydub pip package not installed")
-
-                logger.error("❌ Cannot convert wav to mp3!")
-
-        if self.app_settings["storage_backend"] == "s3":
-            s3_file_path = mp3_file_path.replace(current_app.instance_path, "")
-            msg = f"Checking length of s3 object: { s3_file_path }"
-            logger.debug(msg)
-            response = s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
-            new_length = response["ContentLength"]
-            msg = f"Length of converted wav file { s3_file_path }: { new_length }"
-        else:
-            new_length = os.stat(mp3_file_path).st_size
-            msg = f"Length of converted wav file { mp3_file_path }: { new_length }"
-
-        logger.debug(msg)
-
-        return new_length
-
-    def _upload_asset_s3(self, file_path: str, extension: str, file_date_string: str):
-        content_type = content_types[extension]
-
-        s3path = file_path.replace(current_app.instance_path, "")
-        try:
-            # Upload the file
-            self.s3.upload_file(
-                file_path,
-                self.app_settings["s3"]["bucket"],
-                s3path,
-                ExtraArgs={"ContentType": content_type},
-            )
-            if file_date_string == "":  # This means that the cover image is never removed from the filesystem
-                logger.info(
-                    "💾⛅ s3 upload successful, not removing podcast cover art from filesystem (this is intended for overriding)"
-                )
-            else:
-                logger.info("💾⛅ s3 upload successful, removing local file")
-                os.remove(file_path)
-        except FileNotFoundError:
-            logger.exception("⛅❌ Could not upload to s3, the source file was not found: %s", file_path)
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logger.exception("⛅❌ Unhandled s3 Error: %s", exc)
-
-    def _download_asset(self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = ""):
-        """Download asset from url with appropriate file name."""
-        spacer = ""
-        if file_date_string != "":
-            spacer = "-"
-
-        file_path = (
-            current_app.instance_path
-            + "content/"
-            + podcast["name_one_word"]
-            + "/"
-            + file_date_string
-            + spacer
-            + title
-            + extension
-        )
-
-        if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
-            if file_date_string != "" and not self._check_path_exists(
-                file_path
-            ):  # logic to upload replacement art if needed
-                try:
-                    logger.debug("Downloading: %s", url)
-                    logger.info("💾 Downloading asset to: %s", file_path)
-                    headers = {"user-agent": "Mozilla/5.0"}
-                    req = requests.get(url, headers=headers, timeout=5)
-
-                    if req.status_code == HTTPStatus.OK:
-                        with open(file_path, "wb") as asset_file:
-                            asset_file.write(req.content)
-                            logger.info("💾 Success!")
-                    else:
-                        logger.error("💾❌ HTTP ERROR: %s", str(req.content))
-
-                except HTTPError as err:
-                    logger.error("💾❌ Download Failed %s", str(err))
-
-            # For if we are using s3 as a backend
-            # wav logic since this gets called in handlewav
-            if extension != ".wav" and self.app_settings["storage_backend"] == "s3":
-                self._upload_asset_s3(file_path, extension, file_date_string)
-
-        else:
-            logger.debug("Already downloaded: " + title + extension)
-
-    def _cleanup_file_name(self, file_name: str | bytes) -> str:
-        """Standardise naming, generate a slug."""
-        if isinstance(file_name, bytes):
-            file_name = file_name.decode()
-
-        # Standardise
-        file_name = file_name.replace("[AUDIO]", "")
-        file_name = file_name.replace("[Audio]", "")
-        file_name = file_name.replace("[audio]", "")
-        file_name = file_name.replace("AUDIO", "")
-        file_name = file_name.replace("(Audio Only)", "")
-        file_name = file_name.replace("(Audio only)", "")
-        file_name = file_name.replace("Ep. ", "Ep ")
-        file_name = file_name.replace("Ep: ", "Ep ")
-        file_name = file_name.replace("Episode ", "Ep ")
-        file_name = file_name.replace("Episode: ", "Ep ")
-
-        # Generate Slug, everything that isn't alphanumeric is now a hyphen
-        file_name = re.sub(r"[^a-zA-Z0-9-]", " ", file_name)
-
-        # Remove excess spaces
-        while "  " in file_name:
-            file_name = file_name.replace("  ", " ")
-
-        # Replace spaces with hyphens
-        file_name = file_name.strip()
-        file_name = file_name.replace(" ", "-")
-
-        logger.debug("Clean Filename: '%s'", file_name)
-        return file_name
-
-    def download_podcasts(self, podcast) -> None:
+    def download_podcast(self, podcast: dict) -> ET.ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""
         response = None
 
@@ -281,9 +85,8 @@ class PodcastDownloader:
             if response.status_code != HTTPStatus.OK:
                 logger.error("❌ Not a great web request, we got: %s", str(response.status_code))
                 return None
-            else:
-                logger.debug("We got a pretty real response by the looks of it")
-                logger.debug(str(response))
+            logger.debug("We got a pretty real response by the looks of it")
+            logger.debug(str(response))
         else:
             logger.error("❌ Failure, no sign of a response.")
             logger.debug("Probably an issue with the code. Or cloudflare ruining our day maybe?")
@@ -298,7 +101,7 @@ class PodcastDownloader:
 
         # It's time to iterate, we overwrite as necessary from the settings in settings.json
         title = ""
-        url = ""
+        url: str | None = ""
 
         for channel in xml_first_child:  # Dont complain
             logger.debug("Found XML item")
@@ -391,7 +194,7 @@ class PodcastDownloader:
 
                         for filetype in IMAGE_FORMATS:
                             if filetype in url:
-                                _download_asset(url, title, podcast, filetype)
+                                self._download_asset(url, title, podcast, filetype)
                                 child.text = (
                                     self.app_settings["inet_path"]
                                     + "content/"
@@ -440,6 +243,7 @@ class PodcastDownloader:
                         if url is None:
                             url = ""
                         for audio_format in AUDIO_FORMATS:
+                            new_audio_format = audio_format
                             if audio_format in url:
                                 if audio_format == ".wav":
                                     # Download the wav, and get the new length of the file for the xml
@@ -450,7 +254,7 @@ class PodcastDownloader:
                                         audio_format,
                                         file_date_string,
                                     )
-                                    audio_format = ".mp3"
+                                    new_audio_format = ".mp3"
                                     child.attrib["type"] = "audio/mpeg"
                                     # Recalculate file size for the xml
                                     child.attrib["length"] = str(new_length)
@@ -472,7 +276,7 @@ class PodcastDownloader:
                                     + file_date_string
                                     + "-"
                                     + title
-                                    + audio_format
+                                    + new_audio_format
                                 )
 
                     # Episode Image
@@ -529,3 +333,211 @@ class PodcastDownloader:
         ET.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
 
         return tree
+
+    def _check_path_exists(self, file_path: str) -> bool:
+        """Check the path, s3 or local."""
+        file_exists = False
+
+        if self.s3 is not None:
+            s3_file_path = file_path.replace(current_app.instance_path, "")
+
+            if s3_file_path not in self.s3_paths_cache:
+                try:
+                    # Head object to check if file exists
+                    self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
+                    logger.debug(
+                        "File %s exists in the s3 bucket %s",
+                        s3_file_path,
+                        self.app_settings["s3"]["bucket"],
+                    )
+                    self.s3_paths_cache.append(s3_file_path)
+                    file_exists = True
+
+                except ClientError as e:
+                    if e.response["Error"]["Code"] == "404":
+                        logger.debug(
+                            "File %s does not exist in the s3 bucket %s",
+                            s3_file_path,
+                            self.app_settings["s3"]["bucket"],
+                        )
+                    else:
+                        logger.exception("⛅❌ s3 check file exists errored out?")
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logger.exception("⛅❌ Unhandled s3 Error:")
+
+            else:
+                logger.debug("s3 path %s exists in s3_paths_cache, skipping", s3_file_path)
+                file_exists = True
+
+        elif os.path.isfile(file_path):
+            file_exists = True
+
+        return file_exists
+
+    def _handle_wav(self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = "") -> int:
+        """Convert podcasts that have wav episodes 😔. Returns new file length."""
+        new_length = None
+        spacer = ""  # This logic can be removed since WAVs will always have a date
+        if file_date_string != "":
+            spacer = "-"
+        wav_file_path = os.path.join(
+            current_app.instance_path, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}.wav"
+        )
+
+        mp3_file_path = os.path.join(
+            current_app.instance_path, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}.mp3"
+        )
+
+        # If we need do download and convert a wav there is a small chance
+        # the user has had ffmpeg issues, remove existing files to play it safe
+        if os.path.exists(wav_file_path):
+            os.remove(wav_file_path)
+            os.remove(mp3_file_path)
+
+        # If the asset hasn't already been downloaded and converted
+        if not self._check_path_exists(mp3_file_path):
+            if PYDUB_LOADED:
+                self._download_asset(
+                    url,
+                    title,
+                    podcast,
+                    extension,
+                    file_date_string,
+                )
+
+                logger.info("♻ Converting episode %s to mp3", title)
+                sound = AudioSegment.from_wav(wav_file_path)
+                sound.export(mp3_file_path, format="mp3")
+                logger.info("♻ Done")
+
+                # Remove wav since we are done with it
+                logger.info("♻ Removing wav version of %s", title)
+                if os.path.exists(wav_file_path):
+                    os.remove(wav_file_path)
+                logger.info("♻ Done")
+
+                self._upload_asset_s3(mp3_file_path, extension, file_date_string)
+
+            else:
+                if not PYDUB_LOADED:
+                    logger.error("❌ pydub pip package not installed")
+
+                logger.error("❌ Cannot convert wav to mp3!")
+
+        if self.app_settings["storage_backend"] == "s3":
+            s3_file_path = mp3_file_path.replace(current_app.instance_path, "")
+            msg = f"Checking length of s3 object: { s3_file_path }"
+            logger.debug(msg)
+            response = self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
+            new_length = response["ContentLength"]
+            msg = f"Length of converted wav file { s3_file_path }: { new_length }"
+        else:
+            new_length = os.stat(mp3_file_path).st_size
+            msg = f"Length of converted wav file { mp3_file_path }: { new_length }"
+
+        logger.debug(msg)
+
+        return new_length
+
+    def _upload_asset_s3(self, file_path: str, extension: str, file_date_string: str) -> None:
+        content_type = content_types[extension]
+
+        s3path = file_path.replace(current_app.instance_path, "")
+        try:
+            # Upload the file
+            self.s3.upload_file(
+                file_path,
+                self.app_settings["s3"]["bucket"],
+                s3path,
+                ExtraArgs={"ContentType": content_type},
+            )
+            if file_date_string == "":  # This means that the cover image is never removed from the filesystem
+                logger.info(
+                    "💾⛅ s3 upload successful, not removing podcast cover art from filesystem "
+                    "(this is intended for overriding)"
+                )
+            else:
+                logger.info("💾⛅ s3 upload successful, removing local file")
+                os.remove(file_path)
+        except FileNotFoundError:
+            logger.exception("⛅❌ Could not upload to s3, the source file was not found: %s", file_path)
+        except Exception:
+            logger.exception("⛅❌ Unhandled s3 Error: %s")
+
+    def _download_asset(
+        self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = ""
+    ) -> None:
+        """Download asset from url with appropriate file name."""
+        spacer = ""
+        if file_date_string != "":
+            spacer = "-"
+
+        file_path = (
+            current_app.instance_path
+            + "content/"
+            + podcast["name_one_word"]
+            + "/"
+            + file_date_string
+            + spacer
+            + title
+            + extension
+        )
+
+        if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
+            if file_date_string != "" and not self._check_path_exists(
+                file_path
+            ):  # logic to upload replacement art if needed
+                try:
+                    logger.debug("Downloading: %s", url)
+                    logger.info("💾 Downloading asset to: %s", file_path)
+                    headers = {"user-agent": "Mozilla/5.0"}
+                    req = requests.get(url, headers=headers, timeout=5)
+
+                    if req.status_code == HTTPStatus.OK:
+                        with open(file_path, "wb") as asset_file:
+                            asset_file.write(req.content)
+                            logger.info("💾 Success!")
+                    else:
+                        logger.error("💾❌ HTTP ERROR: %s", str(req.content))
+
+                except HTTPError as err:
+                    logger.exception("💾❌ Download Failed %s", str(err))
+
+            # For if we are using s3 as a backend
+            # wav logic since this gets called in handle_wav
+            if extension != ".wav" and self.app_settings["storage_backend"] == "s3":
+                self._upload_asset_s3(file_path, extension, file_date_string)
+
+        else:
+            logger.debug(f"Already downloaded: {title}{extension}")
+
+    def _cleanup_file_name(self, file_name: str | bytes) -> str:
+        """Standardise naming, generate a slug."""
+        if isinstance(file_name, bytes):
+            file_name = file_name.decode()
+
+        # Standardise
+        file_name = file_name.replace("[AUDIO]", "")
+        file_name = file_name.replace("[Audio]", "")
+        file_name = file_name.replace("[audio]", "")
+        file_name = file_name.replace("AUDIO", "")
+        file_name = file_name.replace("(Audio Only)", "")
+        file_name = file_name.replace("(Audio only)", "")
+        file_name = file_name.replace("Ep. ", "Ep ")
+        file_name = file_name.replace("Ep: ", "Ep ")
+        file_name = file_name.replace("Episode ", "Ep ")
+        file_name = file_name.replace("Episode: ", "Ep ")
+
+        # Generate Slug, everything that isn't alphanumeric is now a hyphen
+        file_name = re.sub(r"[^a-zA-Z0-9-]", " ", file_name)
+
+        # Remove excess spaces
+        while "  " in file_name:
+            file_name = file_name.replace("  ", " ")
+
+        # Replace spaces with hyphens
+        file_name = file_name.strip()
+        file_name = file_name.replace(" ", "-")
+
+        logger.debug("Clean Filename: '%s'", file_name)
+        return file_name

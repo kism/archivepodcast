@@ -18,7 +18,12 @@
     "Archiver",
     "boto",
     "botocore",
+    "feedburner",
     "flac",
-    "pydub"
+    "googleplay",
+    "noto",
+    "podcasto",
+    "pydub",
+    "rawvoice"
   ]
 }
