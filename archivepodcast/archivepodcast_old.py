@@ -3,6 +3,7 @@
 
 # 🐍 Standard Modules
 import datetime
+import logger
 import os
 import signal
 import sys
@@ -12,7 +13,6 @@ import xml.etree.ElementTree as Et
 
 # 🐍 Pip
 import boto3
-import logger
 from flask import (
     Blueprint,
     Flask,
@@ -35,7 +35,7 @@ setup_logger(args)
 
 # Weird place to have an import, we need the logger running first
 # 🐍 Local, archivepodcast
-from archivepodcast.download_podcast import download_podcasts  # pylint: disable=wrong-import-position
+from archivepodcast.ap_downloader import download_podcasts  # pylint: disable=wrong-import-position
 
 # 🌏 Globals
 app = Flask(__name__, static_folder="static")  # Flask app object
