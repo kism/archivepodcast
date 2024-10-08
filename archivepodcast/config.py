@@ -31,16 +31,16 @@ DEFAULT_CONFIG: dict[str, dict] = {
             "access_key_id": "",
             "secret_access_key": "",
         },
-        "podcast": [
-            {
-                "url": "",
-                "new_name": "",
-                "name_one_word": "",
-                "description": "",
-                "live": True,
-                "contact_email": "",
-            }
-        ],
+    "podcast": [
+        {
+            "url": "",
+            "new_name": "",
+            "name_one_word": "",
+            "description": "",
+            "live": True,
+            "contact_email": "",
+        }
+    ],
     },
     "logging": {
         "level": "INFO",
