@@ -41,9 +41,6 @@ def initialise_archivepodcast() -> None:
     thread = threading.Thread(target=podcast_loop, daemon=True)
     thread.start()
 
-    # Cleanup
-    thread.join()
-
 
 def reload_settings(signal_num: int, handler: FrameType | None) -> None:
     """Handle Sighup."""
@@ -129,7 +126,13 @@ def home() -> Response:
         return generate_not_initialized_error()
 
     return Response(
-        render_template("home.j2", settings=current_app.config["app"], about_page=ap.about_page), status=HTTPStatus.OK
+        render_template(
+            "home.j2",
+            settings=current_app.config["app"],
+            podcasts=current_app.config["podcast"],
+            about_page=ap.about_page,
+        ),
+        status=HTTPStatus.OK,
     )
 
 
@@ -159,14 +162,17 @@ def home_about() -> Response:
 @bp.route("/content/<path:path>")
 def send_content(path: str) -> Response:
     """Serve Content."""
-    if current_app.config["storage_backend"] == "s3":
-        new_path = current_app.config["s3"]["cdn_domain"] + "content/" + path.replace(current_app.instance_path, "")
+    if not ap:
+        return generate_not_initialized_error()
+
+    if current_app.config["app"]["storage_backend"] == "s3":
+        new_path = current_app.config["app"]["s3"]["cdn_domain"] + "content/" + path.replace(ap.web_root, "")
         response = current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
         response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
         response = send_from_directory(os.path.join(current_app.instance_path, "web", "content"), path)
 
-    return response  # type: ignore
+    return response  # type: ignore  # noqa: PGH003 The conflicting types here are secretly the same
 
 
 @bp.errorhandler(404)
@@ -244,11 +250,12 @@ def favicon() -> Response:
 
 def generate_not_initialized_error() -> Response:
     """Generate a 500 error."""
+    logger.error("❌ ArchivePodcast object not initialized")
     return Response(
         render_template(
             "error.j2",
             error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
-            error_text="ArchivePodcast not initialized",
+            error_text="Archive Podcast not initialized",
             settings=current_app.config["app"],
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,

@@ -43,7 +43,7 @@ content_types = {
 
 PYDUB_LOADED = False
 if which("ffmpeg") is not None:
-    logger.debug("Trying to load pydub w/ffmpeg")
+    logger.trace("Trying to load pydub w/ffmpeg")
     try:
         from pydub import AudioSegment
 
@@ -76,6 +76,7 @@ class PodcastDownloader:
         # lets fetch the original podcast xml
         request = podcast["url"]
 
+        logger.debug(f"Downloading podcast rss: {request}")
         try:
             response = requests.get(request, timeout=5)
         except ValueError:  # NameResolutionError ?
@@ -90,13 +91,13 @@ class PodcastDownloader:
             logger.debug(str(response))
         else:
             logger.error("❌ Failure, no sign of a response.")
-            logger.debug("Probably an issue with the code. Or cloudflare ruining our day maybe?")
+            logger.error("Probably an issue with the code. Or cloudflare ruining our day maybe?")
             return None
 
         # We have the xml
         podcast_xml = ET.fromstring(response.content)
         logger.info("📄 Downloaded RSS XML, Processing")
-        logger.debug(str(podcast_xml))
+        logger.trace(str(podcast_xml))
 
         xml_first_child = podcast_xml[0]
 
@@ -105,12 +106,12 @@ class PodcastDownloader:
         url: str | None = ""
 
         for channel in xml_first_child:  # Dont complain
-            logger.debug("Found XML item")
-            logger.debug("XML tag: %s", channel.tag)
+            logger.trace("Found XML item")
+            logger.trace("XML tag: %s", channel.tag)
 
             # Handle URL, override
             if channel.tag == "link":
-                logger.debug("Podcast link: %s", str(channel.text))
+                logger.trace("Podcast link: %s", str(channel.text))
                 channel.text = self.app_settings["inet_path"]
 
             # Handle Podcast Title, override
@@ -122,7 +123,7 @@ class PodcastDownloader:
 
             # Handle Podcast Description, override
             elif channel.tag == "description":
-                logger.debug("Podcast description: %s", str(channel.text))
+                logger.trace("Podcast description: %s", str(channel.text))
                 channel.text = podcast["description"]
 
             # Remake Atom Tags
@@ -176,9 +177,9 @@ class PodcastDownloader:
             # Handle Image
             elif channel.tag == "image":
                 for child in channel:
-                    logger.debug("image > XML tag: %s", child.tag)
+                    logger.trace("image > XML tag: %s", child.tag)
                     if child.tag == "title":
-                        logger.debug("Title: %s", str(child.text))
+                        logger.trace("Title: %s", str(child.text))
                         child.text = podcast["new_name"]
 
                     elif child.tag == "link":
@@ -206,7 +207,7 @@ class PodcastDownloader:
                                 )
 
                     else:
-                        logger.debug(
+                        logger.trace(
                             "Unhandled XML tag %s, (under child.tag) leaving as-is",
                             child.tag,
                         )
@@ -229,11 +230,11 @@ class PodcastDownloader:
                         file_date_string = file_date.strftime("%Y%m%d")
 
                 for child in channel:
-                    logger.debug("item > XML tag: %s", child.tag)
+                    logger.trace("item > XML tag: %s", child.tag)
                     # Episode Title
                     if child.tag == "title":
                         title = str(child.text)
-                        logger.debug("Title: %s", title)
+                        logger.trace("Title: %s", title)
 
                     # Episode Content (Enclosure)
                     elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in child.tag:
@@ -308,13 +309,13 @@ class PodcastDownloader:
                                 )
 
                     else:
-                        logger.debug(
+                        logger.trace(
                             "Unhandled XML tag %s, (under child.tag) leaving as-is",
                             child.tag,
                         )
 
             else:
-                logger.debug("Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag)
+                logger.trace("Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag)
 
         podcast_xml[0] = xml_first_child
 
@@ -346,7 +347,7 @@ class PodcastDownloader:
                 try:
                     # Head object to check if file exists
                     self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
-                    logger.debug(
+                    logger.trace(
                         "File %s exists in the s3 bucket %s",
                         s3_file_path,
                         self.app_settings["s3"]["bucket"],
@@ -356,7 +357,7 @@ class PodcastDownloader:
 
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
-                        logger.debug(
+                        logger.trace(
                             "File %s does not exist in the s3 bucket %s",
                             s3_file_path,
                             self.app_settings["s3"]["bucket"],
@@ -367,7 +368,7 @@ class PodcastDownloader:
                     logger.exception("⛅❌ Unhandled s3 Error:")
 
             else:
-                logger.debug("s3 path %s exists in s3_paths_cache, skipping", s3_file_path)
+                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_file_path)
                 file_exists = True
 
         elif os.path.isfile(file_path):
@@ -434,7 +435,7 @@ class PodcastDownloader:
         if self.app_settings["storage_backend"] == "s3":
             s3_file_path = mp3_file_path.replace(self.web_root, "")
             msg = f"Checking length of s3 object: { s3_file_path }"
-            logger.debug(msg)
+            logger.trace(msg)
             response = self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
             new_length = response["ContentLength"]
             msg = f"Length of converted wav file { s3_file_path }: { new_length }"
@@ -442,7 +443,7 @@ class PodcastDownloader:
             new_length = os.stat(mp3_file_path).st_size
             msg = f"Length of converted wav file { mp3_file_path }: { new_length }"
 
-        logger.debug(msg)
+        logger.trace(msg)
 
         return new_length
 
@@ -488,7 +489,7 @@ class PodcastDownloader:
                 file_path
             ):  # logic to upload replacement art if needed
                 try:
-                    logger.debug("Downloading: %s", url)
+                    logger.trace("Downloading: %s", url)
                     logger.info("💾 Downloading asset to: %s", file_path)
                     headers = {"user-agent": "Mozilla/5.0"}
                     req = requests.get(url, headers=headers, timeout=5)
@@ -500,8 +501,8 @@ class PodcastDownloader:
                     else:
                         logger.error("💾❌ HTTP ERROR: %s", str(req.content))
 
-                except HTTPError as err:
-                    logger.exception("💾❌ Download Failed %s", str(err))
+                except HTTPError:
+                    logger.exception("💾❌ Download Failed")
 
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
@@ -509,7 +510,7 @@ class PodcastDownloader:
                 self._upload_asset_s3(file_path, extension, file_date_string)
 
         else:
-            logger.debug(f"Already downloaded: {title}{extension}")
+            logger.trace(f"Already downloaded: {title}{extension}")
 
     def _cleanup_file_name(self, file_name: str | bytes) -> str:
         """Standardise naming, generate a slug."""
@@ -539,5 +540,5 @@ class PodcastDownloader:
         file_name = file_name.strip()
         file_name = file_name.replace(" ", "-")
 
-        logger.debug("Clean Filename: '%s'", file_name)
+        logger.trace("Clean Filename: '%s'", file_name)
         return file_name

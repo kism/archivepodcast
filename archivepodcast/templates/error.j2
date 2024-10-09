@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>
-        Heck, {{ errorcode|e }}
+        Heck, {{ error_code|e }}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
@@ -14,9 +14,9 @@
 
 <body>
     <main>
-        <h1>{{ settingsjson['webpagetitle']|e }}</h1>
-        <h2>Heck, looks like a {{ errorcode|e }} error!</h2>
-        <p>{{ errortext|e }}</p>
+        <h1>{{ settings['web_page']['title']|e }}</h1>
+        <h2>Heck, looks like a {{ error_code|e }} error!</h2>
+        <p>{{ error_text|e }}</p>
         <p>I'm going to suggest that you go back and read the guide.</p>
     </main>
 </body>

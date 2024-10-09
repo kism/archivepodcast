@@ -43,16 +43,14 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
 
     app.logger.debug(app_config_str)
 
-    # Now that we have loaded out configuration, we can import our blueprints
-    # KISM-BOILERPLATE: This is a demo blueprint blueprint_one.py. Rename the file
-    #  and vars to make your own http endpoints and pages. Use multiple blueprints if
-    #  you have functionality you can categorise.
     app.register_blueprint(bp_archivepodcast.bp)  # Register blueprint
 
     # For modules that need information from the app object we need to start them under `with app.app_context():`
     # Since in the blueprint_one module, we use `from flask import current_app` to get the app object to get the config
     with app.app_context():
         bp_archivepodcast.initialise_archivepodcast()
+
+    app.app_context().push()
 
     app.logger.info("Starting Web Server")
 
