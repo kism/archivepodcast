@@ -50,7 +50,7 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     with app.app_context():
         bp_archivepodcast.initialise_archivepodcast()
 
-    app.app_context().push()
+    app.app_context().push() # God knows what does this does but it fixes everything
 
     app.logger.info("Starting Web Server")
 
