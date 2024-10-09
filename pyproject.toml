@@ -13,7 +13,6 @@ tomlkit = "^0.12"
 boto3 = "^1.0"
 pydub = "^0.25"
 requests = "^2.32.3"
-boto3-stubs = "^1.35.35"
 jinja2 = "^3.1.4"
 
 [tool.poetry.group.test.dependencies]
@@ -25,7 +24,7 @@ pytest-random-order = "*"
 mypy = "*"
 ruff = "*"
 types-requests = "*"
-types-boto3 = "*"
+boto3-stubs = "*"
 
 [tool.poetry.group.dev.dependencies]
 pylance = "*"

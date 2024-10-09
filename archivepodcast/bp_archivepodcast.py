@@ -29,7 +29,8 @@ ap = None
 def initialise_archivepodcast() -> None:
     """Initialize the archivepodcast app."""
     global ap  # noqa: PLW0603
-    ap = PodcastArchiver(current_app.config["app"], current_app.config["podcast"])
+
+    ap = PodcastArchiver(current_app.config["app"], current_app.config["podcast"], current_app.instance_path)
 
     signal.signal(signal.SIGHUP, reload_settings)
 
@@ -150,21 +151,20 @@ def home_index() -> Response:
 @bp.route("/about.html")
 def home_about() -> Response:
     """Flask Home, s3 backup compatible."""
-    if os.path.exists(os.path.join(current_app.instance_path, "about.html")):
-        return send_from_directory(current_app.instance_path, "about.html")
+    if os.path.exists(os.path.join(current_app.instance_path, "web", "about.html")):
+        return send_from_directory(os.path.join(current_app.instance_path, "web"), "about.html")
     return generate_404()
 
 
 @bp.route("/content/<path:path>")
 def send_content(path: str) -> Response:
     """Serve Content."""
-
     if current_app.config["storage_backend"] == "s3":
         new_path = current_app.config["s3"]["cdn_domain"] + "content/" + path.replace(current_app.instance_path, "")
         response = current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
         response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
-        response = send_from_directory(current_app.instance_path + "/content", path)
+        response = send_from_directory(os.path.join(current_app.instance_path, "web", "content"), path)
 
     return response  # type: ignore
 
@@ -200,7 +200,7 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = ET.parse(os.path.join(current_app.instance_path, "rss", feed))
+            tree = ET.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
             xml = ET.tostring(
                 tree.getroot(),
                 encoding="utf-8",

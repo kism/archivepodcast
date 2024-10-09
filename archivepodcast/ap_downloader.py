@@ -11,19 +11,17 @@ from shutil import which  # shockingly this works on windows
 from typing import TYPE_CHECKING
 from urllib.error import HTTPError
 
-
-
 import requests
 from botocore.exceptions import (
     ClientError,
 )  # No need to import boto3 since the object just gets passed in
-from flask import current_app
 
 from .logger import get_logger
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
-
+else:
+    S3Client = object
 
 logger = get_logger(__name__)
 
@@ -60,15 +58,16 @@ else:
 class PodcastDownloader:
     """PodcastDownloader object."""
 
-    def __init__(self, app_settings: dict, s3: S3Client) -> None:
+    def __init__(self, app_settings: dict, s3: S3Client, web_root: str) -> None:
         """Initialise the PodcastDownloader object."""
-        self.reload_settings(app_settings, s3)
+        self.reload_settings(app_settings, s3, web_root)
 
-    def reload_settings(self, app_settings: dict, s3: S3Client) -> None:
+    def reload_settings(self, app_settings: dict, s3: S3Client, web_root: str) -> None:
         """Load/Reload settings of the app."""
         self.s3 = s3
         self.s3_paths_cache: list = []
         self.app_settings = app_settings
+        self.web_root = web_root
 
     def download_podcast(self, podcast: dict) -> ET.ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""
@@ -341,7 +340,7 @@ class PodcastDownloader:
         file_exists = False
 
         if self.s3 is not None:
-            s3_file_path = file_path.replace(current_app.instance_path, "")
+            s3_file_path = file_path.replace(self.web_root, "")
 
             if s3_file_path not in self.s3_paths_cache:
                 try:
@@ -383,11 +382,17 @@ class PodcastDownloader:
         if file_date_string != "":
             spacer = "-"
         wav_file_path = os.path.join(
-            current_app.instance_path, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}.wav"
+            self.web_root,
+            "content",
+            podcast["name_one_word"],
+            f"{file_date_string}{spacer}{title}.wav",
         )
 
         mp3_file_path = os.path.join(
-            current_app.instance_path, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}.mp3"
+            self.web_root,
+            "content",
+            podcast["name_one_word"],
+            f"{file_date_string}{spacer}{title}.mp3",
         )
 
         # If we need do download and convert a wav there is a small chance
@@ -427,7 +432,7 @@ class PodcastDownloader:
                 logger.error("❌ Cannot convert wav to mp3!")
 
         if self.app_settings["storage_backend"] == "s3":
-            s3_file_path = mp3_file_path.replace(current_app.instance_path, "")
+            s3_file_path = mp3_file_path.replace(self.web_root, "")
             msg = f"Checking length of s3 object: { s3_file_path }"
             logger.debug(msg)
             response = self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
@@ -444,7 +449,7 @@ class PodcastDownloader:
     def _upload_asset_s3(self, file_path: str, extension: str, file_date_string: str) -> None:
         content_type = content_types[extension]
 
-        s3path = file_path.replace(current_app.instance_path, "")
+        s3path = file_path.replace(self.web_root, "")
         try:
             # Upload the file
             self.s3.upload_file(
@@ -474,15 +479,8 @@ class PodcastDownloader:
         if file_date_string != "":
             spacer = "-"
 
-        file_path = (
-            current_app.instance_path
-            + "content/"
-            + podcast["name_one_word"]
-            + "/"
-            + file_date_string
-            + spacer
-            + title
-            + extension
+        file_path = os.path.join(
+            self.web_root, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}{extension}"
         )
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
