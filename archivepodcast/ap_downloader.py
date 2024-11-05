@@ -362,7 +362,7 @@ class PodcastDownloader:
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
                         logger.debug(
-                            "File %s does not exist in the s3 bucket %s",
+                            "File %s does not exist 🙅‍ in the s3 bucket %s",
                             s3_file_path,
                             self.app_settings["s3"]["bucket"],
                         )
@@ -454,14 +454,16 @@ class PodcastDownloader:
     def _upload_asset_s3(self, file_path: str, extension: str, file_date_string: str) -> None:
         """Upload asset to s3."""
         content_type = content_types[extension]
-        s3path = file_path.replace(self.web_root, "")
+        s3_path = file_path.replace(self.web_root, "")
+        if s3_path[0] == "/": # TODO: Check if needed
+            s3_path = s3_path[1:]
         try:
             # Upload the file
-            logger.info("💾⛅ Uploading to s3: %s", s3path)
+            logger.info("💾⛅ Uploading to s3: %s", s3_path)
             self.s3.upload_file(
                 file_path,
                 self.app_settings["s3"]["bucket"],
-                s3path,
+                s3_path,
                 ExtraArgs={"ContentType": content_type},
             )
             if file_date_string == "":  # This means that the cover image is never removed from the filesystem

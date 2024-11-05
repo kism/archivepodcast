@@ -196,18 +196,19 @@ class PodcastArchiver:
             try:
                 static_directory = os.path.join(current_app.root_path, "static")
                 items_to_copy = [
-                    os.path.join(static_directory, f)
-                    for f in os.listdir(static_directory)
-                    if os.path.isfile(os.path.join(static_directory, f))
+                    os.path.join(root, file)
+                    for root, __, files in os.walk(static_directory)
+                    for file in files
                 ]
 
                 for item in items_to_copy:
-                    logger.debug("Uploading static item: %s", item)
-                    static_item_path = os.path.join(static_directory, item)
+                    static_item_local_path = os.path.join(static_directory, item)
+                    static_item_s3_path = "static" + item.replace(os.sep, "/").replace(static_directory, "")
+                    logger.debug("Uploading static item: %s to s3: %s", static_item_local_path, static_item_s3_path)
                     self.s3.upload_file(
-                        static_item_path,
+                        static_item_local_path,
                         self.app_settings["s3"]["bucket"],
-                        "static" + item,
+                        static_item_s3_path,
                     )
 
                 if self.about_page:
