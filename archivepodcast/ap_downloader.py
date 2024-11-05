@@ -345,7 +345,9 @@ class PodcastDownloader:
         file_exists = False
 
         if self.s3 is not None:
-            s3_file_path = file_path.replace(self.web_root, "")
+            s3_file_path = file_path.replace(self.web_root, "").replace(os.sep, "/")
+            if s3_file_path[0] == "/":
+                s3_file_path = s3_file_path[1:]
 
             if s3_file_path not in self.s3_paths_cache:
                 try:
