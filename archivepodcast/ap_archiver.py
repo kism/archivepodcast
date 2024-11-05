@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import boto3
 from jinja2 import Environment, FileSystemLoader
+from flask import current_app
 
 from .ap_downloader import PodcastDownloader
 from .logger import get_logger
@@ -193,15 +194,21 @@ class PodcastArchiver:
         if self.app_settings["storage_backend"] == "s3":
             logger.info("⛅ Uploading static pages to s3 in the background")
             try:
-                for item in [
-                    "/clipboard.js",
-                    "/favicon.ico",
-                    "/podcasto.css",
-                    "/fonts/fira-code-v12-latin-600.woff2",
-                    "/fonts/fira-code-v12-latin-700.woff2",
-                    "/fonts/noto-sans-display-v10-latin-500.woff2",
-                ]:
-                    self.s3.upload_file("static" + item, self.app_settings["s3"]["bucket"], "static" + item)
+                static_directory = os.path.join(current_app.root_path, "static")
+                items_to_copy = [
+                    os.path.join(static_directory, f)
+                    for f in os.listdir(static_directory)
+                    if os.path.isfile(os.path.join(static_directory, f))
+                ]
+
+                for item in items_to_copy:
+                    logger.debug("Uploading static item: %s", item)
+                    static_item_path = os.path.join(static_directory, item)
+                    self.s3.upload_file(
+                        static_item_path,
+                        self.app_settings["s3"]["bucket"],
+                        "static" + item,
+                    )
 
                 if self.about_page:
                     self.s3.upload_file(

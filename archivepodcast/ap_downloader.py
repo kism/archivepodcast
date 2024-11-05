@@ -87,8 +87,7 @@ class PodcastDownloader:
             if response.status_code != HTTPStatus.OK:
                 logger.error("❌ Not a great web request, we got: %s", str(response.status_code))
                 return None
-            logger.debug("We got a pretty real response by the looks of it")
-            logger.debug(str(response))
+            logger.debug(f"Good response {response.status_code}")
         else:
             logger.error("❌ Failure, no sign of a response.")
             logger.error("Probably an issue with the code. Or cloudflare ruining our day maybe?")
