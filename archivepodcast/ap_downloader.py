@@ -160,6 +160,7 @@ class PodcastDownloader:
                 if url is None:
                     url = ""
 
+                logger.trace("Image URL: %s", url)
                 for filetype in IMAGE_FORMATS:
                     if filetype in url:
                         self._download_asset(url, title, podcast, filetype)
@@ -336,6 +337,10 @@ class PodcastDownloader:
 
         return tree
 
+    def _check_local_path_exists(self, file_path: str) -> bool:
+        """Check if the file exists locally."""
+        return os.path.isfile(file_path)
+
     def _check_path_exists(self, file_path: str) -> bool:
         """Check the path, s3 or local."""
         file_exists = False
@@ -347,7 +352,7 @@ class PodcastDownloader:
                 try:
                     # Head object to check if file exists
                     self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
-                    logger.trace(
+                    logger.debug(
                         "File %s exists in the s3 bucket %s",
                         s3_file_path,
                         self.app_settings["s3"]["bucket"],
@@ -357,7 +362,7 @@ class PodcastDownloader:
 
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
-                        logger.trace(
+                        logger.debug(
                             "File %s does not exist in the s3 bucket %s",
                             s3_file_path,
                             self.app_settings["s3"]["bucket"],
@@ -371,8 +376,8 @@ class PodcastDownloader:
                 logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_file_path)
                 file_exists = True
 
-        elif os.path.isfile(file_path):
-            file_exists = True
+        else:
+            file_exists = self._check_local_path_exists(file_path)
 
         return file_exists
 
@@ -448,11 +453,12 @@ class PodcastDownloader:
         return new_length
 
     def _upload_asset_s3(self, file_path: str, extension: str, file_date_string: str) -> None:
+        """Upload asset to s3."""
         content_type = content_types[extension]
-
         s3path = file_path.replace(self.web_root, "")
         try:
             # Upload the file
+            logger.info("💾⛅ Uploading to s3: %s", s3path)
             self.s3.upload_file(
                 file_path,
                 self.app_settings["s3"]["bucket"],
@@ -485,7 +491,7 @@ class PodcastDownloader:
         )
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
-            if file_date_string != "" and not self._check_path_exists(
+            if file_date_string == "" and not self._check_local_path_exists(
                 file_path
             ):  # logic to upload replacement art if needed
                 try:

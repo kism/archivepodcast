@@ -184,10 +184,10 @@ class PodcastArchiver:
 
         # Render backup of html
         env = Environment(loader=FileSystemLoader("."), autoescape=True)
-        template = env.get_template("templates/home.j2")
+        template = env.get_template("archivepodcast/templates/home.j2")
         rendered_output = template.render(settings=self.app_settings, about_page=self.about_page)
 
-        with open(self.app_settings["web_root"] + os.sep + "index.html", "w", encoding="utf-8") as root_web_page:
+        with open(os.path.join(self.instance_path, "web", "index.html"), "w", encoding="utf-8") as root_web_page:
             root_web_page.write(rendered_output)
 
         if self.app_settings["storage_backend"] == "s3":

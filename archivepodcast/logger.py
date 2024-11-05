@@ -5,7 +5,42 @@ import typing
 from logging.handlers import RotatingFileHandler
 from typing import cast
 
+from colorama import Fore, init
 from flask import Flask
+
+init(autoreset=True)
+
+COLOURS = {
+    "TRACE": Fore.CYAN,
+    "DEBUG": Fore.GREEN,
+    "INFO": Fore.WHITE,
+    "WARNING": Fore.YELLOW,
+    "ERROR": Fore.RED,
+    "CRITICAL": Fore.RED,
+}
+
+
+class ColorFormatter(logging.Formatter):
+    """Formatter for coloring the log messages."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format the log message."""
+        if isinstance(record.msg, tuple):
+            record.msg = "  ".join(map(str, record.msg))
+
+        elif record.msg is None:
+            record.msg = "<NoneType>"
+
+        elif isinstance(record.msg, list):
+            record.msg = "  \n".join(map(str, record.msg))
+
+        colour = COLOURS.get(record.levelname, "")
+        if colour:
+            record.name = f"{colour}{record.name}"
+            record.levelname = f"{colour}{record.levelname}"
+            record.msg = f"{colour}{record.msg}"
+        return super().format(record)
+
 
 LOG_LEVELS = [
     "TRACE",
@@ -15,7 +50,8 @@ LOG_LEVELS = [
     "ERROR",
     "CRITICAL",
 ]  # Valid str logging levels.
-LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"  # This is the logging message format that I like.
+# LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"  # This is the logging message format that I like.
+LOG_FORMAT = "%(levelname)s:%(name)s:%(message)s"  # This is the logging message format that I like.
 TRACE_LEVEL_NUM = 5
 
 
@@ -74,6 +110,8 @@ def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | Non
     logging.getLogger("werkzeug").setLevel(logging.DEBUG)  # Only will be used in dev, debug logs incoming requests.
     logging.getLogger("urllib3").setLevel(logging.WARNING)  # Bit noisy when set to info, used by requests module.
     logging.getLogger("botocore").setLevel(logging.WARNING)  # Can be noisy
+    logging.getLogger("boto3").setLevel(logging.WARNING)  # Can be noisy
+    logging.getLogger("s3transfer").setLevel(logging.WARNING)  # Can be noisy
 
     logger.info("Logger configuration set!")
 
@@ -95,7 +133,7 @@ def _has_console_handler(in_logger: logging.Logger) -> bool:
 
 def _add_console_handler(in_logger: logging.Logger) -> None:
     """Add a console handler to the logger."""
-    formatter = logging.Formatter(LOG_FORMAT)
+    formatter = ColorFormatter(LOG_FORMAT)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
 
