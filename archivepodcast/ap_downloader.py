@@ -150,7 +150,7 @@ class PodcastDownloader:
             elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
                 channel.text = self.app_settings["inet_path"] + "rss/" + podcast["name_one_word"]
 
-            elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
+            elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":  # Podcast Cover Art
                 if podcast["new_name"] == "":
                     podcast["new_name"] = channel.text
                 title = podcast["new_name"]
@@ -162,7 +162,7 @@ class PodcastDownloader:
                 logger.trace("Image URL: %s", url)
                 for filetype in IMAGE_FORMATS:
                     if filetype in url:
-                        self._download_asset(url, title, podcast, filetype)
+                        self._download_cover_art(url, title, podcast, filetype)
                         channel.attrib["href"] = (
                             self.app_settings["inet_path"]
                             + "content/"
@@ -434,7 +434,7 @@ class PodcastDownloader:
                     os.remove(wav_file_path)
                 logger.info("♻ Done")
 
-                self._upload_asset_s3(mp3_file_path, extension, file_date_string)
+                self._upload_asset_s3(mp3_file_path, extension)
 
             else:
                 if not PYDUB_LOADED:
@@ -443,7 +443,7 @@ class PodcastDownloader:
                 logger.error("❌ Cannot convert wav to mp3!")
 
         if self.app_settings["storage_backend"] == "s3":
-            s3_file_path = mp3_file_path.replace(self.web_root, "")
+            s3_file_path = mp3_file_path.replace(self.web_root, "").replace(os.sep, "/")
             msg = f"Checking length of s3 object: { s3_file_path }"
             logger.trace(msg)
             response = self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
@@ -457,11 +457,11 @@ class PodcastDownloader:
 
         return new_length
 
-    def _upload_asset_s3(self, file_path: str, extension: str, file_date_string: str) -> None:
+    def _upload_asset_s3(self, file_path: str, extension: str) -> None:
         """Upload asset to s3."""
         content_type = content_types[extension]
-        s3_path = file_path.replace(self.web_root, "")
-        if s3_path[0] == "/":  # TODO: Check if needed
+        s3_path = file_path.replace(self.web_root, "").replace(os.sep, "/")
+        if s3_path[0] == "/":
             s3_path = s3_path[1:]
         try:
             # Upload the file
@@ -472,18 +472,35 @@ class PodcastDownloader:
                 s3_path,
                 ExtraArgs={"ContentType": content_type},
             )
-            if file_date_string == "":  # This means that the cover image is never removed from the filesystem
-                logger.info(
-                    "💾⛅ s3 upload successful, not removing podcast cover art from filesystem "
-                    "(this is intended for overriding)"
-                )
-            else:
-                logger.info("💾⛅ s3 upload successful, removing local file")
-                os.remove(file_path)
+
+            logger.info("💾⛅ s3 upload successful, removing local file")
+            os.remove(file_path)
         except FileNotFoundError:
             logger.exception("⛅❌ Could not upload to s3, the source file was not found: %s", file_path)
         except Exception:
             logger.exception("⛅❌ Unhandled s3 Error: %s")
+
+    def _download_cover_art(self, url: str, title: str, podcast: dict, extension: str = "") -> None:
+        """Download cover art from url with appropriate file name."""
+        cover_art_destination = os.path.join(self.web_root, "content", podcast["name_one_word"], f"{title}{extension}")
+
+        local_file_found = self._check_local_path_exists(
+            os.path.join(self.web_root, "content", podcast["name_one_word"], f"{title}{extension}")
+        )
+
+        if not local_file_found:
+            self._download_to_local(url, cover_art_destination)
+
+        if self.app_settings["storage_backend"] == "s3":
+            content_type = content_types[extension]
+            s3_path = cover_art_destination.replace(self.web_root, "").replace(os.sep, "/")
+            logger.info("💾⛅ Uploading to s3: %s", s3_path)
+            self.s3.upload_file(
+                cover_art_destination,
+                self.app_settings["s3"]["bucket"],
+                s3_path,
+                ExtraArgs={"ContentType": content_type},
+            )
 
     def _download_asset(
         self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = ""
@@ -498,30 +515,33 @@ class PodcastDownloader:
         )
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
-            if not self._check_local_path_exists(file_path):  # logic to upload replacement art if needed
-                try:
-                    logger.debug("💾 Downloading: %s", url)
-                    logger.info("💾 Downloading asset to: %s", file_path)
-                    headers = {"user-agent": "Mozilla/5.0"}
-                    req = requests.get(url, headers=headers, timeout=5)
-
-                    if req.status_code == HTTPStatus.OK:
-                        with open(file_path, "wb") as asset_file:
-                            asset_file.write(req.content)
-                            logger.info("💾 Success!")
-                    else:
-                        logger.error("💾❌ HTTP ERROR: %s", str(req.content))
-
-                except HTTPError:
-                    logger.exception("💾❌ Download Failed")
+            self._download_to_local(url, file_path)
 
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
             if extension != ".wav" and self.app_settings["storage_backend"] == "s3":
-                self._upload_asset_s3(file_path, extension, file_date_string)
+                self._upload_asset_s3(file_path, extension)
 
         else:
             logger.trace(f"Already downloaded: {title}{extension}")
+
+    def _download_to_local(self, url: str, file_path: str) -> None:
+        """Download the asset from the url."""
+        try:
+            logger.debug("💾 Downloading: %s", url)
+            logger.info("💾 Downloading asset to: %s", file_path)
+            headers = {"user-agent": "Mozilla/5.0"}
+            req = requests.get(url, headers=headers, timeout=5)
+
+            if req.status_code == HTTPStatus.OK:
+                with open(file_path, "wb") as asset_file:
+                    asset_file.write(req.content)
+                    logger.info("💾 Success!")
+            else:
+                logger.error("💾❌ HTTP ERROR: %s", str(req.content))
+
+        except HTTPError:
+            logger.exception("💾❌ Download Failed")
 
     def _cleanup_file_name(self, file_name: str | bytes) -> str:
         """Standardise naming, generate a slug."""

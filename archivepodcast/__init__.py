@@ -1,11 +1,10 @@
 """Flask webapp archivepodcast."""
 
-from pprint import pformat
 
 from flask import Flask
 
 from . import bp_archivepodcast, logger
-from .config import DEFAULT_CONFIG, ArchivePodcastConfig
+from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 
 __version__ = "1.1.0"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
@@ -14,7 +13,7 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)  # Create Flask app object
 
-    logger.setup_logger(app, DEFAULT_CONFIG["logging"])  # Setup logger with defaults defined in config module
+    logger.setup_logger(app, DEFAULT_LOGGING_CONFIG)  # Setup logger with defaults defined in config module
 
     if test_config:  # For Python testing we will often pass in a config
         if not instance_path:
@@ -37,22 +36,7 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
             app.config[key] = value
 
     # Do some debug logging of config
-    import tomlkit
-    from datetime import timedelta
-
-    def convert_timedelta_to_str(config):
-        for k, v in config.items():
-            if isinstance(v, timedelta):
-                config[k] = str(v)
-        return config
-
-    filtered_config = {k: v for k, v in app.config.items() if v is not None}
-    filtered_config = convert_timedelta_to_str(filtered_config)
-
-    app_config_str = "Flask config >>>\n"
-    app_config_str += tomlkit.dumps(filtered_config)
-
-    app.logger.debug(app_config_str)
+    print_config(app)
 
     app.register_blueprint(bp_archivepodcast.bp)  # Register blueprint
 

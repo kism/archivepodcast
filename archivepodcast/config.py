@@ -4,8 +4,10 @@ import contextlib
 import os
 import pwd
 import typing
+from datetime import timedelta
 
 import tomlkit
+from flask import Flask
 
 from .logger import get_logger
 
@@ -14,6 +16,11 @@ from .logger import get_logger
 logger = get_logger(__name__)
 
 # Default config dictionary, also works as a schema
+DEFAULT_LOGGING_CONFIG: dict = {
+    "level": "INFO",
+    "path": "",
+}
+
 DEFAULT_CONFIG: dict[str, dict | list] = {
     "app": {
         "web_page": {
@@ -42,10 +49,7 @@ DEFAULT_CONFIG: dict[str, dict | list] = {
             "contact_email": "",
         }
     ],
-    "logging": {
-        "level": "INFO",
-        "path": "",
-    },
+    "logging": DEFAULT_LOGGING_CONFIG,
     "flask": {  # This section is for Flask default config entries https://flask.palletsprojects.com/en/3.0.x/config/
         "DEBUG": False,
         "TESTING": False,
@@ -143,7 +147,6 @@ class ArchivePodcastConfig:
             if not podcast["name_one_word"]:
                 failed_items.append("Podcast name_one_word is empty")
 
-
         # This is to assure that you don't accidentally test without the tmp_dir fixture.
         if self._config["flask"]["TESTING"] and not any(
             substring in str(self.instance_path) for substring in ["tmp", "temp", "TMP", "TEMP"]
@@ -220,3 +223,22 @@ class ArchivePodcastConfig:
 
         with open(self._config_path, encoding="utf8") as toml_file:
             return tomlkit.load(toml_file)
+
+
+def print_config(app: Flask) -> None:
+    """Print app config to log."""
+
+    def convert_timedelta_to_str(config: dict) -> dict:
+        """Convert timedelta to str for printing."""
+        for k, v in config.items():
+            if isinstance(v, timedelta):
+                config[k] = str(v)
+        return config
+
+    filtered_config = {k: v for k, v in app.config.items() if v is not None}
+    filtered_config = convert_timedelta_to_str(filtered_config)
+
+    app_config_str = "Flask config >>>\n"
+    app_config_str += tomlkit.dumps(filtered_config)
+
+    app.logger.debug(app_config_str.strip())
