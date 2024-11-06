@@ -363,9 +363,8 @@ class PodcastDownloader:
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
                         logger.debug(
-                            "File %s does not exist 🙅‍ in the s3 bucket %s",
+                            "File: %s does not exist 🙅‍ in the s3 bucket",
                             s3_file_path,
-                            self.app_settings["s3"]["bucket"],
                         )
                     else:
                         logger.exception("⛅❌ s3 check file exists errored out?")
@@ -495,7 +494,7 @@ class PodcastDownloader:
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
             if not self._check_local_path_exists(file_path):  # logic to upload replacement art if needed
                 try:
-                    logger.debug("Downloading: %s", url)
+                    logger.debug("💾 Downloading: %s", url)
                     logger.info("💾 Downloading asset to: %s", file_path)
                     headers = {"user-agent": "Mozilla/5.0"}
                     req = requests.get(url, headers=headers, timeout=5)

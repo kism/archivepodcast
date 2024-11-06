@@ -92,15 +92,14 @@ class PodcastArchiver:
                 aws_access_key_id=self.app_settings["s3"]["access_key_id"],
                 aws_secret_access_key=self.app_settings["s3"]["secret_access_key"],
             )
-            if logger.level <= 10:
-                self.check_s3_files()
-            logger.info("⛅ Authenticated s3")
+            logger.info(f"⛅ Authenticated s3, using bucket: {self.app_settings['s3']['bucket']}")
+            self.check_s3_files()
         else:
             logger.info("⛅ Not using s3")
 
     def check_s3_files(self) -> None:
         """Function to list files in s3 bucket."""
-        logger.info("Checking state of s3 bucket")
+        logger.info("⛅ Checking state of s3 bucket")
         if not self.s3:
             logger.warning("⛅ No s3 client to list files")
             return
@@ -118,7 +117,7 @@ class PodcastArchiver:
                     self.s3.delete_object(Bucket=self.app_settings["s3"]["bucket"], Key=obj["Key"])
             logger.debug("⛅ S3 Bucket Contents >>>\n%s", contents_str.strip())
         else:
-            logger.info("No objects found in the bucket.")
+            logger.info("⛅ No objects found in the bucket.")
 
     def grab_podcasts(self) -> None:
         """Loop through defined podcasts, download and store the xml."""
