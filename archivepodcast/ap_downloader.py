@@ -115,30 +115,31 @@ class PodcastDownloader:
             logger.trace("XML tag: %s", channel.tag)
             self._process_channel_tag(channel, podcast)
 
-    def _process_channel_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _process_channel_tag(self, channel: etree._Element, podcast: dict) -> None:  # noqa: C901 There is no way to avoid this really, there are many tag types
         """Process individual channel tags in the podcast XML."""
-        if channel.tag == "link":
-            self._handle_link_tag(channel)
-        elif channel.tag == "title":
-            self._handle_title_tag(channel, podcast)
-        elif channel.tag == "description":
-            self._handle_description_tag(channel, podcast)
-        elif channel.tag == "{http://www.w3.org/2005/Atom}link":
-            self._handle_atom_link_tag(channel, podcast)
-        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}owner":
-            self._handle_itunes_owner_tag(channel, podcast)
-        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}author":
-            self._handle_itunes_author_tag(channel, podcast)
-        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
-            self._handle_itunes_new_feed_url_tag(channel, podcast)
-        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-            self._handle_itunes_image_tag(channel, podcast)
-        elif channel.tag == "image":
-            self._handle_image_tag(channel, podcast)
-        elif channel.tag == "item":
-            self._handle_item_tag(channel, podcast)
-        else:
-            logger.trace("Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag)
+        match channel.tag:
+            case "link":
+                self._handle_link_tag(channel)
+            case "title":
+                self._handle_title_tag(channel, podcast)
+            case "description":
+                self._handle_description_tag(channel, podcast)
+            case "{http://www.w3.org/2005/Atom}link":
+                self._handle_atom_link_tag(channel, podcast)
+            case "{http://www.itunes.com/dtds/podcast-1.0.dtd}owner":
+                self._handle_itunes_owner_tag(channel, podcast)
+            case "{http://www.itunes.com/dtds/podcast-1.0.dtd}author":
+                self._handle_itunes_author_tag(channel, podcast)
+            case "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
+                self._handle_itunes_new_feed_url_tag(channel, podcast)
+            case "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
+                self._handle_itunes_image_tag(channel, podcast)
+            case "image":
+                self._handle_image_tag(channel, podcast)
+            case "item":
+                self._handle_item_tag(channel, podcast)
+            case _:
+                logger.trace("Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag)
 
     def _handle_link_tag(self, channel: etree._Element) -> None:
         """Handle the link tag in the podcast XML."""
