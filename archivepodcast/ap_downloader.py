@@ -85,9 +85,9 @@ class PodcastDownloader:
 
         if response is not None:
             if response.status_code != HTTPStatus.OK:
-                logger.error("❌ Not a great web request, we got: %s", str(response.status_code))
+                logger.error("❌ Not a great web response getting RSS: %s", str(response.status_code))
                 return None
-            logger.debug(f"Good response {response.status_code}")
+            logger.debug(f"Good response getting podcast RSS: {response.status_code}")
         else:
             logger.error("❌ Failure, no sign of a response.")
             logger.error("Probably an issue with the code. Or cloudflare ruining our day maybe?")
@@ -338,7 +338,13 @@ class PodcastDownloader:
 
     def _check_local_path_exists(self, file_path: str) -> bool:
         """Check if the file exists locally."""
-        return os.path.isfile(file_path)
+        file_exists = os.path.isfile(file_path)
+        if file_exists:
+            logger.debug("📁 File: %s exists locally", file_path)
+        else:
+            logger.debug("📁 File: %s does not exist locally", file_path)
+
+        return file_exists
 
     def _check_path_exists(self, file_path: str) -> bool:
         """Check the path, s3 or local."""
