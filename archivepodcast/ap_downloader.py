@@ -111,8 +111,6 @@ class PodcastDownloader:
     def _process_podcast_xml(self, xml_first_child: etree._Element, podcast: dict) -> None:
         """Process the podcast XML and update it with new values."""
         for channel in xml_first_child:
-            logger.trace("Found XML item")
-            logger.trace("XML tag: %s", channel.tag)
             self._process_channel_tag(channel, podcast)
 
     def _process_channel_tag(self, channel: etree._Element, podcast: dict) -> None:  # noqa: C901 There is no way to avoid this really, there are many tag types
@@ -160,11 +158,13 @@ class PodcastDownloader:
 
     def _handle_atom_link_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the Atom link tag in the podcast XML."""
+        logger.trace("Atom link: %s", str(channel.attrib["href"]))
         channel.attrib["href"] = self.app_settings["inet_path"] + "rss/" + podcast["name_one_word"]
         channel.text = " "
 
     def _handle_itunes_owner_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the iTunes owner tag in the podcast XML."""
+        logger.trace("iTunes owner: %s", str(channel.text))
         for child in channel:
             if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}name":
                 if podcast["new_name"] == "":
@@ -177,16 +177,19 @@ class PodcastDownloader:
 
     def _handle_itunes_author_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the iTunes author tag in the podcast XML."""
+        logger.trace("iTunes author: %s", str(channel.text))
         if podcast["new_name"] == "":
             podcast["new_name"] = channel.text
         channel.text = podcast["new_name"]
 
     def _handle_itunes_new_feed_url_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the iTunes new-feed-url tag in the podcast XML."""
+        logger.trace("iTunes new-feed-url: %s", str(channel.text))
         channel.text = self.app_settings["inet_path"] + "rss/" + podcast["name_one_word"]
 
     def _handle_itunes_image_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the iTunes image tag in the podcast XML."""
+        logger.trace("iTunes image: %s", str(channel.attrib["href"]))
         if podcast["new_name"] == "":
             podcast["new_name"] = channel.text
         title = self._cleanup_file_name(podcast["new_name"])
@@ -229,7 +232,6 @@ class PodcastDownloader:
         """Handle the item tag in the podcast XML."""
         file_date_string = self._get_file_date_string(channel)
         for child in channel:
-            logger.trace("item > XML tag: %s", child.tag)
             if child.tag == "title":
                 title = str(child.text)
                 logger.trace("Title: %s", title)
