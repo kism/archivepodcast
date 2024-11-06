@@ -79,99 +79,142 @@ class PodcastDownloader:
 
     def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""
-        response = None
-
-        # lets fetch the original podcast xml
-        request = podcast["url"]
-
-        logger.debug(f"Downloading podcast rss: {request}")
-        try:
-            response = requests.get(request, timeout=5)
-        except ValueError:  # NameResolutionError ?
-            logger.exception("❌ Real early failure on grabbing the podcast xml, weird")
+        response = self._fetch_podcast_xml(podcast["url"])
+        if response is None:
             return None
 
-        if response is not None:
-            if response.status_code != HTTPStatus.OK:
-                logger.error("❌ Not a great web response getting RSS: %s", str(response.status_code))
-                return None
-            logger.debug(f"Good response getting podcast RSS: {response.status_code}")
-        else:
-            logger.error("❌ Failure, no sign of a response.")
-            logger.error("Probably an issue with the code. Or cloudflare ruining our day maybe?")
-            return None
-
-        # We have the xml
         podcast_xml = etree.fromstring(response.content)
         logger.info("📄 Downloaded RSS XML, Processing")
         logger.trace(str(podcast_xml))
 
         xml_first_child = podcast_xml[0]
+        self._process_podcast_xml(xml_first_child, podcast)
+        podcast_xml[0] = xml_first_child
 
-        # It's time to iterate, we overwrite as necessary from the settings in settings.json
-        title = ""
-        url: str | None = ""
+        return etree.ElementTree(podcast_xml)
 
-        for channel in xml_first_child:  # Dont complain
+    def _fetch_podcast_xml(self, url: str) -> requests.Response | None:
+        """Fetch the podcast XML from the given URL."""
+        logger.debug(f"Downloading podcast rss: {url}")
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code != HTTPStatus.OK:
+                logger.error("❌ Not a great web response getting RSS: %s", str(response.status_code))
+                return None
+            logger.debug(f"Good response getting podcast RSS: {response.status_code}")
+        except ValueError:
+            logger.exception("❌ Real early failure on grabbing the podcast xml, weird")
+            response = None
+
+        return response
+
+    def _process_podcast_xml(self, xml_first_child: etree._Element, podcast: dict) -> None:
+        """Process the podcast XML and update it with new values."""
+        for channel in xml_first_child:
             logger.trace("Found XML item")
             logger.trace("XML tag: %s", channel.tag)
+            self._process_channel_tag(channel, podcast)
 
-            # Handle URL, override
-            if channel.tag == "link":
-                logger.trace("Podcast link: %s", str(channel.text))
-                channel.text = self.app_settings["inet_path"]
+    def _process_channel_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Process individual channel tags in the podcast XML."""
+        if channel.tag == "link":
+            self._handle_link_tag(channel)
+        elif channel.tag == "title":
+            self._handle_title_tag(channel, podcast)
+        elif channel.tag == "description":
+            self._handle_description_tag(channel, podcast)
+        elif channel.tag == "{http://www.w3.org/2005/Atom}link":
+            self._handle_atom_link_tag(channel, podcast)
+        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}owner":
+            self._handle_itunes_owner_tag(channel, podcast)
+        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}author":
+            self._handle_itunes_author_tag(channel, podcast)
+        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
+            self._handle_itunes_new_feed_url_tag(channel, podcast)
+        elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
+            self._handle_itunes_image_tag(channel, podcast)
+        elif channel.tag == "image":
+            self._handle_image_tag(channel, podcast)
+        elif channel.tag == "item":
+            self._handle_item_tag(channel, podcast)
+        else:
+            logger.trace("Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag)
 
-            # Handle Podcast Title, override
-            elif channel.tag == "title":
-                logger.info("📄 Podcast title: %s", str(channel.text))
+    def _handle_link_tag(self, channel: etree._Element) -> None:
+        """Handle the link tag in the podcast XML."""
+        logger.trace("Podcast link: %s", str(channel.text))
+        channel.text = self.app_settings["inet_path"]
+
+    def _handle_title_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the title tag in the podcast XML."""
+        logger.info("📄 Podcast title: %s", str(channel.text))
+        if podcast["new_name"] == "":
+            podcast["new_name"] = channel.text
+        channel.text = podcast["new_name"]
+
+    def _handle_description_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the description tag in the podcast XML."""
+        logger.trace("Podcast description: %s", str(channel.text))
+        channel.text = podcast["description"]
+
+    def _handle_atom_link_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the Atom link tag in the podcast XML."""
+        channel.attrib["href"] = self.app_settings["inet_path"] + "rss/" + podcast["name_one_word"]
+        channel.text = " "
+
+    def _handle_itunes_owner_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the iTunes owner tag in the podcast XML."""
+        for child in channel:
+            if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}name":
                 if podcast["new_name"] == "":
-                    podcast["new_name"] = channel.text
-                channel.text = podcast["new_name"]
+                    podcast["new_name"] = child.text
+                child.text = podcast["new_name"]
+            if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}email":
+                if podcast["contact_email"] == "":
+                    podcast["contact_email"] = child.text
+                child.text = podcast["contact_email"]
 
-            # Handle Podcast Description, override
-            elif channel.tag == "description":
-                logger.trace("Podcast description: %s", str(channel.text))
-                channel.text = podcast["description"]
+    def _handle_itunes_author_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the iTunes author tag in the podcast XML."""
+        if podcast["new_name"] == "":
+            podcast["new_name"] = channel.text
+        channel.text = podcast["new_name"]
 
-            # Remake Atom Tags
-            elif channel.tag == "{http://www.w3.org/2005/Atom}link":
-                channel.attrib["href"] = self.app_settings["inet_path"] + "rss/" + podcast["name_one_word"]
-                channel.text = " "  # here me out...
+    def _handle_itunes_new_feed_url_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the iTunes new-feed-url tag in the podcast XML."""
+        channel.text = self.app_settings["inet_path"] + "rss/" + podcast["name_one_word"]
 
-            # Remake Apple Tags
-            elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}owner":
-                for child in channel:
-                    if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}name":
-                        if podcast["new_name"] == "":
-                            podcast["new_name"] = child.text
-                        child.text = podcast["new_name"]
-                    if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}email":
-                        if podcast["contact_email"] == "":
-                            podcast["contact_email"] = child.text
-                        child.text = podcast["contact_email"]
+    def _handle_itunes_image_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the iTunes image tag in the podcast XML."""
+        if podcast["new_name"] == "":
+            podcast["new_name"] = channel.text
+        title = self._cleanup_file_name(podcast["new_name"])
+        url = channel.attrib.get("href", "")
+        logger.trace("Image URL: %s", url)
+        for filetype in IMAGE_FORMATS:
+            if filetype in url:
+                self._download_cover_art(url, title, podcast, filetype)
+                channel.attrib["href"] = (
+                    self.app_settings["inet_path"] + "content/" + podcast["name_one_word"] + "/" + title + filetype
+                )
+        channel.text = " "
 
-            elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}author":
-                if podcast["new_name"] == "":
-                    podcast["new_name"] = channel.text
-                channel.text = podcast["new_name"]
-
-            elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
-                channel.text = self.app_settings["inet_path"] + "rss/" + podcast["name_one_word"]
-
-            elif channel.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":  # Podcast Cover Art
-                if podcast["new_name"] == "":
-                    podcast["new_name"] = channel.text
-                title = podcast["new_name"]
-                title = self._cleanup_file_name(title)
-                url = channel.attrib.get("href")
-                if url is None:
-                    url = ""
-
-                logger.trace("Image URL: %s", url)
+    def _handle_image_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the image tag in the podcast XML."""
+        for child in channel:
+            logger.trace("image > XML tag: %s", child.tag)
+            if child.tag == "title":
+                logger.trace("Title: %s", str(child.text))
+                child.text = podcast["new_name"]
+            elif child.tag == "link":
+                child.text = self.app_settings["inet_path"]
+            elif child.tag == "url":
+                title = self._cleanup_file_name(podcast["new_name"])
+                url = child.text or ""
                 for filetype in IMAGE_FORMATS:
                     if filetype in url:
-                        self._download_cover_art(url, title, podcast, filetype)
-                        channel.attrib["href"] = (
+                        self._download_asset(url, title, podcast, filetype)
+                        child.text = (
                             self.app_settings["inet_path"]
                             + "content/"
                             + podcast["name_one_word"]
@@ -179,155 +222,80 @@ class PodcastDownloader:
                             + title
                             + filetype
                         )
+        channel.text = " "
 
-                channel.text = " "
+    def _handle_item_tag(self, channel: etree._Element, podcast: dict) -> None:
+        """Handle the item tag in the podcast XML."""
+        file_date_string = self._get_file_date_string(channel)
+        for child in channel:
+            logger.trace("item > XML tag: %s", child.tag)
+            if child.tag == "title":
+                title = str(child.text)
+                logger.trace("Title: %s", title)
+            elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in child.tag:
+                self._handle_enclosure_tag(child, title, podcast, file_date_string)
+            elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
+                self._handle_episode_image_tag(child, title, podcast, file_date_string)
 
-            # Handle Image
-            elif channel.tag == "image":
-                for child in channel:
-                    logger.trace("image > XML tag: %s", child.tag)
-                    if child.tag == "title":
-                        logger.trace("Title: %s", str(child.text))
-                        child.text = podcast["new_name"]
+    def _get_file_date_string(self, channel: etree._Element) -> str:
+        """Get the file date string from the channel."""
+        file_date_string = "00000000"
+        for child in channel:
+            if child.tag == "pubDate":
+                original_date = str(child.text)
+                file_date = datetime(1970, 1, 1)
+                with contextlib.suppress(ValueError):
+                    file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")
+                with contextlib.suppress(ValueError):
+                    file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
+                file_date_string = file_date.strftime("%Y%m%d")
+        return file_date_string
 
-                    elif child.tag == "link":
-                        child.text = self.app_settings["inet_path"]
+    def _handle_enclosure_tag(self, child: etree._Element, title: str, podcast: dict, file_date_string: str) -> None:
+        """Handle the enclosure tag in the podcast XML."""
+        title = self._cleanup_file_name(title)
+        url = child.attrib.get("url", "")
+        child.attrib["url"] = ""
+        for audio_format in AUDIO_FORMATS:
+            new_audio_format = audio_format
+            if audio_format in url:
+                if audio_format == ".wav":
+                    new_length = self._handle_wav(url, title, podcast, audio_format, file_date_string)
+                    new_audio_format = ".mp3"
+                    child.attrib["type"] = "audio/mpeg"
+                    child.attrib["length"] = str(new_length)
+                else:
+                    self._download_asset(url, title, podcast, audio_format, file_date_string)
+                child.attrib["url"] = (
+                    self.app_settings["inet_path"]
+                    + "content/"
+                    + podcast["name_one_word"]
+                    + "/"
+                    + file_date_string
+                    + "-"
+                    + title
+                    + new_audio_format
+                )
 
-                    elif child.tag == "url":
-                        title = podcast["new_name"]
-                        title = self._cleanup_file_name(title)
-                        url = child.text
-                        # Default to prevent unchanged url on error
-                        child.text = ""
-                        if url is None:
-                            url = ""
-
-                        for filetype in IMAGE_FORMATS:
-                            if filetype in url:
-                                self._download_asset(url, title, podcast, filetype)
-                                child.text = (
-                                    self.app_settings["inet_path"]
-                                    + "content/"
-                                    + podcast["name_one_word"]
-                                    + "/"
-                                    + title
-                                    + filetype
-                                )
-
-                    else:
-                        logger.trace(
-                            "Unhandled XML tag %s, (under child.tag) leaving as-is",
-                            child.tag,
-                        )
-
-                channel.text = " "  # here me out...
-
-            # Handle Episode
-            elif channel.tag == "item":
-                file_date_string = "00000000"
-
-                # Episode Date, need to do this before dealing with real data
-                for child in channel:
-                    if child.tag == "pubDate":
-                        original_date = str(child.text)
-                        file_date = datetime(1970, 1, 1)
-                        with contextlib.suppress(ValueError):
-                            file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")
-                        with contextlib.suppress(ValueError):
-                            file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
-                        file_date_string = file_date.strftime("%Y%m%d")
-
-                for child in channel:
-                    logger.trace("item > XML tag: %s", child.tag)
-                    # Episode Title
-                    if child.tag == "title":
-                        title = str(child.text)
-                        logger.trace("Title: %s", title)
-
-                    # Episode Content (Enclosure)
-                    elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in child.tag:
-                        title = self._cleanup_file_name(title)
-                        url = child.attrib.get("url")
-                        # Default to prevent unchanged url on error
-                        child.attrib["url"] = ""
-                        if url is None:
-                            url = ""
-                        for audio_format in AUDIO_FORMATS:
-                            new_audio_format = audio_format
-                            if audio_format in url:
-                                if audio_format == ".wav":
-                                    # Download the wav, and get the new length of the file for the xml
-                                    new_length = self._handle_wav(
-                                        url,
-                                        title,
-                                        podcast,
-                                        audio_format,
-                                        file_date_string,
-                                    )
-                                    new_audio_format = ".mp3"
-                                    child.attrib["type"] = "audio/mpeg"
-                                    # Recalculate file size for the xml
-                                    child.attrib["length"] = str(new_length)
-
-                                else:
-                                    self._download_asset(
-                                        url,
-                                        title,
-                                        podcast,
-                                        audio_format,
-                                        file_date_string,
-                                    )
-                                # Set path of audio file
-                                child.attrib["url"] = (
-                                    self.app_settings["inet_path"]
-                                    + "content/"
-                                    + podcast["name_one_word"]
-                                    + "/"
-                                    + file_date_string
-                                    + "-"
-                                    + title
-                                    + new_audio_format
-                                )
-
-                    # Episode Image
-                    elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                        title = self._cleanup_file_name(title)
-                        url = child.attrib.get("href")
-                        if url is None:
-                            url = ""
-                        for filetype in IMAGE_FORMATS:
-                            if filetype in url:
-                                self._download_asset(
-                                    url,
-                                    title,
-                                    podcast,
-                                    filetype,
-                                    file_date_string,
-                                )
-                                # Set path of image
-                                child.attrib["href"] = (
-                                    self.app_settings["inet_path"]
-                                    + "content/"
-                                    + podcast["name_one_word"]
-                                    + "/"
-                                    + file_date_string
-                                    + "-"
-                                    + title
-                                    + filetype
-                                )
-
-                    else:
-                        logger.trace(
-                            "Unhandled XML tag %s, (under child.tag) leaving as-is",
-                            child.tag,
-                        )
-
-            else:
-                logger.trace("Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag)
-
-        podcast_xml[0] = xml_first_child
-
-        return etree.ElementTree(podcast_xml)
+    def _handle_episode_image_tag(
+        self, child: etree._Element, title: str, podcast: dict, file_date_string: str
+    ) -> None:
+        """Handle the episode image tag in the podcast XML."""
+        title = self._cleanup_file_name(title)
+        url = child.attrib.get("href", "")
+        for filetype in IMAGE_FORMATS:
+            if filetype in url:
+                self._download_asset(url, title, podcast, filetype, file_date_string)
+                child.attrib["href"] = (
+                    self.app_settings["inet_path"]
+                    + "content/"
+                    + podcast["name_one_word"]
+                    + "/"
+                    + file_date_string
+                    + "-"
+                    + title
+                    + filetype
+                )
 
     def _check_local_path_exists(self, file_path: str) -> bool:
         """Check if the file exists locally."""
