@@ -15,6 +15,7 @@ pydub = "^0.25"
 requests = "^2.32.3"
 jinja2 = "^3.1.4"
 colorama = "^0.4.6"
+defusedxml = "^0.7.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
@@ -26,7 +27,8 @@ mypy = "*"
 ruff = "*"
 types-requests = "*"
 types-colorama = "*"
-boto3-stubs = {extras = ["s3"], version = "*"}
+types-defusedxml = "*"
+boto3-stubs = { extras = ["s3"], version = "*" }
 pydub-stubs = "*"
 
 [tool.poetry.group.dev.dependencies]

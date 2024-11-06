@@ -18,6 +18,7 @@
     "Archiver",
     "boto",
     "botocore",
+    "defusedxml",
     "errorcode",
     "errortext",
     "feedburner",

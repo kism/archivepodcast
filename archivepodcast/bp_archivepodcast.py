@@ -9,6 +9,7 @@ from http import HTTPStatus
 from types import FrameType
 from xml.etree import ElementTree as ET
 
+from defusedxml.ElementTree import parse as xml_parse
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
 
 from .ap_archiver import PodcastArchiver
@@ -208,7 +209,7 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = ET.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
+            tree = xml_parse(os.path.join(current_app.instance_path, "web", "rss", feed))
             xml = ET.tostring(
                 tree.getroot(),
                 encoding="utf-8",

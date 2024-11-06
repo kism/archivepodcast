@@ -14,6 +14,7 @@ import requests
 from botocore.exceptions import (
     ClientError,
 )  # No need to import boto3 since the object just gets passed in
+from defusedxml.ElementTree import fromstring as xml_fromstring
 from mypy_boto3_s3.client import S3Client
 
 from .logger import get_logger
@@ -89,7 +90,7 @@ class PodcastDownloader:
             return None
 
         # We have the xml
-        podcast_xml = ET.fromstring(response.content)
+        podcast_xml = xml_fromstring(response.content)
         logger.info("📄 Downloaded RSS XML, Processing")
         logger.trace(str(podcast_xml))
 

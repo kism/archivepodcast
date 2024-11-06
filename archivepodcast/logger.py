@@ -50,8 +50,10 @@ LOG_LEVELS = [
     "ERROR",
     "CRITICAL",
 ]  # Valid str logging levels.
-# LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"  # This is the logging message format that I like.
-LOG_FORMAT = "%(levelname)s:%(name)s:%(message)s"  # This is the logging message format that I like.
+
+# This is the logging message format that I like.
+# LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # noqa: ERA001
+LOG_FORMAT = "%(levelname)s:%(name)s:%(message)s"
 TRACE_LEVEL_NUM = 5
 
 
