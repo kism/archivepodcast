@@ -5,9 +5,9 @@ import os
 import signal
 import threading
 import time
-import xml.etree.ElementTree as ET
 from http import HTTPStatus
 from types import FrameType
+from xml.etree import ElementTree
 
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
 
@@ -78,7 +78,8 @@ def podcast_loop() -> None:
     if ap.s3 is not None:
         emoji = "⛅"  # un-upset black
         logger.info(
-            "%s Since we are in s3 storage mode, the first iteration of checking which episodes are downloaded will be slow",
+            "%s Since we are in s3 storage mode, "
+            "the first iteration of checking which episodes are downloaded will be slow",
             emoji,
         )
 
@@ -172,13 +173,14 @@ def send_content(path: str) -> Response:
     else:
         response = send_from_directory(os.path.join(current_app.instance_path, "web", "content"), path)
 
-    return response  # type: ignore  # noqa: PGH003 The conflicting types here are secretly the same
+    return response  # type: ignore[return-value] # The conflicting types here are secretly the same
 
 
 @bp.errorhandler(404)
 # pylint: disable=unused-argument
-def invalid_route(e) -> Response:
+def invalid_route(e: str) -> Response:  # Who knows if this is the right type
     """404 Handler."""
+    logger.debug(f"Error handler: invalid_route: {e}")
     return generate_404()
 
 
@@ -206,8 +208,8 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = ET.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
-            xml = ET.tostring(
+            tree = ElementTree.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
+            xml = ElementTree.tostring(
                 tree.getroot(),
                 encoding="utf-8",
                 method="xml",

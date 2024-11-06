@@ -1,6 +1,5 @@
 """Flask webapp archivepodcast."""
 
-
 from flask import Flask
 
 from . import bp_archivepodcast, logger

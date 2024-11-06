@@ -6,8 +6,8 @@ import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
 
 import boto3
-from jinja2 import Environment, FileSystemLoader
 from flask import current_app
+from jinja2 import Environment, FileSystemLoader
 
 from .ap_downloader import PodcastDownloader
 from .logger import get_logger
@@ -209,7 +209,9 @@ class PodcastArchiver:
         # Render backup of html
         env = Environment(loader=FileSystemLoader("."), autoescape=True)
         template = env.get_template(os.path.join("archivepodcast", "templates", "home.j2"))
-        rendered_output = template.render(settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page)
+        rendered_output = template.render(
+            settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page
+        )
 
         with open(os.path.join(self.instance_path, "web", "index.html"), "w", encoding="utf-8") as root_web_page:
             root_web_page.write(rendered_output)

@@ -1,27 +1,22 @@
-"""Set of functions to download podcasts to a directory"""
+"""Set of functions to download podcasts to a directory."""
 # and return xml that can be served to download them
 
 import contextlib
 import os
 import re
-import xml.etree.ElementTree as ET
 from datetime import datetime
 from http import HTTPStatus
 from shutil import which  # shockingly this works on windows
-from typing import TYPE_CHECKING
 from urllib.error import HTTPError
+from xml.etree import ElementTree
 
 import requests
 from botocore.exceptions import (
     ClientError,
 )  # No need to import boto3 since the object just gets passed in
+from mypy_boto3_s3.client import S3Client
 
 from .logger import get_logger
-
-if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client
-else:
-    S3Client = object
 
 logger = get_logger(__name__)
 
@@ -69,7 +64,7 @@ class PodcastDownloader:
         self.app_settings = app_settings
         self.web_root = web_root
 
-    def download_podcast(self, podcast: dict) -> ET.ElementTree | None:
+    def download_podcast(self, podcast: dict) -> ElementTree.ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""
         response = None
 
@@ -94,7 +89,7 @@ class PodcastDownloader:
             return None
 
         # We have the xml
-        podcast_xml = ET.fromstring(response.content)
+        podcast_xml = ElementTree.fromstring(response.content)
         logger.info("📄 Downloaded RSS XML, Processing")
         logger.trace(str(podcast_xml))
 
@@ -319,20 +314,20 @@ class PodcastDownloader:
 
         podcast_xml[0] = xml_first_child
 
-        tree = ET.ElementTree(podcast_xml)
+        tree = ElementTree.ElementTree(podcast_xml)
         # These make the name spaces appear nicer in the generated XML
-        ET.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
-        ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
-        ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
-        ET.register_namespace("media", "http://search.yahoo.com/mrss/")
-        ET.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
-        ET.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
-        ET.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
-        ET.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
-        ET.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
-        ET.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
-        ET.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
-        ET.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
+        ElementTree.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
+        ElementTree.register_namespace("atom", "http://www.w3.org/2005/Atom")
+        ElementTree.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+        ElementTree.register_namespace("media", "http://search.yahoo.com/mrss/")
+        ElementTree.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
+        ElementTree.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
+        ElementTree.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
+        ElementTree.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
+        ElementTree.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
+        ElementTree.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
+        ElementTree.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
+        ElementTree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
 
         return tree
 
