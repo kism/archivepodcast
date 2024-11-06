@@ -137,7 +137,7 @@ class PodcastDownloader:
             case "item":
                 self._handle_item_tag(channel, podcast)
             case _:
-                logger.trace("Unhandled XML tag %s, (under channel.tag) leaving as-is", channel.tag)
+                logger.trace("Unhandled root-level XML tag %s, (under channel.tag) leaving as-is", channel.tag)
 
     def _handle_link_tag(self, channel: etree._Element) -> None:
         """Handle the link tag in the podcast XML."""
@@ -208,7 +208,7 @@ class PodcastDownloader:
         for child in channel:
             logger.trace("image > XML tag: %s", child.tag)
             if child.tag == "title":
-                logger.trace("Title: %s", str(child.text))
+                logger.trace("Image title: %s", str(child.text))
                 child.text = podcast["new_name"]
             elif child.tag == "link":
                 child.text = self.app_settings["inet_path"]
@@ -234,7 +234,7 @@ class PodcastDownloader:
         for child in channel:
             if child.tag == "title":
                 title = str(child.text)
-                logger.trace("Title: %s", title)
+                logger.debug("📄 Item title: %s", title)
             elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in child.tag:
                 self._handle_enclosure_tag(child, title, podcast, file_date_string)
             elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
