@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import boto3
 from flask import current_app
 from jinja2 import Environment, FileSystemLoader
-from lxml import etree as ET
+from lxml import etree as ET  # noqa: N812 So the python xml package should be ET, this can be used the same
 
 from .ap_downloader import PodcastDownloader
 from .logger import get_logger

@@ -9,7 +9,7 @@ from http import HTTPStatus
 from types import FrameType
 
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
-from lxml import etree as ET
+from lxml import etree as ET  # noqa: N812 So the python xml package should be ET, this can be used the same
 
 from .ap_archiver import PodcastArchiver
 from .config import ArchivePodcastConfig

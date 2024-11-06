@@ -13,7 +13,7 @@ import requests
 from botocore.exceptions import (
     ClientError,
 )  # No need to import boto3 since the object just gets passed in
-from lxml import etree as ET
+from lxml import etree as ET  # noqa: N812 So the python xml package should be ET, this can be used the same
 from mypy_boto3_s3.client import S3Client
 
 from .logger import get_logger
