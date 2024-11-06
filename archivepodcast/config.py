@@ -58,7 +58,7 @@ class ConfigValidationError(Exception):
 
     def __init__(self, failure_list: list) -> None:
         """Raise exception with list of config issues."""
-        msg = ">>> Config issues:\n"
+        msg = "Config issues >>>\n"
 
         for failure in failure_list:
             msg += f"\n  {failure}"

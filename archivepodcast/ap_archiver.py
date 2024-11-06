@@ -92,9 +92,33 @@ class PodcastArchiver:
                 aws_access_key_id=self.app_settings["s3"]["access_key_id"],
                 aws_secret_access_key=self.app_settings["s3"]["secret_access_key"],
             )
+            if logger.level <= 10:
+                self.check_s3_files()
             logger.info("⛅ Authenticated s3")
         else:
             logger.info("⛅ Not using s3")
+
+    def check_s3_files(self) -> None:
+        """Function to list files in s3 bucket."""
+        logger.info("Checking state of s3 bucket")
+        if not self.s3:
+            logger.warning("⛅ No s3 client to list files")
+            return
+        response = self.s3.list_objects_v2(Bucket=self.app_settings["s3"]["bucket"])
+
+        contents_str = ""
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                contents_str += obj["Key"] + "\n"
+                if obj["Key"].startswith("/"):
+                    logger.warning("⛅ S3 Path starts with a /, this is not expected: %s DELETING", obj["Key"])
+                    self.s3.delete_object(Bucket=self.app_settings["s3"]["bucket"], Key=obj["Key"])
+                if "//" in obj["Key"]:
+                    logger.warning("⛅ S3 Path contains a //, this is not expected: %s DELETING", obj["Key"])
+                    self.s3.delete_object(Bucket=self.app_settings["s3"]["bucket"], Key=obj["Key"])
+            logger.debug("⛅ S3 Bucket Contents >>>\n%s", contents_str.strip())
+        else:
+            logger.info("No objects found in the bucket.")
 
     def grab_podcasts(self) -> None:
         """Loop through defined podcasts, download and store the xml."""
@@ -196,15 +220,13 @@ class PodcastArchiver:
             try:
                 static_directory = os.path.join(current_app.root_path, "static")
                 items_to_copy = [
-                    os.path.join(root, file)
-                    for root, __, files in os.walk(static_directory)
-                    for file in files
+                    os.path.join(root, file) for root, __, files in os.walk(static_directory) for file in files
                 ]
 
                 for item in items_to_copy:
                     static_item_local_path = os.path.join(static_directory, item)
                     static_item_s3_path = "static" + item.replace(os.sep, "/").replace(static_directory, "")
-                    logger.debug("Uploading static item: %s to s3: %s", static_item_local_path, static_item_s3_path)
+                    logger.debug("⛅ Uploading static item: %s to s3: %s", static_item_local_path, static_item_s3_path)
                     self.s3.upload_file(
                         static_item_local_path,
                         self.app_settings["s3"]["bucket"],

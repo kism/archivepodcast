@@ -37,9 +37,20 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
             app.config[key] = value
 
     # Do some debug logging of config
-    app_config_str = ">>>\nFlask config:"
-    for key, value in app.config.items():
-        app_config_str += f"\n  {key}: {pformat(value)}"
+    import tomlkit
+    from datetime import timedelta
+
+    def convert_timedelta_to_str(config):
+        for k, v in config.items():
+            if isinstance(v, timedelta):
+                config[k] = str(v)
+        return config
+
+    filtered_config = {k: v for k, v in app.config.items() if v is not None}
+    filtered_config = convert_timedelta_to_str(filtered_config)
+
+    app_config_str = "Flask config >>>\n"
+    app_config_str += tomlkit.dumps(filtered_config)
 
     app.logger.debug(app_config_str)
 
@@ -50,7 +61,7 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     with app.app_context():
         bp_archivepodcast.initialise_archivepodcast()
 
-    app.app_context().push() # God knows what does this does but it fixes everything
+    app.app_context().push()  # God knows what does this does but it fixes everything
 
     app.logger.info("Starting Web Server")
 

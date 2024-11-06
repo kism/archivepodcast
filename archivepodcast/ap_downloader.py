@@ -354,9 +354,8 @@ class PodcastDownloader:
                     # Head object to check if file exists
                     self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
                     logger.debug(
-                        "File %s exists in the s3 bucket %s",
+                        "⛅ File: %s exists in s3 bucket",
                         s3_file_path,
-                        self.app_settings["s3"]["bucket"],
                     )
                     self.s3_paths_cache.append(s3_file_path)
                     file_exists = True
@@ -457,7 +456,7 @@ class PodcastDownloader:
         """Upload asset to s3."""
         content_type = content_types[extension]
         s3_path = file_path.replace(self.web_root, "")
-        if s3_path[0] == "/": # TODO: Check if needed
+        if s3_path[0] == "/":  # TODO: Check if needed
             s3_path = s3_path[1:]
         try:
             # Upload the file
@@ -494,11 +493,9 @@ class PodcastDownloader:
         )
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
-            if file_date_string == "" and not self._check_local_path_exists(
-                file_path
-            ):  # logic to upload replacement art if needed
+            if not self._check_local_path_exists(file_path):  # logic to upload replacement art if needed
                 try:
-                    logger.trace("Downloading: %s", url)
+                    logger.debug("Downloading: %s", url)
                     logger.info("💾 Downloading asset to: %s", file_path)
                     headers = {"user-agent": "Mozilla/5.0"}
                     req = requests.get(url, headers=headers, timeout=5)
