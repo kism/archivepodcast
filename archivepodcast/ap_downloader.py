@@ -494,7 +494,9 @@ class PodcastDownloader:
         if self.app_settings["storage_backend"] == "s3":
             content_type = content_types[extension]
             s3_path = cover_art_destination.replace(self.web_root, "").replace(os.sep, "/")
-            logger.info("💾⛅ Uploading to s3: %s", s3_path)
+            logger.info(
+                "💾⛅ Uploading podcast cover art to s3: %s, not deleting local file to allow overriding", s3_path
+            )
             self.s3.upload_file(
                 cover_art_destination,
                 self.app_settings["s3"]["bucket"],
