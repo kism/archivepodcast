@@ -13,7 +13,7 @@ import requests
 from botocore.exceptions import (
     ClientError,
 )  # No need to import boto3 since the object just gets passed in
-from lxml import etree as ET  # noqa: N812 So the python xml package should be ET, this can be used the same
+from lxml import etree
 from mypy_boto3_s3.client import S3Client
 
 from .logger import get_logger
@@ -22,8 +22,7 @@ logger = get_logger(__name__)
 
 IMAGE_FORMATS = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
 AUDIO_FORMATS = [".mp3", ".wav", ".m4a", ".flac"]
-
-content_types = {
+CONTENT_TYPES = {
     ".webp": "image/webp",
     ".png": "image/png",
     ".jpg": "image/jpeg",
@@ -49,6 +48,20 @@ if which("ffmpeg") is not None:
 else:
     logger.warning("❗ Not loading pydub since ffmpeg is not installed on this system (and in the PATH)")
 
+# These make the name spaces appear nicer in the generated XML
+etree.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
+etree.register_namespace("atom", "http://www.w3.org/2005/Atom")
+etree.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+etree.register_namespace("media", "http://search.yahoo.com/mrss/")
+etree.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
+etree.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
+etree.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
+etree.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
+etree.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
+etree.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
+etree.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
+etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
+
 
 class PodcastDownloader:
     """PodcastDownloader object."""
@@ -64,7 +77,7 @@ class PodcastDownloader:
         self.app_settings = app_settings
         self.web_root = web_root
 
-    def download_podcast(self, podcast: dict):
+    def download_podcast(self, podcast: dict) -> str | None:
         """Parse the XML, Download all the assets, this is main."""
         response = None
 
@@ -89,7 +102,7 @@ class PodcastDownloader:
             return None
 
         # We have the xml
-        podcast_xml = ET.fromstring(response.content)
+        podcast_xml = etree.fromstring(response.content)
         logger.info("📄 Downloaded RSS XML, Processing")
         logger.trace(str(podcast_xml))
 
@@ -314,20 +327,7 @@ class PodcastDownloader:
 
         podcast_xml[0] = xml_first_child
 
-        tree = ET.ElementTree(podcast_xml)
-        # These make the name spaces appear nicer in the generated XML
-        ET.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
-        ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
-        ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
-        ET.register_namespace("media", "http://search.yahoo.com/mrss/")
-        ET.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
-        ET.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
-        ET.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
-        ET.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
-        ET.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
-        ET.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
-        ET.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
-        ET.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
+        tree = etree.ElementTree(podcast_xml)
 
         return tree
 
@@ -457,7 +457,7 @@ class PodcastDownloader:
         if not self.s3:
             logger.error("⛅❌ s3 client not found, cannot upload")
             return
-        content_type = content_types[extension]
+        content_type = CONTENT_TYPES[extension]
         s3_path = file_path.replace(self.web_root, "").replace(os.sep, "/")
         if s3_path[0] == "/":
             s3_path = s3_path[1:]
@@ -490,8 +490,10 @@ class PodcastDownloader:
             self._download_to_local(url, cover_art_destination)
 
         if self.s3:
-            content_type = content_types[extension]
+            content_type = CONTENT_TYPES[extension]
             s3_path = cover_art_destination.replace(self.web_root, "").replace(os.sep, "/")
+            if s3_path[0] == "/":
+                s3_path = s3_path[1:]
             logger.info(
                 "💾⛅ Uploading podcast cover art to s3: %s, not deleting local file to allow overriding", s3_path
             )
