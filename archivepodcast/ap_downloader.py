@@ -77,7 +77,7 @@ class PodcastDownloader:
         self.app_settings = app_settings
         self.web_root = web_root
 
-    def download_podcast(self, podcast: dict) -> str | None:
+    def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""
         response = None
 
@@ -327,9 +327,7 @@ class PodcastDownloader:
 
         podcast_xml[0] = xml_first_child
 
-        tree = etree.ElementTree(podcast_xml)
-
-        return tree
+        return etree.ElementTree(podcast_xml)
 
     def _check_local_path_exists(self, file_path: str) -> bool:
         """Check if the file exists locally."""
