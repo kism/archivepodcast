@@ -234,7 +234,7 @@ class PodcastDownloader:
         for child in channel:
             if child.tag == "title":
                 title = str(child.text)
-                logger.debug("📄 Item title: %s", title)
+                logger.debug("📢 Episode title: %s", title)
             elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in child.tag:
                 self._handle_enclosure_tag(child, title, podcast, file_date_string)
             elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
