@@ -2,8 +2,8 @@
 
 import contextlib
 import os
-import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
+from xml.etree import ElementTree as ET
 
 import boto3
 from flask import current_app

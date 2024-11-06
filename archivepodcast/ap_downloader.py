@@ -8,7 +8,7 @@ from datetime import datetime
 from http import HTTPStatus
 from shutil import which  # shockingly this works on windows
 from urllib.error import HTTPError
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 
 import requests
 from botocore.exceptions import (
@@ -53,18 +53,18 @@ else:
 class PodcastDownloader:
     """PodcastDownloader object."""
 
-    def __init__(self, app_settings: dict, s3: S3Client, web_root: str) -> None:
+    def __init__(self, app_settings: dict, s3: S3Client | None, web_root: str) -> None:
         """Initialise the PodcastDownloader object."""
         self.reload_settings(app_settings, s3, web_root)
 
-    def reload_settings(self, app_settings: dict, s3: S3Client, web_root: str) -> None:
+    def reload_settings(self, app_settings: dict, s3: S3Client | None, web_root: str) -> None:
         """Load/Reload settings of the app."""
         self.s3 = s3
         self.s3_paths_cache: list = []
         self.app_settings = app_settings
         self.web_root = web_root
 
-    def download_podcast(self, podcast: dict) -> ElementTree.ElementTree | None:
+    def download_podcast(self, podcast: dict) -> ET.ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""
         response = None
 
@@ -89,7 +89,7 @@ class PodcastDownloader:
             return None
 
         # We have the xml
-        podcast_xml = ElementTree.fromstring(response.content)
+        podcast_xml = ET.fromstring(response.content)
         logger.info("📄 Downloaded RSS XML, Processing")
         logger.trace(str(podcast_xml))
 
@@ -314,20 +314,20 @@ class PodcastDownloader:
 
         podcast_xml[0] = xml_first_child
 
-        tree = ElementTree.ElementTree(podcast_xml)
+        tree = ET.ElementTree(podcast_xml)
         # These make the name spaces appear nicer in the generated XML
-        ElementTree.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
-        ElementTree.register_namespace("atom", "http://www.w3.org/2005/Atom")
-        ElementTree.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
-        ElementTree.register_namespace("media", "http://search.yahoo.com/mrss/")
-        ElementTree.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
-        ElementTree.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
-        ElementTree.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
-        ElementTree.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
-        ElementTree.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
-        ElementTree.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
-        ElementTree.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
-        ElementTree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
+        ET.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
+        ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
+        ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+        ET.register_namespace("media", "http://search.yahoo.com/mrss/")
+        ET.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
+        ET.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
+        ET.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
+        ET.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
+        ET.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
+        ET.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
+        ET.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
+        ET.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
 
         return tree
 
@@ -437,7 +437,7 @@ class PodcastDownloader:
 
                 logger.error("❌ Cannot convert wav to mp3!")
 
-        if self.app_settings["storage_backend"] == "s3":
+        if self.s3:
             s3_file_path = mp3_file_path.replace(self.web_root, "").replace(os.sep, "/")
             msg = f"Checking length of s3 object: { s3_file_path }"
             logger.trace(msg)
@@ -454,6 +454,9 @@ class PodcastDownloader:
 
     def _upload_asset_s3(self, file_path: str, extension: str) -> None:
         """Upload asset to s3."""
+        if not self.s3:
+            logger.error("⛅❌ s3 client not found, cannot upload")
+            return
         content_type = content_types[extension]
         s3_path = file_path.replace(self.web_root, "").replace(os.sep, "/")
         if s3_path[0] == "/":
@@ -486,7 +489,7 @@ class PodcastDownloader:
         if not local_file_found:
             self._download_to_local(url, cover_art_destination)
 
-        if self.app_settings["storage_backend"] == "s3":
+        if self.s3:
             content_type = content_types[extension]
             s3_path = cover_art_destination.replace(self.web_root, "").replace(os.sep, "/")
             logger.info(

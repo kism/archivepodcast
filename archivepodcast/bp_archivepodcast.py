@@ -7,7 +7,7 @@ import threading
 import time
 from http import HTTPStatus
 from types import FrameType
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
 
@@ -208,8 +208,8 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = ElementTree.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
-            xml = ElementTree.tostring(
+            tree = ET.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
+            xml = ET.tostring(
                 tree.getroot(),
                 encoding="utf-8",
                 method="xml",
