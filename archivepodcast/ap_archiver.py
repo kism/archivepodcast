@@ -3,12 +3,11 @@
 import contextlib
 import os
 from typing import TYPE_CHECKING
-from xml.etree import ElementTree as ET
 
 import boto3
-from defusedxml.ElementTree import parse as xml_parse
 from flask import current_app
 from jinja2 import Environment, FileSystemLoader
+from lxml import etree as ET
 
 from .ap_downloader import PodcastDownloader
 from .logger import get_logger
@@ -160,7 +159,7 @@ class PodcastArchiver:
             if tree is None:
                 logger.info("📄 Loading rss from file: %s", rss_file_path)
                 try:
-                    tree = xml_parse(rss_file_path)
+                    tree = ET.parse(rss_file_path)
                 except FileNotFoundError:
                     logger.exception("❌ Cannot find rss xml file: %s", rss_file_path)
 

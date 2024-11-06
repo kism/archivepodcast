@@ -25,6 +25,7 @@
     "flac",
     "googleplay",
     "inet",
+    "lxml",
     "noto",
     "podcasto",
     "pydub",

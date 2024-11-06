@@ -8,13 +8,12 @@ from datetime import datetime
 from http import HTTPStatus
 from shutil import which  # shockingly this works on windows
 from urllib.error import HTTPError
-from xml.etree import ElementTree as ET
 
 import requests
 from botocore.exceptions import (
     ClientError,
 )  # No need to import boto3 since the object just gets passed in
-from defusedxml.ElementTree import fromstring as xml_fromstring
+from lxml import etree as ET
 from mypy_boto3_s3.client import S3Client
 
 from .logger import get_logger
@@ -65,7 +64,7 @@ class PodcastDownloader:
         self.app_settings = app_settings
         self.web_root = web_root
 
-    def download_podcast(self, podcast: dict) -> ET.ElementTree | None:
+    def download_podcast(self, podcast: dict):
         """Parse the XML, Download all the assets, this is main."""
         response = None
 
@@ -90,7 +89,7 @@ class PodcastDownloader:
             return None
 
         # We have the xml
-        podcast_xml = xml_fromstring(response.content)
+        podcast_xml = ET.fromstring(response.content)
         logger.info("📄 Downloaded RSS XML, Processing")
         logger.trace(str(podcast_xml))
 

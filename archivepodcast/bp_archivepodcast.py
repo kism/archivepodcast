@@ -7,10 +7,9 @@ import threading
 import time
 from http import HTTPStatus
 from types import FrameType
-from xml.etree import ElementTree as ET
 
-from defusedxml.ElementTree import parse as xml_parse
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
+from lxml import etree as ET
 
 from .ap_archiver import PodcastArchiver
 from .config import ArchivePodcastConfig
@@ -192,10 +191,10 @@ def rss(feed: str) -> Response:
         return generate_not_initialized_error()
 
     logger.debug("Sending xml feed: %s", feed)
-    xml = ""
+    xml_str = ""
     returncode = HTTPStatus.OK
     try:
-        xml = ap.get_rss_xml(feed)
+        xml_str = ap.get_rss_xml(feed)
     except TypeError:
         return Response(
             render_template(
@@ -209,13 +208,14 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = xml_parse(os.path.join(current_app.instance_path, "web", "rss", feed))
+            tree = ET.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
             xml = ET.tostring(
                 tree.getroot(),
                 encoding="utf-8",
                 method="xml",
                 xml_declaration=True,
             )
+            xml_str = xml.decode("utf-8")
             logger.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
 
         except FileNotFoundError:
@@ -230,7 +230,7 @@ def rss(feed: str) -> Response:
                 status=HTTPStatus.NOT_FOUND,
             )
 
-    return Response(xml, mimetype="application/rss+xml; charset=utf-8", status=HTTPStatus.OK)
+    return Response(xml_str, mimetype="application/rss+xml; charset=utf-8", status=HTTPStatus.OK)
 
 
 @bp.route("/robots.txt")
