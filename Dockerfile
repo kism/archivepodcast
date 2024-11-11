@@ -1,4 +1,4 @@
-FROM python:3.12-bookworm AS builder
+FROM python:3.12-alpine AS builder
 
 RUN pip install poetry==1.8.3
 
@@ -14,7 +14,7 @@ RUN touch README.md
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --only main --no-root
 
-FROM python:3.12-bookworm AS runtime
+FROM python:3.12-alpine AS runtime
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
