@@ -79,3 +79,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - Docker
 - Quick startup (s3 thread)
 - Re-write README
+- Quick docker build
