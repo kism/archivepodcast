@@ -14,6 +14,8 @@ from .logger import get_logger
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
+else:
+    S3Client = object
 
 logger = get_logger(__name__)
 

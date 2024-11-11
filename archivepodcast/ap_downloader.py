@@ -7,16 +7,19 @@ import re
 from datetime import datetime
 from http import HTTPStatus
 from shutil import which  # shockingly this works on windows
+from typing import TYPE_CHECKING
 from urllib.error import HTTPError
 
 import requests
-from botocore.exceptions import (
-    ClientError,
-)  # No need to import boto3 since the object just gets passed in
+from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
 from lxml import etree
-from mypy_boto3_s3.client import S3Client
 
 from .logger import get_logger
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
+else:
+    S3Client = object
 
 logger = get_logger(__name__)
 
