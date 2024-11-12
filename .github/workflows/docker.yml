@@ -4,8 +4,8 @@ on:
   push:
 
 env:
-  TEST_TAG: user/app:test
-  LATEST_TAG: user/app:latest
+  TEST_TAG: kism/archivepodcast:test
+  LATEST_TAG: kism/archivepodcast:latest
 
 jobs:
   docker:
