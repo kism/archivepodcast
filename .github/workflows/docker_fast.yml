@@ -22,18 +22,12 @@ jobs:
       - name: Build and export to Docker
         uses: docker/build-push-action@v6
         with:
+          file: Dockerfile_fast
           load: true
+          push: false
           tags: ${{ env.TEST_TAG }}
 
       - name: Test
         run: |
           docker run --rm ${{ env.TEST_TAG }}
-
-      - name: Build and not push
-        uses: docker/build-push-action@v6
-        with:
-          file: Dockerfile_fast
-          platforms: linux/amd64,linux/arm64
-          push: false
-          tags: ${{ env.LATEST_TAG }}
 
