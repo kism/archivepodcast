@@ -6,6 +6,7 @@ on: [push, pull_request]
 jobs:
   ruff:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
       - uses: actions/checkout@v4
 
@@ -14,10 +15,6 @@ jobs:
 
       - name: Add ~/.local/.bin to path for pipx packages
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      # - uses: actions/setup-python@v5
-      #   with:
-      #     python-version: "3.9"
 
       - name: Run ruff
         run: ruff check .
