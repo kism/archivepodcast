@@ -16,22 +16,22 @@ ENV UV_LINK_MODE=copy
 RUN uv tool install poetry==1.8.3
 
 COPY pyproject.toml poetry.lock ./
-RUN poetry export -f requirements.txt --output requirements.txt
+RUN poetry export --only main -f requirements.txt --output requirements.txt
 
 RUN uv venv
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -r requirements.txt
 
-FROM python:3.12-alpine AS runtime
+# FROM python:3.12-alpine AS runtime
 
-WORKDIR /app
+# WORKDIR /app
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
 COPY archivepodcast ./archivepodcast
 
-COPY --from=builder /app/.venv /app/.venv
+# COPY --from=builder /app/.venv /app/.venv
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
@@ -39,8 +39,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
-# Run the FastAPI application by default
-# Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
-# Uses `--host 0.0.0.0` to allow access from outside the container
-# CMD [ "waitress-serve", "--listen", "0.0.0.0:5000", "--trusted-proxy", "*", "--trusted-proxy-headers", "x-forwarded-for x-forwarded-proto x-forwarded-port", "--log-untrusted-proxy-headers", "--clear-untrusted-proxy-headers", "--threads", "4", "--call", "archivepodcast:create_app" ]
-CMD [ "sleep", "infinity" ]
+EXPOSE 5000
+
+CMD [ "waitress-serve", "--listen", "0.0.0.0:5000", "--trusted-proxy", "*", "--trusted-proxy-headers", "x-forwarded-for x-forwarded-proto x-forwarded-port", "--log-untrusted-proxy-headers", "--clear-untrusted-proxy-headers", "--threads", "4", "--call", "archivepodcast:create_app" ]
+# CMD [ "sleep", "infinity" ]
