@@ -12,14 +12,9 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
-# Install the project's dependencies using the lockfile and settings
-RUN uv tool install poetry==1.8.3
-
-COPY pyproject.toml poetry.lock ./
-RUN poetry export --only main -f requirements.txt --output requirements.txt
-
 RUN uv venv
 
+# requirements.txt is created with a pre-commit hook
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -r requirements.txt
 
