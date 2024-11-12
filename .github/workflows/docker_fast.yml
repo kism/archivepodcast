@@ -31,4 +31,3 @@ jobs:
       - name: Test
         run: |
           docker run --rm ${{ env.TEST_TAG }} waitress-serve --help
-
