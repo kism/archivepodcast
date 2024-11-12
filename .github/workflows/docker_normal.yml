@@ -1,4 +1,4 @@
-name: ci
+name: ci_docker_normal
 
 on:
   push:
@@ -8,7 +8,7 @@ env:
   LATEST_TAG: user/app:latest
 
 jobs:
-  docker_fast:
+  docker_normal:
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
@@ -28,4 +28,3 @@ jobs:
       - name: Test
         run: |
           docker run --rm ${{ env.TEST_TAG }}
-
