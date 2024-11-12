@@ -1,5 +1,5 @@
 # Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:python3.12-alpine
 
 # Install the project into `/app`
 WORKDIR /app
@@ -19,15 +19,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     uv pip install -r requirements.txt
 
-# FROM python:3.12-alpine AS runtime
-
-# WORKDIR /app
-
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
 COPY archivepodcast ./archivepodcast
-
-# COPY --from=builder /app/.venv /app/.venv
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"

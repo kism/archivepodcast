@@ -21,7 +21,6 @@ jobs:
       - name: Build and export to Docker
         uses: docker/build-push-action@v6
         with:
-          file: "Dockerfile_normal"
           load: true
           push: false
           tags: ${{ env.TEST_TAG }}
