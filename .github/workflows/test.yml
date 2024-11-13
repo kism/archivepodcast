@@ -10,6 +10,7 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"] # Don't bother with beta versions, slow on github. https://github.com/actions/python-versions/releases
