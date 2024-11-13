@@ -409,6 +409,9 @@ class PodcastDownloader:
 
         if self.s3:
             s3_file_path = mp3_file_path.replace(self.web_root, "").replace(os.sep, "/")
+            if s3_file_path[0] == "/":
+                s3_file_path = s3_file_path[1:]
+
             msg = f"Checking length of s3 object: { s3_file_path }"
             logger.trace(msg)
             response = self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
