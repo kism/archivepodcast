@@ -45,6 +45,7 @@ if which("ffmpeg") is not None:
         from pydub import AudioSegment
 
         PYDUB_LOADED = True
+        logger.info("🎵 pydub loaded with ffmpeg! Episodes in .wav format will be converted to mp3")
     except ImportError:
         pass
 
@@ -404,10 +405,7 @@ class PodcastDownloader:
                 self._upload_asset_s3(mp3_file_path, extension)
 
             else:
-                if not PYDUB_LOADED:
-                    logger.error("❌ pydub pip package not installed")
-
-                logger.error("❌ Cannot convert wav to mp3!")
+                logger.error("❌ FFMPEG or Pydub not found, cannot convert wav to mp3!")
 
         if self.s3:
             s3_file_path = mp3_file_path.replace(self.web_root, "").replace(os.sep, "/")
