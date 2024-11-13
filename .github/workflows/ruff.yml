@@ -1,7 +1,11 @@
 ---
-name: Ruff
+name: Check (Ruff)
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+      - test
 
 jobs:
   ruff:

@@ -76,7 +76,7 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ### TODO
 
-- Docker
+- ~~Docker~~
 - Quick startup (s3 thread)
+- Systemctl reload support
 - Re-write README
-- Quick docker build <https://github.com/astral-sh/uv-docker-example/blob/main/Dockerfile>

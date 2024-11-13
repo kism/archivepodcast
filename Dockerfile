@@ -1,3 +1,4 @@
+# https://github.com/astral-sh/uv-docker-example/blob/main/Dockerfile
 # Use a Python image with uv pre-installed
 FROM ghcr.io/astral-sh/uv:python3.12-alpine
 
