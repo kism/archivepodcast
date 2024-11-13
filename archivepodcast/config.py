@@ -102,7 +102,7 @@ class ArchivePodcastConfig:
     https://gist.github.com/turicas/1510860
     """
 
-    def __getitem__(self, key: str) -> typing.Any:  # noqa: ANN401 Yes this will return Any, but it's a dict.
+    def __getitem__(self, key: str) -> typing.Any:  # noqa: ANN401 # Yes this will return Any, but it's a dict.
         """Get item from config like a dictionary."""
         return self._config[key]
 

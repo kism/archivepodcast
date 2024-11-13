@@ -117,7 +117,7 @@ class PodcastDownloader:
         for channel in xml_first_child:
             self._process_channel_tag(channel, podcast)
 
-    def _process_channel_tag(self, channel: etree._Element, podcast: dict) -> None:  # noqa: C901 There is no way to avoid this really, there are many tag types
+    def _process_channel_tag(self, channel: etree._Element, podcast: dict) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
         """Process individual channel tags in the podcast XML."""
         match channel.tag:
             case "link":
@@ -239,7 +239,7 @@ class PodcastDownloader:
             if child.tag == "title":
                 title = str(child.text)
                 logger.debug("📢 Episode title: %s", title)
-            elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in child.tag:
+            elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in str(child.tag):
                 self._handle_enclosure_tag(child, title, podcast, file_date_string)
             elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
                 self._handle_episode_image_tag(child, title, podcast, file_date_string)

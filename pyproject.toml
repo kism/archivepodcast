@@ -4,7 +4,7 @@ version = "1.1.0"
 description = ""
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = "~=3.11"
 dependencies = [
     "boto3>=1.35.58",
     "colorama>=0.4.6",
@@ -95,7 +95,6 @@ docstring-code-line-length = 40
 
 [tool.pytest.ini_options]
 addopts = [
-    "--import-mode=importlib",
     "--cov-context=test",
     "--cov=archivepodcast",
     "--cov-report=term",
