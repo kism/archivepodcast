@@ -1,6 +1,10 @@
+FROM linuxserver/ffmpeg AS ffmpeg
+
 # https://github.com/astral-sh/uv-docker-example/blob/main/Dockerfile
 # Use a Python image with uv pre-installed
 FROM ghcr.io/astral-sh/uv:python3.12-alpine
+
+COPY --from=ffmpeg /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
 
 # Install the project into `/app`
 WORKDIR /app
