@@ -337,7 +337,7 @@ class PodcastDownloader:
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
                         logger.debug(
-                            "File: %s does not exist 🙅‍ in the s3 bucket",
+                            "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
                             s3_file_path,
                         )
                     else:
