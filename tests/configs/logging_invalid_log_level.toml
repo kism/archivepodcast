@@ -1,0 +1,15 @@
+[app]
+
+[[podcast]]
+url = "https://localhost"
+new_name = "TEST"
+name_one_word = "test"
+description = "Test podcasst description"
+live = false
+contact_email = "test@localhost"
+
+[logging]
+level = "INVALID"
+
+[flask]
+TESTING = true
