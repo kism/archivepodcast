@@ -6,7 +6,7 @@
 ![Docker](https://github.com/kism/archivepodcast/actions/workflows/docker.yml/badge.svg)
 [![codecov](https://codecov.io/gh/kism/archivepodcast/graph/badge.svg?token=FPGDA0ODT7)](https://codecov.io/gh/kism/archivepodcast)
 
-This is a flask webapp that will archive a podcast from a RSS feed. It will download the episodes and host them. It can also convert WAV files to MP3.
+This is a flask webapp that will archive a podcast from a RSS feed. It will download the episodes and host them.
 
 In theory this works in windows however I haven't tested it, it ~should be able to handle windows file paths fine.
 
@@ -120,3 +120,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Systemctl reload support~~
 - ~~Re-write README~~
 - ~~Tests~~
+- Better test coverage
