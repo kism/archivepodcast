@@ -21,16 +21,20 @@ dependencies = [
 dev = [
     { name = "pylance" },
 ]
+lint = [
+    { name = "ruff" },
+]
 test = [
-    { name = "boto3-stubs", extra = ["s3"] },
     { name = "detect-test-pollution" },
-    { name = "mypy" },
-    { name = "pydub-stubs" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "pytest-random-order" },
-    { name = "ruff" },
+]
+type = [
+    { name = "boto3-stubs", extra = ["s3"] },
+    { name = "mypy" },
+    { name = "pydub-stubs" },
     { name = "types-colorama" },
     { name = "types-lxml" },
     { name = "types-requests" },
@@ -51,16 +55,18 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [{ name = "pylance" }]
+lint = [{ name = "ruff" }]
 test = [
-    { name = "boto3-stubs", extras = ["s3"] },
     { name = "detect-test-pollution" },
-    { name = "mypy" },
-    { name = "pydub-stubs" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "pytest-random-order" },
-    { name = "ruff" },
+]
+type = [
+    { name = "boto3-stubs", extras = ["s3"] },
+    { name = "mypy" },
+    { name = "pydub-stubs" },
     { name = "types-colorama" },
     { name = "types-lxml" },
     { name = "types-requests" },

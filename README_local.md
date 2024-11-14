@@ -9,28 +9,51 @@ Example install in /opt, with systemd, logging, log rotation, nginx reverse prox
 cd /opt
 git clone https://github.com/kism/archivepodcast.git
 cd archivepodcast
-pipenv install --dev
-adduser podcasto --shell=/bin/false --no-create-home
-touch /var/log/archivepodcast.log
-chown podcasto:podcasto /var/log/archivepodcast.log
-chown -R podcasto:podcasto /opt/archivepodcast
+uv sync --no-group dev --no-group test --no-group type --no-group lint
+adduser archivepodcast --shell=/bin/false --no-create-home
+mkdir /var/log/archivepodcast/
+chown apuser:apuser /var/log/archivepodcast
+chown -R apuser:apuser /opt/archivepodcast
 ```
 
 ## Create Config
 
-Run the program once manually to create the default settings.json and then fill it in. You can ignore the cdn address and s3 settings.
+Run the program once manually to create the default config.toml and then fill it in. You can ignore the cdn address and s3 settings.
 
 ```bash
 cd /opt/archivepodcast
-/opt/archivepodcast/env/bin/python3 archivepodcast.py --config settings.json
-vim settings.json
+sudo -u apuser .venv/bin/waitress-serve --port=5000 --call 'archivepodcast:create_app'
+```
+
+Edit: `/opt/archivepodcast/instance/config.toml` to your liking.
+
+```toml
+[app]
+inet_path = "https://mycooldomain.org/"
+storage_backend = "local"
+
+[app.web_page]
+title = "Podcast Archive"
+description = "My Cool  Podcast Archive"
+podcast_guide = "https://medium.com/@joshmuccio/how-to-manually-add-a-rss-feed-to-your-podcast-app-on-desktop-ios-android-478d197a3770" podcast app
+contact = "email@example.com"
+
+[[podcast]]
+url = "https://feeds.megaphone.fm/replyall"
+new_name = "Reply All [Archive]"
+name_one_word = "replyall"
+description = ""
+live = true
+contact_email = "archivepodcast@localhost"
+
+[logging]
+level = "INFO"
+path = ""
 ```
 
 ## Systemd service
 
-```bash
-vim /etc/systemd/system/archivepodcast.service
-```
+Edit: `/etc/systemd/system/archivepodcast.service`
 
 ```text
 [Unit]
@@ -38,9 +61,9 @@ Description=Podcast Archiving Webapp
 After=network.target
 
 [Service]
-User=podcasto
+User=apuser
 WorkingDirectory=/opt/archivepodcast
-ExecStart=/usr/sbin/pipenv run python3 archivepodcast.py --config settings.json --logfile /var/log/archivepodcast.log --loglevel INFO --production
+ExecStart=/opt/archivepodcast/.venv/bin/waitress-serve --port=5000 --call 'archivepodcast:create_app'
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 
@@ -50,32 +73,13 @@ WantedBy=multi-user.target
 
 You can use `systemctl reload archivepodcast` to reload the config, check the log to make sure it worked.
 
-## Logrotate
-
-```bash
-vim /etc/logrotate.d/archivepodcast
-```
-
-```text
-/var/log/archivepodcast.log
-{
-    rotate 6
-    daily
-    missingok
-    dateext
-    copytruncate
-    notifempty
-    compress
-}
-```
-
 ## Nginx Reverse Proxy
 
-I wont go into detail on nginx reverse proxys, I add this as a server with my domain name. Then use certbot & certbot nginx plugin to setup https.
+I wont go into detail on nginx reverse proxies, I add this as a server with my domain name. Then use certbot & certbot nginx plugin to setup https.
 
 ```text
 server {
-    server_name yourdomain.com;
+    server_name mycooldomain.org;
     location / {
         proxy_pass http://localhost:5000/;
     }

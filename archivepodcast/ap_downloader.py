@@ -81,6 +81,11 @@ class PodcastDownloader:
         self.app_settings = app_settings
         self.web_root = web_root
 
+        if self.s3:
+            paths = self.s3.list_objects_v2(Bucket=app_settings["s3"]["bucket"])
+            if paths:
+                self.s3_paths_cache = [path["Key"] for path in paths.get("Contents", [])]
+
     def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""
         response = self._fetch_podcast_xml(podcast["url"])
@@ -337,7 +342,7 @@ class PodcastDownloader:
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
                         logger.debug(
-                            "File: %s does not exist 🙅‍ in the s3 bucket",
+                            "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
                             s3_file_path,
                         )
                     else:
@@ -409,6 +414,9 @@ class PodcastDownloader:
 
         if self.s3:
             s3_file_path = mp3_file_path.replace(self.web_root, "").replace(os.sep, "/")
+            if s3_file_path[0] == "/":
+                s3_file_path = s3_file_path[1:]
+
             msg = f"Checking length of s3 object: { s3_file_path }"
             logger.trace(msg)
             response = self.s3.head_object(Bucket=self.app_settings["s3"]["bucket"], Key=s3_file_path)
