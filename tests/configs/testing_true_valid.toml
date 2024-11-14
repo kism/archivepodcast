@@ -1,5 +1,6 @@
-
 [app]
+inet_path = "http://localhost:5000/"
+storage_backend = "local"
 
 [[podcast]]
 url = "https://localhost"

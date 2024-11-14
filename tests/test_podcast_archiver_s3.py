@@ -34,13 +34,8 @@ def mocked_aws(aws_credentials):
         yield
 
 
-@pytest.fixture # We need to mock threads out since they won't have context
-def mock_threads(monkeypatch):
-    """Mock thread start to prevent threads from actually starting."""
-    monkeypatch.setattr("threading.Thread.start", lambda _: None)
 
-
-def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads):
+def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
     """Test that the app can load config and the testing attribute is set."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
@@ -73,13 +68,6 @@ def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads):
         app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path
     )
 
-
-def test_no_about_page(pa_aws, caplog): # Move this to non aws tests
-    """Test no about page."""
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
-        pa_aws.make_about_page()
-
-    assert "About page doesn't exist" in caplog.text
 
 
 
