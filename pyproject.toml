@@ -19,13 +19,8 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pylance"]
-test = [
-    "ruff",
-    "detect-test-pollution",
-    "pytest",
-    "pytest-cov",
-    "pytest-mock",
-    "pytest-random-order",
+
+type = [
     "mypy",
     "types-colorama",
     "types-lxml",
@@ -34,8 +29,18 @@ test = [
     "pydub-stubs",
 ]
 
+lint = ["ruff"]
+
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-random-order",
+    "detect-test-pollution",
+]
+
 [tool.uv]
-default-groups = ["dev", "test"]
+default-groups = ["dev", "test", "type", "lint"]
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
