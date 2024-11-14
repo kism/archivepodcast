@@ -34,33 +34,11 @@ If there is no config.toml file in the instance folder, the program will create 
 
 The default settings will not be enough to start the program as you need to define the podcasts you want to archive.
 
-### Podcast list
-
-Multiple podcasts can be defined in the toml list.
-
-```toml
-[[podcast]]
-url = "https://feed.articlesofinterest.club" # Feed url to archive from
-new_name = "Articles of Interest [Archive]"  # override the name of the podcast. Empty string uses original
-name_one_word = "aoi"                        # the http endpoint for the feed: /rss/<name_one_word>
-description = ""                             # override the description of the podcast. Empty string uses original
-live = true                                  # whether to actively grab new episodes, or just serve the archive
-contact_email = "archivepodcast@localhost"   # override the contact email of the podcast
-
-[[podcast]]
-url = "https://feeds.megaphone.fm/replyall"
-new_name = "Reply All [Archive]"
-name_one_word = "replyall"
-description = ""
-live = true
-contact_email = "archivepodcast@localhost"
-```
-
 ### App settings 'app'
 
 ```toml
 [app]
-inet_path = "<http://localhost:5000/>"  # URL of the webapp, must match what users connect to
+inet_path = "http://localhost:5000/"  # URL of the webapp, must match what users connect to
 storage_backend = "local"               # Choices are "local" or "s3"
 ```
 
@@ -83,6 +61,28 @@ api_url = "<api url>"                       # The url of the s3 api, doesn't hav
 bucket = "<bucket name>"                    # The name of the bucket
 access_key_id = "<access_key_id>"           # The access key id of the s3 bucket
 secret_access_key = "<secret_access_key>"   # The secret access key of the s3 bucket
+```
+
+### Podcast list
+
+Multiple podcasts can be defined in the toml list.
+
+```toml
+[[podcast]]
+url = "https://feed.articlesofinterest.club" # Feed url to archive from
+new_name = "Articles of Interest [Archive]"  # override the name of the podcast. Empty string uses original
+name_one_word = "aoi"                        # the http endpoint for the feed: /rss/<name_one_word>
+description = ""                             # override the description of the podcast. Empty string uses original
+live = true                                  # whether to actively grab new episodes, or just serve the archive
+contact_email = "archivepodcast@localhost"   # override the contact email of the podcast
+
+[[podcast]]
+url = "https://feeds.megaphone.fm/replyall"
+new_name = "Reply All [Archive]"
+name_one_word = "replyall"
+description = ""
+live = true
+contact_email = "archivepodcast@localhost"
 ```
 
 ### Logging settings 'logging'
