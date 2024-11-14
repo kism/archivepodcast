@@ -7,12 +7,10 @@ import os
 import shutil
 from collections.abc import Callable
 
-import boto3
 import pytest
 import tomlkit
 from flask import Flask
 from flask.testing import FlaskClient, FlaskCliRunner
-from moto import mock_aws
 
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
 
@@ -23,7 +21,7 @@ def pytest_configure():
 
 
 @pytest.fixture
-def app(tmp_path, get_test_config, mocked_aws) -> Flask:
+def app(tmp_path, get_test_config) -> Flask:
     """This fixture uses the default config within the flask app."""
     from archivepodcast import create_app
 
@@ -70,27 +68,3 @@ def place_test_config() -> Callable:
         shutil.copyfile(filepath, os.path.join(path, "config.toml"))
 
     return _place_test_config
-
-
-@pytest.fixture
-def aws_credentials():
-    """Mocked AWS Credentials for moto."""
-    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
-    os.environ["AWS_SECURITY_TOKEN"] = "testing"
-    os.environ["AWS_SESSION_TOKEN"] = "testing"
-    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
-
-
-@pytest.fixture
-def s3(aws_credentials):
-    """Return a mocked S3 client."""
-    with mock_aws():
-        yield boto3.client("s3", region_name="us-east-1")
-
-
-@pytest.fixture
-def mocked_aws(aws_credentials):
-    """Mock all AWS interactions, Requires you to create your own boto3 clients."""
-    with mock_aws():
-        yield

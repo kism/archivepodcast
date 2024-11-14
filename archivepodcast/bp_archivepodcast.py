@@ -31,7 +31,7 @@ def initialise_archivepodcast() -> None:
     global ap  # noqa: PLW0603
 
     ap = PodcastArchiver(
-        current_app.config["app"], current_app.config["podcast"], current_app.instance_path, current_app.root_path
+        current_app.config["app"], current_app.config["podcast"], current_app.instance_path
     )
 
     signal.signal(signal.SIGHUP, reload_settings)

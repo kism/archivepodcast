@@ -23,11 +23,10 @@ logger = get_logger(__name__)
 class PodcastArchiver:
     """ArchivePodcast object."""
 
-    def __init__(self, app_settings: dict, podcast_list: list, instance_path: str, root_path: str) -> None:
+    def __init__(self, app_settings: dict, podcast_list: list, instance_path: str) -> None:
         """Initialise the ArchivePodcast object."""
         self.instance_path = instance_path
-        self.web_root = os.path.join(instance_path, "web")
-        self.root_path = root_path
+        self.web_root = os.path.join(instance_path, "web") # This gets used so often, it's worth the variable
         self.app_settings: dict = {}
         self.podcast_xml: dict[str, str] = {}
         self.podcast_list: list = []
@@ -57,7 +56,9 @@ class PodcastArchiver:
             with open(about_page_desired_path, encoding="utf-8") as about_page:
                 self.about_page = about_page.read()
 
-            logger.debug("About page exists!")
+            logger.info("About page exists!")
+        else:
+            logger.debug("About page doesn't exist")
 
     def make_folder_structure(self) -> None:
         """Ensure that web_root folder structure exists."""
@@ -211,9 +212,9 @@ class PodcastArchiver:
 
     def upload_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
-        threading.Thread(target=self._upload_static, args=(self.root_path,), daemon=True).start()
+        threading.Thread(target=self._upload_static, daemon=True).start()
 
-    def _upload_static(self, app_root_path: str) -> None:
+    def _upload_static(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
         if not self.s3:
             return
@@ -233,7 +234,7 @@ class PodcastArchiver:
         if self.app_settings["storage_backend"] == "s3":
             logger.info("⛅ Uploading static pages to s3 in the background")
             try:
-                static_directory = os.path.join(app_root_path, "static")
+                static_directory = os.path.join("archivepodcast", "static")
                 items_to_copy = [
                     os.path.join(root, file) for root, __, files in os.walk(static_directory) for file in files
                 ]
