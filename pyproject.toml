@@ -1,6 +1,6 @@
 [project]
 name = "archivepodcast"
-version = "1.1.0"
+version = "1.1.1"
 description = ""
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -37,6 +37,8 @@ test = [
     "pytest-mock",
     "pytest-random-order",
     "detect-test-pollution",
+    # "moto[s3]",
+    "moto"
 ]
 
 [tool.uv]
@@ -83,6 +85,7 @@ ignore = [
     "PT004",  # KG monkeypatches don't return.
     "ANN001", # KG Tests don't need type hints.
     "S311",   # KG I'll assume no real crypto will be done in PyTest.
+    "S105",   # KG Hardcoded fake passwords are fine in tests.
 ]
 
 

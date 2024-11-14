@@ -1,0 +1,29 @@
+[app]
+inet_path = "http://localhost:5000/"
+storage_backend = "s3"
+
+[app.web_page]
+title = "Pytest Podcast Archive"
+description = "My Podcast Archive, in pytest!"
+podcast_guide = "<url>"
+contact = "archivepodcast_pytest@localhost"
+
+[app.s3]
+cdn_domain = "https://cdn.my.cool.website/"
+api_url = ""
+bucket = "podcast-archive-test"
+access_key_id = "abcd"
+secret_access_key = "efgh"
+
+[[podcast]]
+url = "https://localhost"
+new_name = "TEST"
+name_one_word = "test"
+description = "Test podcasst description"
+live = false
+contact_email = "test@localhost"
+
+[logging]
+
+[flask]
+TESTING = true

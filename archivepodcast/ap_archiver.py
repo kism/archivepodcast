@@ -6,7 +6,6 @@ import threading
 from typing import TYPE_CHECKING
 
 import boto3
-from flask import current_app
 from jinja2 import Environment, FileSystemLoader
 from lxml import etree
 
@@ -24,10 +23,11 @@ logger = get_logger(__name__)
 class PodcastArchiver:
     """ArchivePodcast object."""
 
-    def __init__(self, app_settings: dict, podcast_list: list, instance_path: str) -> None:
+    def __init__(self, app_settings: dict, podcast_list: list, instance_path: str, root_path: str) -> None:
         """Initialise the ArchivePodcast object."""
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")
+        self.root_path = root_path
         self.app_settings: dict = {}
         self.podcast_xml: dict[str, str] = {}
         self.podcast_list: list = []
@@ -89,9 +89,14 @@ class PodcastArchiver:
     def load_s3(self) -> None:
         """Function to get a s3 credential if one is needed."""
         if self.app_settings["storage_backend"] == "s3":
+            # This is specifically for pytest, as moto doesn't support the endpoint_url
+            api_url = None
+            if self.app_settings["s3"]["api_url"] != "":
+                api_url = self.app_settings["s3"]["api_url"]
+
             self.s3 = boto3.client(
                 "s3",
-                endpoint_url=self.app_settings["s3"]["api_url"],
+                endpoint_url=api_url,
                 aws_access_key_id=self.app_settings["s3"]["access_key_id"],
                 aws_secret_access_key=self.app_settings["s3"]["secret_access_key"],
             )
@@ -206,7 +211,7 @@ class PodcastArchiver:
 
     def upload_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
-        threading.Thread(target=self._upload_static, args=(current_app.root_path,), daemon=True).start()
+        threading.Thread(target=self._upload_static, args=(self.root_path,), daemon=True).start()
 
     def _upload_static(self, app_root_path: str) -> None:
         """Actual function to upload static to s3 and copy index.html."""
