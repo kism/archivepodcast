@@ -10,10 +10,10 @@ cd /opt
 git clone https://github.com/kism/archivepodcast.git
 cd archivepodcast
 pipenv install --dev
-adduser podcasto --shell=/bin/false --no-create-home
+adduser archivepodcast --shell=/bin/false --no-create-home
 touch /var/log/archivepodcast.log
-chown podcasto:podcasto /var/log/archivepodcast.log
-chown -R podcasto:podcasto /opt/archivepodcast
+chown archivepodcast:archivepodcast /var/log/archivepodcast.log
+chown -R archivepodcast:archivepodcast /opt/archivepodcast
 ```
 
 ## Create Config
@@ -38,7 +38,7 @@ Description=Podcast Archiving Webapp
 After=network.target
 
 [Service]
-User=podcasto
+User=archivepodcast
 WorkingDirectory=/opt/archivepodcast
 ExecStart=/usr/sbin/pipenv run python3 archivepodcast.py --config settings.json --logfile /var/log/archivepodcast.log --loglevel INFO --production
 ExecReload=/bin/kill -HUP $MAINPID
