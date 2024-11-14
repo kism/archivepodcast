@@ -39,17 +39,17 @@ The default settings will not be enough to start the program as you need to defi
 ```toml
 [app]
 inet_path = "http://localhost:5000/"  # URL of the webapp, must match what users connect to
-storage_backend = "local"               # Choices are "local" or "s3"
+storage_backend = "local"             # Choices are "local" or "s3"
 ```
 
 #### App webpage settings 'app.web_page'
 
 ```toml
 [app.web_page]
-title = "Podcast Archive"               # Webpage Title
-description = "My Podcast Archive"      # Webpage Description
-podcast_guide = "<url>"                 # URL to a guide on adding rss manually to a podcast app
-contact = "archivepodcast@localhost"    # Contact email for the archive
+title = "Podcast Archive"             # Webpage Title
+description = "My Podcast Archive"    # Webpage Description
+podcast_guide = "<url>"               # URL to a guide on adding rss manually to a podcast app
+contact = "archivepodcast@localhost"  # Contact email for the archive
 ```
 
 #### App s3 settings 'app.s3'
@@ -114,4 +114,5 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Quick startup (s3 thread)~~
 - ~~Quick startup (cache s3 better)~~
 - ~~Systemctl reload support~~
-- Re-write README
+- ~~Re-write README~~
+- ~~Tests~~
