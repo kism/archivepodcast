@@ -2,6 +2,7 @@
 
 import contextlib
 import os
+import threading
 from typing import TYPE_CHECKING
 
 import boto3
@@ -205,8 +206,14 @@ class PodcastArchiver:
 
     def upload_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
+        threading.Thread(target=self._upload_static, args=(current_app.root_path,), daemon=True).start()
+
+    def _upload_static(self, app_root_path: str) -> None:
+        """Actual function to upload static to s3 and copy index.html."""
         if not self.s3:
             return
+
+        logger = get_logger(__name__ + ".upload_static")
 
         # Render backup of html
         env = Environment(loader=FileSystemLoader("."), autoescape=True)
@@ -221,7 +228,7 @@ class PodcastArchiver:
         if self.app_settings["storage_backend"] == "s3":
             logger.info("⛅ Uploading static pages to s3 in the background")
             try:
-                static_directory = os.path.join(current_app.root_path, "static")
+                static_directory = os.path.join(app_root_path, "static")
                 items_to_copy = [
                     os.path.join(root, file) for root, __, files in os.walk(static_directory) for file in files
                 ]

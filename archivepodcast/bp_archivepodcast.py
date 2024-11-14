@@ -76,12 +76,7 @@ def podcast_loop() -> None:
         return
 
     if ap.s3 is not None:
-        emoji = "⛅"  # un-upset black
-        logger.info(
-            "%s Since we are in s3 storage mode, "
-            "the first iteration of checking which episodes are downloaded will be slow",
-            emoji,
-        )
+        logger.info("⛅ We are in s3 mode, missing episode files will be downloaded, uploaded to s3 and then deleted")
 
     while True:
         # We do a broad try/except here since god knows what http errors seem to happen at random

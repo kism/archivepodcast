@@ -78,12 +78,13 @@ class PodcastDownloader:
         """Load/Reload settings of the app."""
         self.s3 = s3
         self.s3_paths_cache: list = []
+        self.app_settings = app_settings
+        self.web_root = web_root
+
         if self.s3:
             paths = self.s3.list_objects_v2(Bucket=app_settings["s3"]["bucket"])
             if paths:
                 self.s3_paths_cache = [path["Key"] for path in paths.get("Contents", [])]
-        self.app_settings = app_settings
-        self.web_root = web_root
 
     def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""

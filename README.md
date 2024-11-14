@@ -78,5 +78,6 @@ An example guide on setting it up start to finish, with all features and saving 
 
 - ~~Docker~~
 - Quick startup (s3 thread)
+- ~~Quick startup (cache s3 better)~~
 - Systemctl reload support
 - Re-write README
