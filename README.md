@@ -1,8 +1,12 @@
 # archivepodcast
 
-This is a python project that both
+![Check](https://github.com/kism/archivepodcast/actions/workflows/check.yml/badge.svg)
+![CheckType](https://github.com/kism/archivepodcast/actions/workflows/check_types.yml/badge.svg)
+![Test](https://github.com/kism/archivepodcast/actions/workflows/test.yml/badge.svg)
+![Docker](https://github.com/kism/archivepodcast/actions/workflows/docker.yml/badge.svg)
+[![codecov](https://codecov.io/gh/kism/archivepodcast/graph/badge.svg?token=FPGDA0ODT7)](https://codecov.io/gh/kism/archivepodcast)
 
-- `archivepodcast.py` Works as a Flask webapp to archive and re-host a podcast from a RSS feed
+This is a flask webapp that will archive a podcast from a RSS feed. It will download the episodes and host them. It can also convert WAV files to MP3.
 
 In theory this works in windows however I haven't tested it, it ~should be able to handle windows file paths fine.
 
