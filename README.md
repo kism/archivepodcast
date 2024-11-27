@@ -122,3 +122,5 @@ An example guide on setting it up start to finish, with all features and saving 
 - Better test coverage
 - Use current_app.root_path instead of os.getcwd()
 - Add italics font
+- Better font sizing
+- Add a favicon
