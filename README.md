@@ -52,7 +52,6 @@ storage_backend = "local"             # Choices are "local" or "s3"
 [app.web_page]
 title = "Podcast Archive"             # Webpage Title
 description = "My Podcast Archive"    # Webpage Description
-podcast_guide = "<url>"               # URL to a guide on adding rss manually to a podcast app
 contact = "archivepodcast@localhost"  # Contact email for the archive
 ```
 
@@ -122,3 +121,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Tests~~
 - Better test coverage
 - Use current_app.root_path instead of os.getcwd()
+- Add italics font

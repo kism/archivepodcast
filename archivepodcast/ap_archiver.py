@@ -26,7 +26,7 @@ class PodcastArchiver:
     def __init__(self, app_settings: dict, podcast_list: list, instance_path: str) -> None:
         """Initialise the ArchivePodcast object."""
         self.instance_path = instance_path
-        self.web_root = os.path.join(instance_path, "web") # This gets used so often, it's worth the variable
+        self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
         self.app_settings: dict = {}
         self.podcast_xml: dict[str, str] = {}
         self.podcast_list: list = []
@@ -223,7 +223,7 @@ class PodcastArchiver:
 
         # Render backup of html
         env = Environment(loader=FileSystemLoader("."), autoescape=True)
-        template = env.get_template(os.path.join("archivepodcast", "templates", "home.j2"))
+        template = env.get_template(os.path.join("archivepodcast", "templates", "home.html.j2"))
         rendered_output = template.render(
             settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page
         )
@@ -240,7 +240,7 @@ class PodcastArchiver:
                 ]
 
                 for item in items_to_copy:
-                    static_item_local_path = os.path.join(static_directory, item)
+                    static_item_local_path = os.path.join("", item)
                     static_item_s3_path = "static" + item.replace(os.sep, "/").replace(static_directory, "")
                     logger.debug("⛅ Uploading static item: %s to s3: %s", static_item_local_path, static_item_s3_path)
                     self.s3.upload_file(
@@ -272,4 +272,4 @@ class PodcastArchiver:
 
                 logger.info("⛅ Done uploading static pages to s3")
             except Exception:
-                logger.exception("⛅❌ Unhandled s3 Error")
+                logger.exception("⛅❌ Unhandled s3 error when trying to upload static files")

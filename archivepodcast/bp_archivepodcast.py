@@ -30,9 +30,7 @@ def initialise_archivepodcast() -> None:
     """Initialize the archivepodcast app."""
     global ap  # noqa: PLW0603
 
-    ap = PodcastArchiver(
-        current_app.config["app"], current_app.config["podcast"], current_app.instance_path
-    )
+    ap = PodcastArchiver(current_app.config["app"], current_app.config["podcast"], current_app.instance_path)
 
     signal.signal(signal.SIGHUP, reload_settings)
 
@@ -109,7 +107,7 @@ def generate_404() -> Response:
     """We use the 404 template in a couple places."""
     returncode = HTTPStatus.NOT_FOUND
     render = render_template(
-        "error.j2",
+        "error.html.j2",
         error_code=str(returncode),
         error_text="Page not found, how did you even?",
         settings=current_app.config["app"],
@@ -125,7 +123,7 @@ def home() -> Response:
 
     return Response(
         render_template(
-            "home.j2",
+            "home.html.j2",
             settings=current_app.config["app"],
             podcasts=current_app.config["podcast"],
             about_page=ap.about_page,
@@ -145,7 +143,20 @@ def home_index() -> Response:
         return generate_not_initialized_error()
 
     return Response(
-        render_template("home.j2", settings=current_app.config["app"], about_page=ap.about_page), status=HTTPStatus.OK
+        render_template("home.html.j2", settings=current_app.config["app"], about_page=ap.about_page),
+        status=HTTPStatus.OK,
+    )
+
+
+@bp.route("/guide.html")
+def home_guide() -> Response:
+    """Podcast app guide."""
+    if not ap:
+        return generate_not_initialized_error()
+
+    return Response(
+        render_template("guide.html.j2", settings=current_app.config["app"], about_page=ap.about_page),
+        status=HTTPStatus.OK,
     )
 
 
@@ -195,7 +206,7 @@ def rss(feed: str) -> Response:
     except TypeError:
         return Response(
             render_template(
-                "error.j2",
+                "error.html.j2",
                 error_code=str(returncode),
                 error_text="The developer probably messed something up",
                 settings=current_app.config["app"],
@@ -218,7 +229,7 @@ def rss(feed: str) -> Response:
         except FileNotFoundError:
             return Response(
                 render_template(
-                    "error.j2",
+                    "error.html.j2",
                     error_code=str(returncode),
                     error_text="Feed not found, you know you can copy and paste yeah?",
                     settings=current_app.config["app"],
@@ -253,7 +264,7 @@ def generate_not_initialized_error() -> Response:
     logger.error("❌ ArchivePodcast object not initialized")
     return Response(
         render_template(
-            "error.j2",
+            "error.html.j2",
             error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
             error_text="Archive Podcast not initialized",
             settings=current_app.config["app"],

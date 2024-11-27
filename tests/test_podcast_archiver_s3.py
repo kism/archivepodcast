@@ -34,7 +34,6 @@ def mocked_aws(aws_credentials):
         yield
 
 
-
 def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
     """Test that the app can load config and the testing attribute is set."""
     config_file = "testing_true_valid_s3.toml"
@@ -46,12 +45,11 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
     from archivepodcast.ap_archiver import PodcastArchiver
 
     with caplog.at_level(logging.DEBUG):
-        PodcastArchiver(
-            app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path
-        )
+        PodcastArchiver(app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path)
 
     assert "Not using s3" not in caplog.text
     assert f"Authenticated s3, using bucket: {bucket_name}" in caplog.text
+
 
 @pytest.fixture
 def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads):
@@ -64,11 +62,7 @@ def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads):
 
     from archivepodcast.ap_archiver import PodcastArchiver
 
-    return PodcastArchiver(
-        app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path
-    )
-
-
+    return PodcastArchiver(app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path)
 
 
 # def test_tktktktktk(pa_aws, caplog):
@@ -83,7 +77,6 @@ def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads):
 #         logging.error(f"Error listing contents of {app_path}: {e}")
 
 #     assert "archivepodcast" in contents
-
 
 
 #     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.upload_static"):

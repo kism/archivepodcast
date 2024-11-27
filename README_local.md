@@ -35,7 +35,6 @@ storage_backend = "local"
 [app.web_page]
 title = "Podcast Archive"
 description = "My Cool  Podcast Archive"
-podcast_guide = "https://medium.com/@joshmuccio/how-to-manually-add-a-rss-feed-to-your-podcast-app-on-desktop-ios-android-478d197a3770" podcast app
 contact = "email@example.com"
 
 [[podcast]]

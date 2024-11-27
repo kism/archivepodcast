@@ -70,8 +70,7 @@ def place_test_config() -> Callable:
     return _place_test_config
 
 
-
-@pytest.fixture # We need to mock threads out since they won't have context
+@pytest.fixture  # We need to mock threads out since they won't have context
 def mock_threads_none(monkeypatch):
     """Mock thread start to prevent threads from actually starting."""
     monkeypatch.setattr("threading.Thread.start", lambda _: None)
