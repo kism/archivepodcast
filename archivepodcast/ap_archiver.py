@@ -222,14 +222,27 @@ class PodcastArchiver:
         logger = get_logger(__name__ + ".upload_static")
 
         # Render backup of html
-        env = Environment(loader=FileSystemLoader("."), autoescape=True)
-        template = env.get_template(os.path.join("archivepodcast", "templates", "home.html.j2"))
-        rendered_output = template.render(
-            settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page
-        )
+        env = Environment(loader=FileSystemLoader(os.path.join(os.getcwd())), autoescape=True)
+        template_directory = os.path.join("archivepodcast", "templates")
+        templates_to_render = [
+            os.path.join(root, file)
+            for root, __, files in os.walk(template_directory)
+            for file in files
+        ]
 
-        with open(os.path.join(self.instance_path, "web", "index.html"), "w", encoding="utf-8") as root_web_page:
-            root_web_page.write(rendered_output)
+        for template_filename in templates_to_render:
+            output_filename = os.path.basename(template_filename).replace(".j2", "")
+            output_path = os.path.join(self.instance_path, "web", output_filename)
+            logger.debug("Rendering template: %s to %s", template_filename, output_path)
+            template = env.get_template(os.path.join(template_filename))
+            rendered_output = template.render(
+                settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page
+            )
+
+            with open(
+                output_path, "w", encoding="utf-8"
+            ) as root_web_page:
+                root_web_page.write(rendered_output)
 
         if self.app_settings["storage_backend"] == "s3":
             logger.info("⛅ Uploading static pages to s3 in the background")

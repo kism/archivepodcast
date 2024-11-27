@@ -123,7 +123,7 @@ def home() -> Response:
 
     return Response(
         render_template(
-            "home.html.j2",
+            "index.html.j2",
             settings=current_app.config["app"],
             podcasts=current_app.config["podcast"],
             about_page=ap.about_page,
@@ -143,7 +143,7 @@ def home_index() -> Response:
         return generate_not_initialized_error()
 
     return Response(
-        render_template("home.html.j2", settings=current_app.config["app"], about_page=ap.about_page),
+        render_template("index.html.j2", settings=current_app.config["app"], about_page=ap.about_page),
         status=HTTPStatus.OK,
     )
 
