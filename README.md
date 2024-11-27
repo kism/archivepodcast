@@ -124,3 +124,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - Add italics font
 - Better font sizing
 - Add a favicon
+- Fix S3 upload web root
