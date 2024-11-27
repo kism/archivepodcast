@@ -221,60 +221,59 @@ class PodcastArchiver:
 
         logger = get_logger(__name__ + ".upload_static")
 
+        # TODO: Use self.web_root
+        instance_web_directory = os.path.join(self.instance_path, "web")
+        static_directory = os.path.join("archivepodcast", "static")
+
         # Render backup of html
         env = Environment(loader=FileSystemLoader(os.path.join(os.getcwd())), autoescape=True)
         template_directory = os.path.join("archivepodcast", "templates")
         templates_to_render = [
-            os.path.join(root, file)
-            for root, __, files in os.walk(template_directory)
-            for file in files
+            os.path.join(root, file) for root, __, files in os.walk(template_directory) for file in files
         ]
 
         for template_filename in templates_to_render:
             output_filename = os.path.basename(template_filename).replace(".j2", "")
-            output_path = os.path.join(self.instance_path, "web", output_filename)
+            output_path = os.path.join(instance_web_directory, output_filename)
             logger.debug("Rendering template: %s to %s", template_filename, output_path)
             template = env.get_template(os.path.join(template_filename))
             rendered_output = template.render(
                 settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page
             )
 
-            with open(
-                output_path, "w", encoding="utf-8"
-            ) as root_web_page:
+            with open(output_path, "w", encoding="utf-8") as root_web_page:
                 root_web_page.write(rendered_output)
 
         if self.app_settings["storage_backend"] == "s3":
             logger.info("⛅ Uploading static pages to s3 in the background")
             try:
-                static_directory = os.path.join("archivepodcast", "static")
-                items_to_copy = [
+                static_items_to_copy = [
                     os.path.join(root, file) for root, __, files in os.walk(static_directory) for file in files
                 ]
 
-                for item in items_to_copy:
-                    static_item_local_path = os.path.join("", item)
+                for item in static_items_to_copy:
                     static_item_s3_path = "static" + item.replace(os.sep, "/").replace(static_directory, "")
-                    logger.debug("⛅ Uploading static item: %s to s3: %s", static_item_local_path, static_item_s3_path)
+                    logger.debug("⛅ Uploading static item: %s to s3: %s", item, static_item_s3_path)
                     self.s3.upload_file(
-                        static_item_local_path,
+                        item,
                         self.app_settings["s3"]["bucket"],
                         static_item_s3_path,
                     )
 
-                if self.about_page:
-                    self.s3.upload_file(
-                        os.path.join(self.web_root, "about.html"),
-                        self.app_settings["s3"]["bucket"],
-                        "about.html",
-                    )
+                rendered_templates_to_copy = [
+                    os.path.join(instance_web_directory, file)
+                    for file in os.listdir(instance_web_directory)
+                    if file.endswith(".html")
+                ]
 
-                self.s3.put_object(
-                    Body=rendered_output,
-                    Bucket=self.app_settings["s3"]["bucket"],
-                    Key="index.html",
-                    ContentType="text/html",
-                )
+                for item in rendered_templates_to_copy:
+                    item_s3_path = os.path.basename(item)
+                    logger.debug("⛅ Uploading rendered template: %s to s3: %s", item, item_s3_path)
+                    self.s3.upload_file(
+                        item,
+                        self.app_settings["s3"]["bucket"],
+                        item_s3_path,
+                    )
 
                 self.s3.put_object(
                     Body="User-Agent: *\nDisallow: /\n",
