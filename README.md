@@ -119,9 +119,11 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Systemctl reload support~~
 - ~~Re-write README~~
 - ~~Tests~~
-- Better test coverage
 - Use current_app.root_path instead of os.getcwd()
+- Don't use relative paths in general
 - Add italics font
-- Better font sizing
+- ~~ Better font sizing ~~
 - Add a favicon
-- Fix S3 upload web root
+- ~~ Fix S3 upload web root ~~
+- Better footer
+- Better test coverage

@@ -224,6 +224,7 @@ class PodcastArchiver:
         # TODO: Use self.web_root
         instance_web_directory = os.path.join(self.instance_path, "web")
         static_directory = os.path.join("archivepodcast", "static")
+        robots_txt_content = "User-Agent: *\nDisallow: /\n"
 
         # Render backup of html
         env = Environment(loader=FileSystemLoader(os.path.join(os.getcwd())), autoescape=True)
@@ -243,6 +244,9 @@ class PodcastArchiver:
 
             with open(output_path, "w", encoding="utf-8") as root_web_page:
                 root_web_page.write(rendered_output)
+
+        with open(os.path.join(instance_web_directory, "robots.txt"), "w", encoding="utf-8") as robots_txt:
+            robots_txt.write(robots_txt_content)
 
         if self.app_settings["storage_backend"] == "s3":
             logger.info("⛅ Uploading static pages to s3 in the background")
@@ -276,7 +280,7 @@ class PodcastArchiver:
                     )
 
                 self.s3.put_object(
-                    Body="User-Agent: *\nDisallow: /\n",
+                    Body=robots_txt_content,
                     Bucket=self.app_settings["s3"]["bucket"],
                     Key="robots.txt",
                     ContentType="text/plain",
