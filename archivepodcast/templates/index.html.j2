@@ -16,12 +16,12 @@
 <body>
     <main>
         <h1>{{ settings['web_page']['title']|e }}</h1>
-        <h4>{{ settings['web_page']['description']|e }}</h3>
-        <h4>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
+        <h3>{{ settings['web_page']['description']|e }}</h3>
+        <h3>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
                 guide</a>.</p>
         {% for podcast in podcasts -%}
         <h2>{{ podcast['new_name']|e }}</h3>
-        <h4>{{ podcast['description']|e }}</h3>
+        <h3>{{ podcast['description']|e }}</h3>
         <input type="text" readonly="readonly" value="{{settings['inet_path']}}rss/{{ podcast['name_one_word']}}"
             id="{{ podcast['name_one_word']}}">
         <button class="button" onclick="grabtoclipboard('{{ podcast['name_one_word']}}')"
