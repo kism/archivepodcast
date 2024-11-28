@@ -20,3 +20,13 @@ def test_static_js_exists(client: FlaskClient):
     """TEST: /static/archivepodcast.js loads."""
     response = client.get("/static/clipboard.js")
     assert response.status_code == HTTPStatus.OK
+
+def test_favicon_exists(client: FlaskClient):
+    """TEST: /static/archivepodcast.js loads."""
+    response = client.get("/favicon.ico")
+    assert response.status_code == HTTPStatus.OK
+
+def test_guide_exists(client: FlaskClient):
+    """TEST: /static/archivepodcast.js loads."""
+    response = client.get("/guide.html")
+    assert response.status_code == HTTPStatus.OK
