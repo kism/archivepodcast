@@ -23,8 +23,9 @@ logger = get_logger(__name__)
 class PodcastArchiver:
     """ArchivePodcast object."""
 
-    def __init__(self, app_settings: dict, podcast_list: list, instance_path: str) -> None:
+    def __init__(self, app_settings: dict, podcast_list: list, instance_path: str, root_path: str) -> None:
         """Initialise the ArchivePodcast object."""
+        self.root_path = root_path
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
         self.app_settings: dict = {}
@@ -221,21 +222,19 @@ class PodcastArchiver:
 
         logger = get_logger(__name__ + ".upload_static")
 
-        # TODO: Use self.web_root
-        instance_web_directory = os.path.join(self.instance_path, "web")
-        static_directory = os.path.join("archivepodcast", "static")
+        static_directory = os.path.join(self.root_path, "archivepodcast", "static")
+        template_directory = os.path.join(self.root_path, "archivepodcast", "templates")
         robots_txt_content = "User-Agent: *\nDisallow: /\n"
 
         # Render backup of html
-        env = Environment(loader=FileSystemLoader(os.path.join(os.getcwd())), autoescape=True)
-        template_directory = os.path.join("archivepodcast", "templates")
+        env = Environment(loader=FileSystemLoader(self.root_path), autoescape=True)
         templates_to_render = [
             os.path.join(root, file) for root, __, files in os.walk(template_directory) for file in files
         ]
 
         for template_filename in templates_to_render:
             output_filename = os.path.basename(template_filename).replace(".j2", "")
-            output_path = os.path.join(instance_web_directory, output_filename)
+            output_path = os.path.join(self.web_root, output_filename)
             logger.debug("Rendering template: %s to %s", template_filename, output_path)
             template = env.get_template(os.path.join(template_filename))
             rendered_output = template.render(
@@ -245,7 +244,7 @@ class PodcastArchiver:
             with open(output_path, "w", encoding="utf-8") as root_web_page:
                 root_web_page.write(rendered_output)
 
-        with open(os.path.join(instance_web_directory, "robots.txt"), "w", encoding="utf-8") as robots_txt:
+        with open(os.path.join(self.web_root, "robots.txt"), "w", encoding="utf-8") as robots_txt:
             robots_txt.write(robots_txt_content)
 
         if self.app_settings["storage_backend"] == "s3":
@@ -265,8 +264,8 @@ class PodcastArchiver:
                     )
 
                 rendered_templates_to_copy = [
-                    os.path.join(instance_web_directory, file)
-                    for file in os.listdir(instance_web_directory)
+                    os.path.join(self.web_root, file)
+                    for file in os.listdir(self.web_root)
                     if file.endswith(".html")
                 ]
 

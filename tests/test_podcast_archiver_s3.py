@@ -7,7 +7,7 @@ import boto3
 import pytest
 from moto import mock_aws
 
-ROOT_PATH = os.path.join(os.getcwd(), "archivepodcast")
+FLASK_ROOT_PATH = os.getcwd()
 
 
 @pytest.fixture
@@ -45,7 +45,12 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
     from archivepodcast.ap_archiver import PodcastArchiver
 
     with caplog.at_level(logging.DEBUG):
-        PodcastArchiver(app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path)
+        PodcastArchiver(
+            app_settings=config["app"],
+            podcast_list=config["podcast"],
+            instance_path=tmp_path,
+            root_path=FLASK_ROOT_PATH,
+        )
 
     assert "Not using s3" not in caplog.text
     assert f"Authenticated s3, using bucket: {bucket_name}" in caplog.text
@@ -62,7 +67,9 @@ def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads):
 
     from archivepodcast.ap_archiver import PodcastArchiver
 
-    return PodcastArchiver(app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path)
+    return PodcastArchiver(
+        app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
+    )
 
 
 # def test_tktktktktk(pa_aws, caplog):

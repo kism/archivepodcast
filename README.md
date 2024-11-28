@@ -119,11 +119,12 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Systemctl reload support~~
 - ~~Re-write README~~
 - ~~Tests~~
-- Use current_app.root_path instead of os.getcwd()
-- Don't use relative paths in general
+- ~~Better font sizing~~
+- ~~Fix S3 upload web root~~
+- ~~Use current_app.root_path instead of os.getcwd()~~
+- ~~Don't use relative paths in general~~
 - Add italics font
-- ~~ Better font sizing ~~
-- Add a favicon
-- ~~ Fix S3 upload web root ~~
+- Add a better favicon
 - Better footer
 - Better test coverage
+- Switch from pydub to ffmpeg
