@@ -254,9 +254,9 @@ def static_from_root() -> Response:
 @bp.route("/favicon.ico")
 def favicon() -> Response:
     """Return the favicon."""
-    logger.trace("Favicon requested")
+    static_folder_path = os.path.join(current_app.root_path, "static")
     return send_from_directory(
-        os.path.join(current_app.root_path, "archivepodcast", "static"),
+        static_folder_path,
         "favicon.ico",
         mimetype="image/vnd.microsoft.icon",
     )
