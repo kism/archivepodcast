@@ -3,16 +3,14 @@
   font-family: "Noto Sans Display";
   font-style: normal;
   font-weight: 500;
-  src: local(""),
-  url("fonts/noto-sans-display-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("fonts/noto-sans-display-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 /* noto-sans-display-500 - latin italic */
 @font-face {
   font-family: "Noto Sans Display";
   font-style: italic;
   font-weight: 500;
-  src: local(""),
-    url("fonts/noto-sans-display-latin-500italic.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("fonts/noto-sans-display-latin-500italic.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 /* fira-code-600 - latin */
 @font-face {
@@ -37,9 +35,8 @@
 }
 
 body {
-  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 14px;
   font-weight: 500;
   max-width: 700px;
@@ -58,23 +55,34 @@ h2 {
 h1 {
   font-size: 40px;
   font-weight: 700;
-  margin: 20px 0 16px;
+  margin: 20px 0 8px;
 }
 h2 {
   font-size: 24px;
   font-weight: 600;
   margin: 20px 0 2px;
 }
+h3,
+h4 {
+  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: rgb(220, 220, 220);
+  font-weight: 500;
+}
 h3 {
   font-size: 18px;
-  font-weight: 500;
+  margin-top: 4px;
+  margin-bottom: 4px;
   font-style: italic;
-  margin: 5px 0 4px;
+}
+h4 {
+  font-size: 18px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 p {
   margin: 0;
   margin-bottom: 16px;
-  margin-top: -8px;
 }
 ol {
   margin: 0;
@@ -208,11 +216,4 @@ label > .label-body {
   display: inline-block;
   margin-left: 0.5rem;
   font-weight: normal;
-}
-
-/* Misc classes */
-.podcast-description {
-  font-size: 18px;
-  margin-top: 4px;
-  margin-bottom: 4px;
 }
