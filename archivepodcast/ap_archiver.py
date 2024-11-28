@@ -264,9 +264,7 @@ class PodcastArchiver:
                     )
 
                 rendered_templates_to_copy = [
-                    os.path.join(self.web_root, file)
-                    for file in os.listdir(self.web_root)
-                    if file.endswith(".html")
+                    os.path.join(self.web_root, file) for file in os.listdir(self.web_root) if file.endswith(".html")
                 ]
 
                 for item in rendered_templates_to_copy:
