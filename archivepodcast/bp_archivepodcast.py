@@ -228,7 +228,7 @@ def rss(feed: str) -> Response:
             xml_str = xml.decode("utf-8")
             logger.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
 
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError): # Technically this can fail on first time startup if the file is not there
             return Response(
                 render_template(
                     "error.html.j2",
