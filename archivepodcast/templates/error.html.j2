@@ -8,7 +8,8 @@
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
-    <link rel="stylesheet" href="/static/archivepodcast.css" />
+    <link rel="stylesheet" href="/static/main.css" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 
 
@@ -16,8 +17,8 @@
     <main>
         <h1>{{ settings['web_page']['title']|e }}</h1>
         <h2>Heck, looks like a {{ error_code|e }} error!</h2>
-        <p>{{ error_text|e }}</p>
-        <p>I'm going to suggest that you go back and read the guide.</p>
+        <p class="podcast-description">{{ error_text|e }}</p>
+        <p class="podcast-description">I'm going to suggest that you go back and read the guide.</p>
     </main>
 </body>
 

@@ -123,8 +123,8 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Fix S3 upload web root~~
 - ~~Use current_app.root_path instead of os.getcwd()~~
 - ~~Don't use relative paths in general~~
-- Add italics font
-- Add a better favicon
+- ~~Add italics font~~
+- ~~Add a better favicon~~
 - Better footer
 - Better test coverage
 - Switch from pydub to ffmpeg
