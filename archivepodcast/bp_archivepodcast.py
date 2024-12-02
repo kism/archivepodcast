@@ -246,7 +246,7 @@ def rss(feed: str) -> Response:
                 render_template(
                     "error.html.j2",
                     error_code=str(returncode),
-                    error_text="Feed not found, Internal Server Error",
+                    error_text="Feed not loadable, Internal Server Error",
                     settings=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
