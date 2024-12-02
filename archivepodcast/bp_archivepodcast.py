@@ -241,7 +241,7 @@ def rss(feed: str) -> Response:
                 status=HTTPStatus.NOT_FOUND,
             )
 
-        except:  # noqa: E722: Prevent crash
+        except:  # noqa: E722: Broad catch to prevent crash
             return Response(
                 render_template(
                     "error.html.j2",
