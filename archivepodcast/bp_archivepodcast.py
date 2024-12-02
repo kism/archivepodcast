@@ -241,6 +241,18 @@ def rss(feed: str) -> Response:
                 status=HTTPStatus.NOT_FOUND,
             )
 
+        except:  # noqa: E722: Prevent crash
+            return Response(
+                render_template(
+                    "error.html.j2",
+                    error_code=str(returncode),
+                    error_text="Feed not found, Internal Server Error",
+                    settings=current_app.config["app"],
+                    podcasts=current_app.config["podcast"],
+                ),
+                status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            )
+
     return Response(xml_str, mimetype="application/rss+xml; charset=utf-8", status=HTTPStatus.OK)
 
 
