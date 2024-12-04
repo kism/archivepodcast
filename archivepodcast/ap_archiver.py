@@ -217,26 +217,43 @@ class PodcastArchiver:
 
     def _upload_static(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
-        if not self.s3:
-            return
 
         logger = get_logger(__name__ + ".upload_static")
 
         static_directory = os.path.join(self.root_path, "archivepodcast", "static")
-        template_directory = os.path.join(self.root_path, "archivepodcast", "templates")
+        template_directory = os.path.join(self.root_path, "templates")
         robots_txt_content = "User-Agent: *\nDisallow: /\n"
 
-        # Render backup of html
-        env = Environment(loader=FileSystemLoader(self.root_path), autoescape=True)
-        templates_to_render = [
-            os.path.join(root, file) for root, __, files in os.walk(template_directory) for file in files
-        ]
 
-        for template_filename in templates_to_render:
-            output_filename = os.path.basename(template_filename).replace(".j2", "")
+        # TODO: REMOVE THIS ZONE
+
+        # Render backup of html
+        env = Environment(loader=FileSystemLoader("templates"), autoescape=True)
+
+        templates_to_render = []
+        files = os.listdir(template_directory)
+        for file in files:
+            templates_to_render.append(file)
+
+
+
+        logger.error("Templates to render: %s", templates_to_render)
+
+        for template_path in templates_to_render:
+            output_filename = os.path.basename(template_path).replace(".j2", "")
             output_path = os.path.join(self.web_root, output_filename)
-            logger.debug("Rendering template: %s to %s", template_filename, output_path)
-            template = env.get_template(os.path.join(template_filename))
+            logger.error("Rendering template: %s to %s", template_path, output_path)
+
+            # TODO: REMOVE THIS ZONE
+            template_list = os.listdir(template_directory)
+            logger.info("Template list: %s", template_list)
+
+            if os.path.exists(template_path):
+                logger.debug("Template exists: %s", template_path)
+            else:
+                logger.error("Template doesn't exist: %s", template_path)
+
+            template = env.get_template(template_path)
             rendered_output = template.render(
                 settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page
             )
@@ -247,7 +264,7 @@ class PodcastArchiver:
         with open(os.path.join(self.web_root, "robots.txt"), "w", encoding="utf-8") as robots_txt:
             robots_txt.write(robots_txt_content)
 
-        if self.app_settings["storage_backend"] == "s3":
+        if self.s3:
             logger.info("⛅ Uploading static pages to s3 in the background")
             try:
                 static_items_to_copy = [

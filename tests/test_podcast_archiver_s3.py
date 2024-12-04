@@ -57,7 +57,7 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
 
 
 @pytest.fixture
-def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads):
+def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads_none):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
@@ -72,23 +72,23 @@ def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads):
     )
 
 
-# def test_tktktktktk(pa_aws, caplog):
-#     """Test TKTKTKTKTKKT."""
+def test_tktktktktk(pa_aws, caplog):
+    """Test TKTKTKTKTKKT."""
 
-#     app_path = os.getcwd()
+    app_path = os.getcwd()
 
-#     try:
-#         contents = os.listdir(app_path)
-#         logging.debug(f"Contents of {app_path}: {contents}")
-#     except Exception as e:
-#         logging.error(f"Error listing contents of {app_path}: {e}")
+    try:
+        contents = os.listdir(app_path)
+        logging.debug(f"Contents of {app_path}: {contents}")
+    except Exception as e:
+        logging.error(f"Error listing contents of {app_path}: {e}")
 
-#     assert "archivepodcast" in contents
+    assert "archivepodcast" in contents
 
 
-#     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.upload_static"):
-#         pa_aws._upload_static()
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.upload_static"):
+        pa_aws._upload_static()
 
-#     assert "Uploading static pages to s3 in the background" in caplog.text
-#     assert "Uploading static item" in caplog.text
-#     assert "Done uploading static pages to s3" in caplog.text
+    assert "Uploading static pages to s3 in the background" in caplog.text
+    assert "Uploading static item" in caplog.text
+    assert "Done uploading static pages to s3" in caplog.text
