@@ -42,7 +42,7 @@ def pd_aws(pa_aws, get_test_config, caplog, mock_threads_none):
 def test_download_podcast(
     pd_aws,
     get_test_config,
-    mock_podcast_source_rss,
+    mock_get_podcast_source_rss,
     mock_podcast_source_images,
     mock_podcast_source_mp3,
     caplog,
@@ -51,6 +51,8 @@ def test_download_podcast(
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
+
+    mock_get_podcast_source_rss("test_valid.rss")
 
     with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_downloader"):
         pd_aws.download_podcast(mock_podcast_definition)

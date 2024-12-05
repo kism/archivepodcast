@@ -129,3 +129,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - Better footer
 - Better test coverage
 - Switch from pydub to ffmpeg
+- Fail if pydub won't work
