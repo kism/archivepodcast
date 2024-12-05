@@ -128,7 +128,7 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Better name for render_static functions~~
 - Better footer
 - Better test coverage
-- Switch from pydub to pyav
+- Switch from pydub to ~~pyav~~, ffmpeg-typed
 - Fail if pydub won't work
 - Handle every state of jpg, mp3 or wav existing
 - tests check s3 debug messages specifically
