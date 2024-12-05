@@ -2,6 +2,7 @@
 
 import contextlib
 import os
+import shutil
 import threading
 from typing import TYPE_CHECKING
 
@@ -13,7 +14,7 @@ from .ap_downloader import PodcastDownloader
 from .logger import get_logger
 
 if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client
+    from mypy_boto3_s3.client import S3Client  # pragma: no cover
 else:
     S3Client = object
 
@@ -43,7 +44,7 @@ class PodcastArchiver:
         self.podcast_downloader = PodcastDownloader(app_settings=app_settings, s3=self.s3, web_root=self.web_root)
         self.make_folder_structure()
         self.make_about_page()
-        self.upload_static()
+        self.render_static()
 
     def get_rss_xml(self, feed: str) -> str:
         """Return the rss xml for a given feed."""
@@ -94,7 +95,7 @@ class PodcastArchiver:
             # This is specifically for pytest, as moto doesn't support the endpoint_url
             api_url = None
             if self.app_settings["s3"]["api_url"] != "":
-                api_url = self.app_settings["s3"]["api_url"]
+                api_url = self.app_settings["s3"]["api_url"]  # pragma: no cover
 
             self.s3 = boto3.client(
                 "s3",
@@ -211,32 +212,39 @@ class PodcastArchiver:
             else:
                 logger.error("❌ Unable to host podcast, something is wrong")
 
-    def upload_static(self) -> None:
+    def render_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
-        threading.Thread(target=self._upload_static, daemon=True).start()
+        threading.Thread(target=self._render_static, daemon=True).start()  # pragma: no cover, pytest and threading :/
 
-    def _upload_static(self) -> None:
+    def _render_static(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
-        if not self.s3:
-            return
+        logger = get_logger(__name__ + ".render_static")
 
-        logger = get_logger(__name__ + ".upload_static")
-
-        static_directory = os.path.join(self.root_path, "archivepodcast", "static")
-        template_directory = os.path.join(self.root_path, "archivepodcast", "templates")
+        static_directory = os.path.join("archivepodcast", "static")
+        template_directory = os.path.join("archivepodcast", "templates")
         robots_txt_content = "User-Agent: *\nDisallow: /\n"
 
-        # Render backup of html
-        env = Environment(loader=FileSystemLoader(self.root_path), autoescape=True)
-        templates_to_render = [
-            os.path.join(root, file) for root, __, files in os.walk(template_directory) for file in files
+        static_items_to_copy = [
+            os.path.join(root, file) for root, __, files in os.walk(static_directory) for file in files
         ]
 
-        for template_filename in templates_to_render:
-            output_filename = os.path.basename(template_filename).replace(".j2", "")
+        for item in static_items_to_copy:
+            static_item_copy_path = os.path.join(self.web_root, "static", item)
+            os.makedirs(os.path.dirname(static_item_copy_path), exist_ok=True)
+            shutil.copy(item, static_item_copy_path)
+
+        # Render backup of html
+        env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
+        templates_to_render = os.listdir(template_directory)
+
+        logger.debug("Templates to render: %s", templates_to_render)
+
+        for template_path in templates_to_render:
+            output_filename = os.path.basename(template_path).replace(".j2", "")
             output_path = os.path.join(self.web_root, output_filename)
-            logger.debug("Rendering template: %s to %s", template_filename, output_path)
-            template = env.get_template(os.path.join(template_filename))
+            logger.debug("Rendering template: %s to %s", template_path, output_path)
+
+            template = env.get_template(template_path)
             rendered_output = template.render(
                 settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page
             )
@@ -245,21 +253,19 @@ class PodcastArchiver:
                 root_web_page.write(rendered_output)
 
         with open(os.path.join(self.web_root, "robots.txt"), "w", encoding="utf-8") as robots_txt:
+            logger.debug("Writing robots.txt")
             robots_txt.write(robots_txt_content)
 
-        if self.app_settings["storage_backend"] == "s3":
+        if self.s3:
             logger.info("⛅ Uploading static pages to s3 in the background")
+            bucket = self.app_settings["s3"]["bucket"]
             try:
-                static_items_to_copy = [
-                    os.path.join(root, file) for root, __, files in os.walk(static_directory) for file in files
-                ]
-
                 for item in static_items_to_copy:
                     static_item_s3_path = "static" + item.replace(os.sep, "/").replace(static_directory, "")
-                    logger.debug("⛅ Uploading static item: %s to s3: %s", item, static_item_s3_path)
+                    logger.debug("⛅ Uploading static item: %s to s3: %s:%s", item, bucket, static_item_s3_path)
                     self.s3.upload_file(
                         item,
-                        self.app_settings["s3"]["bucket"],
+                        bucket,
                         static_item_s3_path,
                     )
 

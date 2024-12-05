@@ -17,7 +17,7 @@ from lxml import etree
 from .logger import get_logger
 
 if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client
+    from mypy_boto3_s3.client import S3Client  # pragma: no cover
 else:
     S3Client = object
 
@@ -55,6 +55,7 @@ else:
 # These make the name spaces appear nicer in the generated XML
 etree.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
 etree.register_namespace("atom", "http://www.w3.org/2005/Atom")
+etree.register_namespace("podcast", "https://podcastindex.org/namespace/1.0")
 etree.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
 etree.register_namespace("media", "http://search.yahoo.com/mrss/")
 etree.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
@@ -85,6 +86,8 @@ class PodcastDownloader:
             paths = self.s3.list_objects_v2(Bucket=app_settings["s3"]["bucket"])
             if paths:
                 self.s3_paths_cache = [path["Key"] for path in paths.get("Contents", [])]
+
+        logger.trace("PodcastDownloader settings (re)loaded")
 
     def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""

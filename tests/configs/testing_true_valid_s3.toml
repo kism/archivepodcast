@@ -11,13 +11,13 @@ contact = "archivepodcast_pytest@localhost"
 [app.s3]
 cdn_domain = "https://cdn.my.cool.website/"
 api_url = ""
-bucket = "podcast-archive-test"
-access_key_id = "abcd"
+bucket = "archivepodcast-pytest"
+access_key_id = "abc"
 secret_access_key = "xyz"
 
 [[podcast]]
-url = "https://localhost"
-new_name = "TEST"
+url = "https://pytest.internal/rss/test_source"
+new_name = "PyTest Podcast [Archive]"
 name_one_word = "test"
 description = "Test podcast description"
 live = false

@@ -1,6 +1,6 @@
 [project]
 name = "archivepodcast"
-version = "1.1.2"
+version = "1.1.3"
 description = ""
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -38,7 +38,8 @@ test = [
     "pytest-random-order",
     "detect-test-pollution",
     # "moto[s3]",
-    "moto"
+    "moto",
+    "requests-mock",
 ]
 
 [tool.uv]
@@ -78,14 +79,15 @@ ignore = [
     "FBT", # KG Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
 
     # Specific rules
-    "S101",   # KG asserts allowed in tests.
-    "ANN201", # KG Not really needed for pytest.
-    "SLF001", # KG Accessing private members is needed for testing.
-    "INP001", # KG __init__.py not needed for PyTest.
-    "PT004",  # KG monkeypatches don't return.
-    "ANN001", # KG Tests don't need type hints.
-    "S311",   # KG I'll assume no real crypto will be done in PyTest.
-    "S105",   # KG Hardcoded fake passwords are fine in tests.
+    "S101",    # KG asserts allowed in tests.
+    "ANN201",  # KG Not really needed for pytest.
+    "SLF001",  # KG Accessing private members is needed for testing.
+    "INP001",  # KG __init__.py not needed for PyTest.
+    "PT004",   # KG monkeypatches don't return.
+    "ANN001",  # KG Tests don't need type hints.
+    "S311",    # KG I'll assume no real crypto will be done in PyTest.
+    "S105",    # KG Hardcoded fake passwords are fine in tests.
+    "PLR0913", # KG Tests can have as many arguments as they want.
 ]
 
 
@@ -109,6 +111,8 @@ addopts = [
     "--cov-report=html",
 ]
 testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning:boto.*"]
+
 
 [tool.coverage.html]
 show_contexts = true
