@@ -128,3 +128,6 @@ An example guide on setting it up start to finish, with all features and saving 
 - Better footer
 - Better test coverage
 - Switch from pydub to ffmpeg
+- Better error for feed not ready
+- Better error for feed not found
+- Better name for upload_static functions
