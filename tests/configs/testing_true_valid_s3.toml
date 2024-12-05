@@ -16,8 +16,8 @@ access_key_id = "abc"
 secret_access_key = "xyz"
 
 [[podcast]]
-url = "https://localhost"
-new_name = "TEST"
+url = "https://pytest.internal/rss/test_source"
+new_name = "PyTest Podcast [Archive]"
 name_one_word = "test"
 description = "Test podcast description"
 live = false

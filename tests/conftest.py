@@ -7,11 +7,16 @@ import os
 import shutil
 from collections.abc import Callable
 
+import boto3
 import pytest
 import tomlkit
 from flask import Flask
 from flask.testing import FlaskClient, FlaskCliRunner
+from moto import mock_aws
 
+from archivepodcast.ap_archiver import PodcastArchiver
+
+FLASK_ROOT_PATH = os.getcwd()
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
 
 
@@ -74,3 +79,81 @@ def place_test_config() -> Callable:
 def mock_threads_none(monkeypatch):
     """Mock thread start to prevent threads from actually starting."""
     monkeypatch.setattr("threading.Thread.start", lambda _: None)
+
+
+@pytest.fixture
+def aws_credentials():
+    """Mocked AWS Credentials for moto."""
+    os.environ["AWS_ACCESS_KEY_ID"] = "abc"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "xyz"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+
+
+@pytest.fixture
+def mocked_aws(aws_credentials):
+    """Mock all AWS interactions, Requires you to create your own boto3 clients."""
+    with mock_aws():
+        yield
+
+
+@pytest.fixture
+def s3(aws_credentials):
+    """Return a mocked S3 client."""
+    with mock_aws():
+        yield boto3.client("s3", region_name="us-east-1")
+
+
+@pytest.fixture
+def pa(tmp_path, get_test_config, caplog, mock_threads_none):
+    """Return a Podcast Archive Object with mocked AWS."""
+    config_file = "testing_true_valid.toml"
+    config = get_test_config(config_file)
+
+    return PodcastArchiver(
+        app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
+    )
+
+
+@pytest.fixture
+def pa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
+    """Return a Podcast Archive Object with mocked AWS."""
+    config_file = "testing_true_valid_s3.toml"
+    config = get_test_config(config_file)
+
+    bucket_name = config["app"]["s3"]["bucket"]
+    s3.create_bucket(Bucket=bucket_name)
+
+    # Prevent weird threading issues
+    monkeypatch.setattr("archivepodcast.ap_archiver.PodcastArchiver.render_static", lambda _: None)
+
+    from archivepodcast.ap_archiver import PodcastArchiver
+
+    return PodcastArchiver(
+        app_settings=config["app"],
+        podcast_list=config["podcast"],
+        instance_path=tmp_path,
+        root_path=FLASK_ROOT_PATH,
+    )
+
+
+@pytest.fixture
+def mock_podcast_source_rss(requests_mock):
+    """Return a podcast definition from the config."""
+    with open("tests/rss/test_valid.rss") as f:
+        rss = f.read()
+
+    requests_mock.get("https://pytest.internal/rss/test_source", text=rss)
+
+
+@pytest.fixture
+def mock_podcast_source_images(requests_mock):
+    """Requests mock for downloading an image."""
+    requests_mock.get("https://pytest.internal/images/test.jpg", text="")
+
+
+@pytest.fixture
+def mock_podcast_source_mp3(requests_mock):
+    """Requests mock for downloading an image."""
+    requests_mock.get("https://pytest.internal/audio/test.mp3", text="")

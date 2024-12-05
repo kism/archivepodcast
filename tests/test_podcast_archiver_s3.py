@@ -10,21 +10,6 @@ from moto import mock_aws
 FLASK_ROOT_PATH = os.getcwd()
 
 
-@pytest.fixture
-def aws_credentials():
-    """Mocked AWS Credentials for moto."""
-    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
-    os.environ["AWS_SECURITY_TOKEN"] = "testing"
-    os.environ["AWS_SESSION_TOKEN"] = "testing"
-    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
-
-
-@pytest.fixture
-def s3(aws_credentials):
-    """Return a mocked S3 client."""
-    with mock_aws():
-        yield boto3.client("s3", region_name="us-east-1")
 
 
 @pytest.fixture
@@ -56,35 +41,9 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
     assert f"Authenticated s3, using bucket: {bucket_name}" in caplog.text
 
 
-@pytest.fixture
-def pa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
-    """Return a Podcast Archive Object with mocked AWS."""
-    config_file = "testing_true_valid_s3.toml"
-    config = get_test_config(config_file)
-
-    bucket_name = config["app"]["s3"]["bucket"]
-    s3.create_bucket(Bucket=bucket_name)
-
-    # Prevent weird threading issues
-    monkeypatch.setattr(
-        "archivepodcast.ap_archiver.PodcastArchiver.render_static", lambda _: None
-    )
-
-    from archivepodcast.ap_archiver import PodcastArchiver
-
-    return PodcastArchiver(
-        app_settings=config["app"],
-        podcast_list=config["podcast"],
-        instance_path=tmp_path,
-        root_path=FLASK_ROOT_PATH,
-    )
-
-
 def test_render_static(pa_aws, caplog):
     """Test that static pages are uploaded to s3."""
-    with caplog.at_level(
-        level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_static"
-    ):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_static"):
         pa_aws._render_static()
 
     list_files = pa_aws.s3.list_objects_v2(Bucket=pa_aws.app_settings["s3"]["bucket"])

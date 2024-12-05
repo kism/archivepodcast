@@ -4,11 +4,11 @@ storage_backend = "local"
 
 [[podcast]]
 url = "https://pytest.internal/rss/test_source"
-new_name = "TEST"
+new_name = ""
 name_one_word = "test"
-description = "Test podcasst description"
+description = ""
 live = false
-contact_email = "test@localhost"
+contact_email = ""
 
 [logging]
 

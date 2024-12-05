@@ -87,6 +87,8 @@ class PodcastDownloader:
             if paths:
                 self.s3_paths_cache = [path["Key"] for path in paths.get("Contents", [])]
 
+        logger.trace("PodcastDownloader settings (re)loaded")
+
     def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
         """Parse the XML, Download all the assets, this is main."""
         response = self._fetch_podcast_xml(podcast["url"])

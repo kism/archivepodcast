@@ -95,7 +95,7 @@ class PodcastArchiver:
             # This is specifically for pytest, as moto doesn't support the endpoint_url
             api_url = None
             if self.app_settings["s3"]["api_url"] != "":
-                api_url = self.app_settings["s3"]["api_url"] # pragma: no cover
+                api_url = self.app_settings["s3"]["api_url"]  # pragma: no cover
 
             self.s3 = boto3.client(
                 "s3",
