@@ -36,7 +36,7 @@
             <pubDate>Mon, 01 Jan 2020 00:00:01 +0000</pubDate>
             <author>ArchivePodcast Contributors</author>
             <link>https://example.org</link>
-            <enclosure length="1000" type="audio/mpeg" url="https://pytest.internal/audio/test.mp3" />
+            <enclosure length="1000" type="audio/mpeg" url="https://pytest.internal/audio/test.wav" />
             <itunes:title>Test Episode</itunes:title>
             <itunes:author>ArchivePodcast Contributors</itunes:author>
             <itunes:image href="https://pytest.internal/images/test.jpg" />

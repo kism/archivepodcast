@@ -18,6 +18,7 @@ from archivepodcast.ap_archiver import PodcastArchiver
 
 FLASK_ROOT_PATH = os.getcwd()
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
+TEST_RSS_LOCATION = os.path.join(os.getcwd(), "tests", "rss")
 
 
 def pytest_configure():
@@ -139,12 +140,19 @@ def pa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
 
 
 @pytest.fixture
-def mock_podcast_source_rss(requests_mock):
+def mock_get_podcast_source_rss(requests_mock) -> Callable:
     """Return a podcast definition from the config."""
-    with open("tests/rss/test_valid.rss") as f:
-        rss = f.read()
 
-    requests_mock.get("https://pytest.internal/rss/test_source", text=rss)
+    def _mock_get_podcast_source_rss(rss_name: str) -> str:
+        """Return the rss file."""
+        filepath = os.path.join(TEST_RSS_LOCATION, rss_name)
+
+        with open(filepath) as file:
+            rss = file.read()
+
+        return requests_mock.get("https://pytest.internal/rss/test_source", text=rss)
+
+    return _mock_get_podcast_source_rss
 
 
 @pytest.fixture
@@ -157,3 +165,22 @@ def mock_podcast_source_images(requests_mock):
 def mock_podcast_source_mp3(requests_mock):
     """Requests mock for downloading an image."""
     requests_mock.get("https://pytest.internal/audio/test.mp3", text="")
+
+
+@pytest.fixture
+def mock_podcast_source_wav(requests_mock, tmp_path):
+    """Requests mock for downloading an image."""
+    from pydub import AudioSegment
+
+    audio = AudioSegment.silent(duration=1000)
+
+    tmp_wav_path = os.path.join(tmp_path, "test.wav")
+
+    audio.export(tmp_wav_path, format="wav")
+
+    with open(os.path.join(tmp_path, "test.wav"), "rb") as audio:
+        audio_file = audio.read()
+
+    requests_mock.get("https://pytest.internal/audio/test.wav", content=audio_file)
+
+    os.remove(tmp_wav_path)

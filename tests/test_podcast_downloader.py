@@ -47,7 +47,7 @@ def test_download_podcast(
     pd,
     test_config_name,
     get_test_config,
-    mock_podcast_source_rss,
+    mock_get_podcast_source_rss,
     mock_podcast_source_images,
     mock_podcast_source_mp3,
     caplog,
@@ -56,6 +56,33 @@ def test_download_podcast(
     config_file = test_config_name
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
+
+    mock_get_podcast_source_rss("test_valid.rss")
+
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
+        pd.download_podcast(mock_podcast_definition)
+
+    assert "Downloaded RSS XML, Processing" in caplog.text
+    assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
+    assert "Downloading asset to:" in caplog.text
+    assert "HTTP ERROR:" not in caplog.text
+    assert "Download Failed" not in caplog.text
+
+
+def test_download_podcast_wav(
+    pd,
+    get_test_config,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_wav,
+    caplog,
+):
+    """Test Fetching RSS and assets."""
+    config_file = "testing_true_valid.toml"
+    config = get_test_config(config_file)
+    mock_podcast_definition = config["podcast"][0]
+
+    mock_get_podcast_source_rss("test_valid_wav.rss")
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
         pd.download_podcast(mock_podcast_definition)

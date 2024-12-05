@@ -6,13 +6,13 @@ import os
 import re
 from datetime import datetime
 from http import HTTPStatus
-from shutil import which  # shockingly this works on windows
 from typing import TYPE_CHECKING
 from urllib.error import HTTPError
 
 import requests
 from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
 from lxml import etree
+from pydub import AudioSegment
 
 from .logger import get_logger
 
@@ -36,21 +36,6 @@ CONTENT_TYPES = {
     ".m4a": "audio/mpeg",
     ".flac": "audio/flac",
 }
-
-
-PYDUB_LOADED = False
-if which("ffmpeg") is not None:
-    logger.trace("Trying to load pydub w/ffmpeg")
-    try:
-        from pydub import AudioSegment
-
-        PYDUB_LOADED = True
-        logger.info("🎵 pydub loaded with ffmpeg! Episodes in .wav format will be converted to mp3")
-    except ImportError:
-        pass
-
-else:
-    logger.warning("❗ Not loading pydub since ffmpeg is not installed on this system (and in the PATH)")
 
 # These make the name spaces appear nicer in the generated XML
 etree.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
@@ -390,30 +375,27 @@ class PodcastDownloader:
 
         # If the asset hasn't already been downloaded and converted
         if not self._check_path_exists(mp3_file_path):
-            if PYDUB_LOADED:
-                self._download_asset(
-                    url,
-                    title,
-                    podcast,
-                    extension,
-                    file_date_string,
-                )
+            self._download_asset(
+                url,
+                title,
+                podcast,
+                extension,
+                file_date_string,
+            )
 
-                logger.info("♻ Converting episode %s to mp3", title)
-                sound = AudioSegment.from_wav(wav_file_path)
-                sound.export(mp3_file_path, format="mp3")
-                logger.info("♻ Done")
+            logger.info("♻ Converting episode %s to mp3", title)
+            sound = AudioSegment.from_wav(wav_file_path)
+            sound.export(mp3_file_path, format="mp3")
+            logger.info("♻ Done")
 
-                # Remove wav since we are done with it
-                logger.info("♻ Removing wav version of %s", title)
-                if os.path.exists(wav_file_path):
-                    os.remove(wav_file_path)
-                logger.info("♻ Done")
+            # Remove wav since we are done with it
+            logger.info("♻ Removing wav version of %s", title)
+            if os.path.exists(wav_file_path):
+                os.remove(wav_file_path)
+            logger.info("♻ Done")
 
+            if self.s3:
                 self._upload_asset_s3(mp3_file_path, extension)
-
-            else:
-                logger.error("❌ FFMPEG or Pydub not found, cannot convert wav to mp3!")
 
         if self.s3:
             s3_file_path = mp3_file_path.replace(self.web_root, "").replace(os.sep, "/")
