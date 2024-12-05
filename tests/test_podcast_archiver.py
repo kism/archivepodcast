@@ -3,8 +3,6 @@
 import logging
 import os
 
-import pytest
-
 
 def test_no_about_page(pa, caplog):
     """Test no about page."""
