@@ -370,8 +370,9 @@ class PodcastDownloader:
         # If we need do download and convert a wav there is a small chance
         # the user has had ffmpeg issues, remove existing files to play it safe
         if os.path.exists(wav_file_path):
-            os.remove(wav_file_path)
-            os.remove(mp3_file_path)
+            with contextlib.suppress(Exception):
+                os.remove(wav_file_path)
+                os.remove(mp3_file_path)
 
         # If the asset hasn't already been downloaded and converted
         if not self._check_path_exists(mp3_file_path):

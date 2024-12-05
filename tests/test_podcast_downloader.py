@@ -131,5 +131,8 @@ def test_download_podcast_wav_wav_exists(
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
     assert "Downloading asset to:" in caplog.text
     assert "Converting episode" in caplog.text
+    assert "Removing wav version of" in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
+
+    assert not os.path.exists(tmp_wav_path)
