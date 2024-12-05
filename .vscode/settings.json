@@ -39,5 +39,6 @@
     "rawvoice",
     "replyall",
     "unphased"
-  ]
+  ],
+  "livePreview.serverRoot": "htmlcov"
 }

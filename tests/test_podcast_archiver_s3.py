@@ -57,7 +57,7 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
 
 
 @pytest.fixture
-def pa_aws(tmp_path, get_test_config, caplog, s3, mock_threads_none):
+def pa_aws(tmp_path, get_test_config, caplog, s3):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
@@ -85,9 +85,24 @@ def test_tktktktktk(pa_aws, caplog):
 
     assert "archivepodcast" in contents
 
+    assert pa_aws.s3 is not None
+
+    pa_aws.s3.put_object(
+        Body="hello world",
+        Bucket=pa_aws.app_settings["s3"]["bucket"],
+        Key="hello.txt",
+        ContentType="text/plain",
+    )
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_static"):
         pa_aws._render_static()
+
+    list_files = pa_aws.s3.list_objects_v2(Bucket=pa_aws.app_settings["s3"]["bucket"])
+    list_files = [path["Key"] for path in list_files.get("Contents", [])]
+
+    assert "hello.txt" in list_files
+    assert "index.html" in list_files
+
 
     assert "Uploading static pages to s3 in the background" in caplog.text
     assert "Uploading static item" in caplog.text

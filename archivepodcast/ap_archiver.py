@@ -258,13 +258,14 @@ class PodcastArchiver:
 
         if self.s3:
             logger.info("⛅ Uploading static pages to s3 in the background")
+            bucket = self.app_settings["s3"]["bucket"]
             try:
                 for item in static_items_to_copy:
                     static_item_s3_path = "static" + item.replace(os.sep, "/").replace(static_directory, "")
-                    logger.debug("⛅ Uploading static item: %s to s3: %s", item, static_item_s3_path)
+                    logger.debug("⛅ Uploading static item: %s to s3: %s:%s", item, bucket, static_item_s3_path)
                     self.s3.upload_file(
                         item,
-                        self.app_settings["s3"]["bucket"],
+                        bucket,
                         static_item_s3_path,
                     )
 
