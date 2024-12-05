@@ -125,9 +125,9 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Don't use relative paths in general~~
 - ~~Add italics font~~
 - ~~Add a better favicon~~
+- ~~Better name for render_static functions~~
 - Better footer
 - Better test coverage
 - Switch from pydub to ffmpeg
 - Better error for feed not ready
 - Better error for feed not found
-- Better name for upload_static functions

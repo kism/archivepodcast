@@ -44,7 +44,7 @@ class PodcastArchiver:
         self.podcast_downloader = PodcastDownloader(app_settings=app_settings, s3=self.s3, web_root=self.web_root)
         self.make_folder_structure()
         self.make_about_page()
-        self.upload_static()
+        self.render_static()
 
     def get_rss_xml(self, feed: str) -> str:
         """Return the rss xml for a given feed."""
@@ -212,13 +212,13 @@ class PodcastArchiver:
             else:
                 logger.error("❌ Unable to host podcast, something is wrong")
 
-    def upload_static(self) -> None:
+    def render_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
-        threading.Thread(target=self._upload_static, daemon=True).start()
+        threading.Thread(target=self._render_static, daemon=True).start()
 
-    def _upload_static(self) -> None:
+    def _render_static(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
-        logger = get_logger(__name__ + ".upload_static")
+        logger = get_logger(__name__ + ".render_static")
 
         static_directory = os.path.join("archivepodcast", "static")
         template_directory = os.path.join("archivepodcast", "templates")

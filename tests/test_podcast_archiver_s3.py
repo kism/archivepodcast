@@ -86,8 +86,8 @@ def test_tktktktktk(pa_aws, caplog):
     assert "archivepodcast" in contents
 
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.upload_static"):
-        pa_aws._upload_static()
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_static"):
+        pa_aws._render_static()
 
     assert "Uploading static pages to s3 in the background" in caplog.text
     assert "Uploading static item" in caplog.text
