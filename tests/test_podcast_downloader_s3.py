@@ -49,5 +49,11 @@ def test_download_podcast(
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader.download_podcast"):
+    with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_downloader"):
         pd_aws.download_podcast(mock_podcast_definition)
+
+    assert "Downloaded RSS XML, Processing" in caplog.text
+    assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
+    assert "Downloading asset to:" in caplog.text
+    assert "HTTP ERROR:" not in caplog.text
+    assert "Download Failed" not in caplog.text

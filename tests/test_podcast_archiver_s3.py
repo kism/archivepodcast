@@ -3,20 +3,7 @@
 import logging
 import os
 
-import boto3
-import pytest
-from moto import mock_aws
-
 FLASK_ROOT_PATH = os.getcwd()
-
-
-
-
-@pytest.fixture
-def mocked_aws(aws_credentials):
-    """Mock all AWS interactions, Requires you to create your own boto3 clients."""
-    with mock_aws():
-        yield
 
 
 def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
