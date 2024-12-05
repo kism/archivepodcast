@@ -14,7 +14,7 @@ from .ap_downloader import PodcastDownloader
 from .logger import get_logger
 
 if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client
+    from mypy_boto3_s3.client import S3Client  # pragma: no cover
 else:
     S3Client = object
 
@@ -95,7 +95,7 @@ class PodcastArchiver:
             # This is specifically for pytest, as moto doesn't support the endpoint_url
             api_url = None
             if self.app_settings["s3"]["api_url"] != "":
-                api_url = self.app_settings["s3"]["api_url"]
+                api_url = self.app_settings["s3"]["api_url"] # pragma: no cover
 
             self.s3 = boto3.client(
                 "s3",
@@ -214,7 +214,7 @@ class PodcastArchiver:
 
     def render_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
-        threading.Thread(target=self._render_static, daemon=True).start()
+        threading.Thread(target=self._render_static, daemon=True).start()  # pragma: no cover, pytest and threading :/
 
     def _render_static(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""

@@ -38,7 +38,7 @@ test = [
     "pytest-random-order",
     "detect-test-pollution",
     # "moto[s3]",
-    "moto"
+    "moto",
 ]
 
 [tool.uv]
@@ -109,6 +109,8 @@ addopts = [
     "--cov-report=html",
 ]
 testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning:boto.*"]
+
 
 [tool.coverage.html]
 show_contexts = true

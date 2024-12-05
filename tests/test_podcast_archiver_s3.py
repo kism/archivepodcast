@@ -57,7 +57,7 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3, mock_threads_none):
 
 
 @pytest.fixture
-def pa_aws(tmp_path, get_test_config, caplog, s3):
+def pa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
@@ -65,45 +65,55 @@ def pa_aws(tmp_path, get_test_config, caplog, s3):
     bucket_name = config["app"]["s3"]["bucket"]
     s3.create_bucket(Bucket=bucket_name)
 
+    # Prevent weird threading issues
+    monkeypatch.setattr(
+        "archivepodcast.ap_archiver.PodcastArchiver.render_static", lambda _: None
+    )
+
     from archivepodcast.ap_archiver import PodcastArchiver
 
     return PodcastArchiver(
-        app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
+        app_settings=config["app"],
+        podcast_list=config["podcast"],
+        instance_path=tmp_path,
+        root_path=FLASK_ROOT_PATH,
     )
 
 
-def test_tktktktktk(pa_aws, caplog):
-    """Test TKTKTKTKTKKT."""
-
-    app_path = os.getcwd()
-
-    try:
-        contents = os.listdir(app_path)
-        logging.debug(f"Contents of {app_path}: {contents}")
-    except Exception as e:
-        logging.error(f"Error listing contents of {app_path}: {e}")
-
-    assert "archivepodcast" in contents
-
-    assert pa_aws.s3 is not None
-
-    pa_aws.s3.put_object(
-        Body="hello world",
-        Bucket=pa_aws.app_settings["s3"]["bucket"],
-        Key="hello.txt",
-        ContentType="text/plain",
-    )
-
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_static"):
+def test_render_static(pa_aws, caplog):
+    """Test that static pages are uploaded to s3."""
+    with caplog.at_level(
+        level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_static"
+    ):
         pa_aws._render_static()
 
     list_files = pa_aws.s3.list_objects_v2(Bucket=pa_aws.app_settings["s3"]["bucket"])
     list_files = [path["Key"] for path in list_files.get("Contents", [])]
 
-    assert "hello.txt" in list_files
     assert "index.html" in list_files
-
+    assert "guide.html" in list_files
+    assert "about.html" not in list_files
 
     assert "Uploading static pages to s3 in the background" in caplog.text
     assert "Uploading static item" in caplog.text
     assert "Done uploading static pages to s3" in caplog.text
+
+
+def test_check_s3_no_files(pa_aws, caplog):
+    """Test that s3 files are checked."""
+    with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):
+        pa_aws.check_s3_files()
+
+    assert "Checking state of s3 bucket" in caplog.text
+    assert "No objects found in the bucket" in caplog.text
+
+
+def test_check_s3_files(pa_aws, caplog):
+    """Test that s3 files are checked."""
+    pa_aws._render_static()
+
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+        pa_aws.check_s3_files()
+
+    assert "Checking state of s3 bucket" in caplog.text
+    assert "S3 Bucket Contents" in caplog.text

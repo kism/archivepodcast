@@ -17,7 +17,7 @@ from lxml import etree
 from .logger import get_logger
 
 if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client
+    from mypy_boto3_s3.client import S3Client  # pragma: no cover
 else:
     S3Client = object
 
