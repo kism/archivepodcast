@@ -11,9 +11,9 @@ dependencies = [
     { name = "flask" },
     { name = "jinja2" },
     { name = "lxml" },
-    { name = "pydub" },
     { name = "requests" },
     { name = "tomlkit" },
+    { name = "typed-ffmpeg" },
     { name = "waitress" },
 ]
 
@@ -26,7 +26,7 @@ lint = [
 ]
 test = [
     { name = "detect-test-pollution" },
-    { name = "moto" },
+    { name = "moto", extra = ["s3"] },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
@@ -49,9 +49,9 @@ requires-dist = [
     { name = "flask", specifier = ">=3.0.3" },
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "lxml", specifier = ">=5.3.0" },
-    { name = "pydub", specifier = ">=0.25.1" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "tomlkit", specifier = ">=0.13.2" },
+    { name = "typed-ffmpeg", specifier = ">=2.1.0" },
     { name = "waitress", specifier = ">=3.0.1" },
 ]
 
@@ -60,7 +60,7 @@ dev = [{ name = "pylance" }]
 lint = [{ name = "ruff" }]
 test = [
     { name = "detect-test-pollution" },
-    { name = "moto" },
+    { name = "moto", extras = ["s3"] },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
@@ -565,6 +565,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/41/e7/5b6a352e7c012dca8083f22d2883bcc4ce085b37e69dbc667fa3436542bd/moto-5.0.20-py2.py3-none-any.whl", hash = "sha256:b6df0041255acb973f2adcb31e3dee1379770ece0253520d4d15986d22aa06cf", size = 4361083 },
 ]
 
+[package.optional-dependencies]
+s3 = [
+    { name = "py-partiql-parser" },
+    { name = "pyyaml" },
+]
+
 [[package]]
 name = "mypy"
 version = "1.13.0"
@@ -666,6 +672,15 @@ wheels = [
 ]
 
 [[package]]
+name = "py-partiql-parser"
+version = "0.5.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/91/9d499c960abea0efda9e81aa62bd8dd1eab1daa12db9b3b0064fe2f8b3c7/py_partiql_parser-0.5.6.tar.gz", hash = "sha256:6339f6bf85573a35686529fc3f491302e71dd091711dfe8df3be89a93767f97b", size = 16926 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2c/24/46262d45ee9e54a181c440fe1a3d87fd538d69f10c8311f699e555119d1f/py_partiql_parser-0.5.6-py2.py3-none-any.whl", hash = "sha256:622d7b0444becd08c1f4e9e73b31690f4b1c309ab6e5ed45bf607fe71319309f", size = 23237 },
+]
+
+[[package]]
 name = "pyarrow"
 version = "18.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -701,15 +716,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1d/b2/31537cf4b1ca988837256c910a668b553fceb8f069bedc4b1c826024b52c/pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6", size = 172736 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/a3/a812df4e2dd5696d1f351d58b8fe16a405b234ad2886a0dab9183fb78109/pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc", size = 117552 },
-]
-
-[[package]]
-name = "pydub"
-version = "0.25.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fe/9a/e6bca0eed82db26562c73b5076539a4a08d3cffd19c3cc5913a3e61145fd/pydub-0.25.1.tar.gz", hash = "sha256:980a33ce9949cab2a569606b65674d748ecbca4f0796887fd6f46173a7b0d30f", size = 38326 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/53/d78dc063216e62fc55f6b2eebb447f6a4b0a59f55c8406376f76bf959b08/pydub-0.25.1-py2.py3-none-any.whl", hash = "sha256:65617e33033874b59d87db603aa1ed450633288aefead953b30bded59cb599a6", size = 32327 },
 ]
 
 [[package]]
@@ -945,6 +951,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b1/09/a439bec5888f00a54b8b9f05fa94d7f901d6735ef4e55dcec9bc37b5d8fa/tomlkit-0.13.2.tar.gz", hash = "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79", size = 192885 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f9/b6/a447b5e4ec71e13871be01ba81f5dfc9d0af7e473da256ff46bc0e24026f/tomlkit-0.13.2-py3-none-any.whl", hash = "sha256:7a974427f6e119197f670fbbbeae7bef749a6c14e793db934baefc1b5f03efde", size = 37955 },
+]
+
+[[package]]
+name = "typed-ffmpeg"
+version = "2.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/aa/abd85f88bbf6baca61c3f3e1bc569801de9230da9e9f3df64ea95a77075a/typed_ffmpeg-2.1.0.tar.gz", hash = "sha256:1b4a02853ae4c87a22fb20842f5342af02d72a2d29cff8e27bb127ff4aedc54f", size = 128921 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/88/1ad47c4cd77b2bcf68967265e1d642a01a0aaa1991758aa820a9c8882cd0/typed_ffmpeg-2.1.0-py3-none-any.whl", hash = "sha256:bf71ea3798503c35f7b5fc6f2ea16c91b2822ab7512d518bb3be6be5320818a1", size = 139653 },
 ]
 
 [[package]]

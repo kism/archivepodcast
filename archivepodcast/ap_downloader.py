@@ -9,10 +9,10 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 from urllib.error import HTTPError
 
+import ffmpeg
 import requests
 from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
 from lxml import etree
-from pydub import AudioSegment
 
 from .logger import get_logger
 
@@ -385,8 +385,11 @@ class PodcastDownloader:
             )
 
             logger.info("♻ Converting episode %s to mp3", title)
-            sound = AudioSegment.from_wav(wav_file_path)
-            sound.export(mp3_file_path, format="mp3")
+            # sound = AudioSegment.from_wav(wav_file_path)
+            # sound.export(mp3_file_path, format="mp3")
+
+            (ffmpeg.input(filename=wav_file_path).output(filename=mp3_file_path, format="mp3"))
+
             logger.info("♻ Done")
 
             # Remove wav since we are done with it
