@@ -148,9 +148,12 @@ class ArchivePodcastConfig:
 
         # This is to assure that you don't accidentally test without the tmp_dir fixture.
         if self._config["flask"]["TESTING"] and not any(
-            substring in str(self.instance_path) for substring in ["tmp", "temp", "TMP", "TEMP"]
+            substring in str(self.instance_path)
+            for substring in ["tmp", "temp", "TMP", "TEMP", "/private/var/folders/"]
         ):
-            failed_items.append("['flask']['TESTING'] is True but instance_path is not a tmp_path")
+            failed_items.append(
+                f"['flask']['TESTING'] is True but instance_path is not a tmp_path, its: {self.instance_path}"
+            )
 
         # If the config doesn't validate, we exit.
         if len(failed_items) != 0:
