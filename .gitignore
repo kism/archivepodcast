@@ -1,5 +1,8 @@
 .commit
 
+# Stop it coming back
+poetry.lock
+
 output/*
 rss/*
 content/*
