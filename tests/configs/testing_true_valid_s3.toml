@@ -3,9 +3,8 @@ inet_path = "http://localhost:5000/"
 storage_backend = "s3"
 
 [app.web_page]
-title = "Pytest Podcast Archive"
+title = "Pytest Podcast Archive [Local]"
 description = "My Podcast Archive, in pytest!"
-podcast_guide = "<url>"
 contact = "archivepodcast_pytest@localhost"
 
 [app.s3]
@@ -17,9 +16,9 @@ secret_access_key = "xyz"
 
 [[podcast]]
 url = "https://pytest.internal/rss/test_source"
-new_name = "PyTest Podcast [Archive]"
+new_name = "PyTest Podcast [Archive S3]"
 name_one_word = "test"
-description = "Test podcast description"
+description = "My Podcast Archive, in pytest!"
 live = false
 contact_email = "test@localhost"
 

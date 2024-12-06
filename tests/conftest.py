@@ -26,6 +26,9 @@ def pytest_configure():
     pytest.TEST_CONFIGS_LOCATION = TEST_CONFIGS_LOCATION
 
 
+# region: Flask
+
+
 @pytest.fixture
 def app(tmp_path, get_test_config) -> Flask:
     """This fixture uses the default config within the flask app."""
@@ -44,6 +47,11 @@ def client(app: Flask) -> FlaskClient:
 def runner(app: Flask) -> FlaskCliRunner:
     """TODO?????"""
     return app.test_cli_runner()
+
+
+# endregion
+
+# region: Configs
 
 
 @pytest.fixture
@@ -76,10 +84,16 @@ def place_test_config() -> Callable:
     return _place_test_config
 
 
+# endregion
+
+
 @pytest.fixture  # We need to mock threads out since they won't have context
 def mock_threads_none(monkeypatch):
     """Mock thread start to prevent threads from actually starting."""
     monkeypatch.setattr("threading.Thread.start", lambda _: None)
+
+
+# region: AWS
 
 
 @pytest.fixture
@@ -106,8 +120,13 @@ def s3(aws_credentials):
         yield boto3.client("s3", region_name="us-east-1")
 
 
+# endregion
+
+# region: PodcastArchiver object
+
+
 @pytest.fixture
-def pa(tmp_path, get_test_config, caplog, mock_threads_none):
+def apa(tmp_path, get_test_config, caplog, mock_threads_none):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid.toml"
     config = get_test_config(config_file)
@@ -118,7 +137,7 @@ def pa(tmp_path, get_test_config, caplog, mock_threads_none):
 
 
 @pytest.fixture
-def pa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
+def apa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
@@ -137,6 +156,11 @@ def pa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
         instance_path=tmp_path,
         root_path=FLASK_ROOT_PATH,
     )
+
+
+# endregion
+
+# region: Requests
 
 
 @pytest.fixture
@@ -184,3 +208,6 @@ def mock_podcast_source_wav(requests_mock, tmp_path):
     requests_mock.get("https://pytest.internal/audio/test.wav", content=audio_file)
 
     os.remove(tmp_wav_path)
+
+
+# endregion
