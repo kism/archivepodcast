@@ -1,8 +1,6 @@
 """Tests the blueprint's HTTP endpoint."""
 
-# import logging # noqa: ERA001
-# from http import HTTPStatus # noqa: ERA001
 
-# from flask.testing import FlaskClient # noqa: ERA001
-
-# from archivepodcast import create_app  # noqa: ERA001
+def test_app_launch(app):
+    """Test that the app launches."""
+    assert app

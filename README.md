@@ -132,3 +132,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - Fail if pydub won't work
 - Handle every state of jpg, mp3 or wav existing
 - tests check s3 debug messages specifically
+- allow failure per podcast
