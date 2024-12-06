@@ -44,7 +44,7 @@ def initialise_archivepodcast() -> None:
     thread.start()
 
 
-def reload_settings(signal_num: int, handler: FrameType | None) -> None:
+def reload_settings(signal_num: int, handler: FrameType | None = None) -> None:
     """Handle Sighup."""
     if not ap:
         logger.error("❌ ArchivePodcast object not initialized")
