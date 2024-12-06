@@ -4,6 +4,8 @@ import logging
 import os
 from http import HTTPStatus
 
+TEST_RSS_STR = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Test RSS</item></rss>"
+
 
 def test_app_paths(client_live, tmp_path):
     """Test that the app launches."""
@@ -83,6 +85,8 @@ def test_app_paths_not_initialized(caplog):
 
 def test_rss_feed(
     app_live,
+    tmp_path,
+    caplog,
 ):
     """Test the RSS feed."""
     from archivepodcast.bp_archivepodcast import ap
@@ -100,5 +104,35 @@ def test_rss_feed(
     response = client_live.get("/rss/non_existent_feed")
     assert response.status_code == HTTPStatus.NOT_FOUND
 
+    with open(os.path.join(tmp_path, "web", "rss", "test_from_file"), "w") as file:
+        file.write(TEST_RSS_STR)
+
+    assert os.path.exists(os.path.join(ap.instance_path, "web", "rss", "test_from_file"))
+
+    with caplog.at_level(logging.WARNING):
+        response = client_live.get("/rss/test_from_file")
+
+    response_str = response.data.decode("utf-8")
+    assert response_str == TEST_RSS_STR
+    assert response.status_code == HTTPStatus.OK
+    assert "not live, sending cached version from disk" in caplog.text
+
     response = client_live.get("/content/test/20200101-Test-Episode.mp3")
     assert response.status_code == HTTPStatus.OK
+
+
+def test_content_s3(
+    app_live,
+):
+    """Test the RSS feed."""
+    from archivepodcast.bp_archivepodcast import ap
+
+    assert ap is not None
+
+    ap.grab_podcasts()
+    ap.app_settings["storage_backend"] = "s3"
+
+    client_live = app_live.test_client()
+
+    response = client_live.get("/content/test/20200101-Test-Episode.mp3")
+    assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
