@@ -1,0 +1,16 @@
+[app]
+inet_path = "http://localhost:5000/"
+storage_backend = "local"
+
+[[podcast]]
+url = "https://pytest.internal/rss/test_source"
+new_name = "PyTest Podcast [Archive]"
+name_one_word = "test"
+description = "My Podcast Archive, in pytest!"
+live = true
+contact_email = "test@localhost"
+
+[logging]
+
+[flask]
+TESTING = true

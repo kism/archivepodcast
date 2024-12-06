@@ -38,9 +38,31 @@ def app(tmp_path, get_test_config) -> Flask:
 
 
 @pytest.fixture
+def app_live(
+    tmp_path,
+    get_test_config,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_mp3,
+) -> Flask:
+    """This fixture uses the default config within the flask app."""
+    mock_get_podcast_source_rss("test_valid.rss")
+
+    from archivepodcast import create_app
+
+    return create_app(test_config=get_test_config("testing_true_valid_live.toml"), instance_path=tmp_path)
+
+
+@pytest.fixture
 def client(app: Flask) -> FlaskClient:
     """This returns a test client for the default app()."""
     return app.test_client()
+
+
+@pytest.fixture
+def client_live(app_live: Flask) -> FlaskClient:
+    """This returns a test client for the default app()."""
+    return app_live.test_client()
 
 
 @pytest.fixture
