@@ -104,4 +104,3 @@ def test_download_podcast_wav(
     assert "content/test/20200101-Test-Episode.jpg" in s3_object_list
     assert "content/test/20200101-Test-Episode.mp3" in s3_object_list
     assert "content/test/PyTest-Podcast-Archive-S3.jpg" in s3_object_list
-

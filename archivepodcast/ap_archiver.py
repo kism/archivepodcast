@@ -171,7 +171,7 @@ class PodcastArchiver:
                 logger.info("📄 Loading rss from file: %s", rss_file_path)
                 try:
                     tree = etree.parse(rss_file_path)
-                except FileNotFoundError:
+                except (FileNotFoundError, OSError):
                     logger.exception("❌ Cannot find rss xml file: %s", rss_file_path)
 
             if tree is not None:
