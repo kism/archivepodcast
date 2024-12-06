@@ -19,19 +19,19 @@ def test_init(get_test_config, tmp_path, caplog):
     web_root = os.path.join(tmp_path, "web")
 
     with caplog.at_level(TRACE_LEVEL_NUM):
-        pd = PodcastDownloader(app_settings=config["app"], s3=None, web_root=web_root)
+        apd = PodcastDownloader(app_settings=config["app"], s3=None, web_root=web_root)
 
     assert "PodcastDownloader settings (re)loaded" in caplog.text
-    assert pd.s3_paths_cache == []
+    assert apd.s3_paths_cache == []
 
 
 @pytest.fixture
-def pd(pa, get_test_config, caplog, mock_threads_none):
+def apd(apa, get_test_config, caplog):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid.toml"
     config = get_test_config(config_file)
 
-    web_root = pa.web_root
+    web_root = apa.web_root
 
     return PodcastDownloader(app_settings=config["app"], s3=None, web_root=web_root)
 
@@ -44,7 +44,7 @@ def pd(pa, get_test_config, caplog, mock_threads_none):
     ],
 )
 def test_download_podcast(
-    pd,
+    apd,
     test_config_name,
     get_test_config,
     mock_get_podcast_source_rss,
@@ -60,7 +60,7 @@ def test_download_podcast(
     mock_get_podcast_source_rss("test_valid.rss")
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        pd.download_podcast(mock_podcast_definition)
+        apd.download_podcast(mock_podcast_definition)
 
     assert "Downloaded RSS XML, Processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
@@ -71,7 +71,7 @@ def test_download_podcast(
 
 
 def test_download_podcast_wav(
-    pd,
+    apd,
     get_test_config,
     mock_get_podcast_source_rss,
     mock_podcast_source_images,
@@ -86,7 +86,7 @@ def test_download_podcast_wav(
     mock_get_podcast_source_rss("test_valid_wav.rss")
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        pd.download_podcast(mock_podcast_definition)
+        apd.download_podcast(mock_podcast_definition)
 
     assert "Downloaded RSS XML, Processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
@@ -97,7 +97,7 @@ def test_download_podcast_wav(
 
 
 def test_download_podcast_wav_wav_exists(
-    pd,
+    apd,
     tmp_path,
     get_test_config,
     mock_get_podcast_source_rss,
@@ -125,13 +125,54 @@ def test_download_podcast_wav_wav_exists(
     mock_get_podcast_source_rss("test_valid_wav.rss")
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        pd.download_podcast(mock_podcast_definition)
+        apd.download_podcast(mock_podcast_definition)
 
     assert "Downloaded RSS XML, Processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
     assert "Downloading asset to:" in caplog.text
     assert "Converting episode" in caplog.text
     assert "Removing wav version of" in caplog.text
+    assert "HTTP ERROR:" not in caplog.text
+    assert "Download Failed" not in caplog.text
+
+    assert not os.path.exists(tmp_wav_path)
+
+
+def test_download_podcast_wav_mp3_exists(
+    apd,
+    tmp_path,
+    get_test_config,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_wav,
+    caplog,
+):
+    """Test Fetching RSS and assets."""
+    config_file = "testing_true_valid.toml"
+    config = get_test_config(config_file)
+    mock_podcast_definition = config["podcast"][0]
+
+    test_podcast_content_dir = os.path.join(tmp_path, "web", "content", "test")
+
+    os.makedirs(test_podcast_content_dir, exist_ok=True)
+
+    episode_file_name = "20200101-Test-Episode"
+    tmp_wav_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.wav")
+    tmp_mp3_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.mp3")
+
+    with open(tmp_mp3_path, "w") as f:
+        f.write("Test MP3")
+
+    mock_get_podcast_source_rss("test_valid_wav.rss")
+
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
+        apd.download_podcast(mock_podcast_definition)
+
+    assert "Downloaded RSS XML, Processing" in caplog.text
+    assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
+    assert "Downloading asset to:" in caplog.text
+    assert "Converting episode" not in caplog.text
+    assert f"{episode_file_name}.mp3 exists locally" in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
 
