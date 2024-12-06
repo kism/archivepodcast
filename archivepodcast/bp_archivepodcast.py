@@ -202,18 +202,18 @@ def rss(feed: str) -> Response:
 
     logger.debug("Sending xml feed: %s", feed)
     xml_str = ""
-    returncode = HTTPStatus.OK
     try:
         xml_str = ap.get_rss_xml(feed)
     except TypeError:
+        return_code = HTTPStatus.INTERNAL_SERVER_ERROR
         return Response(
             render_template(
                 "error.html.j2",
-                error_code=str(returncode),
+                error_code=str(return_code),
                 error_text="The developer probably messed something up",
                 settings=current_app.config["app"],
             ),
-            status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            status=return_code,
         )
 
     except KeyError:
@@ -230,27 +230,29 @@ def rss(feed: str) -> Response:
 
         # The file isn't there due to user error or not being created yet
         except (FileNotFoundError, OSError):
+            return_code = HTTPStatus.NOT_FOUND
             return Response(
                 render_template(
                     "error.html.j2",
-                    error_code=str(returncode),
+                    error_code=str(return_code),
                     error_text="Feed not found, you know you can copy and paste yeah?",
                     settings=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
-                status=HTTPStatus.NOT_FOUND,
+                status=return_code,
             )
 
         except:  # noqa: E722: Broad catch to prevent crash
+            return_code = HTTPStatus.INTERNAL_SERVER_ERROR
             return Response(
                 render_template(
                     "error.html.j2",
-                    error_code=str(returncode),
+                    error_code=str(return_code),
                     error_text="Feed not loadable, Internal Server Error",
                     settings=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
-                status=HTTPStatus.INTERNAL_SERVER_ERROR,
+                status=return_code,
             )
 
     return Response(xml_str, mimetype="application/rss+xml; charset=utf-8", status=HTTPStatus.OK)
