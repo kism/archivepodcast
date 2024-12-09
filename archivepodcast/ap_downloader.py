@@ -385,10 +385,17 @@ class PodcastDownloader:
             )
 
             logger.info("♻ Converting episode %s to mp3", title)
-            # sound = AudioSegment.from_wav(wav_file_path)
-            # sound.export(mp3_file_path, format="mp3")
+            logger.debug("♻ MP3 File Path: %s", mp3_file_path)
 
-            (ffmpeg.input(filename=wav_file_path).output(filename=mp3_file_path, format="mp3"))
+            input_wav = ffmpeg.input(filename=wav_file_path)
+            ff = ffmpeg.output(
+                input_wav,
+                filename=mp3_file_path,
+                format="mp3",
+                ab="4",
+            )  # VBR v4 might be overkill for voice
+
+            ff.run()
 
             logger.info("♻ Done")
 

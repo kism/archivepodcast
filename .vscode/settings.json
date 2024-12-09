@@ -38,6 +38,7 @@
     "mycooldomain",
     "mypy",
     "noto",
+    "pathlib",
     "Podbean",
     "Podder",
     "pydocstyle",
