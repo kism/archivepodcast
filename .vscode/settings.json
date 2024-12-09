@@ -23,6 +23,7 @@
     "boto",
     "botocore",
     "BUILDKIT",
+    "choco",
     "colorama",
     "defusedxml",
     "errorcode",
@@ -32,12 +33,14 @@
     "flac",
     "googleplay",
     "inet",
+    "kwargs",
     "lxml",
     "monkeypatches",
     "moto",
     "mycooldomain",
     "mypy",
     "noto",
+    "pathlib",
     "Podbean",
     "Podder",
     "pydocstyle",
@@ -48,5 +51,6 @@
     "testpaths",
     "unphased"
   ],
-  "livePreview.serverRoot": "htmlcov"
+  "livePreview.serverRoot": "htmlcov/",
+  "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3"
 }

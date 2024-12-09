@@ -20,10 +20,18 @@ FLASK_ROOT_PATH = os.getcwd()
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
 TEST_RSS_LOCATION = os.path.join(os.getcwd(), "tests", "rss")
 
+# Test WAV File
+microsoft_wav_header = bytes.fromhex(
+    "524946469822000057415645666D7420100000000100010044AC000088580100020010006461746174220000"
+)
+null_audio_data = b"\x00" * 5120
+TEST_WAV_FILE = microsoft_wav_header + null_audio_data
+
 
 def pytest_configure():
     """This is a magic function for adding things to pytest?"""
     pytest.TEST_CONFIGS_LOCATION = TEST_CONFIGS_LOCATION
+    pytest.TEST_WAV_FILE = TEST_WAV_FILE
 
 
 # region: Flask
@@ -159,7 +167,13 @@ def apa(tmp_path, get_test_config, caplog, mock_threads_none):
 
 
 @pytest.fixture
-def apa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
+def no_render_static(monkeypatch):
+    """Monkeypatch render_static to prevent it from running."""
+    monkeypatch.setattr("archivepodcast.ap_archiver.PodcastArchiver.render_static", lambda _: None)
+
+
+@pytest.fixture
+def apa_aws(tmp_path, get_test_config, no_render_static, caplog, s3):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
@@ -168,7 +182,6 @@ def apa_aws(tmp_path, get_test_config, monkeypatch, caplog, s3):
     s3.create_bucket(Bucket=bucket_name)
 
     # Prevent weird threading issues
-    monkeypatch.setattr("archivepodcast.ap_archiver.PodcastArchiver.render_static", lambda _: None)
 
     from archivepodcast.ap_archiver import PodcastArchiver
 
@@ -215,21 +228,11 @@ def mock_podcast_source_mp3(requests_mock):
 
 @pytest.fixture
 def mock_podcast_source_wav(requests_mock, tmp_path):
-    """Requests mock for downloading an image."""
-    from pydub import AudioSegment
+    """Requests mock for downloading a the test wav file.
 
-    audio = AudioSegment.silent(duration=1000)
-
-    tmp_wav_path = os.path.join(tmp_path, "test.wav")
-
-    audio.export(tmp_wav_path, format="wav")
-
-    with open(os.path.join(tmp_path, "test.wav"), "rb") as audio:
-        audio_file = audio.read()
-
-    requests_mock.get("https://pytest.internal/audio/test.wav", content=audio_file)
-
-    os.remove(tmp_wav_path)
+    Unlike the fake mp3 files, this needs to be real since it will be converted.
+    """
+    requests_mock.get("https://pytest.internal/audio/test.wav", content=pytest.TEST_WAV_FILE)
 
 
 # endregion

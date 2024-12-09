@@ -126,10 +126,11 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Add italics font~~
 - ~~Add a better favicon~~
 - ~~Better name for render_static functions~~
+- ~~Better test coverage~~
+- ~~Switch from pydub ffmpeg-typed~~
+- ~~Fail if ffmpeg won't work~~
+- ~~Handle every state of jpg, mp3 or wav existing~~
+- ~~tests check s3 debug messages specifically~~
 - Better footer
-- Better test coverage
-- Switch from pydub to ~~pyav~~, ffmpeg-typed
-- Fail if pydub won't work
-- Handle every state of jpg, mp3 or wav existing
-- tests check s3 debug messages specifically
 - allow failure per podcast
+- 100% test coverage

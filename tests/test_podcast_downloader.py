@@ -110,17 +110,14 @@ def test_download_podcast_wav_wav_exists(
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
 
-    from pydub import AudioSegment
-
-    audio = AudioSegment.silent(duration=1000)
-
     test_podcast_content_dir = os.path.join(tmp_path, "web", "content", "test")
 
     os.makedirs(test_podcast_content_dir, exist_ok=True)
 
     tmp_wav_path = os.path.join(test_podcast_content_dir, "20200101-Test-Episode.wav")
 
-    audio.export(tmp_wav_path, format="wav")
+    with open(tmp_wav_path, "wb") as f:
+        f.write(pytest.TEST_WAV_FILE)
 
     mock_get_podcast_source_rss("test_valid_wav.rss")
 

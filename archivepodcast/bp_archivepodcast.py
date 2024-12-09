@@ -81,13 +81,7 @@ def podcast_loop() -> None:
         logger.info("⛅ We are in s3 mode, missing episode files will be downloaded, uploaded to s3 and then deleted")
 
     while True:
-        # We do a broad try/except here since god knows what http errors seem to happen at random
-        # If there is something uncaught in the grab podcasts function it will crash the scraping
-        # part of this program and it will need to be restarted, this avoids it.
-        try:
-            ap.grab_podcasts()
-        except Exception:
-            logger.exception("❌ Error that broke grab_podcasts()")
+        ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
         # Calculate time until next run
         now = datetime.datetime.now()
@@ -99,8 +93,8 @@ def podcast_loop() -> None:
         if seconds_until_next_run > one_hour_in_seconds:
             seconds_until_next_run -= one_hour_in_seconds
 
-        emoji = "🛌"  # un-upset black
-        logger.info("%s Sleeping for ~%s minutes", emoji, str(int(seconds_until_next_run / 60)))
+        msg = f"🛌 Sleeping for ~%s minutes {int(seconds_until_next_run / 60)}"
+        logger.info(msg)
         time.sleep(seconds_until_next_run)
         logger.info("🌄 Waking up, looking for new episodes")
 

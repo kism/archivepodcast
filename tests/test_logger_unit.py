@@ -25,7 +25,7 @@ def logger() -> Generator:
         logger.removeHandler(handler)
         handler.close()
 
-
+@pytest.mark.filterwarnings("ignore:.*:pytest.PytestUnhandledThreadExceptionWarning")
 def test_logging_permissions_error(logger, tmp_path, mocker: pytest_mock.plugin.MockerFixture):
     """Test logging, mock a permission error."""
     from archivepodcast.logger import _add_file_handler
@@ -90,3 +90,42 @@ def test_set_log_level(log_level_in: str | int, log_level_expected: int, logger)
     # TEST: Logger ends up with correct values
     _set_log_level(logger, log_level_in)
     assert logger.getEffectiveLevel() == log_level_expected
+
+
+def test_colour():
+    """Test colour messages."""
+    from archivepodcast.logger import ColorFormatter
+
+    formatter = ColorFormatter()
+
+    class TestRecord(logging.LogRecord):
+        def __init__(self, levelno, msg) -> None:
+            self.levelno = levelno
+            self.msg = msg
+            self.name = "Test_Logger"
+            self.args = ()
+            self.exc_info = None
+            self.exc_text = None
+            self.stack_info = None
+            self.levelname = logging.getLevelName(levelno)
+
+    log_records = [
+        TestRecord(levelno=10, msg="Test message str"),
+        TestRecord(levelno=10, msg=None),
+        TestRecord(levelno=10, msg=["Test", "message", "list"]),
+        TestRecord(levelno=10, msg=("Test", "message", "tuple")),
+    ]
+
+    for i in log_records:
+        assert formatter.format(i)
+
+
+def test_trace_log_level():
+    """Test trace log level."""
+    from archivepodcast.logger import TRACE_LEVEL_NUM, CustomLogger
+
+    custom_logger = CustomLogger("TEST_LOGGER")
+    custom_logger.trace("Test trace message")
+
+    assert logging.getLevelName(TRACE_LEVEL_NUM) == "TRACE"
+    assert logging._nameToLevel["TRACE"] == TRACE_LEVEL_NUM

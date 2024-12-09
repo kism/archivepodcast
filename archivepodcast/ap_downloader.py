@@ -4,15 +4,17 @@
 import contextlib
 import os
 import re
+import shutil
+import sys
 from datetime import datetime
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 from urllib.error import HTTPError
 
+import ffmpeg
 import requests
 from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
 from lxml import etree
-from pydub import AudioSegment
 
 from .logger import get_logger
 
@@ -22,6 +24,19 @@ else:
     S3Client = object
 
 logger = get_logger(__name__)
+
+# Test FFMPEG
+ffmpeg_info = """ffmpeg not found, please install it and ensure it's in PATH.
+https://www.ffmpeg.org/download.html
+ apt install ffmpeg
+ brew install ffmpeg
+ scoop install ffmpeg
+exiting..."""
+
+if not shutil.which("ffmpeg"):
+    logger.error(ffmpeg_info)
+    sys.exit(1)
+
 
 IMAGE_FORMATS = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
 AUDIO_FORMATS = [".mp3", ".wav", ".m4a", ".flac"]
@@ -385,8 +400,18 @@ class PodcastDownloader:
             )
 
             logger.info("♻ Converting episode %s to mp3", title)
-            sound = AudioSegment.from_wav(wav_file_path)
-            sound.export(mp3_file_path, format="mp3")
+            logger.debug("♻ MP3 File Path: %s", mp3_file_path)
+
+            input_wav = ffmpeg.input(filename=wav_file_path)
+            ff = ffmpeg.output(
+                input_wav,
+                filename=mp3_file_path,
+                format="mp3",
+                ab="4",
+            )  # VBR v4 might be overkill for voice
+
+            ff.run()
+
             logger.info("♻ Done")
 
             # Remove wav since we are done with it

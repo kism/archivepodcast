@@ -81,12 +81,11 @@ class PodcastArchiver:
             except FileExistsError:
                 pass
             except PermissionError as exc:
-                emoji = "❌"
-                err = emoji + " You do not have permission to create folder: " + folder
-                logger.exception(
-                    "%s Run this this script as a different user probably, or check permissions of the web_root.",
-                    emoji,
+                err = (
+                    f"❌ You do not have permission to create folder: {folder}"
+                    "Run this this script as a different user probably, or check permissions of the web_root."
                 )
+                logger.exception(err)
                 raise PermissionError(err) from exc
 
     def load_s3(self) -> None:
@@ -133,84 +132,87 @@ class PodcastArchiver:
     def grab_podcasts(self) -> None:
         """Loop through defined podcasts, download and store the xml."""
         for podcast in self.podcast_list:
-            tree = None
-            previous_feed = ""
-            logger.info("📜 Processing settings entry: %s", podcast["new_name"])
+            try:
+                self._grab_podcast(podcast)
+            except Exception:  # pylint: disable=broad-exception-caught
+                logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
 
-            with contextlib.suppress(KeyError):  # Set the previous feed var if it exists
-                previous_feed = self.podcast_xml[podcast["name_one_word"]]
+    def _grab_podcast(self, podcast: dict) -> None:
+        tree = None
+        previous_feed = ""
+        logger.info("📜 Processing settings entry: %s", podcast["new_name"])
 
-            rss_file_path = os.path.join(self.web_root, "rss", podcast["name_one_word"])
+        with contextlib.suppress(KeyError):  # Set the previous feed var if it exists
+            previous_feed = self.podcast_xml[podcast["name_one_word"]]
 
-            if podcast["live"] is True:  # download all the podcasts
-                tree = self.podcast_downloader.download_podcast(podcast)
-                if tree:
-                    try:
-                        # Write xml to disk
-                        tree.write(
-                            rss_file_path,
-                            encoding="utf-8",
-                            xml_declaration=True,
-                        )
-                        logger.debug("Wrote rss to disk: %s", rss_file_path)
+        rss_file_path = os.path.join(self.web_root, "rss", podcast["name_one_word"])
 
-                    except Exception:  # pylint: disable=broad-exception-caught
-                        emoji = "❌"  # un-upset black
-                        logger.exception(
-                            "%s RSS XML Download Failure, attempting to host cached version",
-                            emoji,
-                        )
-                        tree = None
-                else:
-                    logger.error("❌ Unable to download podcast, something is wrong")
-            else:
-                logger.info('📄 "live": false, in settings so not fetching new episodes')
-
-            # Serving a podcast that we can't currently download?, load it from file
-            if tree is None:
-                logger.info("📄 Loading rss from file: %s", rss_file_path)
+        if podcast["live"] is True:  # download all the podcasts
+            tree = self.podcast_downloader.download_podcast(podcast)
+            if tree:
                 try:
-                    tree = etree.parse(rss_file_path)
-                except (FileNotFoundError, OSError):
-                    logger.exception("❌ Cannot find rss xml file: %s", rss_file_path)
+                    # Write xml to disk
+                    tree.write(
+                        rss_file_path,
+                        encoding="utf-8",
+                        xml_declaration=True,
+                    )
+                    logger.debug("Wrote rss to disk: %s", rss_file_path)
 
-            if tree is not None:
-                self.podcast_xml.update(
-                    {
-                        podcast["name_one_word"]: etree.tostring(
-                            tree.getroot(),
-                            encoding="utf-8",
-                            method="xml",
-                            xml_declaration=True,
-                        )
-                    }
-                )
-                logger.info(
-                    f"📄 Hosted: {self.app_settings['inet_path']}rss/{ podcast['name_one_word'] }",
-                )
-
-                # Upload to s3 if we are in s3 mode
-                if (
-                    self.s3
-                    and previous_feed
-                    != self.podcast_xml[
-                        podcast["name_one_word"]
-                    ]  # This doesn't work when feed has build dates times on it, patreon for one
-                ):
-                    try:
-                        # Upload the file
-                        self.s3.put_object(
-                            Body=self.podcast_xml[podcast["name_one_word"]],
-                            Bucket=self.app_settings["s3"]["bucket"],
-                            Key="rss/" + podcast["name_one_word"],
-                            ContentType="application/rss+xml",
-                        )
-                        logger.info('📄⛅ Uploaded feed "%s" to s3', podcast["name_one_word"])
-                    except Exception:  # pylint: disable=broad-exception-caught
-                        logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
-
+                except Exception:  # pylint: disable=broad-exception-caught
+                    msg = "❌ RSS XML Download Failure, attempting to host cached version"
+                    logger.exception(msg)
+                    tree = None
             else:
-                logger.error("❌ Unable to host podcast, something is wrong")
+                logger.error("❌ Unable to download podcast, something is wrong")
+        else:
+            logger.info('📄 "live": false, in settings so not fetching new episodes')
+
+        # Serving a podcast that we can't currently download?, load it from file
+        if tree is None:
+            logger.info("📄 Loading rss from file: %s", rss_file_path)
+            try:
+                tree = etree.parse(rss_file_path)
+            except (FileNotFoundError, OSError):
+                logger.exception("❌ Cannot find rss xml file: %s", rss_file_path)
+
+        if tree is not None:
+            self.podcast_xml.update(
+                {
+                    podcast["name_one_word"]: etree.tostring(
+                        tree.getroot(),
+                        encoding="utf-8",
+                        method="xml",
+                        xml_declaration=True,
+                    )
+                }
+            )
+            logger.info(
+                f"📄 Hosted: {self.app_settings['inet_path']}rss/{ podcast['name_one_word'] }",
+            )
+
+            # Upload to s3 if we are in s3 mode
+            if (
+                self.s3
+                and previous_feed
+                != self.podcast_xml[
+                    podcast["name_one_word"]
+                ]  # This doesn't work when feed has build dates times on it, patreon for one
+            ):
+                try:
+                    # Upload the file
+                    self.s3.put_object(
+                        Body=self.podcast_xml[podcast["name_one_word"]],
+                        Bucket=self.app_settings["s3"]["bucket"],
+                        Key="rss/" + podcast["name_one_word"],
+                        ContentType="application/rss+xml",
+                    )
+                    logger.info('📄⛅ Uploaded feed "%s" to s3', podcast["name_one_word"])
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
+
+        else:
+            logger.error("❌ Unable to host podcast, something is wrong")
 
     def render_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
