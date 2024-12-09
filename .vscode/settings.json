@@ -12,7 +12,7 @@
   "python.terminal.activateEnvInCurrentTerminal": true,
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true,
+  "python.testing.pytestEnabled": false,
 
   "cSpell.words": [
     "addopts",
@@ -52,5 +52,6 @@
     "unphased"
   ],
   "livePreview.serverRoot": "htmlcov/",
-  "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3"
+  "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3",
+  "python.analysis.enablePytestSupport": false
 }

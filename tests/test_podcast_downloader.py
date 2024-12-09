@@ -174,3 +174,17 @@ def test_download_podcast_wav_mp3_exists(
     assert "Download Failed" not in caplog.text
 
     assert not os.path.exists(tmp_wav_path)
+
+
+def test_no_ffmpeg(tmp_path, caplog, monkeypatch):
+    """Test that the app exists when there is no ffmpeg."""
+
+    from archivepodcast import ap_downloader
+
+    monkeypatch.setattr("shutil.which", lambda x: None)
+
+    # with pytest.raises(SystemExit):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader") and pytest.raises(SystemExit):
+        ap_downloader.check_ffmpeg()
+
+    assert "ffmpeg not found" in caplog.text

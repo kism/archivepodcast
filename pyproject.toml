@@ -112,7 +112,10 @@ addopts = [
     "--cov-report=html",
 ]
 testpaths = ["tests"]
-filterwarnings = ["ignore::DeprecationWarning:boto.*"]
+filterwarnings = [
+    "ignore::DeprecationWarning:boto.*",
+    "ignore::pytest.PytestUnhandledThreadExceptionWarning", # God knows
+]
 
 
 [tool.coverage.html]

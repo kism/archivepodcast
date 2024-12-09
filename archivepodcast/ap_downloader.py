@@ -33,11 +33,6 @@ https://www.ffmpeg.org/download.html
  scoop install ffmpeg
 exiting..."""
 
-if not shutil.which("ffmpeg"):
-    logger.error(ffmpeg_info)
-    sys.exit(1)
-
-
 IMAGE_FORMATS = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
 AUDIO_FORMATS = [".mp3", ".wav", ".m4a", ".flac"]
 CONTENT_TYPES = {
@@ -66,6 +61,16 @@ etree.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
 etree.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
 etree.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
 etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
+
+
+
+def check_ffmpeg() -> None:
+    """Check if ffmpeg is installed."""
+    if not shutil.which("ffmpeg"):
+        logger.error(ffmpeg_info)
+        sys.exit(1)
+
+check_ffmpeg()
 
 
 class PodcastDownloader:
