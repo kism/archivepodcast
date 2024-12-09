@@ -5,6 +5,9 @@ import os
 
 import pytest
 
+import archivepodcast.ap_archiver
+import archivepodcast.ap_archiver
+
 
 def test_no_about_page(apa, caplog):
     """Test no about page."""
@@ -64,6 +67,39 @@ def test_grab_podcasts_not_live(
     get_rss = str(apa.get_rss_xml("test"), "utf-8")
 
     assert rss_str == get_rss
+
+
+def test_grab_podcasts_unhandled_exception(
+    apa,
+    caplog,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_mp3,
+    monkeypatch,
+):
+    """Test grabbing podcasts."""
+    mock_get_podcast_source_rss("test_valid.rss")
+
+    apa.podcast_list[0]["live"] = False
+
+    rss_str = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Test RSS</item></rss>"
+
+    os.makedirs(os.path.join(apa.instance_path, "web", "rss"), exist_ok=True)
+    with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
+        f.write(rss_str)
+
+    class FakeExceptionError(Exception):
+        pass
+
+    def mock_get_rss_xml_exception(*args, **kwargs) -> None:
+        raise FakeExceptionError
+
+    monkeypatch.setattr(apa, "_grab_podcast", mock_get_rss_xml_exception)
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_archiver"):
+        apa.grab_podcasts()
+
+    assert "Error grabbing podcast:" in caplog.text
 
 
 def test_grab_podcasts_not_live_no_existing_feed(

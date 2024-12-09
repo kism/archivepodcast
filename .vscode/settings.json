@@ -33,6 +33,7 @@
     "flac",
     "googleplay",
     "inet",
+    "kwargs",
     "lxml",
     "monkeypatches",
     "moto",

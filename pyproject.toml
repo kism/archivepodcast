@@ -84,6 +84,8 @@ ignore = [
     "INP001",  # KG __init__.py not needed for PyTest.
     "PT004",   # KG monkeypatches don't return.
     "ANN001",  # KG Tests don't need type hints.
+    "ANN002",  # KG args/kwargs don't need type hints.
+    "ANN003",  # KG args/kwargs don't need type hints.
     "S311",    # KG I'll assume no real crypto will be done in PyTest.
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
