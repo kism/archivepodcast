@@ -3,6 +3,8 @@
 import logging
 import os
 
+import pytest
+
 
 def test_no_about_page(apa, caplog):
     """Test no about page."""
@@ -115,3 +117,15 @@ def test_grab_podcasts_live(
 
     assert "https://pytest.internal/images/test.jpg" not in rss
     assert "https://pytest.internal/audio/test.mp3" not in rss
+
+
+def test_create_folder_structure_no_perms(apa, monkeypatch):
+    """Test creating folder structure with permissions error."""
+
+    def mock_os_makedirs_permission_error() -> None:
+        raise PermissionError
+
+    monkeypatch.setattr("os.mkdir", lambda _: mock_os_makedirs_permission_error())
+
+    with pytest.raises(PermissionError):
+        apa.make_folder_structure()

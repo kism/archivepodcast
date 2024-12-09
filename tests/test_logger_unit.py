@@ -119,6 +119,7 @@ def test_colour():
     for i in log_records:
         assert formatter.format(i)
 
+
 def test_trace_log_level():
     """Test trace log level."""
     from archivepodcast.logger import TRACE_LEVEL_NUM, CustomLogger
