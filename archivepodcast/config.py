@@ -146,7 +146,7 @@ class ArchivePodcastConfig:
             if not podcast["name_one_word"]:
                 failed_items.append("Podcast name_one_word is empty")
 
-        # This is to assure that you don't accidentally test without the tmp_dir fixture.
+        # This is to assure that you don't accidentally test without the tmp_path fixture.
         if self._config["flask"]["TESTING"] and not any(
             substring in str(self.instance_path)
             for substring in ["tmp", "temp", "TMP", "TEMP", "/private/var/folders/"]

@@ -5,9 +5,6 @@ import os
 
 import pytest
 
-import archivepodcast.ap_archiver
-import archivepodcast.ap_archiver
-
 
 def test_no_about_page(apa, caplog):
     """Test no about page."""

@@ -91,3 +91,34 @@ def test_check_s3_files_problem_files(apa_aws, caplog):
     s3_object_list = [path["Key"] for path in s3_object_list.get("Contents", [])]
 
     assert s3_object_list == []
+
+
+def test_grab_podcasts_live(
+    apa_aws,
+    caplog,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_mp3,
+):
+    """Test grabbing podcasts."""
+    mock_get_podcast_source_rss("test_valid.rss")
+
+    apa_aws.podcast_list[0]["live"] = True
+
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+        apa_aws.grab_podcasts()
+
+    assert "Processing settings entry: PyTest Podcast [Archive S3]" in caplog.text
+    assert "Wrote rss to disk:" in caplog.text
+    assert "Hosted: http://localhost:5000/rss/test" in caplog.text
+
+    rss = str(apa_aws.get_rss_xml("test"))
+
+    assert "PyTest Podcast [Archive S3]" in rss
+    assert "http://localhost:5000/content/test/20200101-Test-Episode.mp3" in rss
+    assert "http://localhost:5000/content/test/PyTest-Podcast-Archive-S3.jpg" in rss
+    assert "<link>http://localhost:5000/</link>" in rss
+    assert "<title>Test Episode</title>" in rss
+
+    assert "https://pytest.internal/images/test.jpg" not in rss
+    assert "https://pytest.internal/audio/test.mp3" not in rss

@@ -2,6 +2,7 @@
 
 import logging
 import os
+import signal
 from http import HTTPStatus
 
 TEST_RSS_STR = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Test RSS</item></rss>"
@@ -43,9 +44,11 @@ def test_app_paths(client_live, tmp_path):
     assert response.status_code == HTTPStatus.OK
 
 
-def test_app_paths_not_initialized(caplog):
+def test_app_paths_not_initialized(tmp_path, get_test_config, caplog):
     """Test the RSS feed."""
     from archivepodcast import bp_archivepodcast
+
+    get_test_config("testing_true_valid.toml")
 
     bp_archivepodcast.ap = None
 
@@ -69,7 +72,6 @@ def test_app_paths_not_initialized(caplog):
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     required_to_be_initialized = [
-        # bp_archivepodcast.reload_settings,
         bp_archivepodcast.podcast_loop,
     ]
 
@@ -79,7 +81,7 @@ def test_app_paths_not_initialized(caplog):
             assert "ArchivePodcast object not initialized" in caplog.text
 
     with caplog.at_level(logging.ERROR):
-        bp_archivepodcast.reload_settings(0)
+        bp_archivepodcast.reload_settings(signal.SIGHUP)
         assert "ArchivePodcast object not initialized" in caplog.text
 
 
@@ -136,3 +138,35 @@ def test_content_s3(
 
     response = client_live.get("/content/test/20200101-Test-Episode.mp3")
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
+
+
+def test_reload_settings(tmp_path, get_test_config, caplog):
+    """Test the reload settings function."""
+    from archivepodcast import bp_archivepodcast
+
+    get_test_config("testing_true_valid.toml")
+
+    with caplog.at_level(logging.DEBUG):
+        bp_archivepodcast.reload_settings(signal.SIGHUP)
+
+    assert "Finished adhoc config reload" in caplog.text
+
+
+def test_reload_settings_exception(tmp_path, get_test_config, monkeypatch, caplog):
+    """Test the reload settings function."""
+    from archivepodcast import bp_archivepodcast
+
+    get_test_config("testing_true_valid.toml")
+
+    class FakeExceptionError(Exception):
+        pass
+
+    def load_settings_exception(*args, **kwargs) -> None:
+        raise FakeExceptionError
+
+    monkeypatch.setattr(bp_archivepodcast.ap, "load_settings", load_settings_exception)
+
+    with caplog.at_level(logging.ERROR):
+        bp_archivepodcast.reload_settings(signal.SIGHUP)
+
+    assert "Error reloading config" in caplog.text
