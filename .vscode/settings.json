@@ -23,6 +23,7 @@
     "boto",
     "botocore",
     "BUILDKIT",
+    "choco",
     "colorama",
     "defusedxml",
     "errorcode",

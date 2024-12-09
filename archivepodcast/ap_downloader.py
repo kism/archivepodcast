@@ -4,6 +4,8 @@
 import contextlib
 import os
 import re
+import shutil
+import sys
 from datetime import datetime
 from http import HTTPStatus
 from typing import TYPE_CHECKING
@@ -22,6 +24,19 @@ else:
     S3Client = object
 
 logger = get_logger(__name__)
+
+# Test FFMPEG
+ffmpeg_info = """ffmpeg not found, please install it and ensure it's in PATH.
+https://www.ffmpeg.org/download.html
+ apt install ffmpeg
+ brew install ffmpeg
+ scoop install ffmpeg
+exiting..."""
+
+if not shutil.which("ffmpeg"):
+    logger.error(ffmpeg_info)
+    sys.exit(1)
+
 
 IMAGE_FORMATS = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
 AUDIO_FORMATS = [".mp3", ".wav", ".m4a", ".flac"]
