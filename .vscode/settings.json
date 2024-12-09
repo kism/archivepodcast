@@ -50,5 +50,6 @@
     "testpaths",
     "unphased"
   ],
-  "livePreview.serverRoot": "htmlcov"
+  "livePreview.serverRoot": "htmlcov/",
+  "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3"
 }
