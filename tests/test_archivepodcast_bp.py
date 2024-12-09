@@ -123,6 +123,62 @@ def test_rss_feed(
     assert response.status_code == HTTPStatus.OK
 
 
+def test_rss_feed_type_error(
+    app_live,
+    tmp_path,
+    monkeypatch,
+    caplog,
+):
+    """Test the RSS feed."""
+    from archivepodcast.bp_archivepodcast import ap
+
+    assert ap is not None
+
+    ap.grab_podcasts()
+
+    client_live = app_live.test_client()
+
+    def return_type_error(*args, **kwargs) -> None:
+        raise TypeError
+
+    monkeypatch.setattr(ap, "get_rss_xml", return_type_error)
+
+    response = client_live.get("/rss/test")
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+def test_rss_feed_unhandled_error(
+    app_live,
+    tmp_path,
+    monkeypatch,
+    caplog,
+):
+    """Test the RSS feed."""
+    from archivepodcast.bp_archivepodcast import ap
+
+    assert ap is not None
+
+    ap.grab_podcasts()
+
+    client_live = app_live.test_client()
+
+    def return_key_error(*args, **kwargs) -> None:
+        raise KeyError
+
+    monkeypatch.setattr(ap, "get_rss_xml", return_key_error)
+
+    class FakeExceptionError(Exception):
+        pass
+
+    def return_unhandled_error(*args, **kwargs) -> None:
+        raise FakeExceptionError
+
+    monkeypatch.setattr("lxml.etree.tostring", return_unhandled_error)
+
+    response = client_live.get("/rss/test")
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+
+
 def test_content_s3(
     app_live,
 ):
@@ -170,3 +226,22 @@ def test_reload_settings_exception(tmp_path, get_test_config, monkeypatch, caplo
         bp_archivepodcast.reload_settings(signal.SIGHUP)
 
     assert "Error reloading config" in caplog.text
+
+
+def test_one_logger_message(app_live, monkeypatch, caplog):
+    """Test s3 log message for podcast loop."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap.s3 = True
+
+    monkeypatch.setattr(bp_archivepodcast.ap, "grab_podcasts", lambda: None)
+
+    def exit_on_sleep(*args, **kwargs) -> None:
+        raise SystemExit
+
+    monkeypatch.setattr("time.sleep", exit_on_sleep)
+
+    import pytest
+
+    with pytest.raises(SystemExit):
+        bp_archivepodcast.podcast_loop()

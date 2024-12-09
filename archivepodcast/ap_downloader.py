@@ -63,12 +63,12 @@ etree.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
 etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
 
 
-
 def check_ffmpeg() -> None:
     """Check if ffmpeg is installed."""
     if not shutil.which("ffmpeg"):
         logger.error(ffmpeg_info)
         sys.exit(1)
+
 
 check_ffmpeg()
 

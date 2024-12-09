@@ -25,6 +25,7 @@ def logger() -> Generator:
         logger.removeHandler(handler)
         handler.close()
 
+
 def test_logging_permissions_error(logger, tmp_path, mocker: pytest_mock.plugin.MockerFixture):
     """Test logging, mock a permission error."""
     from archivepodcast.logger import _add_file_handler

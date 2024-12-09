@@ -134,3 +134,6 @@ An example guide on setting it up start to finish, with all features and saving 
 - Better footer
 - allow failure per podcast
 - 100% test coverage
+- remove all mentions of xml?
+- remove the dumb `pytest.raises(SystemExit):`
+- find why `logger.info("🌄 Waking up, looking for new episodes")` never gets logged in pytest

@@ -178,7 +178,6 @@ def test_download_podcast_wav_mp3_exists(
 
 def test_no_ffmpeg(tmp_path, caplog, monkeypatch):
     """Test that the app exists when there is no ffmpeg."""
-
     from archivepodcast import ap_downloader
 
     monkeypatch.setattr("shutil.which", lambda x: None)
@@ -188,3 +187,29 @@ def test_no_ffmpeg(tmp_path, caplog, monkeypatch):
         ap_downloader.check_ffmpeg()
 
     assert "ffmpeg not found" in caplog.text
+
+
+def test_fetch_podcast_xml_error(apd, requests_mock, caplog):
+    """Test that the app can load config and the testing attribute is set."""
+    rss_url = "https://podcast.internal/rss/not_found"
+    requests_mock.get(rss_url, status_code=404)
+
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
+        apd._fetch_podcast_xml(rss_url)
+
+    assert "Not a great web response getting RSS: 404" in caplog.text
+
+
+def test_fetch_podcast_xml_value_error(apd, monkeypatch, caplog):
+    """Test that the app can load config and the testing attribute is set."""
+    rss_url = "https://podcast.internal/rss/not_found"
+
+    def mock_value_error(*args, **kwargs) -> None:
+        raise ValueError
+
+    monkeypatch.setattr("requests.get", mock_value_error)
+
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
+        apd._fetch_podcast_xml(rss_url)
+
+    assert "Real early failure on grabbing the podcast xml" in caplog.text

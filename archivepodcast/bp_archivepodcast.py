@@ -91,9 +91,9 @@ def podcast_loop() -> None:
 
         seconds_until_next_run = (one_hour_in_seconds + seconds_offset) - ((now.minute * 60) + now.second)
         if seconds_until_next_run > one_hour_in_seconds:
-            seconds_until_next_run -= one_hour_in_seconds
+            seconds_until_next_run -= one_hour_in_seconds  # pragma: no cover, would need to do one hell of a mock
 
-        msg = f"🛌 Sleeping for ~%s minutes {int(seconds_until_next_run / 60)}"
+        msg = f"🛌 Sleeping for {int(seconds_until_next_run / 60)} minutes"
         logger.info(msg)
         time.sleep(seconds_until_next_run)
         logger.info("🌄 Waking up, looking for new episodes")
@@ -178,14 +178,6 @@ def send_content(path: str) -> Response:
         response = send_from_directory(os.path.join(current_app.instance_path, "web", "content"), path)
 
     return response  # type: ignore[return-value] # The conflicting types here are secretly the same
-
-
-@bp.errorhandler(404)
-# pylint: disable=unused-argument
-def invalid_route(e: str) -> Response:  # Who knows if this is the right type
-    """404 Handler."""
-    logger.debug(f"Error handler: invalid_route: {e}")
-    return generate_404()
 
 
 @bp.route("/rss/<string:feed>", methods=["GET"])

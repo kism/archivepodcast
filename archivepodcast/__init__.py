@@ -1,6 +1,6 @@
 """Flask webapp archivepodcast."""
 
-from flask import Flask
+from flask import Flask, Response
 
 from . import bp_archivepodcast, logger
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
@@ -48,5 +48,11 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
 
     app.logger.info("Starting Web Server")
     app.logger.info("ArchivePodcast Version: %s", __version__)
+
+    @app.errorhandler(404)
+    def invalid_route(e: str) -> Response:
+        """404 Handler."""
+        app.logger.debug(f"Error handler: invalid_route: {e}")
+        return bp_archivepodcast.generate_404()
 
     return app
