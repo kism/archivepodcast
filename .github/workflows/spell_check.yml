@@ -14,3 +14,5 @@ jobs:
       - uses: streetsidesoftware/cspell-action@v6
         with:
           incremental_files_only: true # Fine for small projects
+          root: '.'
+          config: 'cspell.json'
