@@ -1,0 +1,14 @@
+name: Spell Check (CSpell)
+
+on:
+    push:
+      branches:
+        - main
+        - test
+
+jobs:
+  spellcheck: # run the action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: streetsidesoftware/cspell-action@v6
