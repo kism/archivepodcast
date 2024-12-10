@@ -213,3 +213,14 @@ def test_fetch_podcast_xml_value_error(apd, monkeypatch, caplog):
         apd._fetch_podcast_xml(rss_url)
 
     assert "Real early failure on grabbing the podcast xml" in caplog.text
+
+def test_download_podcast_no_response(apd, get_test_config, monkeypatch):
+    """Test _fetch_podcast_xml failure."""
+    podcast = get_test_config("testing_true_valid.toml")["podcast"][0]
+
+    def mock_fetch_podcast_xml(*args, **kwargs) -> None:
+        return None
+
+    monkeypatch.setattr("archivepodcast.ap_downloader.PodcastDownloader._fetch_podcast_xml", mock_fetch_podcast_xml)
+
+    assert apd.download_podcast(podcast) is None
