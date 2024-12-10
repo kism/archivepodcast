@@ -94,7 +94,7 @@ class PodcastArchiver:
             # This is specifically for pytest, as moto doesn't support the endpoint_url
             api_url = None
             if self.app_settings["s3"]["api_url"] != "":
-                api_url = self.app_settings["s3"]["api_url"]  # pragma: no cover
+                api_url = self.app_settings["s3"]["api_url"] # # pragma: no cover
 
             self.s3 = boto3.client(
                 "s3",
@@ -150,19 +150,14 @@ class PodcastArchiver:
         if podcast["live"] is True:  # download all the podcasts
             tree = self.podcast_downloader.download_podcast(podcast)
             if tree:
-                try:
-                    # Write xml to disk
-                    tree.write(
-                        rss_file_path,
-                        encoding="utf-8",
-                        xml_declaration=True,
-                    )
-                    logger.debug("Wrote rss to disk: %s", rss_file_path)
+                # Write xml to disk
+                tree.write(
+                    rss_file_path,
+                    encoding="utf-8",
+                    xml_declaration=True,
+                )
+                logger.debug("Wrote rss to disk: %s", rss_file_path)
 
-                except Exception:  # pylint: disable=broad-exception-caught
-                    msg = "❌ RSS XML Download Failure, attempting to host cached version"
-                    logger.exception(msg)
-                    tree = None
             else:
                 logger.error("❌ Unable to download podcast, something is wrong")
         else:
@@ -216,7 +211,7 @@ class PodcastArchiver:
 
     def render_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
-        threading.Thread(target=self._render_static, daemon=True).start()  # pragma: no cover, pytest and threading :/
+        threading.Thread(target=self._render_static, daemon=True).start()  # # pragma: no cover, pytest and threading :/
 
     def _render_static(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""

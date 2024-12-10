@@ -91,7 +91,7 @@ def podcast_loop() -> None:
 
         seconds_until_next_run = (one_hour_in_seconds + seconds_offset) - ((now.minute * 60) + now.second)
         if seconds_until_next_run > one_hour_in_seconds:
-            seconds_until_next_run -= one_hour_in_seconds  # pragma: no cover, would need to do one hell of a mock
+            seconds_until_next_run -= one_hour_in_seconds
 
         msg = f"🛌 Sleeping for {int(seconds_until_next_run / 60)} minutes"
         logger.info(msg)

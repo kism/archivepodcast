@@ -170,3 +170,4 @@ def test_check_path_exists_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
         assert apd_aws._check_path_exists("content/test") is False
 
     assert "Unhandled s3 Error" in caplog.text
+

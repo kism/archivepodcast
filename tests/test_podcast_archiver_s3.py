@@ -122,3 +122,34 @@ def test_grab_podcasts_live(
 
     assert "https://pytest.internal/images/test.jpg" not in rss
     assert "https://pytest.internal/audio/test.mp3" not in rss
+
+
+def test_upload_to_s3_exception(
+    apa_aws,
+    caplog,
+    tmp_path,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_mp3,
+    monkeypatch,
+):
+    """Test grabbing podcasts."""
+    rss_str = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Test RSS</item></rss>"
+    mock_get_podcast_source_rss("test_valid.rss")
+    apa_aws.podcast_list[0]["live"] = False
+
+    with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
+        file.write(rss_str)
+
+    class FakeExceptionError(Exception):
+        pass
+
+    def mock_unhandled_exception(*args, **kwargs) -> None:
+        raise FakeExceptionError
+
+    monkeypatch.setattr(apa_aws.s3, "put_object", mock_unhandled_exception)
+
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+        apa_aws.grab_podcasts()
+
+    assert "Unhandled s3 error trying to upload the file:" in caplog.text
