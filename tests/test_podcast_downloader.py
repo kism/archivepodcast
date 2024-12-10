@@ -2,6 +2,7 @@
 
 import logging
 import os
+from http import HTTPStatus
 
 import pytest
 
@@ -23,17 +24,6 @@ def test_init(get_test_config, tmp_path, caplog):
 
     assert "PodcastDownloader settings (re)loaded" in caplog.text
     assert apd.s3_paths_cache == []
-
-
-@pytest.fixture
-def apd(apa, get_test_config, caplog):
-    """Return a Podcast Archive Object with mocked AWS."""
-    config_file = "testing_true_valid.toml"
-    config = get_test_config(config_file)
-
-    web_root = apa.web_root
-
-    return PodcastDownloader(app_settings=config["app"], s3=None, web_root=web_root)
 
 
 @pytest.mark.parametrize(
@@ -68,6 +58,7 @@ def test_download_podcast(
     assert "Converting episode" not in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
+    # assert "lmao" in caplog.text
 
 
 def test_download_podcast_wav(
@@ -214,6 +205,7 @@ def test_fetch_podcast_xml_value_error(apd, monkeypatch, caplog):
 
     assert "Real early failure on grabbing the podcast xml" in caplog.text
 
+
 def test_download_podcast_no_response(apd, get_test_config, monkeypatch):
     """Test _fetch_podcast_xml failure."""
     podcast = get_test_config("testing_true_valid.toml")["podcast"][0]
@@ -224,3 +216,35 @@ def test_download_podcast_no_response(apd, get_test_config, monkeypatch):
     monkeypatch.setattr("archivepodcast.ap_downloader.PodcastDownloader._fetch_podcast_xml", mock_fetch_podcast_xml)
 
     assert apd.download_podcast(podcast) is None
+
+
+def test_download_to_local_failure(apd, requests_mock, caplog):
+    """Test local file download failure."""
+    url = "https://pytest.internal/audio/test.mp3"
+
+    requests_mock.get(url, status_code=HTTPStatus.NOT_FOUND)
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+        apd._download_to_local(url, "test.mp3")
+
+    assert "HTTP ERROR" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("file_name", "expected_slug"),
+    [
+        ("lmao", "lmao"),
+        (b"lmao", "lmao"),
+        ("lmao ", "lmao"),
+        ("lmao%", "lmao"),
+        ("lmao%lmao", "lmao-lmao"),
+        (" lmao", "lmao"),
+        ("lmao - lmao", "lmao---lmao"),
+        ("lmao_", "lmao"),
+        ("lmao***", "lmao"),
+        ("lmao✌️", "lmao"),
+    ],
+)
+def test_filename_cleanup(apd, file_name, expected_slug):
+    """Test filename cleanup."""
+    assert apd._cleanup_file_name(file_name) == expected_slug

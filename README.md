@@ -113,19 +113,6 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ### TODO
 
-- ~~Docker~~
-- ~~Quick startup (s3 thread)~~
-- ~~Quick startup (cache s3 better)~~
-- ~~Systemctl reload support~~
-- ~~Re-write README~~
-- ~~Tests~~
-- ~~Better font sizing~~
-- ~~Fix S3 upload web root~~
-- ~~Use current_app.root_path instead of os.getcwd()~~
-- ~~Don't use relative paths in general~~
-- ~~Add italics font~~
-- ~~Add a better favicon~~
-- ~~Better name for render_static functions~~
 - ~~Better test coverage~~
 - ~~Switch from pydub ffmpeg-typed~~
 - ~~Fail if ffmpeg won't work~~

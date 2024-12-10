@@ -9,7 +9,6 @@ import sys
 from datetime import datetime
 from http import HTTPStatus
 from typing import TYPE_CHECKING
-from urllib.error import HTTPError
 
 import ffmpeg
 import requests
@@ -164,9 +163,8 @@ class PodcastDownloader:
     def _handle_title_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the title tag in the podcast XML."""
         logger.info("📄 Podcast title: %s", str(channel.text))
-        if podcast["new_name"] == "":
-            podcast["new_name"] = channel.text
-        channel.text = podcast["new_name"]
+        if podcast["new_name"] != "":
+            channel.text = podcast["new_name"]
 
     def _handle_description_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the description tag in the podcast XML."""
@@ -195,9 +193,8 @@ class PodcastDownloader:
     def _handle_itunes_author_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the iTunes author tag in the podcast XML."""
         logger.trace("iTunes author: %s", str(channel.text))
-        if podcast["new_name"] == "":
-            podcast["new_name"] = channel.text
-        channel.text = podcast["new_name"]
+        if podcast["new_name"] != "":
+            channel.text = podcast["new_name"]
 
     def _handle_itunes_new_feed_url_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the iTunes new-feed-url tag in the podcast XML."""
@@ -207,8 +204,7 @@ class PodcastDownloader:
     def _handle_itunes_image_tag(self, channel: etree._Element, podcast: dict) -> None:
         """Handle the iTunes image tag in the podcast XML."""
         logger.trace("iTunes image: %s", str(channel.attrib["href"]))
-        if podcast["new_name"] == "":
-            podcast["new_name"] = channel.text
+
         title = self._cleanup_file_name(podcast["new_name"])
         url = channel.attrib.get("href", "")
         logger.trace("Image URL: %s", url)
@@ -523,21 +519,19 @@ class PodcastDownloader:
 
     def _download_to_local(self, url: str, file_path: str) -> None:
         """Download the asset from the url."""
-        try:
-            logger.debug("💾 Downloading: %s", url)
-            logger.info("💾 Downloading asset to: %s", file_path)
-            headers = {"user-agent": "Mozilla/5.0"}
-            req = requests.get(url, headers=headers, timeout=5)
+        logger.debug("💾 Downloading: %s", url)
+        logger.info("💾 Downloading asset to: %s", file_path)
+        headers = {"user-agent": "Mozilla/5.0"}
+        req = requests.get(url, headers=headers, timeout=5)
 
-            if req.status_code == HTTPStatus.OK:
-                with open(file_path, "wb") as asset_file:
-                    asset_file.write(req.content)
-                    logger.info("💾 Success!")
-            else:
-                logger.error("💾❌ HTTP ERROR: %s", str(req.content))
+        if req.status_code == HTTPStatus.OK:
+            with open(file_path, "wb") as asset_file:
+                asset_file.write(req.content)
+                logger.info("💾 Success!")
+        else:
+            logger.error("💾❌ HTTP ERROR: %s", str(req.content))
 
-        except HTTPError:
-            logger.exception("💾❌ Download Failed")
+
 
     def _cleanup_file_name(self, file_name: str | bytes) -> str:
         """Standardise naming, generate a slug."""
