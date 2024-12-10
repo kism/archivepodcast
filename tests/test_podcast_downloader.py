@@ -4,6 +4,7 @@ import logging
 import os
 from http import HTTPStatus
 
+import magic
 import pytest
 
 from archivepodcast.ap_downloader import PodcastDownloader
@@ -105,7 +106,9 @@ def test_download_podcast_wav_wav_exists(
 
     os.makedirs(test_podcast_content_dir, exist_ok=True)
 
-    tmp_wav_path = os.path.join(test_podcast_content_dir, "20200101-Test-Episode.wav")
+    episode_file_name = "20200101-Test-Episode"
+    tmp_wav_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.wav")
+    tmp_mp3_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.mp3")
 
     with open(tmp_wav_path, "wb") as f:
         f.write(pytest.TEST_WAV_FILE)
@@ -124,6 +127,8 @@ def test_download_podcast_wav_wav_exists(
     assert "Download Failed" not in caplog.text
 
     assert not os.path.exists(tmp_wav_path)
+    assert os.path.exists(tmp_mp3_path)
+    assert magic.from_file(tmp_mp3_path, mime=True) == "audio/mpeg" # Check that the file is actually an mp3
 
 
 def test_download_podcast_wav_mp3_exists(

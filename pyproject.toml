@@ -1,6 +1,6 @@
 [project]
 name = "archivepodcast"
-version = "1.1.5"
+version = "1.1.6"
 description = ""
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -39,6 +39,7 @@ test = [
     "detect-test-pollution",
     "moto[s3]",
     "requests-mock",
+    "python-magic",
 ]
 
 [tool.uv]
