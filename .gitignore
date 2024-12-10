@@ -15,6 +15,9 @@ content/*
 /*.html
 *.log
 .DS_Store
+.cspell/.cspellcache
+
+
 ## PYTHON
 
 # Javascript, if we want to use eslint/scss-lintbiome for checking the html/css/javascript

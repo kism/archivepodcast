@@ -83,7 +83,7 @@ ignore = [
     "ANN201",  # KG Not really needed for pytest.
     "SLF001",  # KG Accessing private members is needed for testing.
     "INP001",  # KG __init__.py not needed for PyTest.
-    "PT004",   # KG monkeypatches don't return.
+    "PT004",   # KG monkeypatch doesn't return.
     "ANN001",  # KG Tests don't need type hints.
     "ANN002",  # KG args/kwargs don't need type hints.
     "ANN003",  # KG args/kwargs don't need type hints.
@@ -106,7 +106,7 @@ docstring-code-format = true
 docstring-code-line-length = 40
 
 [tool.pytest.ini_options]
-addopts = [
+addopts = [ # cspell: ignore addopts
     "--cov-context=test",
     "--cov=archivepodcast",
     "--cov-report=term",

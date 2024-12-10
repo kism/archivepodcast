@@ -59,7 +59,7 @@ def test_download_podcast(
     assert "Converting episode" not in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
-    # assert "lmao" in caplog.text
+    # assert "str" in caplog.text
 
 
 def test_download_podcast_wav(
@@ -237,16 +237,16 @@ def test_download_to_local_failure(apd, requests_mock, caplog):
 @pytest.mark.parametrize(
     ("file_name", "expected_slug"),
     [
-        ("lmao", "lmao"),
-        (b"lmao", "lmao"),
-        ("lmao ", "lmao"),
-        ("lmao%", "lmao"),
-        ("lmao%lmao", "lmao-lmao"),
-        (" lmao", "lmao"),
-        ("lmao - lmao", "lmao---lmao"),
-        ("lmao_", "lmao"),
-        ("lmao***", "lmao"),
-        ("lmao✌️", "lmao"),
+        ("str", "str"),
+        (b"str", "str"),
+        ("str ", "str"),
+        ("str%", "str"),
+        ("str%str", "str-str"),
+        (" str", "str"),
+        ("str - str", "str---str"),
+        ("str_", "str"),
+        ("str***", "str"),
+        ("str✌️", "str"),
     ],
 )
 def test_filename_cleanup(apd, file_name, expected_slug):

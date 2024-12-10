@@ -137,8 +137,6 @@ class ArchivePodcastConfig:
 
         self._warn_unexpected_keys(DEFAULT_CONFIG, self._config, "<root>")
 
-        # KISM-BOILERPLATE: Put your configuration validation here, set failure to True if it's a critical failure
-
         for podcast in self._config["podcast"]:
             if not podcast["url"]:
                 failed_items.append("Podcast url is empty")

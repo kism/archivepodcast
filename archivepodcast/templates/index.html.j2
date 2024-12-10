@@ -24,7 +24,7 @@
         <h3>{{ podcast['description']|e }}</h3>
         <input type="text" readonly="readonly" value="{{settings['inet_path']}}rss/{{ podcast['name_one_word']}}"
             id="{{ podcast['name_one_word']}}">
-        <button class="button" onclick="grabtoclipboard('{{ podcast['name_one_word']}}')"
+        <button class="button" onclick="grab_to_clipboard('{{ podcast['name_one_word']}}')"
             id="{{ podcast['name_one_word']}}_button">Copy url</button>
         {% endfor %}
         {% if about_page %}
