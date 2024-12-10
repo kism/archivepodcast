@@ -30,7 +30,7 @@ class PodcastArchiver:
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
         self.app_settings: dict = {}
-        self.podcast_xml: dict[str, str] = {}
+        self.podcast_rss: dict[str, str] = {}
         self.podcast_list: list = []
         self.s3: S3Client | None = None
         self.about_page: str | None = None
@@ -48,7 +48,7 @@ class PodcastArchiver:
 
     def get_rss_xml(self, feed: str) -> str:
         """Return the rss xml for a given feed."""
-        return self.podcast_xml[feed]
+        return self.podcast_rss[feed]
 
     def make_about_page(self) -> None:
         """Create about page if needed."""
@@ -143,14 +143,14 @@ class PodcastArchiver:
         logger.info("📜 Processing settings entry: %s", podcast["new_name"])
 
         with contextlib.suppress(KeyError):  # Set the previous feed var if it exists
-            previous_feed = self.podcast_xml[podcast["name_one_word"]]
+            previous_feed = self.podcast_rss[podcast["name_one_word"]]
 
         rss_file_path = os.path.join(self.web_root, "rss", podcast["name_one_word"])
 
         if podcast["live"] is True:  # download all the podcasts
             tree = self.podcast_downloader.download_podcast(podcast)
             if tree:
-                # Write xml to disk
+                # Write rss to disk
                 tree.write(
                     rss_file_path,
                     encoding="utf-8",
@@ -172,7 +172,7 @@ class PodcastArchiver:
                 logger.exception("❌ Cannot find rss xml file: %s", rss_file_path)
 
         if tree is not None:
-            self.podcast_xml.update(
+            self.podcast_rss.update(
                 {
                     podcast["name_one_word"]: etree.tostring(
                         tree.getroot(),
@@ -190,14 +190,14 @@ class PodcastArchiver:
             if (
                 self.s3
                 and previous_feed
-                != self.podcast_xml[
+                != self.podcast_rss[
                     podcast["name_one_word"]
                 ]  # This doesn't work when feed has build dates times on it, patreon for one
             ):
                 try:
                     # Upload the file
                     self.s3.put_object(
-                        Body=self.podcast_xml[podcast["name_one_word"]],
+                        Body=self.podcast_rss[podcast["name_one_word"]],
                         Bucket=self.app_settings["s3"]["bucket"],
                         Key="rss/" + podcast["name_one_word"],
                         ContentType="application/rss+xml",

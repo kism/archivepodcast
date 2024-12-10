@@ -179,18 +179,18 @@ def test_no_ffmpeg(tmp_path, caplog, monkeypatch):
     assert "ffmpeg not found" in caplog.text
 
 
-def test_fetch_podcast_xml_error(apd, requests_mock, caplog):
+def test_fetch_podcast_rss_error(apd, requests_mock, caplog):
     """Test that the app can load config and the testing attribute is set."""
     rss_url = "https://podcast.internal/rss/not_found"
     requests_mock.get(rss_url, status_code=404)
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        apd._fetch_podcast_xml(rss_url)
+        apd._fetch_podcast_rss(rss_url)
 
     assert "Not a great web response getting RSS: 404" in caplog.text
 
 
-def test_fetch_podcast_xml_value_error(apd, monkeypatch, caplog):
+def test_fetch_podcast_rss_value_error(apd, monkeypatch, caplog):
     """Test that the app can load config and the testing attribute is set."""
     rss_url = "https://podcast.internal/rss/not_found"
 
@@ -200,19 +200,19 @@ def test_fetch_podcast_xml_value_error(apd, monkeypatch, caplog):
     monkeypatch.setattr("requests.get", mock_value_error)
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        apd._fetch_podcast_xml(rss_url)
+        apd._fetch_podcast_rss(rss_url)
 
-    assert "Real early failure on grabbing the podcast xml" in caplog.text
+    assert "Real early failure on grabbing the podcast rss" in caplog.text
 
 
 def test_download_podcast_no_response(apd, get_test_config, monkeypatch):
-    """Test _fetch_podcast_xml failure."""
+    """Test _fetch_podcast_rss failure."""
     podcast = get_test_config("testing_true_valid.toml")["podcast"][0]
 
-    def mock_fetch_podcast_xml(*args, **kwargs) -> None:
+    def mock_fetch_podcast_rss(*args, **kwargs) -> None:
         return None
 
-    monkeypatch.setattr("archivepodcast.ap_downloader.PodcastDownloader._fetch_podcast_xml", mock_fetch_podcast_xml)
+    monkeypatch.setattr("archivepodcast.ap_downloader.PodcastDownloader._fetch_podcast_rss", mock_fetch_podcast_rss)
 
     assert apd.download_podcast(podcast) is None
 
