@@ -6,3 +6,4 @@ pylance
 flac
 getuid
 monkeypatch
+addopts

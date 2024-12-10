@@ -106,7 +106,7 @@ docstring-code-format = true
 docstring-code-line-length = 40
 
 [tool.pytest.ini_options]
-addopts = [ # cspell: ignore addopts
+addopts = [
     "--cov-context=test",
     "--cov=archivepodcast",
     "--cov-report=term",
