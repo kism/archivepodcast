@@ -29,7 +29,6 @@ type = [
     "types-lxml",
     "types-requests",
     "boto3-stubs[s3]",
-    "pydub-stubs",
 ]
 
 lint = ["ruff"]

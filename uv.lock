@@ -37,7 +37,6 @@ test = [
 type = [
     { name = "boto3-stubs", extra = ["s3"] },
     { name = "mypy" },
-    { name = "pydub-stubs" },
     { name = "types-colorama" },
     { name = "types-lxml" },
     { name = "types-requests" },
@@ -72,7 +71,6 @@ test = [
 type = [
     { name = "boto3-stubs", extras = ["s3"] },
     { name = "mypy" },
-    { name = "pydub-stubs" },
     { name = "types-colorama" },
     { name = "types-lxml" },
     { name = "types-requests" },
@@ -855,18 +853,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1d/b2/31537cf4b1ca988837256c910a668b553fceb8f069bedc4b1c826024b52c/pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6", size = 172736 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/a3/a812df4e2dd5696d1f351d58b8fe16a405b234ad2886a0dab9183fb78109/pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc", size = 117552 },
-]
-
-[[package]]
-name = "pydub-stubs"
-version = "0.25.1.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c1/f5/0482df00f87e95295888007c4dc94bf33bed74daf910f0587bcb9a2b6cf5/pydub_stubs-0.25.1.5.tar.gz", hash = "sha256:fa5e98441e7de3be3b8329c02c8a34c7900a2712d49cf52e47cd58c722c779e6", size = 8413 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/9c/7c6fffba2b87dfda8248701d4fc28bc662562d5687123084fe63aa330b1c/pydub_stubs-0.25.1.5-py3-none-any.whl", hash = "sha256:a463a81c832e4b720478c5e2e8f6c76000765c821797457b253aa695a352c414", size = 9326 },
 ]
 
 [[package]]
