@@ -110,18 +110,3 @@ Development: `flask --app archivepodcast run --port 5000`
 Production: `waitress-serve --listen 0.0.0.0:5000 --call archivepodcast:create_app`
 
 An example guide on setting it up start to finish, with all features and saving episodes do disk can be found here [here](README_local.md). There are others for if you want to use s3 to host assets, or even host the whole thing on s3.
-
-### TODO
-
-- ~~Better test coverage~~
-- ~~Switch from pydub ffmpeg-typed~~
-- ~~Fail if ffmpeg won't work~~
-- ~~Handle every state of jpg, mp3 or wav existing~~
-- ~~tests check s3 debug messages specifically~~
-- ~~allow failure per podcast~~
-- ~~100% test coverage~~
-- ~~remove most mentions of xml?~~
-- ~~remove the dumb `pytest.raises(SystemExit):`~~
-- ~~find why `logger.info("🌄 Waking up, looking for new episodes")` never gets logged in pytest~~
-- ~~conftest TEST_RSS_STR~~
-- Better footer
