@@ -194,10 +194,10 @@ def rss(feed: str) -> Response:
     if not ap:
         return generate_not_initialized_error()
 
-    logger.debug("Sending xml feed: %s", feed)
-    xml_str = ""
+    logger.debug("Sending rss feed: %s", feed)
+    rss_str = ""
     try:
-        xml_str = ap.get_rss_feed(feed)
+        rss_str = ap.get_rss_feed(feed)
     except TypeError:
         return_code = HTTPStatus.INTERNAL_SERVER_ERROR
         return Response(
@@ -213,13 +213,13 @@ def rss(feed: str) -> Response:
     except KeyError:
         try:
             tree = etree.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
-            xml = etree.tostring(
+            rss = etree.tostring(
                 tree.getroot(),
                 encoding="utf-8",
                 method="xml",
                 xml_declaration=True,
             )
-            xml_str = xml.decode("utf-8")
+            rss_str = rss.decode("utf-8")
             logger.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
 
         # The file isn't there due to user error or not being created yet
@@ -249,7 +249,7 @@ def rss(feed: str) -> Response:
                 status=return_code,
             )
 
-    return Response(xml_str, mimetype="application/rss+xml; charset=utf-8", status=HTTPStatus.OK)
+    return Response(rss_str, mimetype="application/rss+xml; charset=utf-8", status=HTTPStatus.OK)
 
 
 @bp.route("/robots.txt")

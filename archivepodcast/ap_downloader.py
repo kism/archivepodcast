@@ -94,13 +94,13 @@ class PodcastDownloader:
         logger.trace("PodcastDownloader settings (re)loaded")
 
     def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
-        """Parse the XML, Download all the assets, this is main."""
+        """Parse the rss, Download all the assets, this is main."""
         response = self._fetch_podcast_rss(podcast["url"])
         if response is None:
             return None
 
         podcast_rss = etree.fromstring(response.content)
-        logger.info("📄 Downloaded RSS XML, Processing")
+        logger.info("📄 Downloaded rss feed, processing")
         logger.trace(str(podcast_rss))
 
         xml_first_child = podcast_rss[0]

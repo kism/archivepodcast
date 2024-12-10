@@ -47,7 +47,7 @@ class PodcastArchiver:
         self.render_static()
 
     def get_rss_feed(self, feed: str) -> str:
-        """Return the rss xml for a given feed."""
+        """Return the rss file for a given feed."""
         return self.podcast_rss[feed]
 
     def make_about_page(self) -> None:
@@ -130,7 +130,7 @@ class PodcastArchiver:
             logger.info("⛅ No objects found in the bucket.")
 
     def grab_podcasts(self) -> None:
-        """Loop through defined podcasts, download and store the xml."""
+        """Loop through defined podcasts, download and store the rss."""
         for podcast in self.podcast_list:
             try:
                 self._grab_podcast(podcast)
@@ -169,7 +169,7 @@ class PodcastArchiver:
             try:
                 tree = etree.parse(rss_file_path)
             except (FileNotFoundError, OSError):
-                logger.exception("❌ Cannot find rss xml file: %s", rss_file_path)
+                logger.exception("❌ Cannot find rss feed file: %s", rss_file_path)
 
         if tree is not None:
             self.podcast_rss.update(

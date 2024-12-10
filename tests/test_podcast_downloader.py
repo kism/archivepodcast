@@ -52,7 +52,7 @@ def test_download_podcast(
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
         apd.download_podcast(mock_podcast_definition)
 
-    assert "Downloaded RSS XML, Processing" in caplog.text
+    assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
     assert "Downloading asset to:" in caplog.text
     assert "Converting episode" not in caplog.text
@@ -79,7 +79,7 @@ def test_download_podcast_wav(
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
         apd.download_podcast(mock_podcast_definition)
 
-    assert "Downloaded RSS XML, Processing" in caplog.text
+    assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
     assert "Downloading asset to:" in caplog.text
     assert "Converting episode" in caplog.text
@@ -115,7 +115,7 @@ def test_download_podcast_wav_wav_exists(
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
         apd.download_podcast(mock_podcast_definition)
 
-    assert "Downloaded RSS XML, Processing" in caplog.text
+    assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
     assert "Downloading asset to:" in caplog.text
     assert "Converting episode" in caplog.text
@@ -156,7 +156,7 @@ def test_download_podcast_wav_mp3_exists(
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
         apd.download_podcast(mock_podcast_definition)
 
-    assert "Downloaded RSS XML, Processing" in caplog.text
+    assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
     assert "Downloading asset to:" in caplog.text
     assert "Converting episode" not in caplog.text
