@@ -17,5 +17,5 @@
 
   "livePreview.serverRoot": "htmlcov/",
   "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3",
-  "python.analysis.enablePytestSupport": false
+  "python.analysis.enablePytestSupport": false,
 }
