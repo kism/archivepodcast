@@ -14,7 +14,7 @@ from flask import Flask
 from flask.testing import FlaskClient, FlaskCliRunner
 from moto import mock_aws
 
-from archivepodcast.ap_archiver import PodcastArchiver
+from archivepodcast.ap_archiver import PodcastArchiver, PodcastDownloader
 
 FLASK_ROOT_PATH = os.getcwd()
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
@@ -194,6 +194,34 @@ def apa_aws(tmp_path, get_test_config, no_render_static, caplog, s3):
 
 
 # endregion
+
+# region: PodcastDownloader object
+
+
+@pytest.fixture
+def apd(apa, get_test_config, caplog):
+    """Return a Podcast Archive Object with mocked AWS."""
+    config_file = "testing_true_valid.toml"
+    config = get_test_config(config_file)
+
+    web_root = apa.web_root
+
+    return PodcastDownloader(app_settings=config["app"], s3=None, web_root=web_root)
+
+
+@pytest.fixture
+def apd_aws(apa_aws, get_test_config, caplog):
+    """Return a Podcast Archive Object with mocked AWS."""
+    config_file = "testing_true_valid_s3.toml"
+    config = get_test_config(config_file)
+
+    web_root = apa_aws.web_root
+
+    return PodcastDownloader(app_settings=config["app"], s3=apa_aws.s3, web_root=web_root)
+
+
+# endregion
+
 
 # region: Requests
 

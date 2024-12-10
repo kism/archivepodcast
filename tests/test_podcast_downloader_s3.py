@@ -28,17 +28,6 @@ def test_init(s3, get_test_config, tmp_path, caplog):
     assert pd.s3_paths_cache == []
 
 
-@pytest.fixture
-def apd_aws(apa_aws, get_test_config, caplog):
-    """Return a Podcast Archive Object with mocked AWS."""
-    config_file = "testing_true_valid_s3.toml"
-    config = get_test_config(config_file)
-
-    web_root = apa_aws.web_root
-
-    return PodcastDownloader(app_settings=config["app"], s3=apa_aws.s3, web_root=web_root)
-
-
 def test_download_podcast(
     apd_aws,
     get_test_config,
@@ -104,3 +93,36 @@ def test_download_podcast_wav(
     assert "content/test/20200101-Test-Episode.jpg" in s3_object_list
     assert "content/test/20200101-Test-Episode.mp3" in s3_object_list
     assert "content/test/PyTest-Podcast-Archive-S3.jpg" in s3_object_list
+
+
+def test_upload_asset_s3_no_client(apd, caplog):
+    """Test upload failure when no s3 client."""
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+        apd._upload_asset_s3("test.jpg", ".jpg")
+
+    assert "s3 client not found, cannot upload" in caplog.text
+
+
+def test_upload_asset_s3_file_not_found(apd_aws, caplog):
+    """Test upload failure when no s3 client."""
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+        apd_aws._upload_asset_s3("test_file_doesn't_exist.jpg", ".jpg")
+
+    assert "Could not upload to s3, the source file was not found" in caplog.text
+
+
+def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
+    """Test upload failure when no s3 client."""
+
+    class FakeExceptionError(Exception):
+        pass
+
+    def unhandled_exception(*args, **kwargs) -> None:
+        raise FakeExceptionError
+
+    monkeypatch.setattr(apd_aws.s3, "upload_file", unhandled_exception)
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+        apd_aws._upload_asset_s3("test_file_doesn't_exist.jpg", ".jpg")
+
+    assert "Unhandled s3 Error" in caplog.text
