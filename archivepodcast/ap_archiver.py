@@ -46,7 +46,7 @@ class PodcastArchiver:
         self.make_about_page()
         self.render_static()
 
-    def get_rss_xml(self, feed: str) -> str:
+    def get_rss_feed(self, feed: str) -> str:
         """Return the rss xml for a given feed."""
         return self.podcast_rss[feed]
 

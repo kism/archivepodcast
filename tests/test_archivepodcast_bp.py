@@ -149,7 +149,7 @@ def test_rss_feed_type_error(
     def return_type_error(*args, **kwargs) -> None:
         raise TypeError
 
-    monkeypatch.setattr(ap, "get_rss_xml", return_type_error)
+    monkeypatch.setattr(ap, "get_rss_feed", return_type_error)
 
     response = client_live.get("/rss/test")
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
@@ -173,7 +173,7 @@ def test_rss_feed_unhandled_error(
     def return_key_error(*args, **kwargs) -> None:
         raise KeyError
 
-    monkeypatch.setattr(ap, "get_rss_xml", return_key_error)
+    monkeypatch.setattr(ap, "get_rss_feed", return_key_error)
 
     def return_unhandled_error(*args, **kwargs) -> None:
         raise FakeExceptionError

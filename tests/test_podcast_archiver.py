@@ -61,7 +61,7 @@ def test_grab_podcasts_not_live(
     assert "Cannot find rss xml file" not in caplog.text
     assert "Unable to host podcast, something is wrong" not in caplog.text
 
-    get_rss = str(apa.get_rss_xml("test"), "utf-8")
+    get_rss = str(apa.get_rss_feed("test"), "utf-8")
 
     assert get_rss == pytest.DUMMY_RSS_STR
 
@@ -83,10 +83,10 @@ def test_grab_podcasts_unhandled_exception(
     with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
         f.write(pytest.DUMMY_RSS_STR)
 
-    def mock_get_rss_xml_exception(*args, **kwargs) -> None:
+    def mock_get_rss_feed_exception(*args, **kwargs) -> None:
         raise FakeExceptionError
 
-    monkeypatch.setattr(apa, "_grab_podcast", mock_get_rss_xml_exception)
+    monkeypatch.setattr(apa, "_grab_podcast", mock_get_rss_feed_exception)
 
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_archiver"):
         apa.grab_podcasts()
@@ -135,7 +135,7 @@ def test_grab_podcasts_live(
     assert "Wrote rss to disk:" in caplog.text
     assert "Hosted: http://localhost:5000/rss/test" in caplog.text
 
-    rss = str(apa.get_rss_xml("test"))
+    rss = str(apa.get_rss_feed("test"))
 
     assert "PyTest Podcast [Archive]" in rss
     assert "http://localhost:5000/content/test/20200101-Test-Episode.mp3" in rss

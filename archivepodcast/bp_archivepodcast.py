@@ -197,7 +197,7 @@ def rss(feed: str) -> Response:
     logger.debug("Sending xml feed: %s", feed)
     xml_str = ""
     try:
-        xml_str = ap.get_rss_xml(feed)
+        xml_str = ap.get_rss_feed(feed)
     except TypeError:
         return_code = HTTPStatus.INTERNAL_SERVER_ERROR
         return Response(

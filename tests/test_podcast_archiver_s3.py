@@ -116,7 +116,7 @@ def test_grab_podcasts_live(
     assert "Wrote rss to disk:" in caplog.text
     assert "Hosted: http://localhost:5000/rss/test" in caplog.text
 
-    rss = str(apa_aws.get_rss_xml("test"))
+    rss = str(apa_aws.get_rss_feed("test"))
 
     assert "PyTest Podcast [Archive S3]" in rss
     assert "http://localhost:5000/content/test/20200101-Test-Episode.mp3" in rss
