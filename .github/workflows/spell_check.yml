@@ -1,10 +1,10 @@
 name: Spell Check (CSpell)
 
 on:
-    push:
-      branches:
-        - main
-        - test
+  push:
+    branches:
+      - main
+      - test
 
 jobs:
   spellcheck: # run the action
@@ -12,3 +12,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: streetsidesoftware/cspell-action@v6
+        with:
+          incremental_files_only: true # Fine for small projects
