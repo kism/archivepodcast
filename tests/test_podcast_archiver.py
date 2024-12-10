@@ -5,6 +5,8 @@ import os
 
 import pytest
 
+from . import FakeExceptionError
+
 
 def test_no_about_page(apa, caplog):
     """Test no about page."""
@@ -46,11 +48,9 @@ def test_grab_podcasts_not_live(
 
     apa.podcast_list[0]["live"] = False
 
-    rss_str = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Test RSS</item></rss>"
-
     os.makedirs(os.path.join(apa.instance_path, "web", "rss"), exist_ok=True)
     with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
-        f.write(rss_str)
+        f.write(pytest.DUMMY_RSS_STR)
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
         apa.grab_podcasts()
@@ -63,7 +63,7 @@ def test_grab_podcasts_not_live(
 
     get_rss = str(apa.get_rss_xml("test"), "utf-8")
 
-    assert rss_str == get_rss
+    assert get_rss == pytest.DUMMY_RSS_STR
 
 
 def test_grab_podcasts_unhandled_exception(
@@ -79,14 +79,9 @@ def test_grab_podcasts_unhandled_exception(
 
     apa.podcast_list[0]["live"] = False
 
-    rss_str = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Test RSS</item></rss>"
-
     os.makedirs(os.path.join(apa.instance_path, "web", "rss"), exist_ok=True)
     with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
-        f.write(rss_str)
-
-    class FakeExceptionError(Exception):
-        pass
+        f.write(pytest.DUMMY_RSS_STR)
 
     def mock_get_rss_xml_exception(*args, **kwargs) -> None:
         raise FakeExceptionError
@@ -162,7 +157,6 @@ def test_create_folder_structure_no_perms(apa, monkeypatch):
 
     with pytest.raises(PermissionError):
         apa.make_folder_structure()
-
 
 
 def test_grab_podcasts_unhandled_exception_rss(

@@ -3,6 +3,10 @@
 import logging
 import os
 
+import pytest
+
+from . import FakeExceptionError
+
 FLASK_ROOT_PATH = os.getcwd()
 
 
@@ -134,15 +138,11 @@ def test_upload_to_s3_exception(
     monkeypatch,
 ):
     """Test grabbing podcasts."""
-    rss_str = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Test RSS</item></rss>"
     mock_get_podcast_source_rss("test_valid.rss")
     apa_aws.podcast_list[0]["live"] = False
 
     with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
-        file.write(rss_str)
-
-    class FakeExceptionError(Exception):
-        pass
+        file.write(pytest.DUMMY_RSS_STR)
 
     def mock_unhandled_exception(*args, **kwargs) -> None:
         raise FakeExceptionError
@@ -153,3 +153,33 @@ def test_upload_to_s3_exception(
         apa_aws.grab_podcasts()
 
     assert "Unhandled s3 error trying to upload the file:" in caplog.text
+
+
+def test_load_s3_api_url(apa, monkeypatch, caplog):
+    """Test loading the s3 api url.
+
+    We hack the apa object (without aws) since moto doesn't support setting the endpoint_url.
+    """
+    apa_no_mocked_aws = apa
+
+    test_url = "https://awsurl.internal/"
+
+    apa_no_mocked_aws.app_settings["storage_backend"] = "s3"
+    apa_no_mocked_aws.app_settings["s3"] = {}
+    apa_no_mocked_aws.app_settings["s3"]["api_url"] = test_url
+    apa_no_mocked_aws.app_settings["s3"]["access_key_id"] = "abc"
+    apa_no_mocked_aws.app_settings["s3"]["secret_access_key"] = "xyz"
+    apa_no_mocked_aws.app_settings["s3"]["bucket"] = "test"
+
+    def check_url_set(_, endpoint_url: str, *args, **kwargs) -> None:
+        assert endpoint_url == test_url
+
+    monkeypatch.setattr("boto3.client", check_url_set)
+
+    monkeypatch.setattr(apa_no_mocked_aws, "check_s3_files", lambda: None)
+
+    with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):
+        apa_no_mocked_aws.load_s3()
+
+    assert "Authenticated s3, using bucket: test" in caplog.text
+    assert "No s3 client to list files" not in caplog.text  # Ensure that check_s3_files was not called

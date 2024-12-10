@@ -1,47 +1,55 @@
 """Tests the blueprint's HTTP endpoint."""
 
+import datetime
 import logging
 import os
 import signal
 from http import HTTPStatus
 
-TEST_RSS_STR = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Test RSS</item></rss>"
+import pytest
+
+from . import FakeExceptionError
 
 
-def test_app_paths(client_live, tmp_path):
+def test_app_paths(client_live, client_live_s3, tmp_path):
     """Test that the app launches."""
-    assert client_live
+    for client in [client_live, client_live_s3]:
+        assert client
 
-    valid_path_list = [
-        "/",
-        "/index.html",
-        "/guide.html",
-        "/robots.txt",
-        "/static/clipboard.js",
-        "/favicon.ico",
-        "/static/favicon.ico",
-        "/static/main.css",
-        "/static/fonts/fira-code-v12-latin-600.woff2",
-        "/static/fonts/fira-code-v12-latin-700.woff2",
-        "/static/fonts/noto-sans-display-latin-500.woff2",
-        "/static/fonts/noto-sans-display-latin-500italic.woff2",
-    ]
+        valid_path_list = [
+            "/",
+            "/index.html",
+            "/guide.html",
+            "/robots.txt",
+            "/static/clipboard.js",
+            "/favicon.ico",
+            "/static/favicon.ico",
+            "/static/main.css",
+            "/static/fonts/fira-code-v12-latin-600.woff2",
+            "/static/fonts/fira-code-v12-latin-700.woff2",
+            "/static/fonts/noto-sans-display-latin-500.woff2",
+            "/static/fonts/noto-sans-display-latin-500italic.woff2",
+        ]
 
-    for path in valid_path_list:
-        response = client_live.get(path)
+        for path in valid_path_list:
+            response = client.get(path)
+            assert response.status_code == HTTPStatus.OK
+
+        response = client.get("/non_existent_page")
+        assert response.status_code == HTTPStatus.NOT_FOUND
+
+        # Since we are looping...
+        if os.path.exists(os.path.join(tmp_path, "web", "about.html")):
+            os.remove(os.path.join(tmp_path, "web", "about.html"))
+
+        response = client.get("/about.html")
+        assert response.status_code == HTTPStatus.NOT_FOUND
+
+        with open(os.path.join(tmp_path, "web", "about.html"), "w") as file:
+            file.write("Test")
+
+        response = client.get("/about.html")
         assert response.status_code == HTTPStatus.OK
-
-    response = client_live.get("/non_existent_page")
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-    response = client_live.get("/about.html")
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-    with open(os.path.join(tmp_path, "web", "about.html"), "w") as file:
-        file.write("Test")
-
-    response = client_live.get("/about.html")
-    assert response.status_code == HTTPStatus.OK
 
 
 def test_app_paths_not_initialized(tmp_path, get_test_config, caplog):
@@ -107,7 +115,7 @@ def test_rss_feed(
     assert response.status_code == HTTPStatus.NOT_FOUND
 
     with open(os.path.join(tmp_path, "web", "rss", "test_from_file"), "w") as file:
-        file.write(TEST_RSS_STR)
+        file.write(pytest.DUMMY_RSS_STR)
 
     assert os.path.exists(os.path.join(ap.instance_path, "web", "rss", "test_from_file"))
 
@@ -115,7 +123,7 @@ def test_rss_feed(
         response = client_live.get("/rss/test_from_file")
 
     response_str = response.data.decode("utf-8")
-    assert response_str == TEST_RSS_STR
+    assert response_str == pytest.DUMMY_RSS_STR
     assert response.status_code == HTTPStatus.OK
     assert "not live, sending cached version from disk" in caplog.text
 
@@ -167,9 +175,6 @@ def test_rss_feed_unhandled_error(
 
     monkeypatch.setattr(ap, "get_rss_xml", return_key_error)
 
-    class FakeExceptionError(Exception):
-        pass
-
     def return_unhandled_error(*args, **kwargs) -> None:
         raise FakeExceptionError
 
@@ -214,9 +219,6 @@ def test_reload_settings_exception(tmp_path, get_test_config, monkeypatch, caplo
 
     get_test_config("testing_true_valid.toml")
 
-    class FakeExceptionError(Exception):
-        pass
-
     def load_settings_exception(*args, **kwargs) -> None:
         raise FakeExceptionError
 
@@ -228,20 +230,15 @@ def test_reload_settings_exception(tmp_path, get_test_config, monkeypatch, caplo
     assert "Error reloading config" in caplog.text
 
 
-def test_one_logger_message(app_live, monkeypatch, caplog):
-    """Test s3 log message for podcast loop."""
-    from archivepodcast import bp_archivepodcast
+@pytest.mark.parametrize(
+    ("time", "expected_seconds"),
+    [
+        (datetime.datetime(2020, 1, 1, 0, 0, 0), 1200),  # 1200 seconds = 20 minutes
+        (datetime.datetime(2020, 1, 1, 0, 30, 0), 3000),  # 3000 seconds = 50 minutes
+    ],
+)
+def test_time_until_next_run(time, expected_seconds):
+    """Test the logic for waiting for the next run."""
+    from archivepodcast.bp_archivepodcast import _get_time_until_next_run
 
-    bp_archivepodcast.ap.s3 = True
-
-    monkeypatch.setattr(bp_archivepodcast.ap, "grab_podcasts", lambda: None)
-
-    def exit_on_sleep(*args, **kwargs) -> None:
-        raise SystemExit
-
-    monkeypatch.setattr("time.sleep", exit_on_sleep)
-
-    import pytest
-
-    with pytest.raises(SystemExit):
-        bp_archivepodcast.podcast_loop()
+    assert _get_time_until_next_run(time) == expected_seconds

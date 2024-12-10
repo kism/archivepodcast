@@ -32,6 +32,7 @@ def pytest_configure():
     """This is a magic function for adding things to pytest?"""
     pytest.TEST_CONFIGS_LOCATION = TEST_CONFIGS_LOCATION
     pytest.TEST_WAV_FILE = TEST_WAV_FILE
+    pytest.DUMMY_RSS_STR = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Dummy RSS</item></rss>"
 
 
 # region: Flask
@@ -62,6 +63,28 @@ def app_live(
 
 
 @pytest.fixture
+def app_live_s3(
+    tmp_path,
+    get_test_config,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_mp3,
+    mocked_aws,
+    s3,
+) -> Flask:
+    """This fixture uses the default config within the flask app."""
+    mock_get_podcast_source_rss("test_valid.rss")
+
+    from archivepodcast import create_app
+
+    config = get_test_config("testing_true_valid_live_s3.toml")
+    bucket_name = config["app"]["s3"]["bucket"]
+    s3.create_bucket(Bucket=bucket_name)
+
+    return create_app(test_config=config, instance_path=tmp_path)
+
+
+@pytest.fixture
 def client(app: Flask) -> FlaskClient:
     """This returns a test client for the default app()."""
     return app.test_client()
@@ -71,6 +94,12 @@ def client(app: Flask) -> FlaskClient:
 def client_live(app_live: Flask) -> FlaskClient:
     """This returns a test client for the default app()."""
     return app_live.test_client()
+
+
+@pytest.fixture
+def client_live_s3(app_live_s3) -> FlaskClient:
+    """This returns a test client for the default app()."""
+    return app_live_s3.test_client()
 
 
 @pytest.fixture

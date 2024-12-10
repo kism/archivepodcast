@@ -25,6 +25,7 @@
     "BUILDKIT",
     "choco",
     "colorama",
+    "conftest",
     "defusedxml",
     "errorcode",
     "errortext",

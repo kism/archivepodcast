@@ -531,8 +531,6 @@ class PodcastDownloader:
         else:
             logger.error("💾❌ HTTP ERROR: %s", str(req.content))
 
-
-
     def _cleanup_file_name(self, file_name: str | bytes) -> str:
         """Standardise naming, generate a slug."""
         if isinstance(file_name, bytes):

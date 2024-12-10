@@ -6,6 +6,8 @@ import os
 from archivepodcast.ap_downloader import PodcastDownloader
 from archivepodcast.logger import TRACE_LEVEL_NUM
 
+from . import FakeExceptionError
+
 FLASK_ROOT_PATH = os.getcwd()
 
 
@@ -112,9 +114,6 @@ def test_upload_asset_s3_file_not_found(apd_aws, caplog):
 def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
     """Test upload failure when no s3 client."""
 
-    class FakeExceptionError(Exception):
-        pass
-
     def unhandled_exception(*args, **kwargs) -> None:
         raise FakeExceptionError
 
@@ -125,9 +124,10 @@ def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
 
     assert "Unhandled s3 Error" in caplog.text
 
+
 def test_check_path_exists_s3(apd_aws, caplog):
     """Test check path exists."""
-    apd_aws.s3.put_object( # Bucket is empty before this
+    apd_aws.s3.put_object(  # Bucket is empty before this
         Bucket=apd_aws.app_settings["s3"]["bucket"],
         Key="content/test",
         Body="Test File Found",
@@ -141,6 +141,7 @@ def test_check_path_exists_s3(apd_aws, caplog):
         assert apd_aws._check_path_exists("content/test/not_exist") is False
 
     assert "File: content/test/not_exist does not exist" in caplog.text
+
 
 def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
     """Test non-404 s3 client error handling."""
@@ -156,10 +157,9 @@ def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
 
     assert "s3 check file exists errored out?" in caplog.text
 
+
 def test_check_path_exists_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
     """Test unhandled exception handling."""
-    class FakeExceptionError(Exception):
-        pass
 
     def unhandled_exception(*args, **kwargs) -> None:
         raise FakeExceptionError
@@ -170,4 +170,3 @@ def test_check_path_exists_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
         assert apd_aws._check_path_exists("content/test") is False
 
     assert "Unhandled s3 Error" in caplog.text
-

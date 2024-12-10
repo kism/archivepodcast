@@ -84,19 +84,27 @@ def podcast_loop() -> None:
         ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
         # Calculate time until next run
-        now = datetime.datetime.now()
-
-        one_hour_in_seconds = 3600
-        seconds_offset = 1200  # 20 minutes
-
-        seconds_until_next_run = (one_hour_in_seconds + seconds_offset) - ((now.minute * 60) + now.second)
-        if seconds_until_next_run > one_hour_in_seconds:
-            seconds_until_next_run -= one_hour_in_seconds
+        seconds_until_next_run = _get_time_until_next_run(datetime.datetime.now())
 
         msg = f"🛌 Sleeping for {int(seconds_until_next_run / 60)} minutes"
         logger.info(msg)
         time.sleep(seconds_until_next_run)
-        logger.info("🌄 Waking up, looking for new episodes")
+        # So regarding the test coverage, the flask_test client really helps here since it stops the test once the
+        # request has completed, meaning that this infinite loop won't ruin everything
+        # that being said, this one log message will never be covered, but I don't care
+        logger.info("🌄 Waking up, looking for new episodes")  # pragma: no cover
+
+
+def _get_time_until_next_run(current_time: datetime.datetime) -> int:
+    """Calculate the time until the next run of the podcast loop."""
+    one_hour_in_seconds = 3600
+    seconds_offset = 1200  # 20 minutes
+
+    seconds_until_next_run = (one_hour_in_seconds + seconds_offset) - ((current_time.minute * 60) + current_time.second)
+    if seconds_until_next_run > one_hour_in_seconds:
+        seconds_until_next_run -= one_hour_in_seconds
+
+    return seconds_until_next_run
 
 
 def generate_404() -> Response:

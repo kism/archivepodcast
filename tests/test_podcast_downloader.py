@@ -173,7 +173,6 @@ def test_no_ffmpeg(tmp_path, caplog, monkeypatch):
 
     monkeypatch.setattr("shutil.which", lambda x: None)
 
-    # with pytest.raises(SystemExit):
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader") and pytest.raises(SystemExit):
         ap_downloader.check_ffmpeg()
 
