@@ -146,7 +146,7 @@ class PodcastArchiver:
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
 
-        self.render_static()
+        self.render_filelist()
 
     def _grab_podcast(self, podcast: dict) -> None:
         tree = None
@@ -243,7 +243,7 @@ class PodcastArchiver:
 
         # Render backup of html
         env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
-        templates_to_render = os.listdir(template_directory)
+        templates_to_render = ["guide.html.j2", "index.html.j2"]
 
         logger.debug("Templates to render: %s", templates_to_render)
 
@@ -254,7 +254,9 @@ class PodcastArchiver:
 
             template = env.get_template(template_path)
             rendered_output = template.render(
-                settings=self.app_settings, podcasts=self.podcast_list, about_page=self.about_page
+                settings=self.app_settings,
+                podcasts=self.podcast_list,
+                about_page=self.about_page,
             )
 
             with open(output_path, "w", encoding="utf-8") as root_web_page:
@@ -300,3 +302,40 @@ class PodcastArchiver:
                 logger.info("⛅ Done uploading static pages to s3")
             except Exception:
                 logger.exception("⛅❌ Unhandled s3 error when trying to upload static files")
+
+        self.render_filelist()
+
+
+    def render_filelist(self) -> None:
+        """Function to render filelist, This is separate since it needs to be done after grabbing podcasts."""
+        template_directory = os.path.join("archivepodcast", "templates")
+
+        base_url, file_list = self.get_file_list()
+
+        env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
+
+        template_filename = "filelist.html.j2"
+        output_filename = template_filename.replace(".j2", "")
+
+        template = env.get_template(template_filename)
+
+        output_path = os.path.join(self.web_root, output_filename)
+
+        rendered_output = template.render(
+            settings=self.app_settings,
+            base_url=base_url,
+            file_list=file_list,
+        )
+
+        with open(output_path, "w", encoding="utf-8") as filelist_page:
+            filelist_page.write(rendered_output)
+
+        if self.s3:
+            bucket = self.app_settings["s3"]["bucket"]
+            item_s3_path = output_filename
+            logger.info("⛅ Uploading rendered filelist: %s to s3: %s", output_path, item_s3_path)
+            self.s3.upload_file(
+                output_path,
+                bucket,
+                item_s3_path,
+            )
