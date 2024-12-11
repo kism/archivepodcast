@@ -21,7 +21,6 @@ def test_app_paths(client_live, client_live_s3, tmp_path):
             "/index.html",
             "/guide.html",
             "/robots.txt",
-            "/filelist.html"
             "/static/clipboard.js",
             "/favicon.ico",
             "/static/favicon.ico",
@@ -65,6 +64,7 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
         bp_archivepodcast.home,
         bp_archivepodcast.home_index,
         bp_archivepodcast.home_guide,
+        bp_archivepodcast.filelist,
     ]
 
     for function_path in required_to_be_initialized_http:
