@@ -118,3 +118,7 @@ npm install -g cspell
 npm install -g @cspell/dict-en-au
 cspell link add @cspell/dict-en-au
 ```
+
+## Todo
+
+- Container Registry
