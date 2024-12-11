@@ -77,10 +77,6 @@ class PodcastDownloader:
 
     def __init__(self, app_settings: dict, s3: S3Client | None, web_root: str) -> None:
         """Initialise the PodcastDownloader object."""
-        self.reload_settings(app_settings, s3, web_root)
-
-    def reload_settings(self, app_settings: dict, s3: S3Client | None, web_root: str) -> None:
-        """Load/Reload settings of the app."""
         self.s3 = s3
         self.s3_paths_cache: list = []
         self.local_paths_cache: list = []
@@ -547,7 +543,6 @@ class PodcastDownloader:
             self._append_to_local_paths_cache(file_path)
 
     def _append_to_local_paths_cache(self, file_path: str) -> None:
-
         file_path = os.path.relpath(file_path, self.web_root)
 
         if file_path not in self.local_paths_cache:

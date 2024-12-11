@@ -15,6 +15,7 @@ def test_version():
         pyproject_toml = tomlkit.load(f)
     assert pyproject_toml["project"]["version"] == archivepodcast.__version__
 
+
 def test_wav_generation(tmp_path):
     """Test WAV file generation."""
     wav_path = os.path.join(tmp_path, "test.wav")

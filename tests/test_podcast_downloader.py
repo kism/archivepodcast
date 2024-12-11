@@ -128,7 +128,7 @@ def test_download_podcast_wav_wav_exists(
 
     assert not os.path.exists(tmp_wav_path)
     assert os.path.exists(tmp_mp3_path)
-    assert magic.from_file(tmp_mp3_path, mime=True) == "audio/mpeg" # Check that the file is actually an mp3
+    assert magic.from_file(tmp_mp3_path, mime=True) == "audio/mpeg"  # Check that the file is actually an mp3
 
 
 def test_download_podcast_wav_mp3_exists(

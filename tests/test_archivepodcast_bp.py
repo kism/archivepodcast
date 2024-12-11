@@ -64,7 +64,7 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
         bp_archivepodcast.home,
         bp_archivepodcast.home_index,
         bp_archivepodcast.home_guide,
-        bp_archivepodcast.filelist,
+        bp_archivepodcast.home_filelist,
     ]
 
     for function_path in required_to_be_initialized_http:
@@ -244,19 +244,20 @@ def test_time_until_next_run(time, expected_seconds):
 
     assert _get_time_until_next_run(time) == expected_seconds
 
+
 def test_file_list(client_live, tmp_path):
     """Test that files are listed."""
     from archivepodcast.bp_archivepodcast import ap
 
     assert ap.s3 is None
 
-    content_path=os.path.join("content", "test", "20200101-Test-Episode.mp3")
-    file_path=os.path.join(tmp_path, "web", content_path)
+    content_path = os.path.join("content", "test", "20200101-Test-Episode.mp3")
+    file_path = os.path.join(tmp_path, "web", content_path)
     with open(os.path.join(tmp_path, file_path), "w") as file:
         file.write("test")
 
     ap._render_static()
-    ap.podcast_downloader.reload_settings(app_settings=ap.app_settings, s3=ap.s3, web_root=ap.web_root)
+    ap.podcast_downloader.__init__(app_settings=ap.app_settings, s3=ap.s3, web_root=ap.web_root)
 
     response = client_live.get("/filelist.html")
 
@@ -271,12 +272,12 @@ def test_file_list_s3(client_live_s3):
 
     assert ap.s3 is not None
 
-    content_s3_path="content/test/20200101-Test-Episode.mp3"
+    content_s3_path = "content/test/20200101-Test-Episode.mp3"
 
     ap.s3.put_object(Bucket=ap.app_settings["s3"]["bucket"], Key=content_s3_path, Body=b"test")
 
     ap._render_static()
-    ap.podcast_downloader.reload_settings(app_settings=ap.app_settings, s3=ap.s3, web_root=ap.web_root)
+    ap.podcast_downloader.__init__(app_settings=ap.app_settings, s3=ap.s3, web_root=ap.web_root)
 
     response = client_live_s3.get("/filelist.html")
 

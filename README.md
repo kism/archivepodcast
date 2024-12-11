@@ -121,9 +121,10 @@ cspell link add @cspell/dict-en-au
 
 ## Todo
 
-- Ensure CDN domain ends with a /
-- File list
+- ~~Ensure CDN domain ends with a /~~
+- ~~File list~~
 - Remove all mention of settings
 - Better footer
 - Check settings reload works
 - Run tests in random order
+- Ensure render static on reload

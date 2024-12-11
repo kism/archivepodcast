@@ -187,18 +187,14 @@ def send_content(path: str) -> Response:
 
     return response  # type: ignore[return-value] # The conflicting types here are secretly the same
 
+
 @bp.route("/filelist.html")
-def filelist() -> Response:
+def home_filelist() -> Response:
     """Serve Filelist."""
     if not ap:
         return generate_not_initialized_error()
 
-    file_list = ap.get_file_list()
-
-    if ap.s3 is not None:
-        base_url = current_app.config["app"]["s3"]["cdn_domain"]
-    else:
-        base_url = current_app.config["app"]["inet_path"]
+    base_url, file_list = ap.get_file_list()
 
     return Response(
         render_template("filelist.html.j2", settings=current_app.config["app"], file_list=file_list, base_url=base_url),

@@ -50,9 +50,14 @@ class PodcastArchiver:
         """Return the rss file for a given feed."""
         return self.podcast_rss[feed]
 
-    def get_file_list(self) -> list:
+    def get_file_list(self) -> tuple[str, list]:
         """Return a list of files in the web_root."""
-        return self.podcast_downloader.s3_paths_cache if self.s3 else self.podcast_downloader.local_paths_cache
+        base_url = self.app_settings["s3"]["cdn_domain"] if self.s3 is not None else self.app_settings["inet_path"]
+
+        return (
+            base_url,
+            self.podcast_downloader.s3_paths_cache if self.s3 else self.podcast_downloader.local_paths_cache,
+        )
 
     def make_about_page(self) -> None:
         """Create about page if needed."""
@@ -140,6 +145,8 @@ class PodcastArchiver:
                 self._grab_podcast(podcast)
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
+
+        self.render_static()
 
     def _grab_podcast(self, podcast: dict) -> None:
         tree = None
