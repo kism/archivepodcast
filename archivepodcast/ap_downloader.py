@@ -83,13 +83,20 @@ class PodcastDownloader:
         """Load/Reload settings of the app."""
         self.s3 = s3
         self.s3_paths_cache: list = []
+        self.local_paths_cache: list = []
         self.app_settings = app_settings
         self.web_root = web_root
 
         if self.s3:
-            paths = self.s3.list_objects_v2(Bucket=app_settings["s3"]["bucket"])
-            if paths:
-                self.s3_paths_cache = [path["Key"] for path in paths.get("Contents", [])]
+            s3_paths = self.s3.list_objects_v2(Bucket=app_settings["s3"]["bucket"])
+            if s3_paths:
+                self.s3_paths_cache = [path["Key"] for path in s3_paths.get("Contents", [])]
+        else:
+            self.local_paths_cache = [
+                os.path.relpath(os.path.join(root, file), self.web_root)
+                for root, _, files in os.walk(self.web_root)
+                for file in files
+            ]
 
         logger.trace("PodcastDownloader settings (re)loaded")
 
@@ -316,6 +323,10 @@ class PodcastDownloader:
     def _check_local_path_exists(self, file_path: str) -> bool:
         """Check if the file exists locally."""
         file_exists = os.path.isfile(file_path)
+
+        if file_exists:
+            self._append_to_local_paths_cache(file_path)
+
         if file_exists:
             logger.debug("📁 File: %s exists locally", file_path)
         else:
@@ -460,6 +471,7 @@ class PodcastDownloader:
                 s3_path,
                 ExtraArgs={"ContentType": content_type},
             )
+            self.s3_paths_cache.append(s3_path)
 
             logger.info("💾⛅ s3 upload successful, removing local file")
             os.remove(file_path)
@@ -530,6 +542,16 @@ class PodcastDownloader:
                 logger.info("💾 Success!")
         else:
             logger.error("💾❌ HTTP ERROR: %s", str(req.content))
+
+        if not self.s3:
+            self._append_to_local_paths_cache(file_path)
+
+    def _append_to_local_paths_cache(self, file_path: str) -> None:
+
+        file_path = os.path.relpath(file_path, self.web_root)
+
+        if file_path not in self.local_paths_cache:
+            self.local_paths_cache.append(file_path)
 
     def _cleanup_file_name(self, file_name: str | bytes) -> str:
         """Standardise naming, generate a slug."""

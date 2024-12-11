@@ -52,16 +52,7 @@ class PodcastArchiver:
 
     def get_file_list(self) -> list:
         """Return a list of files in the web_root."""
-        file_list = []
-
-        if self.s3:
-            file_list = self.podcast_downloader.s3_paths_cache
-        else:
-            for root, _, files in os.walk(self.web_root):
-                for file in files:
-                    file_list.append(os.path.relpath(os.path.join(root, file), self.web_root))
-
-        return file_list
+        return self.podcast_downloader.s3_paths_cache if self.s3 else self.podcast_downloader.local_paths_cache
 
     def make_about_page(self) -> None:
         """Create about page if needed."""
