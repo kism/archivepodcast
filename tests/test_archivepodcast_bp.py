@@ -11,8 +11,12 @@ import pytest
 from . import FakeExceptionError
 
 
-def test_app_paths(client_live, client_live_s3, tmp_path):
+def test_app_paths(apa, client_live, client_live_s3, tmp_path):
     """Test that the app launches."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
+
     for client in [client_live, client_live_s3]:
         assert client
 
@@ -95,15 +99,17 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
 
 
 def test_rss_feed(
+    apa,
     app_live,
     tmp_path,
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast.bp_archivepodcast import ap
+    from archivepodcast import bp_archivepodcast
 
-    assert ap is not None
-
+    bp_archivepodcast.ap = apa
+    ap = apa
+    ap.podcast_list[0]["live"] = True
     ap.grab_podcasts()
 
     client_live = app_live.test_client()
@@ -133,17 +139,17 @@ def test_rss_feed(
 
 
 def test_rss_feed_type_error(
+    apa,
     app_live,
     tmp_path,
     monkeypatch,
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast.bp_archivepodcast import ap
+    from archivepodcast import bp_archivepodcast
 
-    assert ap is not None
-
-    ap.grab_podcasts()
+    bp_archivepodcast.ap = apa
+    ap = apa
 
     client_live = app_live.test_client()
 
@@ -157,19 +163,24 @@ def test_rss_feed_type_error(
 
 
 def test_rss_feed_unhandled_error(
+    apa,
     app_live,
     tmp_path,
     monkeypatch,
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast.bp_archivepodcast import ap
+    from archivepodcast import bp_archivepodcast
 
-    assert ap is not None
+    bp_archivepodcast.ap = apa
+    ap = apa
 
     ap.grab_podcasts()
 
     client_live = app_live.test_client()
+
+    with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
+        file.write(pytest.DUMMY_RSS_STR)
 
     def return_key_error(*args, **kwargs) -> None:
         raise KeyError
@@ -185,12 +196,14 @@ def test_rss_feed_unhandled_error(
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-def test_content_s3(apa_aws,
+def test_content_s3(
+    apa_aws,
     app_live,
 ):
     """Test the RSS feed."""
-    from archivepodcast.bp_archivepodcast import ap
-    assert ap is not None
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa_aws
     ap = apa_aws
 
     ap.grab_podcasts()
@@ -205,6 +218,7 @@ def test_content_s3(apa_aws,
 def test_reload_settings(app, apa, tmp_path, get_test_config, caplog):
     """Test the reload settings function."""
     from archivepodcast import bp_archivepodcast
+
     bp_archivepodcast.ap = apa
 
     get_test_config("testing_true_valid.toml")
@@ -218,6 +232,7 @@ def test_reload_settings(app, apa, tmp_path, get_test_config, caplog):
 def test_reload_settings_exception(apa, tmp_path, get_test_config, monkeypatch, caplog):
     """Test the reload settings function."""
     from archivepodcast import bp_archivepodcast
+
     bp_archivepodcast.ap = apa
 
     get_test_config("testing_true_valid.toml")
@@ -250,6 +265,7 @@ def test_time_until_next_run(time, expected_seconds):
 def test_file_list(apa, client_live, tmp_path):
     """Test that files are listed."""
     from archivepodcast import bp_archivepodcast
+
     bp_archivepodcast.ap = apa
     ap = apa
 
@@ -271,6 +287,7 @@ def test_file_list(apa, client_live, tmp_path):
 def test_file_list_s3(apa_aws, client_live_s3):
     """Test that s3 files are listed."""
     from archivepodcast import bp_archivepodcast
+
     bp_archivepodcast.ap = apa_aws
     ap = apa_aws
 
