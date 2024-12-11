@@ -123,7 +123,7 @@ cspell link add @cspell/dict-en-au
 
 - ~~Ensure CDN domain ends with a /~~
 - ~~File list~~
-- Remove all mention of settings
+- ~~Remove all mention of settings~~
 - ~~Better footer~~
 - ~~Check config reload works~~
 - ~~Run tests in random order~~
