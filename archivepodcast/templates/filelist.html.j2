@@ -16,9 +16,32 @@
     <main>
         <h1>{{ settings['web_page']['title']|e }} File List</h1>
         <p>Please don't listen to podcast episodes this way, use the guide on the website to add the feeds to a podcast
-            app. Anything in the /content/_adhoc folder is not in a podcast feed.</p>
-        {% for file in file_list %}<a href="{{ base_url }}{{ file }}">/{{ file }}</a><br>{% endfor %}
+            app. Anything in the /content/_adhoc folder is not in a podcast feed.{% if settings['storage_backend'] ==
+            "s3" %} Files are sent via the CDN.{% endif %}</p>
+        <div id="file_list">
+            {% for file in file_list %}<div><a href="{{ base_url }}{{ file }}">/{{ file }}</a><br></div>
+            {% endfor %}
+        </div>
     </main>
+
+    <script>
+        function sortLinks() {
+            const container = document.getElementById("file_list");
+            const lines = Array.from(container.children);
+
+            // Sort lines based on the text content of the links
+            lines.sort((a, b) => {
+                const textA = a.textContent.trim().toLowerCase();
+                const textB = b.textContent.trim().toLowerCase();
+                return textA.localeCompare(textB);
+            });
+
+            // Append sorted lines back to the container
+            lines.forEach(line => container.appendChild(line));
+        }
+        sortLinks();
+    </script>
+
 </body>
 
 </html>
