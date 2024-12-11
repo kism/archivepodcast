@@ -39,8 +39,7 @@ def initialise_archivepodcast() -> None:
     logger.info("🙋 Podcast Archive running! PID: %s", os.getpid())
 
     # Start thread: podcast backup loop
-    thread = threading.Thread(target=podcast_loop, daemon=True)
-    thread.start()
+    threading.Thread(target=podcast_loop, daemon=True).start()
 
 
 def reload_settings(signal_num: int, handler: FrameType | None = None) -> None:

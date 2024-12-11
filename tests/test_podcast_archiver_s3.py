@@ -47,6 +47,7 @@ def test_render_static(apa_aws, caplog):
     assert "Uploading static pages to s3 in the background" in caplog.text
     assert "Uploading static item" in caplog.text
     assert "Done uploading static pages to s3" in caplog.text
+    assert "Unhandled s3 error" not in caplog.text
 
 
 def test_check_s3_no_files(apa_aws, caplog):
@@ -67,6 +68,7 @@ def test_check_s3_files(apa_aws, caplog):
 
     assert "Checking state of s3 bucket" in caplog.text
     assert "S3 Bucket Contents" in caplog.text
+    assert "Unhandled s3 error" not in caplog.text
 
 
 def test_check_s3_files_problem_files(apa_aws, caplog):
