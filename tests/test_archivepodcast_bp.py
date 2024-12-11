@@ -190,7 +190,6 @@ def test_content_s3(
 ):
     """Test the RSS feed."""
     from archivepodcast.bp_archivepodcast import ap
-
     assert ap is not None
 
     ap.grab_podcasts()
@@ -205,7 +204,6 @@ def test_content_s3(
 def test_reload_settings(app, apa, tmp_path, get_test_config, caplog):
     """Test the reload settings function."""
     from archivepodcast import bp_archivepodcast
-
     bp_archivepodcast.ap = apa
 
     get_test_config("testing_true_valid.toml")
@@ -219,9 +217,7 @@ def test_reload_settings(app, apa, tmp_path, get_test_config, caplog):
 def test_reload_settings_exception(apa, tmp_path, get_test_config, monkeypatch, caplog):
     """Test the reload settings function."""
     from archivepodcast import bp_archivepodcast
-
-    assert bp_archivepodcast.ap is not None
-    assert bp_archivepodcast.ap.s3 is None
+    bp_archivepodcast.ap = apa
 
     get_test_config("testing_true_valid.toml")
 
@@ -250,11 +246,11 @@ def test_time_until_next_run(time, expected_seconds):
     assert _get_time_until_next_run(time) == expected_seconds
 
 
-def test_file_list(client_live, tmp_path):
+def test_file_list(apa, client_live, tmp_path):
     """Test that files are listed."""
-    from archivepodcast.bp_archivepodcast import ap
-
-    assert ap.s3 is None
+    from archivepodcast import bp_archivepodcast
+    bp_archivepodcast.ap = apa
+    ap = apa
 
     content_path = os.path.join("content", "test", "20200101-Test-Episode.mp3")
     file_path = os.path.join(tmp_path, "web", content_path)
@@ -271,11 +267,11 @@ def test_file_list(client_live, tmp_path):
     assert content_path in response.data.decode("utf-8")
 
 
-def test_file_list_s3(client_live_s3):
+def test_file_list_s3(apa_aws, client_live_s3):
     """Test that s3 files are listed."""
-    from archivepodcast.bp_archivepodcast import ap
-
-    assert ap.s3 is not None
+    from archivepodcast import bp_archivepodcast
+    bp_archivepodcast.ap = apa_aws
+    ap = apa_aws
 
     content_s3_path = "content/test/20200101-Test-Episode.mp3"
 
