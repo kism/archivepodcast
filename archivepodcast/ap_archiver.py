@@ -143,6 +143,7 @@ class PodcastArchiver:
         for podcast in self.podcast_list:
             try:
                 self._grab_podcast(podcast)
+                logger.debug("💾 Updating filelist.html")
                 self.render_filelist()
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
@@ -150,7 +151,7 @@ class PodcastArchiver:
     def _grab_podcast(self, podcast: dict) -> None:
         tree = None
         previous_feed = ""
-        logger.info("📜 Processing settings entry: %s", podcast["new_name"])
+        logger.info("📜 Processing podcast to archive: %s", podcast["new_name"])
 
         with contextlib.suppress(KeyError):  # Set the previous feed var if it exists
             previous_feed = self.podcast_rss[podcast["name_one_word"]]
@@ -166,7 +167,7 @@ class PodcastArchiver:
                     encoding="utf-8",
                     xml_declaration=True,
                 )
-                logger.debug("Wrote rss to disk: %s", rss_file_path)
+                logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
 
             else:
                 logger.error("❌ Unable to download podcast, something is wrong")
@@ -238,18 +239,19 @@ class PodcastArchiver:
         for item in static_items_to_copy:
             static_item_copy_path = os.path.join(self.web_root, "static", item)
             os.makedirs(os.path.dirname(static_item_copy_path), exist_ok=True)
+            logger.debug("💾 Copying static item: %s to %s", item, static_item_copy_path)
             shutil.copy(item, static_item_copy_path)
 
         # Render backup of html
         env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
         templates_to_render = ["guide.html.j2", "index.html.j2"]
 
-        logger.debug("Templates to render: %s", templates_to_render)
+        logger.debug("💾 Templates to render: %s", templates_to_render)
 
         for template_path in templates_to_render:
             output_filename = os.path.basename(template_path).replace(".j2", "")
             output_path = os.path.join(self.web_root, output_filename)
-            logger.debug("Rendering template: %s to %s", template_path, output_path)
+            logger.debug("💾 Rendering template: %s to %s", template_path, output_path)
 
             template = env.get_template(template_path)
             rendered_output = template.render(
@@ -262,7 +264,7 @@ class PodcastArchiver:
                 root_web_page.write(rendered_output)
 
         with open(os.path.join(self.web_root, "robots.txt"), "w", encoding="utf-8") as robots_txt:
-            logger.debug("Writing robots.txt")
+            logger.debug("💾 Writing robots.txt")
             robots_txt.write(robots_txt_content)
 
         if self.s3:
@@ -328,7 +330,7 @@ class PodcastArchiver:
             file_list=file_list,
         )
 
-        logger.debug(f"Rendering: {template_filename} to {output_path}")
+        logger.debug(f"💾 Rendering: {template_filename} to {output_path}")
 
         with open(output_path, "w", encoding="utf-8") as filelist_page:
             filelist_page.write(rendered_output)

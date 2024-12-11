@@ -114,13 +114,13 @@ class PodcastDownloader:
 
     def _fetch_podcast_rss(self, url: str) -> requests.Response | None:
         """Fetch the podcast rss from the given URL."""
-        logger.debug(f"Downloading podcast rss: {url}")
+        logger.debug(f"📜 Fetching podcast rss: {url}")
         try:
             response = requests.get(url, timeout=5)
             if response.status_code != HTTPStatus.OK:
                 logger.error("❌ Not a great web response getting RSS: %s", str(response.status_code))
                 return None
-            logger.debug(f"Good response getting podcast RSS: {response.status_code}")
+            logger.debug(f"📄 Success fetching podcast RSS: {response.status_code}")
         except ValueError:
             logger.exception("❌ Real early failure on grabbing the podcast rss, weird")
             response = None

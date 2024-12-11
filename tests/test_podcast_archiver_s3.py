@@ -112,7 +112,7 @@ def test_grab_podcasts_live(
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
         apa_aws.grab_podcasts()
 
-    assert "Processing settings entry: PyTest Podcast [Archive S3]" in caplog.text
+    assert "Processing podcast to archive: PyTest Podcast [Archive S3]" in caplog.text
     assert "Wrote rss to disk:" in caplog.text
     assert "Hosted: http://localhost:5000/rss/test" in caplog.text
 
