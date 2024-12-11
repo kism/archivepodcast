@@ -125,3 +125,5 @@ cspell link add @cspell/dict-en-au
 - File list
 - Remove all mention of settings
 - Better footer
+- Check settings reload works
+- Run tests in random order
