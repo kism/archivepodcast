@@ -44,7 +44,7 @@
     }
   ],
 
-  "ignorePaths": [".gitignore"],
+  "ignorePaths": [".gitignore","instance/*"],
   "useGitignore": true,
   "flagWords": [],
   "ignoreWords": [],

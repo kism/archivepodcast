@@ -27,13 +27,13 @@
         <button class="button" onclick="grab_to_clipboard('{{ podcast['name_one_word']}}')"
             id="{{ podcast['name_one_word']}}_button">Copy url</button>
         {% endfor %}
-        {% if about_page %}
+
         <footer>
             <hr>
-            <a href="/about.html">About</a> | Contact: <a href="mailto:{{ settings['web_page']['contact']|e }}">{{
+            {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a href="/filelist.html">File list</a> | Contact: <a href="mailto:{{ settings['web_page']['contact']|e }}">{{
                 settings['web_page']['contact']|e }}</a>
         </footer>
-        {% endif %}
+
     </main>
 </body>
 

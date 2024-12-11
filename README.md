@@ -118,3 +118,10 @@ npm install -g cspell
 npm install -g @cspell/dict-en-au
 cspell link add @cspell/dict-en-au
 ```
+
+## Todo
+
+- Ensure CDN domain ends with a /
+- File list
+- Remove all mention of settings
+- Better footer

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>
+        {{ settings['web_page']['title']|e }}
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
+    <link rel="stylesheet" href="/static/main.css" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+
+<body>
+    <main>
+        <h1>{{ settings['web_page']['title']|e }} File List</h1>
+        <p>Please don't listen to podcast episodes this way, use the guide on the website to add the feeds to a podcast
+            app. Anything in the /content/_adhoc folder is not in a podcast feed.</p>
+        {% for file in file_list %}<a href="{{ base_url }}{{ file }}">/{{ file }}</a><br>{% endfor %}
+    </main>
+</body>
+
+</html>
