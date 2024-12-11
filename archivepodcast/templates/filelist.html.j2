@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>
-        {{ settings['web_page']['title']|e }}
+        {{ app_config['web_page']['title']|e }}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
@@ -14,9 +14,9 @@
 
 <body>
     <main>
-        <h1>{{ settings['web_page']['title']|e }} File List</h1>
+        <h1>{{ app_config['web_page']['title']|e }} File List</h1>
         <p>Please don't listen to podcast episodes this way, use the guide on the website to add the feeds to a podcast
-            app. Anything in the /content/_adhoc folder is not in a podcast feed.{% if settings['storage_backend'] ==
+            app. Anything in the /content/_adhoc folder is not in a podcast feed.{% if app_config['storage_backend'] ==
             "s3" %} Files are sent via the CDN.{% endif %}</p>
         <div id="file_list">
             {% for file in file_list %}<div><a href="{{ base_url }}{{ file }}">/{{ file }}</a><br></div>

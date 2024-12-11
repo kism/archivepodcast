@@ -21,9 +21,9 @@ def test_init(get_test_config, tmp_path, caplog):
     web_root = os.path.join(tmp_path, "web")
 
     with caplog.at_level(TRACE_LEVEL_NUM):
-        apd = PodcastDownloader(app_settings=config["app"], s3=None, web_root=web_root)
+        apd = PodcastDownloader(app_config=config["app"], s3=None, web_root=web_root)
 
-    assert "PodcastDownloader settings (re)loaded" in caplog.text
+    assert "PodcastDownloader config (re)loaded" in caplog.text
     assert apd.s3_paths_cache == []
 
 

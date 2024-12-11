@@ -32,7 +32,7 @@ jobs:
         run: uv sync --no-group type --no-group lint --no-group dev
 
       - name: Test with pytest
-        run: uv run pytest --cov-report=xml # xml report needed for codecov, other settings from pyproject.toml
+        run: uv run pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1

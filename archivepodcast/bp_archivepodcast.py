@@ -34,7 +34,7 @@ def initialise_archivepodcast() -> None:
         current_app.config["app"], current_app.config["podcast"], current_app.instance_path, current_app.root_path
     )
 
-    signal.signal(signal.SIGHUP, reload_settings)
+    signal.signal(signal.SIGHUP, reload_config)
 
     logger.info("🙋 Podcast Archive running! PID: %s", os.getpid())
 
@@ -42,7 +42,7 @@ def initialise_archivepodcast() -> None:
     threading.Thread(target=podcast_loop, daemon=True).start()
 
 
-def reload_settings(signal_num: int, handler: FrameType | None = None) -> None:
+def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     """Handle Sighup."""
     if not ap:
         logger.error("❌ ArchivePodcast object not initialized")
@@ -59,7 +59,7 @@ def reload_settings(signal_num: int, handler: FrameType | None = None) -> None:
             if key != "flask":
                 current_app.config[key] = value
 
-        ap.load_settings(current_app.config["app"], current_app.config["podcast"])
+        ap.load_config(current_app.config["app"], current_app.config["podcast"])
         ap.grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
 
         logger.info("🙋 Finished adhoc config reload")
@@ -112,7 +112,7 @@ def generate_404() -> Response:
         "error.html.j2",
         error_code=str(returncode),
         error_text="Page not found, how did you even?",
-        settings=current_app.config["app"],
+        app_config=current_app.config["app"],
     )
     return Response(render, status=returncode)
 
@@ -126,7 +126,7 @@ def home() -> Response:
     return Response(
         render_template(
             "index.html.j2",
-            settings=current_app.config["app"],
+            app_config=current_app.config["app"],
             podcasts=current_app.config["podcast"],
             about_page=ap.about_page,
         ),
@@ -145,7 +145,7 @@ def home_index() -> Response:
         return generate_not_initialized_error()
 
     return Response(
-        render_template("index.html.j2", settings=current_app.config["app"], about_page=ap.about_page),
+        render_template("index.html.j2", app_config=current_app.config["app"], about_page=ap.about_page),
         status=HTTPStatus.OK,
     )
 
@@ -157,7 +157,7 @@ def home_guide() -> Response:
         return generate_not_initialized_error()
 
     return Response(
-        render_template("guide.html.j2", settings=current_app.config["app"], about_page=ap.about_page),
+        render_template("guide.html.j2", app_config=current_app.config["app"], about_page=ap.about_page),
         status=HTTPStatus.OK,
     )
 
@@ -195,7 +195,7 @@ def home_filelist() -> Response:
     base_url, file_list = ap.get_file_list()
 
     return Response(
-        render_template("filelist.html.j2", settings=current_app.config["app"], file_list=file_list, base_url=base_url),
+        render_template("filelist.html.j2", app_config=current_app.config["app"], file_list=file_list, base_url=base_url),
         status=HTTPStatus.OK,
     )
 
@@ -217,7 +217,7 @@ def rss(feed: str) -> Response:
                 "error.html.j2",
                 error_code=str(return_code),
                 error_text="The developer probably messed something up",
-                settings=current_app.config["app"],
+                app_config=current_app.config["app"],
             ),
             status=return_code,
         )
@@ -242,7 +242,7 @@ def rss(feed: str) -> Response:
                     "error.html.j2",
                     error_code=str(return_code),
                     error_text="Feed not found, you know you can copy and paste yeah?",
-                    settings=current_app.config["app"],
+                    app_config=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
                 status=return_code,
@@ -255,7 +255,7 @@ def rss(feed: str) -> Response:
                     "error.html.j2",
                     error_code=str(return_code),
                     error_text="Feed not loadable, Internal Server Error",
-                    settings=current_app.config["app"],
+                    app_config=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
                 status=return_code,
@@ -291,7 +291,7 @@ def generate_not_initialized_error() -> Response:
             "error.html.j2",
             error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
             error_text="Archive Podcast not initialized",
-            settings=current_app.config["app"],
+            app_config=current_app.config["app"],
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,
     )

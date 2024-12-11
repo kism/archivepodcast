@@ -94,7 +94,7 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
             assert "ArchivePodcast object not initialized" in caplog.text
 
     with caplog.at_level(logging.ERROR):
-        bp_archivepodcast.reload_settings(signal.SIGHUP)
+        bp_archivepodcast.reload_config(signal.SIGHUP)
         assert "ArchivePodcast object not initialized" in caplog.text
 
 
@@ -215,8 +215,8 @@ def test_content_s3(
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
 
 
-def test_reload_settings(app, apa, tmp_path, get_test_config, caplog):
-    """Test the reload settings function."""
+def test_reload_config(app, apa, tmp_path, get_test_config, caplog):
+    """Test the reload config function."""
     from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
@@ -224,26 +224,26 @@ def test_reload_settings(app, apa, tmp_path, get_test_config, caplog):
     get_test_config("testing_true_valid.toml")
 
     with caplog.at_level(logging.DEBUG), app.app_context():
-        bp_archivepodcast.reload_settings(signal.SIGHUP)
+        bp_archivepodcast.reload_config(signal.SIGHUP)
 
     assert "Finished adhoc config reload" in caplog.text
 
 
-def test_reload_settings_exception(apa, tmp_path, get_test_config, monkeypatch, caplog):
-    """Test the reload settings function."""
+def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, caplog):
+    """Test the reload config function."""
     from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
 
     get_test_config("testing_true_valid.toml")
 
-    def load_settings_exception(*args, **kwargs) -> None:
+    def load_config_exception(*args, **kwargs) -> None:
         raise FakeExceptionError
 
-    monkeypatch.setattr(bp_archivepodcast.ap, "load_settings", load_settings_exception)
+    monkeypatch.setattr(bp_archivepodcast.ap, "load_config", load_config_exception)
 
     with caplog.at_level(logging.ERROR):
-        bp_archivepodcast.reload_settings(signal.SIGHUP)
+        bp_archivepodcast.reload_config(signal.SIGHUP)
 
     assert "Error reloading config" in caplog.text
 
@@ -275,7 +275,7 @@ def test_file_list(apa, client_live, tmp_path):
         file.write("test")
 
     ap._render_static()
-    ap.podcast_downloader.__init__(app_settings=ap.app_settings, s3=ap.s3, web_root=ap.web_root)
+    ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
 
     response = client_live.get("/filelist.html")
 
@@ -293,10 +293,10 @@ def test_file_list_s3(apa_aws, client_live_s3):
 
     content_s3_path = "content/test/20200101-Test-Episode.mp3"
 
-    ap.s3.put_object(Bucket=ap.app_settings["s3"]["bucket"], Key=content_s3_path, Body=b"test")
+    ap.s3.put_object(Bucket=ap.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
 
     ap._render_static()
-    ap.podcast_downloader.__init__(app_settings=ap.app_settings, s3=ap.s3, web_root=ap.web_root)
+    ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
 
     response = client_live_s3.get("/filelist.html")
 

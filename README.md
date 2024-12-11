@@ -36,9 +36,9 @@ uv sync --no-group dev --no-group test --no-group type --no-group lint
 
 If there is no config.toml file in the instance folder, the program will create one with the default values in archivepodcast/config.py.
 
-The default settings will not be enough to start the program as you need to define the podcasts you want to archive.
+The default config will not be enough to start the program as you need to define the podcasts you want to archive.
 
-### App settings 'app'
+### App config 'app'
 
 ```toml
 [app]
@@ -46,7 +46,7 @@ inet_path = "http://localhost:5000/"  # URL of the webapp, must match what users
 storage_backend = "local"             # Choices are "local" or "s3"
 ```
 
-#### App webpage settings 'app.web_page'
+#### App webpage config 'app.web_page'
 
 ```toml
 [app.web_page]
@@ -55,7 +55,7 @@ description = "My Podcast Archive"    # Webpage Description
 contact = "archivepodcast@localhost"  # Contact email for the archive
 ```
 
-#### App s3 settings 'app.s3'
+#### App s3 config 'app.s3'
 
 ```toml
 [app.s3]
@@ -88,7 +88,7 @@ live = true
 contact_email = "archivepodcast@localhost"
 ```
 
-### Logging settings 'logging'
+### Logging config 'logging'
 
 ```toml
 [logging]
@@ -102,7 +102,7 @@ This will run a webapp on <http://localhost:5000> (configurable) that will:
 
 - Run persistently
 - Host RSS feeds of the podcasts
-- If `"live" : true` in settings json is set it will look for and download new episodes every hour
+- If `"live" : true` in config json is set it will look for and download new episodes every hour
 - If you send it a SIGHUP command it will reload the configuration, be sure to check the logs to see if it was successful.
 
 Development: `flask --app archivepodcast run --port 5000`
@@ -124,7 +124,7 @@ cspell link add @cspell/dict-en-au
 - ~~Ensure CDN domain ends with a /~~
 - ~~File list~~
 - Remove all mention of settings
-- Better footer
-- Check settings reload works
-- Run tests in random order
-- Ensure render static on reload
+- ~~Better footer~~
+- ~~Check config reload works~~
+- ~~Run tests in random order~~
+- ~~Ensure render static on reload~~

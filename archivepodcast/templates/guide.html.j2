@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>
-        {{ settings['web_page']['title']|e }}
+        {{ app_config['web_page']['title']|e }}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
@@ -14,7 +14,7 @@
 
 <body>
     <main>
-        <h1>{{ settings['web_page']['title']|e }}</h1>
+        <h1>{{ app_config['web_page']['title']|e }}</h1>
         <p>Guides for some popular podcast applications.</p>
         <h2>Pocket Casts</h2>
         <h4>iOS, Android</h4>
