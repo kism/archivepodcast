@@ -3,7 +3,7 @@
 Same as README_local but:
 
 * In config.toml set storage_backend to 's3'
-* Fill in the s3 settings with what's appropriate for your bucket, make sure your api credential has read + write on the bucket
+* Fill in the s3 config with what's appropriate for your bucket, make sure your api credential has read + write on the bucket
 * Ensure you s3 bucket has a domain. In config.toml set the cdn_domain to that domain
 
 ```toml

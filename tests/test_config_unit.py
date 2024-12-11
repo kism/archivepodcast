@@ -82,7 +82,7 @@ def test_config_dictionary_merge(place_test_config, tmp_path, get_test_config):
         assert isinstance(result_dict["flask"], dict)
 
     # TEST: If an item isn't in the schema, it still ends up around, not that this is a good idea...
-    result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, {"TEST_CONFIG_ENTRY_NOT_IN_SCHEMA": "lmao"})
+    result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, {"TEST_CONFIG_ENTRY_NOT_IN_SCHEMA": "test_not_in_schema"})
     assert result_dict["TEST_CONFIG_ENTRY_NOT_IN_SCHEMA"]
 
 
@@ -118,3 +118,13 @@ def test_load_write_no_config_path(place_test_config, tmp_path):
     # TEST: PermissionsError is raised.
     with pytest.raises(ValueError, match="Config path not set, cannot write config"):
         conf._write_config()
+
+
+def test_config_no_url_forward_slash(place_test_config, tmp_path, caplog: pytest.LogCaptureFixture):
+    """Test config file loading, use tmp_path."""
+    place_test_config("testing_true_no_forward_slash.toml", tmp_path)
+
+    conf = archivepodcast.config.ArchivePodcastConfig(instance_path=tmp_path)
+
+    assert conf["app"]["inet_path"][-1] == "/"
+    assert conf["app"]["s3"]["cdn_domain"][-1] == "/"

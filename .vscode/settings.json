@@ -10,49 +10,14 @@
   // Language config
   "python.languageServer": "Pylance",
   "python.terminal.activateEnvInCurrentTerminal": true,
-  "python.testing.pytestArgs": ["tests"],
-  "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": false,
-
-  "cSpell.words": [
-    "addopts",
-    "adduser",
-    "apuser",
-    "archivepodcast",
-    "Archiver",
-    "boto",
-    "botocore",
-    "BUILDKIT",
-    "choco",
-    "colorama",
-    "conftest",
-    "defusedxml",
-    "errorcode",
-    "errortext",
-    "feedburner",
-    "filterwarnings",
-    "flac",
-    "googleplay",
-    "inet",
-    "kwargs",
-    "lxml",
-    "monkeypatches",
-    "moto",
-    "mycooldomain",
-    "mypy",
-    "noto",
-    "pathlib",
-    "Podbean",
-    "Podder",
-    "pydocstyle",
-    "pydub",
-    "pylance",
-    "rawvoice",
-    "replyall",
-    "testpaths",
-    "unphased"
+  "python.testing.pytestArgs": [
+    "tests"
   ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+
+
   "livePreview.serverRoot": "htmlcov/",
   "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3",
-  "python.analysis.enablePytestSupport": false
+  "python.analysis.enablePytestSupport": false,
 }

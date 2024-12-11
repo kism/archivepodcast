@@ -154,9 +154,9 @@ def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
             )
         else:
             in_logger.setLevel(log_level)
-            logger.trace("Set log level: %s", log_level)
-            logger.debug("Set log level: %s", log_level)
-            logger.info("Set log level: %s", log_level)
+            logger.info("Showing log level: INFO and above")
+            logger.debug("Showing log level: DEBUG")
+            logger.trace("Showing log level: TRACE")
     else:
         in_logger.setLevel(log_level)
 

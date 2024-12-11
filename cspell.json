@@ -1,0 +1,54 @@
+{
+  "version": "0.2",
+  "cache": {
+    "useCache": true,
+    "cacheLocation": "./.cspell/.cspellcache",
+    "cacheStrategy": "content"
+  },
+  "dictionaries": [
+    "en-gb",
+    "en-AU",
+    "python",
+    "html",
+    "custom-jinja",
+    "custom-python",
+    "custom-fonts",
+    "custom-archivepodcast",
+    "custom-readme"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "custom-python",
+      "path": "./.cspell/custom-python.txt",
+      "addWords": true
+    },
+    {
+      "name": "custom-readme",
+      "path": "./.cspell/custom-readme.txt",
+      "addWords": true
+    },
+    {
+      "name": "custom-jinja",
+      "path": "./.cspell/custom-jinja.txt",
+      "addWords": true
+    },
+    {
+      "name": "custom-archivepodcast",
+      "path": "./.cspell/custom-archivepodcast.txt",
+      "addWords": true
+    },
+    {
+      "name": "custom-fonts",
+      "path": "./.cspell/custom-fonts.txt",
+      "addWords": true
+    }
+  ],
+
+  "ignorePaths": [".gitignore","instance/*"],
+  "useGitignore": true,
+  "flagWords": [],
+  "ignoreWords": [],
+  "features": {
+    "weighted-suggestions": true
+  }
+}

@@ -11,8 +11,12 @@ import pytest
 from . import FakeExceptionError
 
 
-def test_app_paths(client_live, client_live_s3, tmp_path):
+def test_app_paths(apa, client_live, client_live_s3, tmp_path):
     """Test that the app launches."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
+
     for client in [client_live, client_live_s3]:
         assert client
 
@@ -52,7 +56,7 @@ def test_app_paths(client_live, client_live_s3, tmp_path):
         assert response.status_code == HTTPStatus.OK
 
 
-def test_app_paths_not_initialized(tmp_path, get_test_config, caplog):
+def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplog):
     """Test the RSS feed."""
     from archivepodcast import bp_archivepodcast
 
@@ -64,6 +68,7 @@ def test_app_paths_not_initialized(tmp_path, get_test_config, caplog):
         bp_archivepodcast.home,
         bp_archivepodcast.home_index,
         bp_archivepodcast.home_guide,
+        bp_archivepodcast.home_filelist,
     ]
 
     for function_path in required_to_be_initialized_http:
@@ -89,20 +94,22 @@ def test_app_paths_not_initialized(tmp_path, get_test_config, caplog):
             assert "ArchivePodcast object not initialized" in caplog.text
 
     with caplog.at_level(logging.ERROR):
-        bp_archivepodcast.reload_settings(signal.SIGHUP)
+        bp_archivepodcast.reload_config(signal.SIGHUP)
         assert "ArchivePodcast object not initialized" in caplog.text
 
 
 def test_rss_feed(
+    apa,
     app_live,
     tmp_path,
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast.bp_archivepodcast import ap
+    from archivepodcast import bp_archivepodcast
 
-    assert ap is not None
-
+    bp_archivepodcast.ap = apa
+    ap = apa
+    ap.podcast_list[0]["live"] = True
     ap.grab_podcasts()
 
     client_live = app_live.test_client()
@@ -132,17 +139,17 @@ def test_rss_feed(
 
 
 def test_rss_feed_type_error(
+    apa,
     app_live,
     tmp_path,
     monkeypatch,
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast.bp_archivepodcast import ap
+    from archivepodcast import bp_archivepodcast
 
-    assert ap is not None
-
-    ap.grab_podcasts()
+    bp_archivepodcast.ap = apa
+    ap = apa
 
     client_live = app_live.test_client()
 
@@ -156,19 +163,24 @@ def test_rss_feed_type_error(
 
 
 def test_rss_feed_unhandled_error(
+    apa,
     app_live,
     tmp_path,
     monkeypatch,
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast.bp_archivepodcast import ap
+    from archivepodcast import bp_archivepodcast
 
-    assert ap is not None
+    bp_archivepodcast.ap = apa
+    ap = apa
 
     ap.grab_podcasts()
 
     client_live = app_live.test_client()
+
+    with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
+        file.write(pytest.DUMMY_RSS_STR)
 
     def return_key_error(*args, **kwargs) -> None:
         raise KeyError
@@ -185,15 +197,17 @@ def test_rss_feed_unhandled_error(
 
 
 def test_content_s3(
+    apa_aws,
     app_live,
 ):
     """Test the RSS feed."""
-    from archivepodcast.bp_archivepodcast import ap
+    from archivepodcast import bp_archivepodcast
 
-    assert ap is not None
+    bp_archivepodcast.ap = apa_aws
+    ap = apa_aws
 
     ap.grab_podcasts()
-    ap.app_settings["storage_backend"] = "s3"
+    app_live.config["app"]["storage_backend"] = "s3"
 
     client_live = app_live.test_client()
 
@@ -201,31 +215,35 @@ def test_content_s3(
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
 
 
-def test_reload_settings(tmp_path, get_test_config, caplog):
-    """Test the reload settings function."""
+def test_reload_config(app, apa, tmp_path, get_test_config, caplog):
+    """Test the reload config function."""
     from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
 
     get_test_config("testing_true_valid.toml")
 
-    with caplog.at_level(logging.DEBUG):
-        bp_archivepodcast.reload_settings(signal.SIGHUP)
+    with caplog.at_level(logging.DEBUG), app.app_context():
+        bp_archivepodcast.reload_config(signal.SIGHUP)
 
     assert "Finished adhoc config reload" in caplog.text
 
 
-def test_reload_settings_exception(tmp_path, get_test_config, monkeypatch, caplog):
-    """Test the reload settings function."""
+def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, caplog):
+    """Test the reload config function."""
     from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
 
     get_test_config("testing_true_valid.toml")
 
-    def load_settings_exception(*args, **kwargs) -> None:
+    def load_config_exception(*args, **kwargs) -> None:
         raise FakeExceptionError
 
-    monkeypatch.setattr(bp_archivepodcast.ap, "load_settings", load_settings_exception)
+    monkeypatch.setattr(bp_archivepodcast.ap, "load_config", load_config_exception)
 
     with caplog.at_level(logging.ERROR):
-        bp_archivepodcast.reload_settings(signal.SIGHUP)
+        bp_archivepodcast.reload_config(signal.SIGHUP)
 
     assert "Error reloading config" in caplog.text
 
@@ -242,3 +260,46 @@ def test_time_until_next_run(time, expected_seconds):
     from archivepodcast.bp_archivepodcast import _get_time_until_next_run
 
     assert _get_time_until_next_run(time) == expected_seconds
+
+
+def test_file_list(apa, client_live, tmp_path):
+    """Test that files are listed."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
+    ap = apa
+
+    content_path = os.path.join("content", "test", "20200101-Test-Episode.mp3")
+    file_path = os.path.join(tmp_path, "web", content_path)
+    with open(os.path.join(tmp_path, file_path), "w") as file:
+        file.write("test")
+
+    ap._render_static()
+    ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
+
+    response = client_live.get("/filelist.html")
+
+    assert response.status_code == HTTPStatus.OK
+    assert "/index.html" in response.data.decode("utf-8")
+    assert content_path in response.data.decode("utf-8")
+
+
+def test_file_list_s3(apa_aws, client_live_s3):
+    """Test that s3 files are listed."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa_aws
+    ap = apa_aws
+
+    content_s3_path = "content/test/20200101-Test-Episode.mp3"
+
+    ap.s3.put_object(Bucket=ap.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
+
+    ap._render_static()
+    ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
+
+    response = client_live_s3.get("/filelist.html")
+
+    assert response.status_code == HTTPStatus.OK
+    assert "/index.html" in response.data.decode("utf-8")
+    assert content_s3_path in response.data.decode("utf-8")

@@ -22,7 +22,7 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3):
 
     with caplog.at_level(logging.DEBUG):
         PodcastArchiver(
-            app_settings=config["app"],
+            app_config=config["app"],
             podcast_list=config["podcast"],
             instance_path=tmp_path,
             root_path=FLASK_ROOT_PATH,
@@ -37,7 +37,7 @@ def test_render_static(apa_aws, caplog):
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_static"):
         apa_aws._render_static()
 
-    list_files = apa_aws.s3.list_objects_v2(Bucket=apa_aws.app_settings["s3"]["bucket"])
+    list_files = apa_aws.s3.list_objects_v2(Bucket=apa_aws.app_config["s3"]["bucket"])
     list_files = [path["Key"] for path in list_files.get("Contents", [])]
 
     assert "index.html" in list_files
@@ -47,6 +47,7 @@ def test_render_static(apa_aws, caplog):
     assert "Uploading static pages to s3 in the background" in caplog.text
     assert "Uploading static item" in caplog.text
     assert "Done uploading static pages to s3" in caplog.text
+    assert "Unhandled s3 error" not in caplog.text
 
 
 def test_check_s3_no_files(apa_aws, caplog):
@@ -67,19 +68,20 @@ def test_check_s3_files(apa_aws, caplog):
 
     assert "Checking state of s3 bucket" in caplog.text
     assert "S3 Bucket Contents" in caplog.text
+    assert "Unhandled s3 error" not in caplog.text
 
 
 def test_check_s3_files_problem_files(apa_aws, caplog):
     """Test that problem s3 paths are removed."""
     apa_aws.s3.put_object(
-        Bucket=apa_aws.app_settings["s3"]["bucket"],
+        Bucket=apa_aws.app_config["s3"]["bucket"],
         Key="/index.html",
         Body="TEST leading slash",
         ContentType="text/html",
     )
 
     apa_aws.s3.put_object(
-        Bucket=apa_aws.app_settings["s3"]["bucket"],
+        Bucket=apa_aws.app_config["s3"]["bucket"],
         Key="content/test//episode.mp3",
         Body="TEST double slash",
         ContentType="text/html",
@@ -91,7 +93,7 @@ def test_check_s3_files_problem_files(apa_aws, caplog):
     assert "S3 Path starts with a /, this is not expected: /index.html DELETING" in caplog.text
     assert "S3 Path contains a //, this is not expected: content/test//episode.mp3 DELETING" in caplog.text
 
-    s3_object_list = apa_aws.s3.list_objects_v2(Bucket=apa_aws.app_settings["s3"]["bucket"])
+    s3_object_list = apa_aws.s3.list_objects_v2(Bucket=apa_aws.app_config["s3"]["bucket"])
     s3_object_list = [path["Key"] for path in s3_object_list.get("Contents", [])]
 
     assert s3_object_list == []
@@ -112,7 +114,7 @@ def test_grab_podcasts_live(
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
         apa_aws.grab_podcasts()
 
-    assert "Processing settings entry: PyTest Podcast [Archive S3]" in caplog.text
+    assert "Processing podcast to archive: PyTest Podcast [Archive S3]" in caplog.text
     assert "Wrote rss to disk:" in caplog.text
     assert "Hosted: http://localhost:5000/rss/test" in caplog.text
 
@@ -164,12 +166,12 @@ def test_load_s3_api_url(apa, monkeypatch, caplog):
 
     test_url = "https://awsurl.internal/"
 
-    apa_no_mocked_aws.app_settings["storage_backend"] = "s3"
-    apa_no_mocked_aws.app_settings["s3"] = {}
-    apa_no_mocked_aws.app_settings["s3"]["api_url"] = test_url
-    apa_no_mocked_aws.app_settings["s3"]["access_key_id"] = "abc"
-    apa_no_mocked_aws.app_settings["s3"]["secret_access_key"] = "xyz"
-    apa_no_mocked_aws.app_settings["s3"]["bucket"] = "test"
+    apa_no_mocked_aws.app_config["storage_backend"] = "s3"
+    apa_no_mocked_aws.app_config["s3"] = {}
+    apa_no_mocked_aws.app_config["s3"]["api_url"] = test_url
+    apa_no_mocked_aws.app_config["s3"]["access_key_id"] = "abc"
+    apa_no_mocked_aws.app_config["s3"]["secret_access_key"] = "xyz"
+    apa_no_mocked_aws.app_config["s3"]["bucket"] = "test"
 
     def check_url_set(_, endpoint_url: str, *args, **kwargs) -> None:
         assert endpoint_url == test_url

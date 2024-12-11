@@ -2,6 +2,9 @@
 inet_path = "http://localhost:5000/"
 storage_backend = "local"
 
+[app.web_page]
+title = "Pytest Podcast Archive [Local]"
+
 [[podcast]]
 url = "https://pytest.internal/rss/test_source"
 new_name = "PyTest Podcast [Archive]"

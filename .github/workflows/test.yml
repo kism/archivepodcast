@@ -20,10 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup FFmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3
-        id: setup-ffmpeg
-        with:
-          ffmpeg-version: release
+        run: "sudo apt-get install -y ffmpeg" # Use this instead of the action since it's faster
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
@@ -35,7 +32,7 @@ jobs:
         run: uv sync --no-group type --no-group lint --no-group dev
 
       - name: Test with pytest
-        run: uv run pytest --cov-report=xml # xml report needed for codecov, other settings from pyproject.toml
+        run: uv run pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1

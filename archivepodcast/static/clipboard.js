@@ -1,7 +1,7 @@
-function grabtoclipboard(buttonname) {
-  console.log("User clicked: " + buttonname);
+function grab_to_clipboard(button_name) {
+  console.log("User clicked: " + button_name);
   // Get the text field
-  var copyText = document.getElementById(buttonname);
+  var copyText = document.getElementById(button_name);
 
   // Select the text field
   copyText.select();
@@ -13,10 +13,10 @@ function grabtoclipboard(buttonname) {
   // Alert the copied text
   console.log("Copied the text: " + copyText.value + " to clipboard");
 
-  document.getElementById(buttonname + "_button").innerHTML = "Copied!";
-  setTimeout(resettext, 2000, buttonname);
+  document.getElementById(button_name + "_button").innerHTML = "Copied!";
+  setTimeout(reset_text, 2000, button_name);
 }
 
-function resettext(buttonname) {
-  document.getElementById(buttonname + "_button").innerHTML = "Copy URL";
+function reset_text(button_name) {
+  document.getElementById(button_name + "_button").innerHTML = "Copy URL";
 }

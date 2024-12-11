@@ -1,26 +1,22 @@
-.commit
-
-# Stop it coming back
+# This app
+# Stop poetry coming back
 poetry.lock
 
-output/*
-rss/*
-content/*
+# Just incase
 *.mp3
 *.jpg
-*.psd
-*.xml
-/*.json
-/*.json*
-/*.html
-*.log
-.DS_Store
-## PYTHON
+*.jpeg
+*.png
+*.wav
+
+# CSpell
+.cspell/.cspellcache
 
 # Javascript, if we want to use eslint/scss-lintbiome for checking the html/css/javascript
 node_modules
 
 # Python
+# https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -117,11 +113,19 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
+# UV
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#uv.lock
+
 # poetry
-#   Similar to Pipfile.lock, it is generally recommended to include #   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
 #   commonly ignored for libraries.
 #   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#
+#poetry.lock
+
 # pdm
 #   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
 #pdm.lock

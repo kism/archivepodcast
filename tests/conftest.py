@@ -191,7 +191,7 @@ def apa(tmp_path, get_test_config, caplog, mock_threads_none):
     config = get_test_config(config_file)
 
     return PodcastArchiver(
-        app_settings=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
+        app_config=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
     )
 
 
@@ -215,7 +215,7 @@ def apa_aws(tmp_path, get_test_config, no_render_static, caplog, s3):
     from archivepodcast.ap_archiver import PodcastArchiver
 
     return PodcastArchiver(
-        app_settings=config["app"],
+        app_config=config["app"],
         podcast_list=config["podcast"],
         instance_path=tmp_path,
         root_path=FLASK_ROOT_PATH,
@@ -235,7 +235,7 @@ def apd(apa, get_test_config, caplog):
 
     web_root = apa.web_root
 
-    return PodcastDownloader(app_settings=config["app"], s3=None, web_root=web_root)
+    return PodcastDownloader(app_config=config["app"], s3=None, web_root=web_root)
 
 
 @pytest.fixture
@@ -246,7 +246,7 @@ def apd_aws(apa_aws, get_test_config, caplog):
 
     web_root = apa_aws.web_root
 
-    return PodcastDownloader(app_settings=config["app"], s3=apa_aws.s3, web_root=web_root)
+    return PodcastDownloader(app_config=config["app"], s3=apa_aws.s3, web_root=web_root)
 
 
 # endregion

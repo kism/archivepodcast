@@ -18,7 +18,7 @@ chown -R apuser:apuser /opt/archivepodcast
 
 ## Create Config
 
-Run the program once manually to create the default config.toml and then fill it in. You can ignore the cdn address and s3 settings.
+Run the program once manually to create the default config.toml and then fill it in. You can ignore the cdn address and s3 config items.
 
 ```bash
 cd /opt/archivepodcast

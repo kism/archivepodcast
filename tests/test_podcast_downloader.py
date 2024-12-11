@@ -4,6 +4,7 @@ import logging
 import os
 from http import HTTPStatus
 
+import magic
 import pytest
 
 from archivepodcast.ap_downloader import PodcastDownloader
@@ -20,9 +21,9 @@ def test_init(get_test_config, tmp_path, caplog):
     web_root = os.path.join(tmp_path, "web")
 
     with caplog.at_level(TRACE_LEVEL_NUM):
-        apd = PodcastDownloader(app_settings=config["app"], s3=None, web_root=web_root)
+        apd = PodcastDownloader(app_config=config["app"], s3=None, web_root=web_root)
 
-    assert "PodcastDownloader settings (re)loaded" in caplog.text
+    assert "PodcastDownloader config (re)loaded" in caplog.text
     assert apd.s3_paths_cache == []
 
 
@@ -58,7 +59,7 @@ def test_download_podcast(
     assert "Converting episode" not in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
-    # assert "lmao" in caplog.text
+    # assert "str" in caplog.text
 
 
 def test_download_podcast_wav(
@@ -105,7 +106,9 @@ def test_download_podcast_wav_wav_exists(
 
     os.makedirs(test_podcast_content_dir, exist_ok=True)
 
-    tmp_wav_path = os.path.join(test_podcast_content_dir, "20200101-Test-Episode.wav")
+    episode_file_name = "20200101-Test-Episode"
+    tmp_wav_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.wav")
+    tmp_mp3_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.mp3")
 
     with open(tmp_wav_path, "wb") as f:
         f.write(pytest.TEST_WAV_FILE)
@@ -124,6 +127,8 @@ def test_download_podcast_wav_wav_exists(
     assert "Download Failed" not in caplog.text
 
     assert not os.path.exists(tmp_wav_path)
+    assert os.path.exists(tmp_mp3_path)
+    assert magic.from_file(tmp_mp3_path, mime=True) == "audio/mpeg"  # Check that the file is actually an mp3
 
 
 def test_download_podcast_wav_mp3_exists(
@@ -232,16 +237,16 @@ def test_download_to_local_failure(apd, requests_mock, caplog):
 @pytest.mark.parametrize(
     ("file_name", "expected_slug"),
     [
-        ("lmao", "lmao"),
-        (b"lmao", "lmao"),
-        ("lmao ", "lmao"),
-        ("lmao%", "lmao"),
-        ("lmao%lmao", "lmao-lmao"),
-        (" lmao", "lmao"),
-        ("lmao - lmao", "lmao---lmao"),
-        ("lmao_", "lmao"),
-        ("lmao***", "lmao"),
-        ("lmao✌️", "lmao"),
+        ("str", "str"),
+        (b"str", "str"),
+        ("str ", "str"),
+        ("str%", "str"),
+        ("str%str", "str-str"),
+        (" str", "str"),
+        ("str - str", "str---str"),
+        ("str_", "str"),
+        ("str***", "str"),
+        ("str✌️", "str"),
     ],
 )
 def test_filename_cleanup(apd, file_name, expected_slug):

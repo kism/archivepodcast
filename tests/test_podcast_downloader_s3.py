@@ -22,9 +22,9 @@ def test_init(s3, get_test_config, tmp_path, caplog):
     web_root = os.path.join(tmp_path, "web")
 
     with caplog.at_level(TRACE_LEVEL_NUM):
-        pd = PodcastDownloader(app_settings=config["app"], s3=s3, web_root=web_root)
+        pd = PodcastDownloader(app_config=config["app"], s3=s3, web_root=web_root)
 
-    assert "PodcastDownloader settings (re)loaded" in caplog.text
+    assert "PodcastDownloader config (re)loaded" in caplog.text
     assert pd.s3_paths_cache == []
 
 
@@ -54,7 +54,7 @@ def test_download_podcast(
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
 
-    s3_object_list = apd_aws.s3.list_objects_v2(Bucket=apd_aws.app_settings["s3"]["bucket"])
+    s3_object_list = apd_aws.s3.list_objects_v2(Bucket=apd_aws.app_config["s3"]["bucket"])
     s3_object_list = [path["Key"] for path in s3_object_list.get("Contents", [])]
 
     assert "content/test/20200101-Test-Episode.jpg" in s3_object_list
@@ -87,7 +87,7 @@ def test_download_podcast_wav(
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
 
-    s3_object_list = apd_aws.s3.list_objects_v2(Bucket=apd_aws.app_settings["s3"]["bucket"])
+    s3_object_list = apd_aws.s3.list_objects_v2(Bucket=apd_aws.app_config["s3"]["bucket"])
     s3_object_list = [path["Key"] for path in s3_object_list.get("Contents", [])]
 
     assert "content/test/20200101-Test-Episode.jpg" in s3_object_list
@@ -128,7 +128,7 @@ def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
 def test_check_path_exists_s3(apd_aws, caplog):
     """Test check path exists."""
     apd_aws.s3.put_object(  # Bucket is empty before this
-        Bucket=apd_aws.app_settings["s3"]["bucket"],
+        Bucket=apd_aws.app_config["s3"]["bucket"],
         Key="content/test",
         Body="Test File Found",
         ContentType="text/html",

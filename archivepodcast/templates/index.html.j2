@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>
-        {{ settings['web_page']['title']|e }}
+        {{ app_config['web_page']['title']|e }}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
@@ -15,25 +15,25 @@
 
 <body>
     <main>
-        <h1>{{ settings['web_page']['title']|e }}</h1>
-        <h3>{{ settings['web_page']['description']|e }}</h3>
+        <h1>{{ app_config['web_page']['title']|e }}</h1>
+        <h3>{{ app_config['web_page']['description']|e }}</h3>
         <h3>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
                 guide</a>.</p>
         {% for podcast in podcasts -%}
         <h2>{{ podcast['new_name']|e }}</h3>
         <h3>{{ podcast['description']|e }}</h3>
-        <input type="text" readonly="readonly" value="{{settings['inet_path']}}rss/{{ podcast['name_one_word']}}"
+        <input type="text" readonly="readonly" value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
             id="{{ podcast['name_one_word']}}">
-        <button class="button" onclick="grabtoclipboard('{{ podcast['name_one_word']}}')"
+        <button class="button" onclick="grab_to_clipboard('{{ podcast['name_one_word']}}')"
             id="{{ podcast['name_one_word']}}_button">Copy url</button>
         {% endfor %}
-        {% if about_page %}
+
         <footer>
             <hr>
-            <a href="/about.html">About</a> | Contact: <a href="mailto:{{ settings['web_page']['contact']|e }}">{{
-                settings['web_page']['contact']|e }}</a>
+            {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a href="/filelist.html">File list</a> | Contact: <a href="mailto:{{ app_config['web_page']['contact']|e }}">{{
+                app_config['web_page']['contact']|e }}</a>
         </footer>
-        {% endif %}
+
     </main>
 </body>
 
