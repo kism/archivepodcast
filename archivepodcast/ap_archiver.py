@@ -143,10 +143,9 @@ class PodcastArchiver:
         for podcast in self.podcast_list:
             try:
                 self._grab_podcast(podcast)
+                self.render_filelist()
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
-
-        self.render_filelist()
 
     def _grab_podcast(self, podcast: dict) -> None:
         tree = None
@@ -303,11 +302,13 @@ class PodcastArchiver:
             except Exception:
                 logger.exception("⛅❌ Unhandled s3 error when trying to upload static files")
 
-        self.render_filelist()
-
+        self.render_filelist()  # Separate
 
     def render_filelist(self) -> None:
-        """Function to render filelist, This is separate since it needs to be done after grabbing podcasts."""
+        """Function to render filelist.html.
+
+        This is separate from render_static() since it needs to be done after grabbing podcasts.
+        """
         template_directory = os.path.join("archivepodcast", "templates")
 
         base_url, file_list = self.get_file_list()
@@ -327,13 +328,15 @@ class PodcastArchiver:
             file_list=file_list,
         )
 
+        logger.debug(f"Rendering: {template_filename} to {output_path}")
+
         with open(output_path, "w", encoding="utf-8") as filelist_page:
             filelist_page.write(rendered_output)
 
         if self.s3:
             bucket = self.app_settings["s3"]["bucket"]
             item_s3_path = output_filename
-            logger.info("⛅ Uploading rendered filelist: %s to s3: %s", output_path, item_s3_path)
+            logger.debug("⛅ Uploading rendered filelist: %s to s3: %s", output_path, item_s3_path)
             self.s3.upload_file(
                 output_path,
                 bucket,
