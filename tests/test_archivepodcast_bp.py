@@ -185,15 +185,16 @@ def test_rss_feed_unhandled_error(
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-def test_content_s3(
+def test_content_s3(apa_aws,
     app_live,
 ):
     """Test the RSS feed."""
     from archivepodcast.bp_archivepodcast import ap
     assert ap is not None
+    ap = apa_aws
 
     ap.grab_podcasts()
-    ap.app_settings["storage_backend"] = "s3"
+    app_live.config["app"]["storage_backend"] = "s3"
 
     client_live = app_live.test_client()
 
