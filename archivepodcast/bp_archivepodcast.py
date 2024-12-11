@@ -195,7 +195,12 @@ def home_filelist() -> Response:
     base_url, file_list = ap.get_file_list()
 
     return Response(
-        render_template("filelist.html.j2", app_config=current_app.config["app"], file_list=file_list, base_url=base_url),
+        render_template(
+            "filelist.html.j2",
+            app_config=current_app.config["app"],
+            file_list=file_list,
+            base_url=base_url,
+        ),
         status=HTTPStatus.OK,
     )
 
