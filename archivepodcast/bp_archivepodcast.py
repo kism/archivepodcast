@@ -36,7 +36,6 @@ def initialise_archivepodcast() -> None:
 
     signal.signal(signal.SIGHUP, reload_settings)
 
-    logger.info("🙋 Starting Podcast Archive strong, unfazed.")
     logger.info("🙋 Podcast Archive running! PID: %s", os.getpid())
 
     # Start thread: podcast backup loop
