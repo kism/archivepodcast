@@ -118,3 +118,13 @@ def test_load_write_no_config_path(place_test_config, tmp_path):
     # TEST: PermissionsError is raised.
     with pytest.raises(ValueError, match="Config path not set, cannot write config"):
         conf._write_config()
+
+
+def test_config_no_url_forward_slash(place_test_config, tmp_path, caplog: pytest.LogCaptureFixture):
+    """Test config file loading, use tmp_path."""
+    place_test_config("testing_true_no_forward_slash.toml", tmp_path)
+
+    conf = archivepodcast.config.ArchivePodcastConfig(instance_path=tmp_path)
+
+    assert conf["app"]["inet_path"][-1] == "/"
+    assert conf["app"]["s3"]["cdn_domain"][-1] == "/"

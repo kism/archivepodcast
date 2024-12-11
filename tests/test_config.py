@@ -40,3 +40,4 @@ def test_config_file_creation(tmp_path, caplog: pytest.LogCaptureFixture):
     assert os.path.exists(os.path.join(tmp_path, "config.toml"))
     assert "Podcast url is empty" in str(exc_info.value)
     assert "Podcast name_one_word is empty" in str(exc_info.value)
+
