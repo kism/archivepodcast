@@ -202,13 +202,15 @@ def test_content_s3(
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
 
 
-def test_reload_settings(tmp_path, get_test_config, caplog):
+def test_reload_settings(app, apa, tmp_path, get_test_config, caplog):
     """Test the reload settings function."""
     from archivepodcast import bp_archivepodcast
 
+    bp_archivepodcast.ap = apa
+
     get_test_config("testing_true_valid.toml")
 
-    with caplog.at_level(logging.DEBUG):
+    with caplog.at_level(logging.DEBUG), app.app_context():
         bp_archivepodcast.reload_settings(signal.SIGHUP)
 
     assert "Finished adhoc config reload" in caplog.text
@@ -217,6 +219,9 @@ def test_reload_settings(tmp_path, get_test_config, caplog):
 def test_reload_settings_exception(apa, tmp_path, get_test_config, monkeypatch, caplog):
     """Test the reload settings function."""
     from archivepodcast import bp_archivepodcast
+
+    assert bp_archivepodcast.ap is not None
+    assert bp_archivepodcast.ap.s3 is None
 
     get_test_config("testing_true_valid.toml")
 
