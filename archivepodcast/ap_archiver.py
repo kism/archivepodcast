@@ -179,10 +179,13 @@ class PodcastArchiver:
 
         # Serving a podcast that we can't currently download?, load it from file
         if tree is None:
-            logger.info("📄 Loading rss from file: %s", rss_file_path)
-            try:
-                tree = etree.parse(rss_file_path)
-            except (FileNotFoundError, OSError):
+            logger.warning("📄 No response, loading rss from file: %s", rss_file_path)
+            if os.path.exists(rss_file_path):
+                try:
+                    tree = etree.parse(rss_file_path)
+                except etree.XMLSyntaxError:
+                    logger.exception("❌ Error parsing rss file: %s", rss_file_path)
+            else:
                 logger.exception("❌ Cannot find rss feed file: %s", rss_file_path)
 
         if tree is not None:
@@ -221,7 +224,7 @@ class PodcastArchiver:
                     logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
 
         else:
-            logger.error("❌ Unable to host podcast, something is wrong")
+            logger.error(f"❌ Unable to host podcast: {podcast['name_one_word']}, something is wrong")
 
     def render_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
