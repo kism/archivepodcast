@@ -118,7 +118,8 @@ class PodcastDownloader:
         try:
             response = requests.get(url, timeout=5)
             if response.status_code != HTTPStatus.OK:
-                logger.error("❌ Not a great web response getting RSS: %s", str(response.status_code))
+                msg = f"❌ Not a great web response getting RSS: {response.status_code}\n{response.content.decode()}"
+                logger.error(msg)
                 return None
             logger.debug(f"📄 Success fetching podcast RSS: {response.status_code}")
         except ValueError:
