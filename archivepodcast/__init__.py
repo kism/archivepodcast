@@ -46,13 +46,12 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
 
     app.app_context().push()  # God knows what does this does but it fixes everything
 
-    app.logger.info("🙋 Starting Web Server")
-    app.logger.info("🙋 ArchivePodcast Version: %s", __version__)
-
     @app.errorhandler(404)
     def invalid_route(e: str) -> Response:
         """404 Handler."""
         app.logger.debug(f"Error handler: invalid_route: {e}")
         return bp_archivepodcast.generate_404()
 
+    app.logger.info("🙋 Starting Web Server")
+    app.logger.info("🙋 ArchivePodcast Version: %s", __version__)
     return app
