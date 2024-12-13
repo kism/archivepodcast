@@ -128,7 +128,7 @@ class PodcastArchiver:
         if "Contents" in response:
             for obj in response["Contents"]:
                 contents_str += obj["Key"] + "\n"
-                if obj["Size"] == 0:
+                if obj["Size"] == 0: # This is for application/x-directory files, but no files should be empty
                     logger.warning("⛅ S3 Object is empty: %s DELETING", obj["Key"])
                     self.s3.delete_object(Bucket=self.app_config["s3"]["bucket"], Key=obj["Key"])
                 if obj["Key"].startswith("/"):
