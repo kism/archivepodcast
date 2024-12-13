@@ -87,11 +87,26 @@ def test_check_s3_files_problem_files(apa_aws, caplog):
         ContentType="text/html",
     )
 
+    apa_aws.s3.put_object(
+        Bucket=apa_aws.app_config["s3"]["bucket"],
+        Key="/content/test//episode.mp3",
+        Body="TEST double slash and leading slash",
+        ContentType="text/html",
+    )
+
+    apa_aws.s3.put_object(
+        Bucket=apa_aws.app_config["s3"]["bucket"],
+        Key="content/test/empty_file.mp3",
+        Body="",
+        ContentType="text/html",
+    )
+
     with caplog.at_level(level=logging.WARNING, logger="archivepodcast.ap_archiver"):
         apa_aws.check_s3_files()
 
     assert "S3 Path starts with a /, this is not expected: /index.html DELETING" in caplog.text
     assert "S3 Path contains a //, this is not expected: content/test//episode.mp3 DELETING" in caplog.text
+    assert "S3 Object is empty: content/test/empty_file.mp3 DELETING" in caplog.text
 
     s3_object_list = apa_aws.s3.list_objects_v2(Bucket=apa_aws.app_config["s3"]["bucket"])
     s3_object_list = [path["Key"] for path in s3_object_list.get("Contents", [])]
