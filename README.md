@@ -123,3 +123,4 @@ cspell link add @cspell/dict-en-au
 
 - Container Registry
 - ~~Get rid of x-directory from s3~~
+- Figure out lag during SIGHUP
