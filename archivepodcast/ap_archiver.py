@@ -173,13 +173,13 @@ class PodcastArchiver:
                 logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
 
             else:
-                logger.error("❌ Unable to download podcast, something is wrong")
+                logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
         else:
             logger.info('📄 "live": false, in config so not fetching new episodes')
 
         # Serving a podcast that we can't currently download?, load it from file
         if tree is None:
-            logger.warning("📄 No response, loading rss from file: %s", rss_file_path)
+            logger.warning("📄 Loading rss from file: %s", rss_file_path)
             if os.path.exists(rss_file_path):
                 try:
                     tree = etree.parse(rss_file_path)
