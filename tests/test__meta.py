@@ -14,7 +14,7 @@ def test_version_pyproject():
     with open("pyproject.toml", "rb") as f:
         pyproject_toml = tomlkit.load(f)
     assert (
-        pyproject_toml["project"]["version"] == videoelo.__version__
+        pyproject_toml["project"]["version"] == archivepodcast.__version__
     ), "Ensure pyproject.toml version matches __init__.py"
 
 
@@ -26,13 +26,13 @@ def test_version_lock():
     found_uv_lock_version = False
 
     for package in uv_lock["package"]:
-        if package["name"] == "videoelo":
+        if package["name"] == "archivepodcast":
             assert (
-                package["version"] == videoelo.__version__
+                package["version"] == archivepodcast.__version__
             ), "uv.lock package version not in-sync, run: uv sync --upgrade"
             found_uv_lock_version = True
 
-    assert found_uv_lock_version, "Ensure videoelo is in uv.lock"
+    assert found_uv_lock_version, "Ensure archivepodcast is in uv.lock"
 
 
 def test_wav_generation(tmp_path):
