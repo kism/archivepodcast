@@ -15,6 +15,9 @@ poetry.lock
 # Javascript, if we want to use eslint/scss-lintbiome for checking the html/css/javascript
 node_modules
 
+# MacOS
+.DS_Store
+
 # Python
 # https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Python.gitignore
 # Byte-compiled / optimized / DLL files
