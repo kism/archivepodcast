@@ -122,4 +122,4 @@ cspell link add @cspell/dict-en-au
 ## Todo
 
 - Container Registry
-- Get rid of x-directory from s3
+- ~~Get rid of x-directory from s3~~
