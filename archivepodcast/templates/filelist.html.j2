@@ -20,11 +20,11 @@
             app. Anything in the /content/_adhoc folder is not in a podcast feed.{% if app_config['storage_backend'] ==
             "s3" %} Files are sent via the CDN.{% endif %}</p>
         <div id="breadcrumb_js" style="white-space: nowrap; display: none;"></div>
+        <div id="file_list_js" style="white-space: nowrap; display: none;"></div>
         <div id="file_list" style="white-space: nowrap;">
             {% for file in file_list %}<div><a href="{{ base_url }}{{ file }}">/{{ file }}</a><br></div>
             {% endfor %}
         </div>
-        <div id="file_list_js" style="white-space: nowrap; display: none;"></div>
     </main>
 </body>
 
