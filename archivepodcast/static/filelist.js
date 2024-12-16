@@ -16,12 +16,14 @@ document.addEventListener("DOMContentLoaded", function () {
   var fileListDiv = document.getElementById("file_list");
   if (fileListDiv) {
     fileListDiv.style.display = "none";
-    const link = fileListDiv.querySelector("a");
-    if (link && link.firstChild) {
-      console.log(link.href);
-      console.log(link.firstChild.textContent);
-      add_file_to_structure(link.href, link.firstChild.textContent);
-    }
+    const links = fileListDiv.querySelectorAll("a");
+    links.forEach((link) => {
+      if (link && link.firstChild) {
+        console.log(link.href);
+        console.log(link.firstChild.textContent);
+        add_file_to_structure(link.href, link.firstChild.textContent);
+      }
+    });
   }
   var fileListJSDiv = document.getElementById("file_list_js");
   if (fileListJSDiv) {
