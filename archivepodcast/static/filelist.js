@@ -1,9 +1,8 @@
 var file_structure = new Object();
 var current_path = new Array();
 current_path = "/";
-// current_path = "/content";
 
-function add_file_to_structure(file_path, file_name) {
+function addFileToStructure(file_path, file_name) {
   var path_parts = file_name.split("/");
   var current = file_structure;
   for (var i = 0; i < path_parts.length; i++) {
@@ -22,9 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const links = fileListDiv.querySelectorAll("a");
     links.forEach((link) => {
       if (link && link.firstChild) {
-        console.log(link.href);
-        console.log(link.firstChild.textContent);
-        add_file_to_structure(link.href, link.firstChild.textContent);
+        addFileToStructure(link.href, link.firstChild.textContent);
       }
     });
   }
@@ -32,8 +29,66 @@ document.addEventListener("DOMContentLoaded", function () {
   if (fileListJSDiv) {
     fileListJSDiv.style.display = "block";
   }
-  show_current_directory();
+  showCurrentDirectory();
 });
+
+
+function generateBreadcrumbHtml() {
+  let html = "";
+  let path = [];
+  if (current_path === "/") {
+    path = [""];
+  } else {
+    path = current_path.split("/");
+  }
+  let current = "";
+  console.log("generateBreadcrumbHtml", path);
+  html += `<a href=# onclick=updatePathAbsolute("/");>File list home</a>`;
+  for (let i = 0; i < path.length; i++) {
+    if (path[i] === "") {
+      continue;
+    }
+    current = `${current}/${path[i]}`;
+    html += ` / <a href=# onclick=updatePathAbsolute("${current}");>${path[i]}</a>`;
+  }
+  return html;
+}
+
+function generateCurrentListHTML(items) {
+  let html = "";
+
+  if (current_path !== "/") {
+    html += `<br><a href=# onclick=updatePathRelative("..");>..</a>`;
+  }
+
+  Object.entries(items).forEach(([key, value]) => {
+    if (value["url"] === undefined) {
+      html += `<br><a href=# onclick=updatePathRelative("${key}");>${key}</a>`;
+    } else {
+      html += `<br><a href=${value["url"]}>${key}</a>`;
+    }
+  });
+
+  html += "";
+  return html;
+}
+
+function updatePathAbsolute(path) {
+  current_path = path;
+  showCurrentDirectory();
+}
+
+function updatePathRelative(directory) {
+  if (current_path === "/") { // Remove the leading slash to avoid double slash at the beginning of the path.
+    current_path = "";
+  }
+  if (directory === "..") {
+    current_path = current_path.split("/").slice(0, -1).join("/");
+  } else {
+    current_path = `${current_path}/${directory}`;
+  }
+  showCurrentDirectory();
+}
 
 function getValue(obj, path) {
   if (!path) return obj; // If no path is provided, return the object itself.
@@ -42,34 +97,19 @@ function getValue(obj, path) {
   return keys.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
 }
 
-function generate_current_list_html(items) {
-  console.log(items);
-  let html = "";
-
-  Object.entries(items).forEach(([key, value]) => {
-    console.log(`Key: ${key}, Value: ${value["url"]}`);
-    if (value["url"] === undefined) {
-      html += `<br><a href=# onclick=update_path("${key}");>${key}</a>`;
-    } else {
-      html += `<br><a href=${value["url"]}>${key}</a>`;
-    }
-  });
-
-  html += "";
-  console.log(html);
-  return html;
-}
-
-function update_path(directory){
-  console.log(current_path, directory);
-  current_path = current_path + "/" + directory
-  show_current_directory();
-}
-
-function show_current_directory() {
+function showCurrentDirectory() {
+  console.log("showCurrentDirectory", current_path);
+  if (current_path === "") { // Add the leading slash if the path is empty.
+    current_path = "/";
+  }
+  let breadcrumbJSDiv = document.getElementById("breadcrumb_js");
+  if (breadcrumbJSDiv) {
+    breadcrumbJSDiv.style.display = "block";
+    breadcrumbJSDiv.innerHTML = generateBreadcrumbHtml();
+  }
   let items = getValue(file_structure, current_path);
   let fileListJSDiv = document.getElementById("file_list_js");
   if (fileListJSDiv) {
-    fileListJSDiv.innerHTML = generate_current_list_html(items);
+    fileListJSDiv.innerHTML = generateCurrentListHTML(items);
   }
 }
