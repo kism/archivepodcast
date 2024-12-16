@@ -16,6 +16,12 @@
 @font-face {
   font-family: "Fira Code";
   font-style: normal;
+  font-weight: 500;
+  src: local(""), url("fonts/fira-code-v12-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
+}
+@font-face {
+  font-family: "Fira Code";
+  font-style: normal;
   font-weight: 600;
   src: local(""), url("fonts/fira-code-v12-latin-600.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
@@ -88,7 +94,7 @@ a:link {
   color: rgb(0, 128, 128);
 }
 a:visited {
-  color: rgb(128, 0, 64);
+  color: rgb(136, 86, 109);
 }
 
 ::selection {
@@ -99,6 +105,15 @@ a:visited {
 footer {
   font-size: smaller;
   margin: 20px 0 16px;
+}
+
+code {
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: #101010;
+  font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
+  font-weight: 500;
 }
 
 /* BUTTON */

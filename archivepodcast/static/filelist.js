@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function generateBreadcrumbHtml() {
-  let html = "";
+  let html = "<code style='display: block';>";
   let path = [];
   if (current_path === "/") {
     path = [""];
@@ -43,17 +43,15 @@ function generateBreadcrumbHtml() {
   console.log("generateBreadcrumbHtml", path);
   html += `<a href=#/>File list home</a>`;
   for (let i = 0; i < path.length; i++) {
-    if (path[i] === "") {
-      continue;
-    }
     current = `${current}/${path[i]}`;
-    html += ` / <a href=#${current}>${path[i]}</a>`;
+    html += `<a href=#${current}>${path[i]}</a> / `;
   }
+  html += "</code>";
   return html;
 }
 
 function generateCurrentListHTML(items) {
-  let html = "";
+  let html = "<br><code style='display: block;'>";
 
   let current_path_nice = current_path;
 
@@ -61,20 +59,20 @@ function generateCurrentListHTML(items) {
     current_path_split = current_path_nice.split("/");
     current_path_split.pop();
     current_path_split = current_path_split.join("/");
-    html += `<br><a href=#${current_path_split} onclick=updatePathRelative("..");>..</a>`;
+    html += `📂 <a href=#${current_path_split} onclick=updatePathRelative("..");>..</a><br>`;
   } else {
     current_path_nice = "";
   }
 
   Object.entries(items).forEach(([key, value]) => {
     if (value["url"] === undefined) {
-      html += `<br><a href="#${current_path_nice}/${key}" ;>${key}</a>`;
+      html += `📂 <a href="#${current_path_nice}/${key}" ;>${key}</a><br>`;
     } else {
-      html += `<br><a href=${value["url"]}>${key}</a>`;
+      html += `💾 <a href=${value["url"]}>${key}</a><br>`;
     }
   });
 
-  html += "";
+  html += "</code>";
   return html;
 }
 
