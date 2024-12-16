@@ -18,11 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	if (fileListDiv) {
 		fileListDiv.style.display = "none";
 		const links = fileListDiv.querySelectorAll("a");
-		links.forEach((link) => {
-			if (link && link.firstChild) {
+		for (const link of links) {
+			if (link?.firstChild) {
 				addFileToStructure(link.href, link.firstChild.textContent);
 			}
-		});
+		}
 	}
 	const fileListJSDiv = document.getElementById("file_list_js");
 	if (fileListJSDiv) {
@@ -64,17 +64,17 @@ function generateCurrentListHTML(items) {
 		current_path_nice = "";
 	}
 
-	Object.entries(items).forEach(([key, value]) => {
-		if (value["url"] === undefined) {
+	for (const [key, value] of Object.entries(items)) {
+		if (value.url === undefined) {
 			html += `📂 <a href="#${current_path_nice}/${key}/" ;>${key}/</a><br>`;
 		}
-	});
+	}
 
-	Object.entries(items).forEach(([key, value]) => {
-		if (value["url"] !== undefined) {
-			html += `💾 <a href="${value["url"]}">${key}</a><br>`;
+	for (const [key, value] of Object.entries(items)) {
+		if (value.url !== undefined) {
+			html += `💾 <a href="${value.url}">${key}</a><br>`;
 		}
-	});
+	}
 
 	html += "</code>";
 	return html;
