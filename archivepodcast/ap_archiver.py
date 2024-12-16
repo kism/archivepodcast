@@ -233,6 +233,7 @@ class PodcastArchiver:
     def _render_static(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
         logger = get_logger(__name__ + ".render_static")
+        logger.info("💾 Rendering static pages in thread")
 
         static_directory = os.path.join("archivepodcast", "static")
         template_directory = os.path.join("archivepodcast", "templates")
