@@ -123,4 +123,8 @@ cspell link add @cspell/dict-en-au
 
 - Container Registry
 - ~~Get rid of x-directory from s3~~
+- ~~Frontend js file browser~~
+- JS testing
+- Cache all pages
+  - Include last generated stat
 - Figure out lag during SIGHUP
