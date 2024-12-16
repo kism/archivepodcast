@@ -40,11 +40,10 @@ function generateBreadcrumbHtml() {
     path = current_path.split("/");
   }
   let current = "";
-  console.log("generateBreadcrumbHtml", path);
-  html += `<a href=#/>File list home</a>`;
+  html += `<a href="#">File list home</a>`;
   for (let i = 0; i < path.length; i++) {
     current = `${current}/${path[i]}`;
-    html += `<a href=#${current}>${path[i]}</a> / `;
+    html += `<a href="#${current}/">${path[i]}</a> / `;
   }
   html += "</code>";
   return html;
@@ -59,16 +58,20 @@ function generateCurrentListHTML(items) {
     current_path_split = current_path_nice.split("/");
     current_path_split.pop();
     current_path_split = current_path_split.join("/");
-    html += `📂 <a href=#${current_path_split} onclick=updatePathRelative("..");>..</a><br>`;
+    html += `📂 <a href="#${current_path_split}/">..</a><br>`;
   } else {
     current_path_nice = "";
   }
 
   Object.entries(items).forEach(([key, value]) => {
     if (value["url"] === undefined) {
-      html += `📂 <a href="#${current_path_nice}/${key}" ;>${key}</a><br>`;
-    } else {
-      html += `💾 <a href=${value["url"]}>${key}</a><br>`;
+      html += `📂 <a href="#${current_path_nice}/${key}/" ;>${key}/</a><br>`;
+    }
+  });
+
+  Object.entries(items).forEach(([key, value]) => {
+    if (value["url"] !== undefined) {
+      html += `💾 <a href="${value["url"]}">${key}</a><br>`;
     }
   });
 
@@ -83,9 +86,9 @@ function updatePathAbsolute(path) {
 
 function updatePathRelative(directory) {
   if (directory === "..") {
-    current_path = current_path.split("/").slice(0, -1).join("/");
+    current_path = `${current_path.split("/").slice(0, -1).join("/")}/`;
   } else {
-    current_path = `${current_path}/${directory}`;
+    current_path = `${current_path}/${directory}/`;
   }
   showCurrentDirectory();
 }
@@ -100,12 +103,12 @@ function getValue(obj, path) {
 function showCurrentDirectory() {
   current_path = window.location.hash.replace("#", "");
   current_path = current_path.replace("//", "/");
-
+  if (current_path[current_path.length - 1] === "/") {
+    current_path = current_path.slice(0, -1);
+  }
   if (current_path == "") {
     current_path = "/";
   }
-
-  console.log("showCurrentDirectory", current_path);
 
   let breadcrumbJSDiv = document.getElementById("breadcrumb_js");
   if (breadcrumbJSDiv) {
