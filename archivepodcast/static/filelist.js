@@ -1,6 +1,10 @@
 var file_structure = new Object();
 var current_path = new Array();
-current_path = "/";
+current_path = window.location.hash.replace("#", "");
+if (current_path == "") {
+  current_path = "/";
+}
+console.log("current_path", current_path);
 
 function addFileToStructure(file_path, file_name) {
   var path_parts = file_name.split("/");
@@ -43,13 +47,13 @@ function generateBreadcrumbHtml() {
   }
   let current = "";
   console.log("generateBreadcrumbHtml", path);
-  html += `<a href=# onclick=updatePathAbsolute("/");>File list home</a>`;
+  html += `<a href=#/>File list home</a>`;
   for (let i = 0; i < path.length; i++) {
     if (path[i] === "") {
       continue;
     }
     current = `${current}/${path[i]}`;
-    html += ` / <a href=# onclick=updatePathAbsolute("${current}");>${path[i]}</a>`;
+    html += ` / <a href=#${current}>${path[i]}</a>`;
   }
   return html;
 }
@@ -58,12 +62,15 @@ function generateCurrentListHTML(items) {
   let html = "";
 
   if (current_path !== "/") {
-    html += `<br><a href=# onclick=updatePathRelative("..");>..</a>`;
+    current_path_split = current_path.split("/");
+    current_path_split.pop();
+    current_path_split = current_path_split.join("/");
+    html += `<br><a href=#${current_path_split} onclick=updatePathRelative("..");>..</a>`;
   }
 
   Object.entries(items).forEach(([key, value]) => {
     if (value["url"] === undefined) {
-      html += `<br><a href=# onclick=updatePathRelative("${key}");>${key}</a>`;
+      html += `<br><a href="#${current_path}/${key}" ;>${key}</a>`;
     } else {
       html += `<br><a href=${value["url"]}>${key}</a>`;
     }
@@ -79,9 +86,6 @@ function updatePathAbsolute(path) {
 }
 
 function updatePathRelative(directory) {
-  if (current_path === "/") { // Remove the leading slash to avoid double slash at the beginning of the path.
-    current_path = "";
-  }
   if (directory === "..") {
     current_path = current_path.split("/").slice(0, -1).join("/");
   } else {
@@ -98,10 +102,15 @@ function getValue(obj, path) {
 }
 
 function showCurrentDirectory() {
-  console.log("showCurrentDirectory", current_path);
-  if (current_path === "") { // Add the leading slash if the path is empty.
+  current_path = window.location.hash.replace("#", "");
+  current_path = current_path.replace("//", "/");
+
+  if (current_path == "") {
     current_path = "/";
   }
+
+  console.log("showCurrentDirectory", current_path);
+
   let breadcrumbJSDiv = document.getElementById("breadcrumb_js");
   if (breadcrumbJSDiv) {
     breadcrumbJSDiv.style.display = "block";
@@ -113,3 +122,5 @@ function showCurrentDirectory() {
     fileListJSDiv.innerHTML = generateCurrentListHTML(items);
   }
 }
+
+window.addEventListener('hashchange', showCurrentDirectory);
