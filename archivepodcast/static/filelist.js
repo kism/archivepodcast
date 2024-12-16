@@ -16,7 +16,7 @@ function add_file_to_structure(file_path, file_name) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  var fileListDiv = document.getElementById("file_list");
+  let fileListDiv = document.getElementById("file_list");
   if (fileListDiv) {
     fileListDiv.style.display = "none";
     const links = fileListDiv.querySelectorAll("a");
@@ -44,14 +44,14 @@ function getValue(obj, path) {
 
 function generate_current_list_html(items) {
   console.log(items);
-  var html = "";
+  let html = "";
 
   Object.entries(items).forEach(([key, value]) => {
     console.log(`Key: ${key}, Value: ${value["url"]}`);
     if (value["url"] === undefined) {
-      html += `<br>${key}`;
+      html += `<br><a href=# onclick=update_path("${key}");>${key}</a>`;
     } else {
-      html += `<br><a href= ${value["url"]}>${key}</a>`;
+      html += `<br><a href=${value["url"]}>${key}</a>`;
     }
   });
 
@@ -60,9 +60,15 @@ function generate_current_list_html(items) {
   return html;
 }
 
+function update_path(directory){
+  console.log(current_path, directory);
+  current_path = current_path + "/" + directory
+  show_current_directory();
+}
+
 function show_current_directory() {
-  var items = getValue(file_structure, current_path);
-  var fileListJSDiv = document.getElementById("file_list_js");
+  let items = getValue(file_structure, current_path);
+  let fileListJSDiv = document.getElementById("file_list_js");
   if (fileListJSDiv) {
     fileListJSDiv.innerHTML = generate_current_list_html(items);
   }
