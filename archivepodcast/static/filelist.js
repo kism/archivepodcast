@@ -33,16 +33,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function generateBreadcrumbHtml() {
   let html = "<code style='display: block';>";
-  let path = [];
-  if (current_path === "/") {
+  let path = current_path.split("/");
+
+  if (path[1] === "") {
     path = [""];
-  } else {
-    path = current_path.split("/");
   }
+
   let current = "";
-  html += `<a href="#">File list home</a>`;
+  html += `<a href="#/">File list</a>`;
   for (let i = 0; i < path.length; i++) {
     current = `${current}/${path[i]}`;
+    current = current.replace(/\/\//g, "/");
     html += `<a href="#${current}/">${path[i]}</a> / `;
   }
   html += "</code>";
@@ -55,7 +56,7 @@ function generateCurrentListHTML(items) {
   let current_path_nice = current_path;
 
   if (current_path !== "/") {
-    current_path_split = current_path_nice.split("/");
+    let current_path_split = current_path_nice.split("/");
     current_path_split.pop();
     current_path_split = current_path_split.join("/");
     html += `📂 <a href="#${current_path_split}/">..</a><br>`;
@@ -102,7 +103,7 @@ function getValue(obj, path) {
 
 function showCurrentDirectory() {
   current_path = window.location.hash.replace("#", "");
-  current_path = current_path.replace("//", "/");
+  current_path = current_path.replace(/\/\//g, "/");
   if (current_path[current_path.length - 1] === "/") {
     current_path = current_path.slice(0, -1);
   }
