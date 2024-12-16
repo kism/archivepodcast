@@ -1,7 +1,9 @@
 var file_structure = new Object();
+var current_path = new Array();
+current_path = [""];
 
 function add_file_to_structure(file_path, file_name) {
-  var path_parts = file_path.split("/");
+  var path_parts = file_name.split("/");
   var current = file_structure;
   for (var i = 0; i < path_parts.length; i++) {
     if (!current[path_parts[i]]) {
@@ -28,6 +30,16 @@ document.addEventListener("DOMContentLoaded", function () {
   var fileListJSDiv = document.getElementById("file_list_js");
   if (fileListJSDiv) {
     fileListJSDiv.style.display = "block";
-    fileListJSDiv.textContent = JSON.stringify(file_structure);
   }
 });
+
+function show_current_directory() {
+  var items = Object.keys(file_structure[""]).filter(key => key !== "__name__");
+  console.log(items);
+  var fileListJSDiv = document.getElementById("file_list_js");
+  if (fileListJSDiv) {
+    fileListJSDiv.innerHTML = JSON.stringify(items);
+  }
+}
+
+show_current_directory()
