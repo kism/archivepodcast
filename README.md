@@ -111,14 +111,6 @@ Production: `waitress-serve --listen 0.0.0.0:5000 --call archivepodcast:create_a
 
 An example guide on setting it up start to finish, with all features and saving episodes do disk can be found here [here](README_local.md). There are others for if you want to use s3 to host assets, or even host the whole thing on s3.
 
-## Spellcheck
-
-```bash
-npm install -g cspell
-npm install -g @cspell/dict-en-au
-cspell link add @cspell/dict-en-au
-```
-
 ## Todo
 
 - Container Registry

@@ -1,0 +1,11 @@
+{
+  "files": {
+    "include": ["archivepodcast/static/*.js"]
+  },
+  "formatter": {
+    "include": ["archivepodcast/static/*.js"],
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  }
+}
