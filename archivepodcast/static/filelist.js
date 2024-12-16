@@ -1,6 +1,7 @@
 var file_structure = new Object();
 var current_path = new Array();
-current_path = [""];
+current_path = "/";
+// current_path = "/content";
 
 function add_file_to_structure(file_path, file_name) {
   var path_parts = file_name.split("/");
@@ -11,7 +12,7 @@ function add_file_to_structure(file_path, file_name) {
     }
     current = current[path_parts[i]];
   }
-  current["__name__"] = file_name;
+  current["url"] = file_path;
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -31,15 +32,38 @@ document.addEventListener("DOMContentLoaded", function () {
   if (fileListJSDiv) {
     fileListJSDiv.style.display = "block";
   }
+  show_current_directory();
 });
 
-function show_current_directory() {
-  var items = Object.keys(file_structure[""]).filter(key => key !== "__name__");
-  console.log(items);
-  var fileListJSDiv = document.getElementById("file_list_js");
-  if (fileListJSDiv) {
-    fileListJSDiv.innerHTML = JSON.stringify(items);
-  }
+function getValue(obj, path) {
+  if (!path) return obj; // If no path is provided, return the object itself.
+  if (path == "/") return obj[""];
+  const keys = path.split("/"); // Split the path by '/' into an array of keys.
+  return keys.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
 }
 
-show_current_directory()
+function generate_current_list_html(items) {
+  console.log(items);
+  var html = "";
+
+  Object.entries(items).forEach(([key, value]) => {
+    console.log(`Key: ${key}, Value: ${value["url"]}`);
+    if (value["url"] === undefined) {
+      html += `<br>${key}`;
+    } else {
+      html += `<br><a href= ${value["url"]}>${key}</a>`;
+    }
+  });
+
+  html += "";
+  console.log(html);
+  return html;
+}
+
+function show_current_directory() {
+  var items = getValue(file_structure, current_path);
+  var fileListJSDiv = document.getElementById("file_list_js");
+  if (fileListJSDiv) {
+    fileListJSDiv.innerHTML = generate_current_list_html(items);
+  }
+}
