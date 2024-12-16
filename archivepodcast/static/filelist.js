@@ -1,10 +1,5 @@
 var file_structure = new Object();
 var current_path = new Array();
-current_path = window.location.hash.replace("#", "");
-if (current_path == "") {
-  current_path = "/";
-}
-console.log("current_path", current_path);
 
 function addFileToStructure(file_path, file_name) {
   var path_parts = file_name.split("/");
@@ -36,7 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
   showCurrentDirectory();
 });
 
-
 function generateBreadcrumbHtml() {
   let html = "";
   let path = [];
@@ -61,16 +55,20 @@ function generateBreadcrumbHtml() {
 function generateCurrentListHTML(items) {
   let html = "";
 
+  let current_path_nice = current_path;
+
   if (current_path !== "/") {
-    current_path_split = current_path.split("/");
+    current_path_split = current_path_nice.split("/");
     current_path_split.pop();
     current_path_split = current_path_split.join("/");
     html += `<br><a href=#${current_path_split} onclick=updatePathRelative("..");>..</a>`;
+  } else {
+    current_path_nice = "";
   }
 
   Object.entries(items).forEach(([key, value]) => {
     if (value["url"] === undefined) {
-      html += `<br><a href="#${current_path}/${key}" ;>${key}</a>`;
+      html += `<br><a href="#${current_path_nice}/${key}" ;>${key}</a>`;
     } else {
       html += `<br><a href=${value["url"]}>${key}</a>`;
     }
@@ -123,4 +121,5 @@ function showCurrentDirectory() {
   }
 }
 
-window.addEventListener('hashchange', showCurrentDirectory);
+window.addEventListener("hashchange", showCurrentDirectory);
+showCurrentDirectory();
