@@ -13,8 +13,8 @@ function addFileToStructure(file_path, file_name) {
 	current.url = file_path;
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-	let fileListDiv = document.getElementById("file_list");
+document.addEventListener("DOMContentLoaded", () => {
+	const fileListDiv = document.getElementById("file_list");
 	if (fileListDiv) {
 		fileListDiv.style.display = "none";
 		const links = fileListDiv.querySelectorAll("a");
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
 			}
 		});
 	}
-	var fileListJSDiv = document.getElementById("file_list_js");
+	const fileListJSDiv = document.getElementById("file_list_js");
 	if (fileListJSDiv) {
 		fileListJSDiv.style.display = "block";
 	}
