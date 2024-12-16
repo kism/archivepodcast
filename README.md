@@ -116,7 +116,7 @@ An example guide on setting it up start to finish, with all features and saving 
 - Container Registry
 - ~~Get rid of x-directory from s3~~
 - ~~Frontend js file browser~~
+- ~~Figure out lag during SIGHUP~~
 - JS testing
 - Cache all pages
   - Include last generated stat
-- Figure out lag during SIGHUP
