@@ -274,7 +274,7 @@ def test_file_list(apa, client_live, tmp_path):
     with open(os.path.join(tmp_path, file_path), "w") as file:
         file.write("test")
 
-    ap._render_static()
+    ap._render_files()
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
 
     response = client_live.get("/filelist.html")
@@ -295,7 +295,7 @@ def test_file_list_s3(apa_aws, client_live_s3):
 
     ap.s3.put_object(Bucket=ap.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
 
-    ap._render_static()
+    ap._render_files()
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
 
     response = client_live_s3.get("/filelist.html")

@@ -32,10 +32,10 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3):
     assert f"Authenticated s3, using bucket: {bucket_name}" in caplog.text
 
 
-def test_render_static(apa_aws, caplog):
+def test_render_files(apa_aws, caplog):
     """Test that static pages are uploaded to s3."""
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_static"):
-        apa_aws._render_static()
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_files"):
+        apa_aws._render_files()
 
     list_files = apa_aws.s3.list_objects_v2(Bucket=apa_aws.app_config["s3"]["bucket"])
     list_files = [path["Key"] for path in list_files.get("Contents", [])]
@@ -61,7 +61,7 @@ def test_check_s3_no_files(apa_aws, caplog):
 
 def test_check_s3_files(apa_aws, caplog):
     """Test that s3 files are checked."""
-    apa_aws._render_static()
+    apa_aws._render_files()
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
         apa_aws.check_s3_files()

@@ -196,13 +196,13 @@ def apa(tmp_path, get_test_config, caplog, mock_threads_none):
 
 
 @pytest.fixture
-def no_render_static(monkeypatch):
-    """Monkeypatch render_static to prevent it from running."""
-    monkeypatch.setattr("archivepodcast.ap_archiver.PodcastArchiver.render_static", lambda _: None)
+def no_render_files(monkeypatch):
+    """Monkeypatch render_files to prevent it from running."""
+    monkeypatch.setattr("archivepodcast.ap_archiver.PodcastArchiver.render_files", lambda _: None)
 
 
 @pytest.fixture
-def apa_aws(tmp_path, get_test_config, no_render_static, caplog, s3):
+def apa_aws(tmp_path, get_test_config, no_render_files, caplog, s3):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
