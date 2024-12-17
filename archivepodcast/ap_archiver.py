@@ -364,6 +364,8 @@ class PodcastArchiver:
 
     def write_webpages(self, webpages: list[Webpage]) -> None:
         """Write files to disk, and to s3 if needed."""
+        logger = get_logger(__name__ + ".write_webpages")
+
         str_webpages = f"{(len(webpages))} pages to files"
         if len(webpages) == 1:
             str_webpages = f"{webpages[0].path} to file"

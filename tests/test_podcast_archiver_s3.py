@@ -34,7 +34,7 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3):
 
 def test_render_files(apa_aws, caplog):
     """Test that static pages are uploaded to s3."""
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.render_files"):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.write_webpages"):
         apa_aws._render_files()
 
     list_files = apa_aws.s3.list_objects_v2(Bucket=apa_aws.app_config["s3"]["bucket"])
@@ -44,9 +44,8 @@ def test_render_files(apa_aws, caplog):
     assert "guide.html" in list_files
     assert "about.html" not in list_files
 
-    assert "Uploading static pages to s3 in the background" in caplog.text
-    assert "Uploading static item" in caplog.text
-    assert "Done uploading static pages to s3" in caplog.text
+    assert "Writing 12 pages to files locally and to s3" in caplog.text
+    assert "Writing filelist.html to file locally and to s3" in caplog.text
     assert "Unhandled s3 error" not in caplog.text
 
 

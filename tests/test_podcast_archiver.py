@@ -11,7 +11,7 @@ from . import FakeExceptionError
 def test_no_about_page(apa, caplog):
     """Test no about page."""
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
-        apa.make_about_page()
+        apa.load_about_page()
 
     assert "About page doesn't exist" in caplog.text
 
@@ -22,7 +22,7 @@ def test_about_page(apa, caplog, tmp_path):
         f.write("About page exists!")
 
     with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):
-        apa.make_about_page()
+        apa.load_about_page()
 
     assert "About page exists!" in caplog.text
 
