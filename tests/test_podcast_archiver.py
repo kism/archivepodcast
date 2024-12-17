@@ -61,6 +61,8 @@ def test_grab_podcasts_not_live(
     assert "Cannot find rss feed file" not in caplog.text
     assert "Unable to host podcast, something is wrong" not in caplog.text
 
+    assert "No response, loading rss from file" not in caplog.text  # This shouldn't happen
+
     get_rss = str(apa.get_rss_feed("test"), "utf-8")
 
     assert get_rss == pytest.DUMMY_RSS_STR
@@ -94,6 +96,31 @@ def test_grab_podcasts_unhandled_exception(
     assert "Error grabbing podcast:" in caplog.text
 
 
+def test_grab_podcasts_invalid_rss(
+    apa,
+    caplog,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_mp3,
+    monkeypatch,
+):
+    """Test grabbing podcasts."""
+    mock_get_podcast_source_rss("test_valid.rss")
+
+    apa.podcast_list[0]["live"] = False
+
+    rss = "INVALID"
+
+    os.makedirs(os.path.join(apa.instance_path, "web", "rss"), exist_ok=True)
+    with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
+        f.write(rss)
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_archiver"):
+        apa.grab_podcasts()
+
+    assert "Error parsing rss file:" in caplog.text
+
+
 def test_grab_podcasts_not_live_no_existing_feed(
     apa,
     caplog,
@@ -111,9 +138,9 @@ def test_grab_podcasts_not_live_no_existing_feed(
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
     assert '"live": false, in config so not fetching new episodes' in caplog.text
-    assert "Loading rss from file" in caplog.text
+    assert "Loading rss from file:" in caplog.text
     assert "Cannot find rss feed file" in caplog.text
-    assert "Unable to host podcast, something is wrong" in caplog.text
+    assert "Unable to host podcast: test, something is wrong" in caplog.text
 
 
 def test_grab_podcasts_live(

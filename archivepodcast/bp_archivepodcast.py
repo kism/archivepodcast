@@ -43,12 +43,17 @@ def initialise_archivepodcast() -> None:
 
 
 def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
-    """Handle Sighup."""
+    """Handle Sighup.
+
+    This will stall the webapp while this function is running.
+    """
+    start_time = time.time()
     if not ap:
         logger.error("❌ ArchivePodcast object not initialized")
         return
 
     logger.debug("Handle Sighup %s %s", signal_num, handler)
+
     logger.info("🙋 Got SIGHUP, Reloading Config")
 
     try:
@@ -59,12 +64,19 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
             if key != "flask":
                 current_app.config[key] = value
 
+        # Due to application context this cannot be done in a thread
         ap.load_config(current_app.config["app"], current_app.config["podcast"])
-        ap.grab_podcasts()  # No point grabbing podcasts adhoc if loading the config fails
 
-        logger.info("🙋 Finished adhoc config reload")
+        # This is the slow part of the reload, no app context required so we can give run it in a thread.
+        logger.info("Grabbing podcasts in a thread")
+        threading.Thread(target=ap.grab_podcasts, daemon=True).start()
+
     except Exception:
         logger.exception("❌ Error reloading config")
+
+    end_time = time.time()  # Record the end time
+    duration = end_time - start_time  # Calculate the duration
+    logger.info("🙋 Finished adhoc config reload in  %.2f seconds", duration)
 
 
 def podcast_loop() -> None:

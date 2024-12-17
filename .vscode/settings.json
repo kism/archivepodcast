@@ -3,6 +3,12 @@
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "[markdown]": {
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true
@@ -10,14 +16,11 @@
   // Language config
   "python.languageServer": "Pylance",
   "python.terminal.activateEnvInCurrentTerminal": true,
-  "python.testing.pytestArgs": [
-    "tests"
-  ],
+  "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
 
-
   "livePreview.serverRoot": "htmlcov/",
   "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3",
-  "python.analysis.enablePytestSupport": false,
+  "python.analysis.enablePytestSupport": false
 }

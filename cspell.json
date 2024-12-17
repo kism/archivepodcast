@@ -14,7 +14,9 @@
     "custom-python",
     "custom-fonts",
     "custom-archivepodcast",
-    "custom-readme"
+    "custom-readme",
+    "custom-javascript"
+
   ],
   "dictionaryDefinitions": [
     {
@@ -40,6 +42,11 @@
     {
       "name": "custom-fonts",
       "path": "./.cspell/custom-fonts.txt",
+      "addWords": true
+    },
+    {
+      "name": "custom-javascript",
+      "path": "./.cspell/custom-javascript.txt",
       "addWords": true
     }
   ],

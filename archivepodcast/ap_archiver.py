@@ -128,6 +128,9 @@ class PodcastArchiver:
         if "Contents" in response:
             for obj in response["Contents"]:
                 contents_str += obj["Key"] + "\n"
+                if obj["Size"] == 0:  # This is for application/x-directory files, but no files should be empty
+                    logger.warning("⛅ S3 Object is empty: %s DELETING", obj["Key"])
+                    self.s3.delete_object(Bucket=self.app_config["s3"]["bucket"], Key=obj["Key"])
                 if obj["Key"].startswith("/"):
                     logger.warning("⛅ S3 Path starts with a /, this is not expected: %s DELETING", obj["Key"])
                     self.s3.delete_object(Bucket=self.app_config["s3"]["bucket"], Key=obj["Key"])
@@ -170,16 +173,19 @@ class PodcastArchiver:
                 logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
 
             else:
-                logger.error("❌ Unable to download podcast, something is wrong")
+                logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
         else:
             logger.info('📄 "live": false, in config so not fetching new episodes')
 
         # Serving a podcast that we can't currently download?, load it from file
         if tree is None:
-            logger.info("📄 Loading rss from file: %s", rss_file_path)
-            try:
-                tree = etree.parse(rss_file_path)
-            except (FileNotFoundError, OSError):
+            logger.warning("📄 Loading rss from file: %s", rss_file_path)
+            if os.path.exists(rss_file_path):
+                try:
+                    tree = etree.parse(rss_file_path)
+                except etree.XMLSyntaxError:
+                    logger.exception("❌ Error parsing rss file: %s", rss_file_path)
+            else:
                 logger.exception("❌ Cannot find rss feed file: %s", rss_file_path)
 
         if tree is not None:
@@ -218,7 +224,7 @@ class PodcastArchiver:
                     logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
 
         else:
-            logger.error("❌ Unable to host podcast, something is wrong")
+            logger.error(f"❌ Unable to host podcast: {podcast['name_one_word']}, something is wrong")
 
     def render_static(self) -> None:
         """Function to upload static to s3 and copy index.html."""
@@ -227,6 +233,7 @@ class PodcastArchiver:
     def _render_static(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
         logger = get_logger(__name__ + ".render_static")
+        logger.info("💾 Rendering static pages in thread")
 
         static_directory = os.path.join("archivepodcast", "static")
         template_directory = os.path.join("archivepodcast", "templates")
