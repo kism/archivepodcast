@@ -129,6 +129,23 @@ def generate_404() -> Response:
     return Response(render, status=returncode)
 
 
+def send_ap_cached_webpage(webpage_name: str) -> Response:
+    """Send a cached webpage."""
+    if not ap:
+        return generate_not_initialized_error()
+
+    try:
+        webpage = ap.webpages.get_webpage(webpage_name)
+    except KeyError:
+        return generate_not_initialized_error()
+
+    return Response(
+        webpage.content,
+        mimetype=webpage.mime,
+        status=HTTPStatus.OK,
+    )
+
+
 @bp.route("/")
 @bp.route("/index.html")
 def home() -> Response:
@@ -150,32 +167,13 @@ def home() -> Response:
 @bp.route("/guide.html")
 def home_guide() -> Response:
     """Podcast app guide."""
-    if not ap:
-        return generate_not_initialized_error()
-
-    webpage = ap.webpages.get_webpage("guide.html")
-    return Response(
-        webpage.content,
-        mimetype=webpage.mime,
-        status=HTTPStatus.OK,
-    )
+    return send_ap_cached_webpage("guide.html")
 
 
 @bp.route("/about.html")
 def home_about() -> Response:
     """Flask Home, s3 backup compatible."""
-    if not ap:
-        return generate_not_initialized_error()
-
-    webpage = ap.webpages.get_webpage("about.html")
-    try:
-        return Response(
-            webpage.content,
-            mimetype=webpage.mime,
-            status=HTTPStatus.OK,
-        )
-    except KeyError:
-        return generate_404()
+    return send_ap_cached_webpage("about.html")
 
 
 @bp.route("/content/<path:path>")
@@ -197,15 +195,7 @@ def send_content(path: str) -> Response:
 @bp.route("/filelist.html")
 def home_filelist() -> Response:
     """Serve Filelist."""
-    if not ap:
-        return generate_not_initialized_error()
-
-    webpage = ap.webpages.get_webpage("filelist.html")
-    return Response(
-        webpage.content,
-        mimetype=webpage.mime,
-        status=HTTPStatus.OK,
-    )
+    return send_ap_cached_webpage("filelist.html")
 
 
 @bp.route("/rss/<string:feed>", methods=["GET"])
@@ -275,29 +265,13 @@ def rss(feed: str) -> Response:
 @bp.route("/robots.txt")
 def static_from_root() -> Response:
     """Serve robots.txt."""
-    if not ap:
-        return generate_not_initialized_error()
-
-    webpage = ap.webpages.get_webpage("robots.txt")
-    return Response(
-        webpage.content,
-        mimetype=webpage.mime,
-        status=HTTPStatus.OK,
-    )
+    return send_ap_cached_webpage("robots.html")
 
 
 @bp.route("/favicon.ico")
 def favicon() -> Response:
     """Return the favicon."""
-    if not ap:
-        return generate_not_initialized_error()
-
-    webpage = ap.webpages.get_webpage("favicon.ico")
-    return Response(
-        webpage.content,
-        mimetype=webpage.mime,
-        status=HTTPStatus.OK,
-    )
+    return send_ap_cached_webpage("favicon.ico")
 
 
 def generate_not_initialized_error() -> Response:
