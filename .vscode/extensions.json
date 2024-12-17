@@ -6,5 +6,6 @@
         "samuelcolvin.jinjahtml",
         "charliermarsh.ruff",
         "biomejs.biome",
+        "vitest.explorer",
     ]
   }

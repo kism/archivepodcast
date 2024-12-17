@@ -30,7 +30,7 @@
         <h3>{{ podcast['description']|e }}</h3>
         <input type="text" readonly="readonly" value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
             id="{{ podcast['name_one_word']}}">
-        <button class="button" onclick="grab_to_clipboard('{{ podcast['name_one_word']}}')"
+        <button class="button" onclick="grabToClipboard('{{ podcast['name_one_word']}}')"
             id="{{ podcast['name_one_word']}}_button">Copy url</button>
         {% endfor %}
         <footer>

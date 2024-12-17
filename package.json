@@ -2,6 +2,11 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@cspell/dict-en-au": "^1.0.19",
-    "cspell": "^8.17.0"
+    "cspell": "^8.17.0",
+    "happy-dom": "^15.11.7",
+    "vitest": "^2.1.8"
+  },
+  "scripts": {
+    "test": "vitest"
   }
 }
