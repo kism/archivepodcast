@@ -7,6 +7,7 @@ from collections.abc import ItemsView
 from typing import TYPE_CHECKING
 
 import boto3
+import magic
 from jinja2 import Environment, FileSystemLoader
 from lxml import etree
 
@@ -87,6 +88,10 @@ class PodcastArchiver:
 
     def get_file_list(self) -> tuple[str, list]:
         """Return a list of files in the web_root."""
+        # We only need them to be sorted when accessed from here.
+        self.podcast_downloader.local_paths_cache.sort()
+        self.podcast_downloader.s3_paths_cache.sort()
+
         base_url = self.app_config["s3"]["cdn_domain"] if self.s3 is not None else self.app_config["inet_path"]
 
         return (
@@ -284,17 +289,16 @@ class PodcastArchiver:
         ]
 
         for item in static_items_to_copy:
-            logger.debug("💾 Copying static item: %s", item)
             item_relative_path = os.path.relpath(item, app_directory)
-            with open(item, "rb") as static_item:
-                try:
-                    self.webpages.add(
-                        path=item_relative_path,
-                        mime="text/html",
-                        content=static_item.read().decode("utf-8"),
-                    )
-                except UnicodeDecodeError:
-                    self.webpages.add(path=item_relative_path, mime="", content=static_item.read())
+            item_mime = magic.from_file(item, mime=True)
+            logger.debug("💾 Registering static item: %s, mime: %s", item, item_mime)
+
+            if item_mime.startswith("text"):
+                with open(item) as static_item:
+                    self.webpages.add(path=item_relative_path, mime=item_mime, content=static_item.read())
+            else:
+                with open(item, "rb") as static_item:
+                    self.webpages.add(path=item_relative_path, mime=item_mime, content=static_item.read())
 
         # Templates
         env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
@@ -316,10 +320,11 @@ class PodcastArchiver:
 
             self.webpages.add(output_filename, "text/html", rendered_output)
 
-        self.render_filelist()  # Separate
-
+        logger.info("💾 Done rendering static pages")
         webpage_list = list({k: v for k, v in self.webpages.get().items() if k != "filelist.html"}.values())
         self.write_webpages(webpage_list)
+
+        self.render_filelist()  # Separate, we need to adhoc call this one
 
     def render_filelist(self) -> None:
         """Function to render filelist.html.
@@ -349,6 +354,14 @@ class PodcastArchiver:
 
     def write_webpages(self, webpages: list[Webpage]) -> None:
         """Write files to disk, and to s3 if needed."""
+        str_webpages = f"{(len(webpages))} pages to files"
+        if len(webpages) == 1:
+            str_webpages = f"{webpages[0].path} to file"
+
+        if self.s3:
+            logger.info(f"⛅💾 Writing {str_webpages} locally and to s3")
+        else:
+            logger.info(f"💾 Writing {str_webpages} locally")
         for webpage in webpages:
             dirs_in_path = os.path.dirname(webpage.path)
             directories_list = dirs_in_path.split(os.sep)
@@ -356,11 +369,11 @@ class PodcastArchiver:
             for i in range(1, len(directories_list) + 1):
                 directory = os.path.join(self.web_root, *directories_list[:i])
                 if not os.path.exists(directory):
-                    logger.info("💾 Creating directory: %s", directory)
+                    logger.debug("💾 Creating directory: %s", directory)
                     os.mkdir(directory)
 
             page_path_local = os.path.join(self.web_root, webpage.path)
-            logger.debug("💾 Writing page locally: %s", page_path_local)
+            logger.trace("💾 Writing page locally: %s", page_path_local)
             page_content_bytes = (
                 webpage.content.encode("utf-8") if isinstance(webpage.content, str) else webpage.content
             )
@@ -368,7 +381,8 @@ class PodcastArchiver:
                 page.write(page_content_bytes)
 
             if self.s3:
-                logger.debug("💾 Writing page s3: %s", webpage.path)
+                logger.trace("⛅💾 Writing page s3: %s", webpage.path)
+
                 self.s3.put_object(
                     Body=page_content_bytes,
                     Bucket=self.app_config["s3"]["bucket"],

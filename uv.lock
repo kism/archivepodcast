@@ -11,6 +11,7 @@ dependencies = [
     { name = "flask" },
     { name = "jinja2" },
     { name = "lxml" },
+    { name = "python-magic" },
     { name = "requests" },
     { name = "tomlkit" },
     { name = "typed-ffmpeg" },
@@ -31,7 +32,6 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "pytest-random-order" },
-    { name = "python-magic" },
     { name = "requests-mock" },
 ]
 type = [
@@ -49,6 +49,7 @@ requires-dist = [
     { name = "flask", specifier = ">=3.0,<4" },
     { name = "jinja2", specifier = ">=3.1,<4" },
     { name = "lxml", specifier = ">=5.3.0" },
+    { name = "python-magic", specifier = ">=0.4" },
     { name = "requests", specifier = ">=2.32" },
     { name = "tomlkit", specifier = ">=0.13" },
     { name = "typed-ffmpeg", specifier = ">=2.1" },
@@ -65,7 +66,6 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "pytest-random-order" },
-    { name = "python-magic" },
     { name = "requests-mock" },
 ]
 type = [
