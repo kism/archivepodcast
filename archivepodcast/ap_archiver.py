@@ -70,7 +70,7 @@ class PodcastArchiver:
         self.podcast_rss: dict[str, str] = {}
         self.webpages: Webpages = Webpages()
         self.s3: S3Client | None = None
-        self._about_page_exists = False
+        self.about_page_exists = False
         self.load_config(app_config, podcast_list)
 
     def load_config(self, app_config: dict, podcast_list: list) -> None:
@@ -108,7 +108,7 @@ class PodcastArchiver:
         if os.path.exists(about_page_desired_path):  # Check if about.html exists, affects index.html so it's first.
             with open(about_page_desired_path, encoding="utf-8") as about_page:
                 self.webpages.add(about_page_filename, mime="text/html", content=about_page.read())
-            self._about_page_exists = True
+            self.about_page_exists = True
             logger.info("About page exists!")
         else:
             logger.debug("About page doesn't exist")
@@ -317,7 +317,7 @@ class PodcastArchiver:
             rendered_output = template.render(
                 app_config=self.app_config,
                 podcasts=self.podcast_list,
-                about_page=self._about_page_exists,
+                about_page=self.about_page_exists,
                 last_generated_date=int(time.time()),
             )
 
@@ -349,6 +349,7 @@ class PodcastArchiver:
             app_config=self.app_config,
             base_url=base_url,
             file_list=file_list,
+            about_page=self.about_page_exists,
             last_generated_date=int(time.time()),
         )
 
@@ -393,4 +394,3 @@ class PodcastArchiver:
                     Key=webpage.path,
                     ContentType=webpage.mime,
                 )
-

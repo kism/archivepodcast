@@ -117,18 +117,6 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
     return seconds_until_next_run
 
 
-def generate_404() -> Response:
-    """We use the 404 template in a couple places."""
-    returncode = HTTPStatus.NOT_FOUND
-    render = render_template(
-        "error.html.j2",
-        error_code=str(returncode),
-        error_text="Page not found, how did you even?",
-        app_config=current_app.config["app"],
-    )
-    return Response(render, status=returncode)
-
-
 def send_ap_cached_webpage(webpage_name: str) -> Response:
     """Send a cached webpage."""
     if not ap:
@@ -137,7 +125,7 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
     try:
         webpage = ap.webpages.get_webpage(webpage_name)
     except KeyError:
-        return generate_not_initialized_error()
+        return generate_not_generated_error()
 
     return Response(
         webpage.content,
@@ -215,6 +203,7 @@ def rss(feed: str) -> Response:
                 "error.html.j2",
                 error_code=str(return_code),
                 error_text="The developer probably messed something up",
+                about_page=get_about_page_exists(),
                 app_config=current_app.config["app"],
             ),
             status=return_code,
@@ -240,6 +229,7 @@ def rss(feed: str) -> Response:
                     "error.html.j2",
                     error_code=str(return_code),
                     error_text="Feed not found, you know you can copy and paste yeah?",
+                    about_page=get_about_page_exists(),
                     app_config=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
@@ -253,6 +243,7 @@ def rss(feed: str) -> Response:
                     "error.html.j2",
                     error_code=str(return_code),
                     error_text="Feed not loadable, Internal Server Error",
+                    about_page=get_about_page_exists(),
                     app_config=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
@@ -275,7 +266,7 @@ def favicon() -> Response:
 
 
 def generate_not_initialized_error() -> Response:
-    """Generate a 500 error."""
+    """Generate a not initialized 500 error."""
     logger.error("❌ ArchivePodcast object not initialized")
     return Response(
         render_template(
@@ -286,3 +277,40 @@ def generate_not_initialized_error() -> Response:
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
+
+
+def generate_not_generated_error() -> Response:
+    """Generate a 500 error."""
+    logger.error("❌ Request for site that is not generated")
+    return Response(
+        render_template(
+            "error.html.j2",
+            error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
+            error_text="You requested a page that is not generated, webapp might be still starting up.",
+            about_page=get_about_page_exists(),
+            app_config=current_app.config["app"],
+        ),
+        status=HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
+
+
+def generate_404() -> Response:
+    """We use the 404 template in a couple places."""
+    returncode = HTTPStatus.NOT_FOUND
+    render = render_template(
+        "error.html.j2",
+        error_code=str(returncode),
+        error_text="Page not found, how did you even?",
+        about_page=get_about_page_exists(),
+        app_config=current_app.config["app"],
+    )
+    return Response(render, status=returncode)
+
+
+def get_about_page_exists() -> bool:
+    """Check if about.html exists, needed for some templates."""
+    about_page_exists = False
+    if ap is not None:
+        about_page_exists = ap.about_page_exists
+
+    return about_page_exists
