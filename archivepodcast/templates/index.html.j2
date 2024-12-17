@@ -33,7 +33,7 @@
             {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a href="/filelist.html">File list</a> | Contact: <a href="mailto:{{ app_config['web_page']['contact']|e }}">{{
                 app_config['web_page']['contact']|e }}</a>
         </footer>
-
+        <p style="display: none;">Last generated: {{ last_generated_date }}</p>
     </main>
 </body>
 

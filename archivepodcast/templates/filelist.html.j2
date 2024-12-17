@@ -25,6 +25,7 @@
             {% for file in file_list %}<li><a href="{{ base_url }}{{ file }}">/{{ file }}</a></li>
             {% endfor %}
         </ul>
+        <p style="display: none;">Last generated: {{ last_generated_date }}</p>
     </main>
 </body>
 

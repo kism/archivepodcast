@@ -3,6 +3,7 @@
 import contextlib
 import os
 import threading
+import time
 from collections.abc import ItemsView
 from typing import TYPE_CHECKING
 
@@ -316,6 +317,7 @@ class PodcastArchiver:
                 app_config=self.app_config,
                 podcasts=self.podcast_list,
                 about_page=self.about_page,
+                last_generated_date=int(time.time()),
             )
 
             self.webpages.add(output_filename, "text/html", rendered_output)
@@ -346,6 +348,7 @@ class PodcastArchiver:
             app_config=self.app_config,
             base_url=base_url,
             file_list=file_list,
+            last_generated_date=int(time.time()),
         )
 
         self.webpages.add(path=output_filename, mime="text/html", content=rendered_output)
