@@ -2,7 +2,6 @@
 
 import contextlib
 import os
-import shutil
 import threading
 from typing import TYPE_CHECKING
 
@@ -30,8 +29,9 @@ class PodcastArchiver:
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
         self.app_config: dict = {}
-        self.podcast_rss: dict[str, str] = {}
         self.podcast_list: list = []
+        self.podcast_rss: dict[str, str] = {}
+        self.webpages: dict[str, str | bytes] = {}
         self.s3: S3Client | None = None
         self.about_page: str | None = None
         self.load_config(app_config, podcast_list)
@@ -235,21 +235,29 @@ class PodcastArchiver:
         logger = get_logger(__name__ + ".render_static")
         logger.info("💾 Rendering static pages in thread")
 
-        static_directory = os.path.join("archivepodcast", "static")
-        template_directory = os.path.join("archivepodcast", "templates")
-        robots_txt_content = "User-Agent: *\nDisallow: /\n"
+        app_directory = "archivepodcast"
+        static_directory = os.path.join(app_directory, "static")
+        template_directory = os.path.join(app_directory, "templates")
 
+        # robots.txt
+        robots_txt_content = "User-Agent: *\nDisallow: /\n"
+        self.webpages["robots.txt"] = robots_txt_content
+
+        # Static items
         static_items_to_copy = [
             os.path.join(root, file) for root, __, files in os.walk(static_directory) for file in files
         ]
 
         for item in static_items_to_copy:
-            static_item_copy_path = os.path.join(self.web_root, "static", item)
-            os.makedirs(os.path.dirname(static_item_copy_path), exist_ok=True)
-            logger.debug("💾 Copying static item: %s to %s", item, static_item_copy_path)
-            shutil.copy(item, static_item_copy_path)
+            logger.debug("💾 Copying static item: %s", item)
+            item_relative_path = os.path.relpath(item, app_directory)
+            with open(item, "rb") as static_item:
+                try:
+                    self.webpages[item_relative_path] = static_item.read().decode("utf-8")
+                except UnicodeDecodeError:
+                    self.webpages[item_relative_path] = static_item.read()
 
-        # Render backup of html
+        # Templates
         env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
         templates_to_render = ["guide.html.j2", "index.html.j2"]
 
@@ -267,51 +275,29 @@ class PodcastArchiver:
                 about_page=self.about_page,
             )
 
-            with open(output_path, "w", encoding="utf-8") as root_web_page:
-                root_web_page.write(rendered_output)
-
-        with open(os.path.join(self.web_root, "robots.txt"), "w", encoding="utf-8") as robots_txt:
-            logger.debug("💾 Writing robots.txt")
-            robots_txt.write(robots_txt_content)
-
-        if self.s3:
-            logger.info("⛅ Uploading static pages to s3 in the background")
-            bucket = self.app_config["s3"]["bucket"]
-            try:
-                for item in static_items_to_copy:
-                    static_item_s3_path = "static" + item.replace(os.sep, "/").replace(static_directory, "")
-                    logger.debug("⛅ Uploading static item: %s to s3: %s:%s", item, bucket, static_item_s3_path)
-                    self.s3.upload_file(
-                        item,
-                        bucket,
-                        static_item_s3_path,
-                    )
-
-                rendered_templates_to_copy = [
-                    os.path.join(self.web_root, file) for file in os.listdir(self.web_root) if file.endswith(".html")
-                ]
-
-                for item in rendered_templates_to_copy:
-                    item_s3_path = os.path.basename(item)
-                    logger.debug("⛅ Uploading rendered template: %s to s3: %s", item, item_s3_path)
-                    self.s3.upload_file(
-                        item,
-                        self.app_config["s3"]["bucket"],
-                        item_s3_path,
-                    )
-
-                self.s3.put_object(
-                    Body=robots_txt_content,
-                    Bucket=self.app_config["s3"]["bucket"],
-                    Key="robots.txt",
-                    ContentType="text/plain",
-                )
-
-                logger.info("⛅ Done uploading static pages to s3")
-            except Exception:
-                logger.exception("⛅❌ Unhandled s3 error when trying to upload static files")
+            self.webpages[output_filename] = rendered_output
 
         self.render_filelist()  # Separate
+
+        for page_path, page_content in self.webpages.items():
+            logger.debug("💾 Writing page: %s", page_path)
+
+            dirs_in_path = os.path.dirname(page_path)
+            try:
+                relative_dirs = os.path.relpath(dirs_in_path, self.web_root)
+                directories_list = relative_dirs.split(os.sep)
+
+                for i in range(1, len(directories_list) + 1):
+                    directory = os.path.join(self.web_root, *directories_list[:i])
+                    if not os.path.exists(directory):
+                        os.mkdir(directory)
+            except ValueError:  # No folders to create
+                pass
+
+            page_path_local = os.path.join(self.web_root, page_path)
+            page_content_bytes = page_content.encode("utf-8") if isinstance(page_content, str) else page_content
+            with open(page_path_local, "wb") as page:
+                page.write(page_content_bytes)
 
     def render_filelist(self) -> None:
         """Function to render filelist.html.
@@ -329,25 +315,10 @@ class PodcastArchiver:
 
         template = env.get_template(template_filename)
 
-        output_path = os.path.join(self.web_root, output_filename)
-
         rendered_output = template.render(
             app_config=self.app_config,
             base_url=base_url,
             file_list=file_list,
         )
 
-        logger.debug(f"💾 Rendering: {template_filename} to {output_path}")
-
-        with open(output_path, "w", encoding="utf-8") as filelist_page:
-            filelist_page.write(rendered_output)
-
-        if self.s3:
-            bucket = self.app_config["s3"]["bucket"]
-            item_s3_path = output_filename
-            logger.debug("⛅ Uploading rendered filelist: %s to s3: %s", output_path, item_s3_path)
-            self.s3.upload_file(
-                output_path,
-                bucket,
-                item_s3_path,
-            )
+        self.webpages[output_filename] = rendered_output
