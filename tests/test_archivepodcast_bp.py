@@ -46,6 +46,30 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
         assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+def test_app_paths_not_generated(apa, client_live):
+    """Test the error for when a page has not been generated."""
+    from archivepodcast import bp_archivepodcast
+    from archivepodcast.ap_archiver import Webpages
+
+    bp_archivepodcast.ap = apa
+
+    apa.webpages = Webpages()
+
+    webpage_list = [
+        "/",
+        "/index.html",
+        "/guide.html",
+        "/robots.txt",
+        "/favicon.ico",
+    ]
+
+    for webpage in webpage_list:
+        response = client_live.get(webpage)
+        assert (
+            response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        ), f"Expected internal server error on {webpage}, got {response.status_code}"
+
+
 def test_app_path_about(apa, client_live, tmp_path):
     """Test the about page."""
     from archivepodcast import bp_archivepodcast

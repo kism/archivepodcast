@@ -18,7 +18,7 @@
   "python.terminal.activateEnvInCurrentTerminal": true,
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true,
+  "python.testing.pytestEnabled": false,
 
   "livePreview.serverRoot": "htmlcov/",
   "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3",

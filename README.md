@@ -117,7 +117,8 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Get rid of x-directory from s3~~
 - ~~Frontend js file browser~~
 - ~~Figure out lag during SIGHUP~~
-- JS testing
 - ~~Cache all pages~~
-  - Include last generated stat
+  - ~~Include last generated stat~~
 - put rss into the page cache maybe
+- test rss mime type
+- JS testing

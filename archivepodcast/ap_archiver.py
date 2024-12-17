@@ -56,10 +56,6 @@ class Webpages:
         """Get a webpage."""
         return self._webpages[path]
 
-    def items(self) -> ItemsView[str, Webpage]:
-        """Return items."""
-        return self._webpages.items()
-
 
 class PodcastArchiver:
     """ArchivePodcast object."""
