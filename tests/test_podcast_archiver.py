@@ -61,7 +61,7 @@ def test_grab_podcasts_not_live(
     assert "Cannot find rss feed file" not in caplog.text
     assert "Unable to host podcast, something is wrong" not in caplog.text
 
-    assert "No response, loading rss from file" not in caplog.text # This shouldn't happen
+    assert "No response, loading rss from file" not in caplog.text  # This shouldn't happen
 
     get_rss = str(apa.get_rss_feed("test"), "utf-8")
 
@@ -95,6 +95,7 @@ def test_grab_podcasts_unhandled_exception(
 
     assert "Error grabbing podcast:" in caplog.text
 
+
 def test_grab_podcasts_invalid_rss(
     apa,
     caplog,
@@ -118,7 +119,6 @@ def test_grab_podcasts_invalid_rss(
         apa.grab_podcasts()
 
     assert "Error parsing rss file:" in caplog.text
-
 
 
 def test_grab_podcasts_not_live_no_existing_feed(
