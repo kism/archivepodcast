@@ -4,7 +4,6 @@ import contextlib
 import os
 import threading
 import time
-from collections.abc import ItemsView
 from typing import TYPE_CHECKING
 
 import boto3

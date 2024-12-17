@@ -294,9 +294,3 @@ def mock_podcast_source_wav(requests_mock, tmp_path):
 
 
 # endregion
-
-
-# @pytest.fixture  # We need to mock threads out since they won't have context
-# def mock_threads_none(monkeypatch):
-#     """Mock thread start to prevent threads from actually starting."""
-#     monkeypatch.setattr("threading.Thread.start", lambda _: None)

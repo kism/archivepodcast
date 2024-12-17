@@ -2,8 +2,6 @@
 
 from http import HTTPStatus
 
-from flask.testing import FlaskClient
-
 
 def test_home(client, apa):
     """Test the hello API endpoint. This one uses the fixture in conftest.py."""
