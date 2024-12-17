@@ -130,34 +130,19 @@ def generate_404() -> Response:
 
 
 @bp.route("/")
-def home() -> Response:
-    """Flask Home."""
-    if not ap:
-        return generate_not_initialized_error()
-
-    return Response(
-        render_template(
-            "index.html.j2",
-            app_config=current_app.config["app"],
-            podcasts=current_app.config["podcast"],
-            about_page=ap.about_page,
-        ),
-        status=HTTPStatus.OK,
-    )
-
-
 @bp.route("/index.html")
-def home_index() -> Response:
-    """Flask Home, s3 backup compatible."""
-    # This ensures that if you transparently redirect / to /index.html
-    # for using in cloudflare r2 storage it will work
-    # If the vm goes down you can change the main domain dns to point to r2
-    # and everything should work.
+def home() -> Response:
+    """Flask Home.
+
+    If you are serving static files with s3 or nginx, ensure that / redirects to /index.html,
+    """
     if not ap:
         return generate_not_initialized_error()
 
+    webpage = ap.webpages.get_webpage("index.html")
     return Response(
-        render_template("index.html.j2", app_config=current_app.config["app"], about_page=ap.about_page),
+        webpage.content,
+        mimetype=webpage.mime,
         status=HTTPStatus.OK,
     )
 
@@ -168,8 +153,10 @@ def home_guide() -> Response:
     if not ap:
         return generate_not_initialized_error()
 
+    webpage = ap.webpages.get_webpage("guide.html")
     return Response(
-        render_template("guide.html.j2", app_config=current_app.config["app"], about_page=ap.about_page),
+        webpage.content,
+        mimetype=webpage.mime,
         status=HTTPStatus.OK,
     )
 
@@ -177,9 +164,18 @@ def home_guide() -> Response:
 @bp.route("/about.html")
 def home_about() -> Response:
     """Flask Home, s3 backup compatible."""
-    if os.path.exists(os.path.join(current_app.instance_path, "web", "about.html")):
-        return send_from_directory(os.path.join(current_app.instance_path, "web"), "about.html")
-    return generate_404()
+    if not ap:
+        return generate_not_initialized_error()
+
+    webpage = ap.webpages.get_webpage("about.html")
+    try:
+        return Response(
+            webpage.content,
+            mimetype=webpage.mime,
+            status=HTTPStatus.OK,
+        )
+    except KeyError:
+        return generate_404()
 
 
 @bp.route("/content/<path:path>")
@@ -204,15 +200,10 @@ def home_filelist() -> Response:
     if not ap:
         return generate_not_initialized_error()
 
-    base_url, file_list = ap.get_file_list()
-
+    webpage = ap.webpages.get_webpage("filelist.html")
     return Response(
-        render_template(
-            "filelist.html.j2",
-            app_config=current_app.config["app"],
-            file_list=file_list,
-            base_url=base_url,
-        ),
+        webpage.content,
+        mimetype=webpage.mime,
         status=HTTPStatus.OK,
     )
 
@@ -284,19 +275,28 @@ def rss(feed: str) -> Response:
 @bp.route("/robots.txt")
 def static_from_root() -> Response:
     """Serve robots.txt."""
-    response = Response(response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain")
-    response.headers["Content-Type"] = "text/plain; charset=utf-8"
-    return response
+    if not ap:
+        return generate_not_initialized_error()
+
+    webpage = ap.webpages.get_webpage("robots.txt")
+    return Response(
+        webpage.content,
+        mimetype=webpage.mime,
+        status=HTTPStatus.OK,
+    )
 
 
 @bp.route("/favicon.ico")
 def favicon() -> Response:
     """Return the favicon."""
-    static_folder_path = os.path.join(current_app.root_path, "static")
-    return send_from_directory(
-        static_folder_path,
-        "favicon.ico",
-        mimetype="image/vnd.microsoft.icon",
+    if not ap:
+        return generate_not_initialized_error()
+
+    webpage = ap.webpages.get_webpage("favicon.ico")
+    return Response(
+        webpage.content,
+        mimetype=webpage.mime,
+        status=HTTPStatus.OK,
     )
 
 
