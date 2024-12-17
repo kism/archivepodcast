@@ -51,7 +51,7 @@ function generateBreadcrumbHtml() {
 }
 
 function generateCurrentListHTML(items) {
-  let html = "<br><code style='display: block;'>";
+  let html = "";
 
   let current_path_nice = current_path;
 
@@ -76,7 +76,7 @@ function generateCurrentListHTML(items) {
     }
   }
 
-  html += "</code>";
+  html += "";
   return html;
 }
 
