@@ -15,7 +15,10 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
     """Test that the app launches."""
     from archivepodcast import bp_archivepodcast
 
+    assert len(apa.webpages) > 0
+
     bp_archivepodcast.ap = apa
+
 
     for client in [client_live, client_live_s3]:
         assert client
@@ -29,6 +32,7 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
             "/favicon.ico",
             "/static/favicon.ico",
             "/static/main.css",
+            "/static/fonts/fira-code-v12-latin-500.woff2",
             "/static/fonts/fira-code-v12-latin-600.woff2",
             "/static/fonts/fira-code-v12-latin-700.woff2",
             "/static/fonts/noto-sans-display-latin-500.woff2",
@@ -37,7 +41,7 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
 
         for path in valid_path_list:
             response = client.get(path)
-            assert response.status_code == HTTPStatus.OK
+            assert response.status_code == HTTPStatus.OK, f"Failed on {path}"
 
         response = client.get("/non_existent_page")
         assert response.status_code == HTTPStatus.NOT_FOUND

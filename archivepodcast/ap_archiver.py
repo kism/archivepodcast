@@ -40,6 +40,10 @@ class Webpages:
         """Initialise the Webpages object."""
         self._webpages: dict[str, Webpage] = {}
 
+    def __len__(self) -> int:
+        """Return the length of the webpages."""
+        return len(self._webpages)
+
     def add(self, path: str, mime: str, content: str | bytes) -> None:
         """Add a webpage."""
         self._webpages[path] = Webpage(path=path, mime=mime, content=content)

@@ -88,7 +88,7 @@ def podcast_loop() -> None:
         return
 
     if ap.s3 is not None:
-        logger.info("⛅ We are in s3 mode, missing episode files will be downloaded, uploaded to s3 and then deleted")
+        logger.info("⛅ We are in s3 mode, missing episode files will be downloaded, uploaded to s3, and then deleted")
 
     while True:
         ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
@@ -125,7 +125,7 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
     try:
         webpage = ap.webpages.get_webpage(webpage_name)
     except KeyError:
-        return generate_not_generated_error()
+        return generate_not_generated_error(webpage_name)
 
     return Response(
         webpage.content,
@@ -135,22 +135,17 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
 
 
 @bp.route("/")
-@bp.route("/index.html")
 def home() -> Response:
     """Flask Home.
 
     If you are serving static files with s3 or nginx, ensure that / redirects to /index.html,
     """
-    if not ap:
-        return generate_not_initialized_error()
+    return send_ap_cached_webpage("index.html")
 
-    webpage = ap.webpages.get_webpage("index.html")
-    return Response(
-        webpage.content,
-        mimetype=webpage.mime,
-        status=HTTPStatus.OK,
-    )
-
+@bp.route("/index.html")
+def home_index() -> Response:
+    """Flask Home."""
+    return send_ap_cached_webpage("index.html")
 
 @bp.route("/guide.html")
 def home_guide() -> Response:
@@ -256,7 +251,7 @@ def rss(feed: str) -> Response:
 @bp.route("/robots.txt")
 def static_from_root() -> Response:
     """Serve robots.txt."""
-    return send_ap_cached_webpage("robots.html")
+    return send_ap_cached_webpage("robots.txt")
 
 
 @bp.route("/favicon.ico")
@@ -279,14 +274,14 @@ def generate_not_initialized_error() -> Response:
     )
 
 
-def generate_not_generated_error() -> Response:
+def generate_not_generated_error(webpage_name: str) -> Response:
     """Generate a 500 error."""
-    logger.error("❌ Request for site that is not generated")
+    logger.error(f"❌ Requested page: {webpage_name} not generated")
     return Response(
         render_template(
             "error.html.j2",
             error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
-            error_text="You requested a page that is not generated, webapp might be still starting up.",
+            error_text=f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
             about_page=get_about_page_exists(),
             app_config=current_app.config["app"],
         ),

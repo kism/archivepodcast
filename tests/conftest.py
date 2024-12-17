@@ -146,12 +146,6 @@ def place_test_config() -> Callable:
 # endregion
 
 
-@pytest.fixture  # We need to mock threads out since they won't have context
-def mock_threads_none(monkeypatch):
-    """Mock thread start to prevent threads from actually starting."""
-    monkeypatch.setattr("threading.Thread.start", lambda _: None)
-
-
 # region: AWS
 
 
@@ -185,7 +179,7 @@ def s3(aws_credentials):
 
 
 @pytest.fixture
-def apa(tmp_path, get_test_config, caplog, mock_threads_none):
+def apa(tmp_path, get_test_config, caplog):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid.toml"
     config = get_test_config(config_file)
@@ -193,6 +187,7 @@ def apa(tmp_path, get_test_config, caplog, mock_threads_none):
     return PodcastArchiver(
         app_config=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
     )
+
 
 
 @pytest.fixture
@@ -293,3 +288,10 @@ def mock_podcast_source_wav(requests_mock, tmp_path):
 
 
 # endregion
+
+
+# @pytest.fixture  # We need to mock threads out since they won't have context
+# def mock_threads_none(monkeypatch):
+#     """Mock thread start to prevent threads from actually starting."""
+#     monkeypatch.setattr("threading.Thread.start", lambda _: None)
+
