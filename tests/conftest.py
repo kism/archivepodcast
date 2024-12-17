@@ -27,12 +27,14 @@ microsoft_wav_header = bytes.fromhex(
 null_audio_data = b"\x00" * 5120
 TEST_WAV_FILE = microsoft_wav_header + null_audio_data
 
+DUMMY_RSS_STR = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Dummy RSS</item></rss>"
+
 
 def pytest_configure():
     """This is a magic function for adding things to pytest?"""
     pytest.TEST_CONFIGS_LOCATION = TEST_CONFIGS_LOCATION
     pytest.TEST_WAV_FILE = TEST_WAV_FILE
-    pytest.DUMMY_RSS_STR = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Dummy RSS</item></rss>"
+    pytest.DUMMY_RSS_STR = DUMMY_RSS_STR
 
 
 # region: Flask
@@ -42,6 +44,11 @@ def pytest_configure():
 def app(tmp_path, get_test_config) -> Flask:
     """This fixture uses the default config within the flask app."""
     from archivepodcast import create_app
+
+    # Create a dummy RSS file since this app instance is not live and requires an existing rss feed.
+    os.makedirs(os.path.join(tmp_path, "web", "rss"))
+    with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
+        file.write(DUMMY_RSS_STR)
 
     return create_app(test_config=get_test_config("testing_true_valid.toml"), instance_path=tmp_path)
 

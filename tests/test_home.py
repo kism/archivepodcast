@@ -10,8 +10,9 @@ def test_home(client, apa):
     from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
+    apa._render_files()
 
-    bp_archivepodcast.ap.render_files()
+    assert apa.webpages.get_webpage("index.html")
 
     response = client.get("/")
     # TEST: HTTP OK
@@ -33,6 +34,7 @@ def test_favicon_exists(client, apa):
     from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
+    apa._render_files()
 
     response = client.get("/favicon.ico")
     assert response.status_code == HTTPStatus.OK
@@ -43,6 +45,7 @@ def test_guide_exists(client, apa):
     from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
+    apa._render_files()
 
     response = client.get("/guide.html")
     assert response.status_code == HTTPStatus.OK
