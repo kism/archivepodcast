@@ -19,7 +19,6 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
 
     bp_archivepodcast.ap = apa
 
-
     for client in [client_live, client_live_s3]:
         assert client
 
@@ -46,18 +45,29 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
         response = client.get("/non_existent_page")
         assert response.status_code == HTTPStatus.NOT_FOUND
 
-        # Since we are looping...
-        if os.path.exists(os.path.join(tmp_path, "web", "about.html")):
-            os.remove(os.path.join(tmp_path, "web", "about.html"))
 
-        response = client.get("/about.html")
-        assert response.status_code == HTTPStatus.NOT_FOUND
+def test_app_path_about(apa, client_live, tmp_path):
+    """Test the about page."""
+    from archivepodcast import bp_archivepodcast
 
-        with open(os.path.join(tmp_path, "web", "about.html"), "w") as file:
-            file.write("Test")
+    bp_archivepodcast.ap = apa
 
-        response = client.get("/about.html")
-        assert response.status_code == HTTPStatus.OK
+    # Since we are looping...
+    if os.path.exists(os.path.join(tmp_path, "web", "about.html")):
+        os.remove(os.path.join(tmp_path, "web", "about.html"))
+
+    apa.load_about_page()
+    response = client_live.get("/about.html")
+    assert (
+        response.status_code == HTTPStatus.NOT_FOUND
+    ), f"About page should not exist, got status code: {response.status_code}"
+
+    with open(os.path.join(tmp_path, "web", "about.html"), "w") as file:
+        file.write("Test")
+
+    apa.load_about_page()
+    response = client_live.get("/about.html")
+    assert response.status_code == HTTPStatus.OK, f"About page should exist, got status code: {response.status_code}"
 
 
 def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplog):

@@ -142,10 +142,12 @@ def home() -> Response:
     """
     return send_ap_cached_webpage("index.html")
 
+
 @bp.route("/index.html")
 def home_index() -> Response:
     """Flask Home."""
     return send_ap_cached_webpage("index.html")
+
 
 @bp.route("/guide.html")
 def home_guide() -> Response:
@@ -156,7 +158,10 @@ def home_guide() -> Response:
 @bp.route("/about.html")
 def home_about() -> Response:
     """Flask Home, s3 backup compatible."""
-    return send_ap_cached_webpage("about.html")
+    if get_about_page_exists():
+        return send_ap_cached_webpage("about.html")
+
+    return generate_404()
 
 
 @bp.route("/content/<path:path>")
@@ -257,7 +262,7 @@ def static_from_root() -> Response:
 @bp.route("/favicon.ico")
 def favicon() -> Response:
     """Return the favicon."""
-    return send_ap_cached_webpage("favicon.ico")
+    return send_ap_cached_webpage("static/favicon.ico")
 
 
 def generate_not_initialized_error() -> Response:

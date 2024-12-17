@@ -189,7 +189,6 @@ def apa(tmp_path, get_test_config, caplog):
     )
 
 
-
 @pytest.fixture
 def no_render_files(monkeypatch):
     """Monkeypatch render_files to prevent it from running."""
@@ -294,4 +293,3 @@ def mock_podcast_source_wav(requests_mock, tmp_path):
 # def mock_threads_none(monkeypatch):
 #     """Mock thread start to prevent threads from actually starting."""
 #     monkeypatch.setattr("threading.Thread.start", lambda _: None)
-

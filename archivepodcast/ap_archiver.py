@@ -48,7 +48,7 @@ class Webpages:
         """Add a webpage."""
         self._webpages[path] = Webpage(path=path, mime=mime, content=content)
 
-    def get(self) -> dict[str, Webpage]:
+    def get_all(self) -> dict[str, Webpage]:
         """Return the webpages."""
         return self._webpages
 
@@ -84,7 +84,7 @@ class PodcastArchiver:
         self.load_s3()
         self.podcast_downloader = PodcastDownloader(app_config=app_config, s3=self.s3, web_root=self.web_root)
         self.make_folder_structure()
-        self.make_about_page()
+        self.load_about_page()
         self.render_files()
 
     def get_rss_feed(self, feed: str) -> str:
@@ -104,7 +104,7 @@ class PodcastArchiver:
             self.podcast_downloader.s3_paths_cache if self.s3 else self.podcast_downloader.local_paths_cache,
         )
 
-    def make_about_page(self) -> None:
+    def load_about_page(self) -> None:
         """Create about page if needed."""
         about_page_filename = "about.html"
         about_page_desired_path = os.path.join(self.web_root, about_page_filename)
@@ -114,6 +114,7 @@ class PodcastArchiver:
                 self.webpages.add(about_page_filename, mime="text/html", content=about_page.read())
             self.about_page_exists = True
             logger.info("About page exists!")
+            self.write_webpages([self.webpages.get_webpage(about_page_filename)])
         else:
             logger.debug("About page doesn't exist")
 
@@ -328,7 +329,7 @@ class PodcastArchiver:
             self.webpages.add(output_filename, "text/html", rendered_output)
 
         logger.info("💾 Done rendering static pages")
-        webpage_list = list({k: v for k, v in self.webpages.get().items() if k != "filelist.html"}.values())
+        webpage_list = list({k: v for k, v in self.webpages.get_all().items() if k != "filelist.html"}.values())
         self.write_webpages(webpage_list)
 
         self.render_filelist()  # Separate, we need to adhoc call this one
