@@ -119,8 +119,8 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Figure out lag during SIGHUP~~
 - ~~Cache all pages~~
   - ~~Include last generated stat~~
-- put rss into the page cache maybe
-- test rss mime type
+- ~~test rss mime type~~
 - ~~JS testing~~
 - ~~Remove empty s3 files every hour~~
--- Fix tests/test_archivepodcast_bp.py::test_file_list_s3
+- ~~Fix tests/test_archivepodcast_bp.py::test_file_list_s3~~
+- put rss into the page cache maybe

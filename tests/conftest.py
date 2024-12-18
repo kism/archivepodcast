@@ -274,13 +274,19 @@ def mock_get_podcast_source_rss(requests_mock) -> Callable:
 
 @pytest.fixture
 def mock_podcast_source_images(requests_mock):
-    """Requests mock for downloading an image."""
+    """Requests mock for downloading an image.
+
+    Doesn't need to be real, but does need content since it will be removed if it is zero bytes.
+    """
     requests_mock.get("https://pytest.internal/images/test.jpg", text="jpg")
 
 
 @pytest.fixture
 def mock_podcast_source_mp3(requests_mock):
-    """Requests mock for downloading an image."""
+    """Requests mock for downloading an image.
+
+    Doesn't need to be real, but does need content since it will be removed if it is zero bytes.
+    """
     requests_mock.get("https://pytest.internal/audio/test.mp3", text="mp3")
 
 
