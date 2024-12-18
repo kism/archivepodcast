@@ -24,7 +24,7 @@
         <p>Please don't listen to podcast episodes this way, use the guide on the website to add the feeds to a podcast
             app. Anything in the /content/_adhoc folder is not in a podcast feed.{% if app_config['storage_backend'] ==
             "s3" %} Files are sent via the CDN.{% endif %}</p>
-        <div id="breadcrumb_js" class="file-list" style="white-space: nowrap; display: none;"></div><br>
+        <div id="breadcrumb_js" class="file-list" style="white-space: nowrap; display: none;"></div><br><br>
         <ul id="file_list_js" class="file-list" style="white-space: nowrap; display: none;"></ul>
         <ul id="file_list" class="file-list" style="white-space: nowrap;">
             {% for file in file_list %}<li><a href="{{ base_url }}{{ file }}">/{{ file }}</a></li>

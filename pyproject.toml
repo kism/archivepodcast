@@ -92,6 +92,7 @@ ignore = [
     "S311",    # KG I'll assume no real crypto will be done in PyTest.
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
+    "ANN401", # KG Tests can return typing.Any.
 ]
 
 

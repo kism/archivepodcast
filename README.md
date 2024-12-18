@@ -116,6 +116,7 @@ An example guide on setting it up start to finish, with all features and saving 
 ## Todo
 
 - Container Registry
+- ~~make mypy more sensitive~~
+- ~~fix css~~
 - put rss into the page cache maybe
-- make mypy more sensitive
 - implement api

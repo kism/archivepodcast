@@ -5,6 +5,7 @@ Fixtures defined in a conftest.py can be used by any test in that package withou
 
 import os
 import shutil
+import typing
 from collections.abc import Callable
 
 import boto3
