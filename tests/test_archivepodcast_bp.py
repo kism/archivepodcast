@@ -313,7 +313,7 @@ def test_file_list(apa, client_live, tmp_path):
         file.write("test")
 
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
-    ap.render_filelist()
+    ap.render_filelist_html()
 
     response = client_live.get("/filelist.html")
 
@@ -334,10 +334,13 @@ def test_file_list_s3(apa_aws, client_live_s3):
     ap.s3.put_object(Bucket=ap.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
 
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
-    ap.render_filelist()
+    ap.render_filelist_html()
 
     response = client_live_s3.get("/filelist.html")
 
     assert response.status_code == HTTPStatus.OK
-    assert "/index.html" in response.data.decode("utf-8")
-    assert content_s3_path in response.data.decode("utf-8")
+
+    response_html = response.data.decode("utf-8")
+
+    assert "/index.html" in response_html
+    assert content_s3_path in response_html

@@ -176,7 +176,7 @@ class PodcastArchiver:
             try:
                 self._grab_podcast(podcast)
                 logger.debug("💾 Updating filelist.html")
-                self.render_filelist()
+                self.render_filelist_html()
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
 
@@ -314,9 +314,9 @@ class PodcastArchiver:
         webpage_list = list({k: v for k, v in self.webpages.get_all().items() if k != "filelist.html"}.values())
         self.write_webpages(webpage_list)
 
-        self.render_filelist()  # Separate, we need to adhoc call this one
+        self.render_filelist_html()  # Separate, we need to adhoc call this one
 
-    def render_filelist(self) -> None:
+    def render_filelist_html(self) -> None:
         """Function to render filelist.html.
 
         This is separate from render_files() since it needs to be done after grabbing podcasts.
