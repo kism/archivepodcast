@@ -23,7 +23,7 @@ bp = Blueprint("archivepodcast", __name__)
 
 logger = get_logger(__name__)
 
-ap = None
+ap: PodcastArchiver | None = None
 
 
 def initialise_archivepodcast() -> None:
