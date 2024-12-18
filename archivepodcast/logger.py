@@ -60,7 +60,7 @@ TRACE_LEVEL_NUM = 5
 class CustomLogger(logging.Logger):
     """Custom logger to appease mypy."""
 
-    def trace(self, message, *args: typing.Any, **kws: typing.Any) -> None:  # noqa: ANN001, ANN401
+    def trace(self, message: object, *args: typing.Any, **kws: typing.Any) -> None:  # noqa: ANN401
         """Create logger level for trace."""
         if self.isEnabledFor(TRACE_LEVEL_NUM):
             # Yes, logger takes its '*args' as 'args'.

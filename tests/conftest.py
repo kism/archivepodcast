@@ -260,7 +260,7 @@ def apd_aws(apa_aws, get_test_config, caplog):
 def mock_get_podcast_source_rss(requests_mock) -> Callable:
     """Return a podcast definition from the config."""
 
-    def _mock_get_podcast_source_rss(rss_name: str) -> str:
+    def _mock_get_podcast_source_rss(rss_name: str) -> typing.Any:
         """Return the rss file."""
         filepath = os.path.join(TEST_RSS_LOCATION, rss_name)
 

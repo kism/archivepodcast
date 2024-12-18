@@ -125,14 +125,12 @@ filterwarnings = [
 show_contexts = true
 
 [tool.mypy]
-files = ["archivepodcast", "tests"]
+files = ["archivepodcast"]
 namespace_packages = true
 explicit_package_bases = true
 show_error_codes = true
-strict = false
-enable_error_code = [
-    "ignore-without-code",
-    "redundant-expr",
-    "truthy-bool",
+strict = true
+disable_error_code = [
     "type-arg",
 ]
+exclude = ["tests/*"]
