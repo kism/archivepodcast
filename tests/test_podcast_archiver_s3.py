@@ -70,6 +70,38 @@ def test_check_s3_files(apa_aws, caplog):
     assert "Unhandled s3 error" not in caplog.text
 
 
+@pytest.mark.parametrize(
+    ("path", "content_type"),
+    [
+        ("index.html", "text/html"),
+        ("filelist.html", "text/html"),
+        ("static/clipboard.js", "text/javascript"),
+        ("static/filelist.js", "text/javascript"),
+        ("robots.txt", "text/plain"),
+        ("static/favicon.ico", "image/vnd.microsoft.icon"),
+        ("static/fonts/fira-code-v12-latin-500.woff2", "font/woff2"),
+    ],
+)
+def test_s3_object_content_type(
+    apa_aws,
+    caplog,
+    tmp_path,
+    monkeypatch,
+    mock_get_podcast_source_rss,
+    mock_podcast_source_images,
+    mock_podcast_source_mp3,
+    path,
+    content_type,
+):
+    """Ensure correct content types."""
+    apa_aws._render_files()
+    bucket = apa_aws.app_config["s3"]["bucket"]
+
+    object_info = apa_aws.s3.head_object(Bucket=bucket, Key=path)
+
+    assert object_info["ContentType"] == content_type
+
+
 def test_check_s3_files_problem_files(apa_aws, caplog):
     """Test that problem s3 paths are removed."""
     apa_aws.s3.put_object(

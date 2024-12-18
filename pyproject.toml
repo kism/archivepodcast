@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.1.10"
+version = "1.1.11"
 description = ""
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -92,6 +92,7 @@ ignore = [
     "S311",    # KG I'll assume no real crypto will be done in PyTest.
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
+    "ANN401", # KG Tests can return typing.Any.
 ]
 
 
@@ -125,14 +126,12 @@ filterwarnings = [
 show_contexts = true
 
 [tool.mypy]
-files = ["archivepodcast", "tests"]
+files = ["archivepodcast"]
 namespace_packages = true
 explicit_package_bases = true
 show_error_codes = true
-strict = false
-enable_error_code = [
-    "ignore-without-code",
-    "redundant-expr",
-    "truthy-bool",
+strict = true
+disable_error_code = [
     "type-arg",
 ]
+exclude = ["tests/*"]

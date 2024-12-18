@@ -25,7 +25,7 @@ describe.each([
   test(`fileListJSDiv on hash: ${in_hash}`, () => {
     window.location.hash = in_hash;
     const fileListJSDiv = document.getElementById("file_list_js");
-    expect(fileListJSDiv.style.display).toBe("block");
+    expect(fileListJSDiv.style.display).toBe("inline-block");
     showCurrentDirectory();
     expect(fileListJSDiv.innerHTML).toBe(expected_html);
   });
@@ -49,7 +49,7 @@ test("DOMContentLoaded event", () => {
 test("fileListJSDiv invalid path", () => {
   window.location.hash = "#/content/vitest/bananas";
   const fileListJSDiv = document.getElementById("file_list_js");
-  expect(fileListJSDiv.style.display).toBe("block");
+  expect(fileListJSDiv.style.display).toBe("inline-block");
   showCurrentDirectory();
   expect(fileListJSDiv.innerHTML).toBe("<li>Invalid path: /content/vitest/bananas</li>");
 });

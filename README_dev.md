@@ -1,6 +1,8 @@
 # Dev Guide
 
-## Python Setup
+## Setup
+
+### Python Setup
 
 ```bash
 uv venv
@@ -8,6 +10,23 @@ source .venv/bin/activate
 uv sync
 flask --app archivepodcast run --port 5000
 ```
+
+### Javascript/Spellcheck/Frontend Setup
+
+Frontend tools are all handled by npm
+
+```bash
+nvm use 22
+npm install
+```
+
+Extra setup dictionaries for spellcheck
+
+```bash
+npx cspell link add @cspell/dict-en-au
+```
+
+## Lint, Format, Type Check, Test
 
 ### Ruff (Python Lint, Format)
 
@@ -31,22 +50,7 @@ pytest
 
 To get coverage report, open the `htmlcov` folder in a browser or the vscode live server.
 
-## Frontend
-
-Frontend tools are all handled by npm
-
-```bash
-nvm use 22
-npm install
-```
-
 ### Spellcheck
-
-Extra setup
-
-```bash
-npx cspell link add @cspell/dict-en-au
-```
 
 Run
 
