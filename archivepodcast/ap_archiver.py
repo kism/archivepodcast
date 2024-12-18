@@ -176,9 +176,14 @@ class PodcastArchiver:
             try:
                 self._grab_podcast(podcast)
                 logger.debug("💾 Updating filelist.html")
-                self.render_filelist_html()
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception:
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
+
+        try:
+            self.render_filelist_html()
+        except Exception:
+            logger.exception("❌ Unhandled exception rendering filelist.html")
+
 
     def _grab_podcast(self, podcast: dict) -> None:
         tree = None
@@ -322,7 +327,7 @@ class PodcastArchiver:
         This is separate from render_files() since it needs to be done after grabbing podcasts.
         """
         self.check_s3_files()
-        base_url, file_list = self.podcast_downloader.get_file_cache()
+        base_url, file_list = self.podcast_downloader.get_file_list()
 
         template_directory = os.path.join("archivepodcast", "templates")
         env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)

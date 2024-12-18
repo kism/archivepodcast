@@ -1,6 +1,7 @@
 """Blueprint and helpers for the ArchivePodcast app."""
 
 import datetime
+import json
 import os
 import signal
 import threading
@@ -130,6 +131,27 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
     return Response(
         webpage.content,
         mimetype=webpage.mime,
+        status=HTTPStatus.OK,
+    )
+
+@bp.route("/api/v1/filelist")
+def api_webpages() -> Response:
+    """Return the filelist as json."""
+    if not ap:
+        return generate_not_initialized_error()
+
+    try:
+        base_url, filelist = ap.podcast_downloader.get_file_list()
+    except KeyError:
+        return generate_not_generated_error("filelist")
+
+    file_list_new = [base_url + file for file in filelist]
+
+    filelist_json = json.dumps(file_list_new)
+
+    return Response(
+        filelist_json,
+        mimetype="application/json",
         status=HTTPStatus.OK,
     )
 

@@ -22,6 +22,7 @@ If you want to convert WAV episodes to mp3, ensure that you have ffmpeg installe
 
 ```bash
 uv venv
+source .venv/bin/activate
 uv sync
 ```
 
@@ -29,6 +30,7 @@ uv sync
 
 ```bash
 uv venv
+source .venv/bin/activate
 uv sync --no-group dev --no-group test --no-group type --no-group lint
 ```
 
@@ -124,3 +126,5 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Remove empty s3 files every hour~~
 - ~~Fix tests/test_archivepodcast_bp.py::test_file_list_s3~~
 - put rss into the page cache maybe
+- fix issue with partial file list
+- fix mime type of javascript in s3

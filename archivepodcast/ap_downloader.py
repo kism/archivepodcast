@@ -101,7 +101,7 @@ class PodcastDownloader:
             ]
             self.local_paths_cache.sort()
 
-    def get_file_cache(self) -> tuple[str, list]:
+    def get_file_list(self) -> tuple[str, list]:
         """Gets the base url and the file cache."""
         self.update_file_cache()
 
