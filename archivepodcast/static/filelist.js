@@ -101,11 +101,13 @@ export function getNicePathStr() {
 
   path = path.replace("#", ""); // Remove the hash
 
-  if (path === "" || path === "/") { // If the path is empty or just a slash, return a single slash
+  if (path === "" || path === "/") {
+    // If the path is empty or just a slash, return a single slash
     return "/";
   }
   path = path.replace(/\/\//g, "/"); // Replace double slashes with a single slash
-  if (path[path.length - 1] === "/") { // Remove trailing slash
+  if (path[path.length - 1] === "/") {
+    // Remove trailing slash
     path = path.slice(0, -1);
   }
   return path;
