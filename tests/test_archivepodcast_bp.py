@@ -327,17 +327,20 @@ def test_file_list_s3(apa_aws, client_live_s3):
     from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa_aws
-    ap = apa_aws
 
     content_s3_path = "content/test/20200101-Test-Episode.mp3"
 
-    ap.s3.put_object(Bucket=ap.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
+    apa_aws.s3.put_object(Bucket=apa_aws.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
 
-    ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
-    ap.render_filelist_html()
+    # Check that the file is in the cache
+    apa_aws.podcast_downloader.__init__(app_config=apa_aws.app_config, s3=apa_aws.s3, web_root=apa_aws.web_root)
+    _, file_cache = apa_aws.podcast_downloader.get_file_cache()
+    assert content_s3_path in file_cache
+
+    # Check that the file is in filelist.html
+    apa_aws.render_filelist_html()
 
     response = client_live_s3.get("/filelist.html")
-
     assert response.status_code == HTTPStatus.OK
 
     response_html = response.data.decode("utf-8")

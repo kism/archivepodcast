@@ -82,6 +82,7 @@ class PodcastDownloader:
         self.local_paths_cache: list = []
         self.app_config = app_config
         self.web_root = web_root
+        self.update_file_cache()
 
         logger.trace("PodcastDownloader config (re)loaded")
 

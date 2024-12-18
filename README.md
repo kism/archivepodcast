@@ -123,3 +123,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - test rss mime type
 - ~~JS testing~~
 - ~~Remove empty s3 files every hour~~
+-- Fix tests/test_archivepodcast_bp.py::test_file_list_s3
