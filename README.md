@@ -122,3 +122,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - put rss into the page cache maybe
 - test rss mime type
 - JS testing
+- Remove empty s3 files every hour

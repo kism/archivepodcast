@@ -1,23 +1,54 @@
 // @vitest-environment happy-dom
+import { expect, test, beforeEach } from 'vitest'
+import { showCurrentDirectory, addFileToStructure, showJSDivs } from '../archivepodcast/static/filelist.js'
 
-import { expect, test } from 'vitest'
+beforeEach(() => {
+  document.body.innerHTML = `
+    <div id="file_list">
+      <a href="/test/path">test/path</a>
+    </div>
+    <div id="file_list_js"></div>
+    <div id="breadcrumb_js"></div>
+  `;
+  addFileToStructure('https://cdn.vitest.internal/content/vitest/test.mp3', '/content/vitest/test.mp3');
+  showJSDivs();
+});
 
-import { generateBreadcrumbHtml } from '../archivepodcast/static/filelist.js'
+test.each([
+  {in_hash: '#/content/vitest', expected_html: `📂 <a href="#/content/">..</a><br>💾 <a href="https://cdn.vitest.internal/content/vitest/test.mp3">test.mp3</a><br>`},
+  {in_hash: "#/content", expected_html: "aaa"},
+])
+test('fileListJSDiv is displayed and populated on hash', ({in_hash, expected_html}) => {
+  window.location.hash = in_hash;
+  const fileListJSDiv = document.getElementById('file_list_js');
+  expect(fileListJSDiv.style.display).toBe('block');
+  showCurrentDirectory();
+  expect(fileListJSDiv.innerHTML).toBe(expected_html);
+});
 
-test('generateBreadcrumbHtml with path', () => {
-    const current_path = "/test/path"
-    const expected_html = `<a href="#/">File list</a> / <a href="#/test/">test</a> / <a href="#/test/path/">path</a> / `
-    expect(generateBreadcrumbHtml(current_path)).toBe(expected_html)
-}   )
+test.each([
+  ["#"],
+  ["#/"],
+  [""],
+])('fileListJSDiv initial', (in_hash) => {
+  window.location.hash = in_hash;
+  const fileListJSDiv = document.getElementById('file_list_js');
+  showCurrentDirectory();
+  expect(fileListJSDiv.innerHTML).toBe(`📂 <a href="#/content/">content/</a><br>`);
+});
 
-test('generateBreadcrumbHtml with empty path', () => {
-    const current_path = ""
-    const expected_html = `<a href="#/">File list</a> / `
-    expect(generateBreadcrumbHtml(current_path)).toBe(expected_html)
+test('DOMContentLoaded event', () => {
+  document.dispatchEvent(new Event('DOMContentLoaded'));
+  const fileListDiv = document.getElementById('file_list');
+  expect(fileListDiv.style.display).toBe('none');
+  const fileListJSDiv = document.getElementById('file_list_js');
+  expect(fileListJSDiv.innerHTML).toBe(`📂 <a href="#/content/">content/</a><br>`);
 })
 
-test('generateBreadcrumbHtml with slash', () => {
-    const current_path = "/"
-    const expected_html = `<a href="#/">File list</a> / `
-    expect(generateBreadcrumbHtml(current_path)).toBe(expected_html)
-})
+test('fileListJSDiv invalid path', () => {
+  window.location.hash = '#/content/vitest/bananas';
+  const fileListJSDiv = document.getElementById('file_list_js');
+  expect(fileListJSDiv.style.display).toBe('block');
+  showCurrentDirectory();
+  expect(fileListJSDiv.innerHTML).toBe("<li>Invalid path: /content/vitest/bananas</li>");
+});

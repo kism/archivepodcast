@@ -2,8 +2,11 @@
   "files": {
     "include": ["archivepodcast/static/*.js"]
   },
+  "linter": {
+    "include": ["archivepodcast/static/*.js", "tests/*.js"]
+  },
   "formatter": {
-    "include": ["archivepodcast/static/*.js"],
+    "include": ["archivepodcast/static/*.js", "tests/*.js"],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 120

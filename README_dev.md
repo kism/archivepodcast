@@ -29,6 +29,8 @@ mypy .
 pytest
 ```
 
+To get coverage report, open the `htmlcov` folder in a browser or the vscode live server.
+
 ## Frontend
 
 Frontend tools are all handled by npm
@@ -54,6 +56,19 @@ npx @biomejs/biome ci .
 
 ### Vitest (JS Test)
 
+Run persistent test watcher
+
 ```bash
 npx vitest --disable-console-intercept
+npx vitest --coverage --disable-console-intercept
+npx vitest --ui --coverage
+```
+
+To get coverage report, open the `htmlcov_js` folder in a browser or the vscode live server, or run vitest in ui mode.
+
+Run once
+
+```bash
+npx vitest run
 npx vitest run --coverage
+```
