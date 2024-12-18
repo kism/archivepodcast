@@ -59,7 +59,7 @@ npx cspell .
 ```bash
 npx @biomejs/biome format --write .
 npx @biomejs/biome lint .
-npx @biomejs/biome ci .
+npx @biomejs/biome check --fix .
 ```
 
 ### Vitest (JS Test)

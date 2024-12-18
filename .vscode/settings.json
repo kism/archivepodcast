@@ -14,7 +14,7 @@
     "editor.formatOnPaste": true
   },
   "[github-actions-workflow]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   // Language config
   "python.languageServer": "Pylance",

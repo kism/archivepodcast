@@ -1,10 +1,10 @@
 {
-    "recommendations": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "samuelcolvin.jinjahtml",
-        "charliermarsh.ruff",
-        "biomejs.biome",
-        "vitest.explorer",
-    ]
-  }
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "samuelcolvin.jinjahtml",
+    "charliermarsh.ruff",
+    "biomejs.biome",
+    "vitest.explorer"
+  ]
+}
