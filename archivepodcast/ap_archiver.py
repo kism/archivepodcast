@@ -222,7 +222,10 @@ class PodcastArchiver:
 
         # Serving a podcast that we can't currently download?, load it from file
         if tree is None:
-            logger.warning("📄 Loading rss from file: %s", rss_file_path)
+            if podcast["live"] is False:
+                logger.info("📄 Loading rss from file: %s", rss_file_path)
+            else:
+                logger.warning("📄 Loading rss from file: %s", rss_file_path)
             if os.path.exists(rss_file_path):
                 try:
                     tree = etree.parse(rss_file_path)
