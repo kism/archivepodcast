@@ -12,6 +12,7 @@ from jinja2 import Environment, FileSystemLoader
 from lxml import etree
 
 from .ap_downloader import PodcastDownloader
+from .helpers import list_all_s3_objects
 from .logger import get_logger
 
 if TYPE_CHECKING:
@@ -151,11 +152,12 @@ class PodcastArchiver:
         if not self.s3:
             logger.warning("⛅ No s3 client to list files")
             return
-        response = self.s3.list_objects_v2(Bucket=self.app_config["s3"]["bucket"])
+
+        contents_list = list_all_s3_objects(self.s3, self.app_config["s3"]["bucket"])
 
         contents_str = ""
-        if "Contents" in response:
-            for obj in response["Contents"]:
+        if len(contents_list) > 0:
+            for obj in contents_list:
                 contents_str += obj["Key"] + "\n"
                 if obj["Size"] == 0:  # This is for application/x-directory files, but no files should be empty
                     logger.warning("⛅ S3 Object is empty: %s DELETING", obj["Key"])
@@ -183,7 +185,6 @@ class PodcastArchiver:
             self.render_filelist_html()
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
-
 
     def _grab_podcast(self, podcast: dict) -> None:
         tree = None

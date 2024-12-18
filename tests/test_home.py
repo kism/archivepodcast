@@ -29,6 +29,7 @@ def test_static_js_exists(client):
     response = client.get("/static/filelist.js")
     assert response.status_code == HTTPStatus.OK
 
+
 def test_favicon_exists(client, apa):
     """TEST: /static/archivepodcast.js loads."""
     from archivepodcast import bp_archivepodcast

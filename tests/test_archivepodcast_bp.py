@@ -334,7 +334,7 @@ def test_file_list_s3(apa_aws, client_live_s3):
 
     # Check that the file is in the cache
     apa_aws.podcast_downloader.__init__(app_config=apa_aws.app_config, s3=apa_aws.s3, web_root=apa_aws.web_root)
-    _, file_cache = apa_aws.podcast_downloader.get_file_cache()
+    _, file_cache = apa_aws.podcast_downloader.get_file_list()
     assert content_s3_path in file_cache
 
     # Check that the file is in filelist.html

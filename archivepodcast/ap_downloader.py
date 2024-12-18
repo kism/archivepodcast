@@ -15,6 +15,7 @@ import requests
 from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
 from lxml import etree
 
+from .helpers import list_all_s3_objects
 from .logger import get_logger
 
 if TYPE_CHECKING:
@@ -89,10 +90,12 @@ class PodcastDownloader:
     def update_file_cache(self) -> None:
         """Update the file cache."""
         if self.s3:
-            s3_paths = self.s3.list_objects_v2(Bucket=self.app_config["s3"]["bucket"])
-            if s3_paths:
-                self.s3_paths_cache = [path["Key"] for path in s3_paths.get("Contents", [])]
-                self.s3_paths_cache.sort()
+            self.s3_paths_cache = []
+            s3_paths = list_all_s3_objects(self.s3, self.app_config["s3"]["bucket"])
+            for s3_path in s3_paths:
+                self.s3_paths_cache.append(s3_path["Key"])
+
+            self.s3_paths_cache.sort()
         else:
             self.local_paths_cache = [
                 os.path.relpath(os.path.join(root, file), self.web_root)
