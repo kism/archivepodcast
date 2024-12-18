@@ -30,7 +30,7 @@ class Webpage:
         """Initialise the Webpages object."""
         # Mime types that magic doesn't always get right
         if path.endswith(".js"):
-            mime = "application/javascript"
+            mime = "text/javascript"
         elif path.endswith(".css"):
             mime = "text/css"
         elif path.endswith(".woff2"):
