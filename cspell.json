@@ -15,8 +15,8 @@
     "custom-fonts",
     "custom-archivepodcast",
     "custom-readme",
-    "custom-javascript"
-
+    "custom-javascript",
+    "custom-docker"
   ],
   "dictionaryDefinitions": [
     {
@@ -48,10 +48,15 @@
       "name": "custom-javascript",
       "path": "./.cspell/custom-javascript.txt",
       "addWords": true
+    },
+    {
+      "name": "custom-docker",
+      "path": "./.cspell/custom-docker.txt",
+      "addWords": true
     }
   ],
 
-  "ignorePaths": [".gitignore","instance/*"],
+  "ignorePaths": [".gitignore", "instance/*"],
   "useGitignore": true,
   "flagWords": [],
   "ignoreWords": [],

@@ -1,9 +1,10 @@
 {
-  "files": {
-    "include": ["archivepodcast/static/*.js"]
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
   },
   "formatter": {
-    "include": ["archivepodcast/static/*.js"],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 120

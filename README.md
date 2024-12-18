@@ -117,6 +117,10 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Get rid of x-directory from s3~~
 - ~~Frontend js file browser~~
 - ~~Figure out lag during SIGHUP~~
-- JS testing
-- Cache all pages
-  - Include last generated stat
+- ~~Cache all pages~~
+  - ~~Include last generated stat~~
+- ~~test rss mime type~~
+- ~~JS testing~~
+- ~~Remove empty s3 files every hour~~
+- ~~Fix tests/test_archivepodcast_bp.py::test_file_list_s3~~
+- put rss into the page cache maybe

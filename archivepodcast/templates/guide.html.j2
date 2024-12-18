@@ -14,7 +14,12 @@
 
 <body>
     <main>
-        <h1>{{ app_config['web_page']['title']|e }}</h1>
+        <h1>{{ app_config['web_page']['title']|e }} Guide</h1>
+        <header>
+            <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
+                href="/guide.html">Guide</a> | <a href="/filelist.html">File list</a>
+            <hr>
+        </header>
         <p>Guides for some popular podcast applications.</p>
         <h2>Pocket Casts</h2>
         <h4>iOS, Android</h4>
@@ -102,7 +107,7 @@
             <li>Paste URL</li>
             <li>Click OK</li>
         </ol>
-
+        <p style="display: none;">Last generated: {{ last_generated_date }}</p>
     </main>
 </body>
 

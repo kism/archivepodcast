@@ -88,7 +88,7 @@ def podcast_loop() -> None:
         return
 
     if ap.s3 is not None:
-        logger.info("⛅ We are in s3 mode, missing episode files will be downloaded, uploaded to s3 and then deleted")
+        logger.info("⛅ We are in s3 mode, missing episode files will be downloaded, uploaded to s3, and then deleted")
 
     while True:
         ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
@@ -117,68 +117,50 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
     return seconds_until_next_run
 
 
-def generate_404() -> Response:
-    """We use the 404 template in a couple places."""
-    returncode = HTTPStatus.NOT_FOUND
-    render = render_template(
-        "error.html.j2",
-        error_code=str(returncode),
-        error_text="Page not found, how did you even?",
-        app_config=current_app.config["app"],
+def send_ap_cached_webpage(webpage_name: str) -> Response:
+    """Send a cached webpage."""
+    if not ap:
+        return generate_not_initialized_error()
+
+    try:
+        webpage = ap.webpages.get_webpage(webpage_name)
+    except KeyError:
+        return generate_not_generated_error(webpage_name)
+
+    return Response(
+        webpage.content,
+        mimetype=webpage.mime,
+        status=HTTPStatus.OK,
     )
-    return Response(render, status=returncode)
 
 
 @bp.route("/")
 def home() -> Response:
-    """Flask Home."""
-    if not ap:
-        return generate_not_initialized_error()
+    """Flask Home.
 
-    return Response(
-        render_template(
-            "index.html.j2",
-            app_config=current_app.config["app"],
-            podcasts=current_app.config["podcast"],
-            about_page=ap.about_page,
-        ),
-        status=HTTPStatus.OK,
-    )
+    If you are serving static files with s3 or nginx, ensure that / redirects to /index.html,
+    """
+    return send_ap_cached_webpage("index.html")
 
 
 @bp.route("/index.html")
 def home_index() -> Response:
-    """Flask Home, s3 backup compatible."""
-    # This ensures that if you transparently redirect / to /index.html
-    # for using in cloudflare r2 storage it will work
-    # If the vm goes down you can change the main domain dns to point to r2
-    # and everything should work.
-    if not ap:
-        return generate_not_initialized_error()
-
-    return Response(
-        render_template("index.html.j2", app_config=current_app.config["app"], about_page=ap.about_page),
-        status=HTTPStatus.OK,
-    )
+    """Flask Home."""
+    return send_ap_cached_webpage("index.html")
 
 
 @bp.route("/guide.html")
 def home_guide() -> Response:
     """Podcast app guide."""
-    if not ap:
-        return generate_not_initialized_error()
-
-    return Response(
-        render_template("guide.html.j2", app_config=current_app.config["app"], about_page=ap.about_page),
-        status=HTTPStatus.OK,
-    )
+    return send_ap_cached_webpage("guide.html")
 
 
 @bp.route("/about.html")
 def home_about() -> Response:
     """Flask Home, s3 backup compatible."""
-    if os.path.exists(os.path.join(current_app.instance_path, "web", "about.html")):
-        return send_from_directory(os.path.join(current_app.instance_path, "web"), "about.html")
+    if get_about_page_exists():
+        return send_ap_cached_webpage("about.html")
+
     return generate_404()
 
 
@@ -201,20 +183,7 @@ def send_content(path: str) -> Response:
 @bp.route("/filelist.html")
 def home_filelist() -> Response:
     """Serve Filelist."""
-    if not ap:
-        return generate_not_initialized_error()
-
-    base_url, file_list = ap.get_file_list()
-
-    return Response(
-        render_template(
-            "filelist.html.j2",
-            app_config=current_app.config["app"],
-            file_list=file_list,
-            base_url=base_url,
-        ),
-        status=HTTPStatus.OK,
-    )
+    return send_ap_cached_webpage("filelist.html")
 
 
 @bp.route("/rss/<string:feed>", methods=["GET"])
@@ -234,6 +203,7 @@ def rss(feed: str) -> Response:
                 "error.html.j2",
                 error_code=str(return_code),
                 error_text="The developer probably messed something up",
+                about_page=get_about_page_exists(),
                 app_config=current_app.config["app"],
             ),
             status=return_code,
@@ -259,6 +229,7 @@ def rss(feed: str) -> Response:
                     "error.html.j2",
                     error_code=str(return_code),
                     error_text="Feed not found, you know you can copy and paste yeah?",
+                    about_page=get_about_page_exists(),
                     app_config=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
@@ -272,6 +243,7 @@ def rss(feed: str) -> Response:
                     "error.html.j2",
                     error_code=str(return_code),
                     error_text="Feed not loadable, Internal Server Error",
+                    about_page=get_about_page_exists(),
                     app_config=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
                 ),
@@ -284,24 +256,17 @@ def rss(feed: str) -> Response:
 @bp.route("/robots.txt")
 def static_from_root() -> Response:
     """Serve robots.txt."""
-    response = Response(response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain")
-    response.headers["Content-Type"] = "text/plain; charset=utf-8"
-    return response
+    return send_ap_cached_webpage("robots.txt")
 
 
 @bp.route("/favicon.ico")
 def favicon() -> Response:
     """Return the favicon."""
-    static_folder_path = os.path.join(current_app.root_path, "static")
-    return send_from_directory(
-        static_folder_path,
-        "favicon.ico",
-        mimetype="image/vnd.microsoft.icon",
-    )
+    return send_ap_cached_webpage("static/favicon.ico")
 
 
 def generate_not_initialized_error() -> Response:
-    """Generate a 500 error."""
+    """Generate a not initialized 500 error."""
     logger.error("❌ ArchivePodcast object not initialized")
     return Response(
         render_template(
@@ -312,3 +277,40 @@ def generate_not_initialized_error() -> Response:
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
+
+
+def generate_not_generated_error(webpage_name: str) -> Response:
+    """Generate a 500 error."""
+    logger.error(f"❌ Requested page: {webpage_name} not generated")
+    return Response(
+        render_template(
+            "error.html.j2",
+            error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
+            error_text=f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
+            about_page=get_about_page_exists(),
+            app_config=current_app.config["app"],
+        ),
+        status=HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
+
+
+def generate_404() -> Response:
+    """We use the 404 template in a couple places."""
+    returncode = HTTPStatus.NOT_FOUND
+    render = render_template(
+        "error.html.j2",
+        error_code=str(returncode),
+        error_text="Page not found, how did you even?",
+        about_page=get_about_page_exists(),
+        app_config=current_app.config["app"],
+    )
+    return Response(render, status=returncode)
+
+
+def get_about_page_exists() -> bool:
+    """Check if about.html exists, needed for some templates."""
+    about_page_exists = False
+    if ap is not None:
+        about_page_exists = ap.about_page_exists
+
+    return about_page_exists

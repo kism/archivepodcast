@@ -15,6 +15,8 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
     """Test that the app launches."""
     from archivepodcast import bp_archivepodcast
 
+    assert len(apa.webpages) > 0
+
     bp_archivepodcast.ap = apa
 
     for client in [client_live, client_live_s3]:
@@ -29,6 +31,7 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
             "/favicon.ico",
             "/static/favicon.ico",
             "/static/main.css",
+            "/static/fonts/fira-code-v12-latin-500.woff2",
             "/static/fonts/fira-code-v12-latin-600.woff2",
             "/static/fonts/fira-code-v12-latin-700.woff2",
             "/static/fonts/noto-sans-display-latin-500.woff2",
@@ -37,23 +40,58 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
 
         for path in valid_path_list:
             response = client.get(path)
-            assert response.status_code == HTTPStatus.OK
+            assert response.status_code == HTTPStatus.OK, f"Failed on {path}"
 
         response = client.get("/non_existent_page")
         assert response.status_code == HTTPStatus.NOT_FOUND
 
-        # Since we are looping...
-        if os.path.exists(os.path.join(tmp_path, "web", "about.html")):
-            os.remove(os.path.join(tmp_path, "web", "about.html"))
 
-        response = client.get("/about.html")
-        assert response.status_code == HTTPStatus.NOT_FOUND
+def test_app_paths_not_generated(apa, client_live):
+    """Test the error for when a page has not been generated."""
+    from archivepodcast import bp_archivepodcast
+    from archivepodcast.ap_archiver import Webpages
 
-        with open(os.path.join(tmp_path, "web", "about.html"), "w") as file:
-            file.write("Test")
+    bp_archivepodcast.ap = apa
 
-        response = client.get("/about.html")
-        assert response.status_code == HTTPStatus.OK
+    apa.webpages = Webpages()
+
+    webpage_list = [
+        "/",
+        "/index.html",
+        "/guide.html",
+        "/robots.txt",
+        "/favicon.ico",
+    ]
+
+    for webpage in webpage_list:
+        response = client_live.get(webpage)
+        assert (
+            response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        ), f"Expected internal server error on {webpage}, got {response.status_code}"
+
+
+def test_app_path_about(apa, client_live, tmp_path):
+    """Test the about page."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
+
+    # Since we are looping...
+    if os.path.exists(os.path.join(tmp_path, "web", "about.html")):
+        os.remove(os.path.join(tmp_path, "web", "about.html"))
+
+    apa.load_about_page()
+    response = client_live.get("/about.html")
+    assert (
+        response.status_code == HTTPStatus.NOT_FOUND
+    ), f"About page should not exist, got status code: {response.status_code}"
+
+    with open(os.path.join(tmp_path, "web", "about.html"), "w") as file:
+        file.write("Test")
+
+    apa.load_about_page()
+    response = client_live.get("/about.html")
+    assert response.status_code == HTTPStatus.OK, f"About page should exist, got status code: {response.status_code}"
 
 
 def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplog):
@@ -274,8 +312,8 @@ def test_file_list(apa, client_live, tmp_path):
     with open(os.path.join(tmp_path, file_path), "w") as file:
         file.write("test")
 
-    ap._render_static()
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
+    ap.render_filelist_html()
 
     response = client_live.get("/filelist.html")
 
@@ -289,17 +327,23 @@ def test_file_list_s3(apa_aws, client_live_s3):
     from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa_aws
-    ap = apa_aws
 
     content_s3_path = "content/test/20200101-Test-Episode.mp3"
 
-    ap.s3.put_object(Bucket=ap.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
+    apa_aws.s3.put_object(Bucket=apa_aws.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
 
-    ap._render_static()
-    ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
+    # Check that the file is in the cache
+    apa_aws.podcast_downloader.__init__(app_config=apa_aws.app_config, s3=apa_aws.s3, web_root=apa_aws.web_root)
+    _, file_cache = apa_aws.podcast_downloader.get_file_cache()
+    assert content_s3_path in file_cache
+
+    # Check that the file is in filelist.html
+    apa_aws.render_filelist_html()
 
     response = client_live_s3.get("/filelist.html")
-
     assert response.status_code == HTTPStatus.OK
-    assert "/index.html" in response.data.decode("utf-8")
-    assert content_s3_path in response.data.decode("utf-8")
+
+    response_html = response.data.decode("utf-8")
+
+    assert "/index.html" in response_html
+    assert content_s3_path in response_html

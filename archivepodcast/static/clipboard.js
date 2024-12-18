@@ -1,4 +1,4 @@
-function grab_to_clipboard(button_name) {
+export function grabToClipboard(button_name) {
   console.log(`User clicked: ${button_name}`);
   const copyText = document.getElementById(button_name);
 
@@ -10,9 +10,11 @@ function grab_to_clipboard(button_name) {
   navigator.clipboard.writeText(copyText.value);
 
   document.getElementById(`${button_name}_button`).innerHTML = "Copied!";
-  setTimeout(reset_text, 2000, button_name);
+  setTimeout(resetText, 2000, button_name);
 }
 
-function reset_text(button_name) {
+export function resetText(button_name) {
   document.getElementById(`${button_name}_button`).innerHTML = "Copy URL";
 }
+
+window.grabToClipboard = grabToClipboard;

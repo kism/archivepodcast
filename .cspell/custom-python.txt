@@ -7,3 +7,4 @@ flac
 getuid
 monkeypatch
 addopts
+htmlcov
