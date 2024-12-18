@@ -129,3 +129,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - fix issue with partial file list
 - fix mime type of javascript in s3
 - make mypy more sensitive
+- implement api
