@@ -121,5 +121,5 @@ An example guide on setting it up start to finish, with all features and saving 
   - ~~Include last generated stat~~
 - put rss into the page cache maybe
 - test rss mime type
-- JS testing
-- Remove empty s3 files every hour
+- ~~JS testing~~
+- ~~Remove empty s3 files every hour~~

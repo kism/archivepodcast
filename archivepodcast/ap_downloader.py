@@ -83,18 +83,33 @@ class PodcastDownloader:
         self.app_config = app_config
         self.web_root = web_root
 
+        logger.trace("PodcastDownloader config (re)loaded")
+
+    def update_file_cache(self) -> None:
+        """Update the file cache."""
         if self.s3:
-            s3_paths = self.s3.list_objects_v2(Bucket=app_config["s3"]["bucket"])
+            s3_paths = self.s3.list_objects_v2(Bucket=self.app_config["s3"]["bucket"])
             if s3_paths:
                 self.s3_paths_cache = [path["Key"] for path in s3_paths.get("Contents", [])]
+                self.s3_paths_cache.sort()
         else:
             self.local_paths_cache = [
                 os.path.relpath(os.path.join(root, file), self.web_root)
                 for root, _, files in os.walk(self.web_root)
                 for file in files
             ]
+            self.local_paths_cache.sort()
 
-        logger.trace("PodcastDownloader config (re)loaded")
+    def get_file_cache(self) -> tuple[str, list]:
+        """Gets the base url and the file cache."""
+        self.update_file_cache()
+
+        base_url = self.app_config["s3"]["cdn_domain"] if self.s3 is not None else self.app_config["inet_path"]
+
+        return (
+            base_url,
+            self.s3_paths_cache if self.s3 else self.local_paths_cache,
+        )
 
     def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
         """Parse the rss, Download all the assets, this is main."""

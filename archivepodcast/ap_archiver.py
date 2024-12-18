@@ -86,19 +86,6 @@ class PodcastArchiver:
         """Return the rss file for a given feed."""
         return self.podcast_rss[feed]
 
-    def get_file_list(self) -> tuple[str, list]:
-        """Return a list of files in the web_root."""
-        # We only need them to be sorted when accessed from here.
-        self.podcast_downloader.local_paths_cache.sort()
-        self.podcast_downloader.s3_paths_cache.sort()
-
-        base_url = self.app_config["s3"]["cdn_domain"] if self.s3 is not None else self.app_config["inet_path"]
-
-        return (
-            base_url,
-            self.podcast_downloader.s3_paths_cache if self.s3 else self.podcast_downloader.local_paths_cache,
-        )
-
     def load_about_page(self) -> None:
         """Create about page if needed."""
         about_page_filename = "about.html"
@@ -334,10 +321,10 @@ class PodcastArchiver:
 
         This is separate from render_files() since it needs to be done after grabbing podcasts.
         """
+        self.check_s3_files()
+        base_url, file_list = self.podcast_downloader.get_file_cache()
+
         template_directory = os.path.join("archivepodcast", "templates")
-
-        base_url, file_list = self.get_file_list()
-
         env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
 
         template_filename = "filelist.html.j2"

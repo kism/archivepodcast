@@ -13,6 +13,8 @@ export function grabToClipboard(button_name) {
   setTimeout(resetText, 2000, button_name);
 }
 
-function resetText(button_name) {
+export function resetText(button_name) {
   document.getElementById(`${button_name}_button`).innerHTML = "Copy URL";
 }
+
+window.grabToClipboard = grabToClipboard;

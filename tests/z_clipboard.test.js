@@ -2,7 +2,7 @@
 
 import { expect, test } from 'vitest'
 
-import { grabToClipboard } from '../archivepodcast/static/clipboard.js'
+import { grabToClipboard, resetText } from '../archivepodcast/static/clipboard.js'
 
 test('grabToClipboard with non-existent element', () => {
     const button_name = "non_existent_button"
@@ -26,3 +26,14 @@ test('grabToClipboard with value', () => {
     expect(copyText.value).toBe(rss_url)
     expect(document.getElementById(`${button_name}_button`).innerHTML).toBe('Copied!')
 })
+
+test ('resetText', () => {
+    const button_name = "button_name"
+    const button = document.createElement('button')
+    button.id = `${button_name}_button`
+    document.body.appendChild(button)
+
+    document.getElementById(`${button_name}_button`).innerHTML = "Copied!"
+    resetText(button_name)
+    expect(document.getElementById(`${button_name}_button`).innerHTML).toBe('Copy URL')
+} )

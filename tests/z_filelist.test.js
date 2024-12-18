@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { expect, test, beforeEach } from 'vitest'
+import { expect, test, describe, beforeEach } from 'vitest'
 import { showCurrentDirectory, addFileToStructure, showJSDivs } from '../archivepodcast/static/filelist.js'
 
 beforeEach(() => {
@@ -14,16 +14,18 @@ beforeEach(() => {
   showJSDivs();
 });
 
-test.each([
+describe.each([
   {in_hash: '#/content/vitest', expected_html: `📂 <a href="#/content/">..</a><br>💾 <a href="https://cdn.vitest.internal/content/vitest/test.mp3">test.mp3</a><br>`},
-  {in_hash: "#/content", expected_html: "aaa"},
-])
-test('fileListJSDiv is displayed and populated on hash', ({in_hash, expected_html}) => {
-  window.location.hash = in_hash;
-  const fileListJSDiv = document.getElementById('file_list_js');
-  expect(fileListJSDiv.style.display).toBe('block');
-  showCurrentDirectory();
-  expect(fileListJSDiv.innerHTML).toBe(expected_html);
+  {in_hash: "#/content", expected_html: `📂 <a href="#/">..</a><br>📂 <a href="#/content/vitest/">vitest/</a><br>`},
+  {in_hash: "#/content/", expected_html: `📂 <a href="#/">..</a><br>📂 <a href="#/content/vitest/">vitest/</a><br>`},
+])('fileListJSDiv is displayed and populated on hash', ({in_hash, expected_html}) => {
+    test(`fileListJSDiv on hash: ${in_hash}`, () => {
+    window.location.hash = in_hash;
+    const fileListJSDiv = document.getElementById('file_list_js');
+    expect(fileListJSDiv.style.display).toBe('block');
+    showCurrentDirectory();
+    expect(fileListJSDiv.innerHTML).toBe(expected_html);
+    })
 });
 
 test.each([

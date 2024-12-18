@@ -75,7 +75,6 @@ export function generateCurrentListHTML(in_current_path, items) {
 }
 
 export function getValue(obj, path) {
-  if (!path) return obj; // If no path is provided, return the object itself.
   if (path === "/") return obj[""];
   const keys = path.split("/"); // Split the path by '/' into an array of keys.
   return keys.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);

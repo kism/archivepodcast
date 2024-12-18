@@ -1,5 +1,5 @@
 ---
-name: Test (PyTest)
+name: Test Python (PyTest), JS (Vitest)
 
 on:
   push:
@@ -38,3 +38,19 @@ jobs:
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  vitest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    strategy:
+      matrix:
+        node-version: ["22.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm install vitest @vitest/coverage-v8
+      - run: npm test

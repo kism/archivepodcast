@@ -1,5 +1,5 @@
 ---
-name: Lint Python (Ruff)
+name: Lint Python (Ruff), JS (Biome)
 
 on:
   push:
@@ -8,9 +8,21 @@ on:
       - test
 
 jobs:
-  check:
+  check_py:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/ruff-action@v2
+
+  check_js:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+      - name: Run Biome
+        run: biome ci .
