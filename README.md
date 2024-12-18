@@ -22,6 +22,7 @@ If you want to convert WAV episodes to mp3, ensure that you have ffmpeg installe
 
 ```bash
 uv venv
+source .venv/bin/activate
 uv sync
 ```
 
@@ -29,6 +30,7 @@ uv sync
 
 ```bash
 uv venv
+source .venv/bin/activate
 uv sync --no-group dev --no-group test --no-group type --no-group lint
 ```
 
