@@ -42,8 +42,16 @@ npm install
 
 ### Spellcheck
 
+Extra setup
+
 ```bash
 npx cspell link add @cspell/dict-en-au
+```
+
+Run
+
+```bash
+npx cspell .
 ```
 
 ### Biome (JS Lint, Format)
