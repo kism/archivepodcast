@@ -1,5 +1,5 @@
 ---
-name: Test Python (PyTest), JS (Vitest)
+name: Test (Pytest, Vitest)
 
 on:
   push:

@@ -1,5 +1,5 @@
 ---
-name: Python Type Check (Mypy)
+name: Type Check (Mypy)
 
 on:
   push:

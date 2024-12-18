@@ -1,5 +1,5 @@
 ---
-name: Lint Python (Ruff), JS (Biome)
+name: Lint (Ruff, Biome)
 
 on:
   push:
