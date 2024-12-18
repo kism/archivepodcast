@@ -275,13 +275,13 @@ def mock_get_podcast_source_rss(requests_mock) -> Callable:
 @pytest.fixture
 def mock_podcast_source_images(requests_mock):
     """Requests mock for downloading an image."""
-    requests_mock.get("https://pytest.internal/images/test.jpg", text="")
+    requests_mock.get("https://pytest.internal/images/test.jpg", text="jpg")
 
 
 @pytest.fixture
 def mock_podcast_source_mp3(requests_mock):
     """Requests mock for downloading an image."""
-    requests_mock.get("https://pytest.internal/audio/test.mp3", text="")
+    requests_mock.get("https://pytest.internal/audio/test.mp3", text="mp3")
 
 
 @pytest.fixture
