@@ -119,4 +119,8 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~make mypy more sensitive~~
 - ~~fix css~~
 - put rss into the page cache maybe
+- mime type in file list?
+- Better css
+- Prefetching
 - implement api
+
