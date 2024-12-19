@@ -44,7 +44,7 @@ class ColorFormatter(logging.Formatter):
         if record.threadName and record.threadName.startswith("Thread-"):
             record.threadName = record.threadName[record.threadName.find("(") + 1 : record.threadName.find(")")]
 
-        if record.name.startswith("ap"):
+        if record.name.startswith("ap") and record.levelno <= logging.INFO:
             if len(record.levelname) < DESIRED_LEVEL_NAME_LEN:
                 record.levelname = record.levelname + " " * (DESIRED_LEVEL_NAME_LEN - len(record.levelname))
 
@@ -53,7 +53,7 @@ class ColorFormatter(logging.Formatter):
 
             if record.threadName and len(record.threadName) < DESIRED_THREAD_NAME_LEN:
                 record.threadName = record.threadName + " " * (DESIRED_THREAD_NAME_LEN - len(record.threadName))
-        else:
+        elif not record.name.startswith("ap"):
             record.threadName = ""
 
         # Colour Formatting
