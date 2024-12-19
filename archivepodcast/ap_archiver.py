@@ -194,7 +194,75 @@ class PodcastArchiver:
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
 
+    def _load_rss_from_file(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
+        """Load the rss from file."""
+        tree = None
+        if podcast["live"] is False:
+            logger.info("📄 Loading rss from file: %s", rss_file_path)
+        else:
+            logger.warning("📄 Loading rss from file: %s", rss_file_path)
+        if os.path.exists(rss_file_path):
+            try:
+                tree = etree.parse(rss_file_path)
+            except etree.XMLSyntaxError:
+                logger.exception("❌ Error parsing rss file: %s", rss_file_path)
+        else:
+            logger.error("❌ Cannot find rss feed file: %s", rss_file_path)
+
+        return tree
+
+    def _update_rss_feed(self, podcast: dict, tree: etree._ElementTree, previous_feed: str) -> None:
+        """Update the rss feed, in memory and s3."""
+        self.podcast_rss.update(
+            {
+                podcast["name_one_word"]: etree.tostring(
+                    tree.getroot(),
+                    encoding="utf-8",
+                    method="xml",
+                    xml_declaration=True,
+                )
+            }
+        )
+        logger.info(
+            f"📄 Hosted: {self.app_config['inet_path']}rss/{ podcast['name_one_word'] }",
+        )
+
+        # Upload to s3 if we are in s3 mode
+        if (
+            self.s3
+            and previous_feed
+            != self.podcast_rss[
+                podcast["name_one_word"]
+            ]  # This doesn't work when feed has build dates times on it, patreon for one
+        ):
+            try:
+                # Upload the file
+                self.s3.put_object(
+                    Body=self.podcast_rss[podcast["name_one_word"]],
+                    Bucket=self.app_config["s3"]["bucket"],
+                    Key="rss/" + podcast["name_one_word"],
+                    ContentType="application/rss+xml",
+                )
+                logger.info('📄⛅ Uploaded feed "%s" to s3', podcast["name_one_word"])
+            except Exception:  # pylint: disable=broad-exception-caught
+                logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
+
+    def _download_podcast(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
+        tree = self.podcast_downloader.download_podcast(podcast)
+        if tree:
+            # Write rss to disk
+            tree.write(
+                rss_file_path,
+                encoding="utf-8",
+                xml_declaration=True,
+            )
+            logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
+
+        else:
+            logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
+
     def _grab_podcast(self, podcast: dict) -> None:
+        """Function to download a podcast and store the rss."""
         tree = None
         previous_feed = ""
         logger.info("📜 Processing podcast to archive: %s", podcast["new_name"])
@@ -205,69 +273,15 @@ class PodcastArchiver:
         rss_file_path = os.path.join(self.web_root, "rss", podcast["name_one_word"])
 
         if podcast["live"] is True:  # download all the podcasts
-            tree = self.podcast_downloader.download_podcast(podcast)
-            if tree:
-                # Write rss to disk
-                tree.write(
-                    rss_file_path,
-                    encoding="utf-8",
-                    xml_declaration=True,
-                )
-                logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
-
-            else:
-                logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
+            tree = self._download_podcast(podcast, rss_file_path)
         else:
             logger.info('📄 "live": false, in config so not fetching new episodes')
 
-        # Serving a podcast that we can't currently download?, load it from file
-        if tree is None:
-            if podcast["live"] is False:
-                logger.info("📄 Loading rss from file: %s", rss_file_path)
-            else:
-                logger.warning("📄 Loading rss from file: %s", rss_file_path)
-            if os.path.exists(rss_file_path):
-                try:
-                    tree = etree.parse(rss_file_path)
-                except etree.XMLSyntaxError:
-                    logger.exception("❌ Error parsing rss file: %s", rss_file_path)
-            else:
-                logger.exception("❌ Cannot find rss feed file: %s", rss_file_path)
+        if tree is None:  # Serving a podcast that we can't currently download?, load it from file
+            tree = self._load_rss_from_file(podcast, rss_file_path)
 
         if tree is not None:
-            self.podcast_rss.update(
-                {
-                    podcast["name_one_word"]: etree.tostring(
-                        tree.getroot(),
-                        encoding="utf-8",
-                        method="xml",
-                        xml_declaration=True,
-                    )
-                }
-            )
-            logger.info(
-                f"📄 Hosted: {self.app_config['inet_path']}rss/{ podcast['name_one_word'] }",
-            )
-
-            # Upload to s3 if we are in s3 mode
-            if (
-                self.s3
-                and previous_feed
-                != self.podcast_rss[
-                    podcast["name_one_word"]
-                ]  # This doesn't work when feed has build dates times on it, patreon for one
-            ):
-                try:
-                    # Upload the file
-                    self.s3.put_object(
-                        Body=self.podcast_rss[podcast["name_one_word"]],
-                        Bucket=self.app_config["s3"]["bucket"],
-                        Key="rss/" + podcast["name_one_word"],
-                        ContentType="application/rss+xml",
-                    )
-                    logger.info('📄⛅ Uploaded feed "%s" to s3', podcast["name_one_word"])
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
+            self._update_rss_feed(podcast, tree, previous_feed)
 
         else:
             logger.error(f"❌ Unable to host podcast: {podcast['name_one_word']}, something is wrong")
