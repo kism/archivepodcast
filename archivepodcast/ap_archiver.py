@@ -115,6 +115,7 @@ class PodcastArchiver:
             self.check_s3_files()
         else:
             logger.info("⛅ Not using s3")
+            self.health.update_s3_status(s3_enabled=False)
 
     def check_s3_files(self) -> None:
         """Function to list files in s3 bucket."""
