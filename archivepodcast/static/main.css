@@ -3,34 +3,34 @@
   font-family: "Noto Sans Display";
   font-style: normal;
   font-weight: 500;
-  src: local(""), url("fonts/noto-sans-display-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("/static/fonts/noto-sans-display-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 /* noto-sans-display-500 - latin italic */
 @font-face {
   font-family: "Noto Sans Display";
   font-style: italic;
   font-weight: 500;
-  src: local(""), url("fonts/noto-sans-display-latin-500italic.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("/static/fonts/noto-sans-display-latin-500italic.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 /* fira-code-600 - latin */
 @font-face {
   font-family: "Fira Code";
   font-style: normal;
   font-weight: 500;
-  src: local(""), url("fonts/fira-code-v12-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("/static/fonts/fira-code-v12-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 @font-face {
   font-family: "Fira Code";
   font-style: normal;
   font-weight: 600;
-  src: local(""), url("fonts/fira-code-v12-latin-600.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("/static/fonts/fira-code-v12-latin-600.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 /* fira-code-700 - latin */
 @font-face {
   font-family: "Fira Code";
   font-style: normal;
   font-weight: 700;
-  src: local(""), url("fonts/fira-code-v12-latin-700.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
+  src: local(""), url("/static/fonts/fira-code-v12-latin-700.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 
 @media screen and (max-width: 430px) {
@@ -41,8 +41,8 @@
 }
 
 body {
-  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 14px;
   font-weight: 500;
 
@@ -70,8 +70,8 @@ h2 {
 }
 h3,
 h4 {
-  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   color: rgb(220, 220, 220);
   font-weight: 500;
   margin-top: 4px;
@@ -194,6 +194,7 @@ textarea,
 select {
   height: 23px;
   padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   background-color: #464646;
   border: 1px solid #d1d1d1;
   color: #bbb;
