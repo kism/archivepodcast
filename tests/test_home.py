@@ -21,8 +21,13 @@ def test_home(client, apa):
     assert b"<!doctype html>" in response.data
 
 
-def test_static_js_exists(client):
+def test_static_js_exists(client, apa):
     """TEST: /static/archivepodcast.js loads."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
+    apa._render_files()
+
     response = client.get("/static/clipboard.js")
     assert response.status_code == HTTPStatus.OK
     assert "text/javascript" in response.content_type
@@ -56,12 +61,17 @@ def test_guide_exists(client, apa):
 
 def test_fonts_exist(client, apa):
     """TEST: /static/fonts/... loads."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
+    apa._render_files()
+
     font_list = [
         "/static/fonts/fira-code-v12-latin-500.woff2",
         "/static/fonts/fira-code-v12-latin-600.woff2",
         "/static/fonts/fira-code-v12-latin-700.woff2",
-        "/static/fonts/noto-sand-display-latin-500.woff2",
-        "/static/fonts/noto-sand-display-latin-500italic.woff2",
+        "/static/fonts/noto-sans-display-latin-500.woff2",
+        "/static/fonts/noto-sans-display-latin-500italic.woff2",
     ]
     for font in font_list:
         response = client.get(font)
