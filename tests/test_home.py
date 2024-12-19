@@ -54,14 +54,14 @@ def test_guide_exists(client, apa):
     assert response.status_code == HTTPStatus.OK
 
 
-def test_fonts_exist(client):
+def test_fonts_exist(client, apa):
     """TEST: /static/fonts/... loads."""
     font_list = [
-        "static/fonts/fira-code-v12-latin-500.woff2",
-        "static/fonts/fira-code-v12-latin-600.woff2",
-        "static/fonts/fira-code-v12-latin-700.woff2",
-        "static/fonts/noto-sand-display-latin-500.woff2",
-        "static/fonts/noto-sand-display-latin-500italic.woff2",
+        "/static/fonts/fira-code-v12-latin-500.woff2",
+        "/static/fonts/fira-code-v12-latin-600.woff2",
+        "/static/fonts/fira-code-v12-latin-700.woff2",
+        "/static/fonts/noto-sand-display-latin-500.woff2",
+        "/static/fonts/noto-sand-display-latin-500italic.woff2",
     ]
     for font in font_list:
         response = client.get(font)

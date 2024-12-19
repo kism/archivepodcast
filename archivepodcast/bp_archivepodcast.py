@@ -262,7 +262,7 @@ def send_robots() -> Response:
 @bp.route("/favicon.ico")
 def favicon() -> Response:
     """Return the favicon."""
-    return send_ap_cached_webpage("/static/favicon.ico")
+    return send_ap_cached_webpage("static/favicon.ico")
 
 
 @bp.route("/static/<path:path>")
