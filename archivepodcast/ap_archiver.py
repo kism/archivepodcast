@@ -111,7 +111,7 @@ class PodcastArchiver:
                 aws_secret_access_key=self.app_config["s3"]["secret_access_key"],
             )
             logger.info(f"⛅ Authenticated s3, using bucket: {self.app_config['s3']['bucket']}")
-            self.health.update_s3_status(s3_available=True)
+            self.health.update_s3_status(s3_enabled=True)
             self.check_s3_files()
         else:
             logger.info("⛅ Not using s3")
@@ -155,6 +155,7 @@ class PodcastArchiver:
             self.render_filelist_html()
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
+            self.health.update_podcast_status("filelist.html", full_crash=True)
 
     def _load_rss_from_file(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
         """Load the rss from file."""
@@ -253,6 +254,7 @@ class PodcastArchiver:
 
         else:
             logger.error(f"❌ Unable to host podcast: {podcast['name_one_word']}, something is wrong")
+            self.health.update_podcast_status(podcast["name_one_word"], rss_available=False)
 
     def render_files(self) -> None:
         """Function to upload static to s3 and copy index.html."""
