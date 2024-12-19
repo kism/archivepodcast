@@ -20,7 +20,7 @@ COLOURS = {
     "CRITICAL": Fore.RED,
 }
 
-desired_level_name_len = 10
+DESIRED_LEVEL_NAME_LEN = 10
 DESIRED_NAME_LEN = 21
 DESIRED_THREAD_NAME_LEN = 13
 
@@ -50,8 +50,8 @@ class ColorFormatter(logging.Formatter):
             record.msg = f"{colour}{record.msg}"
 
 
-        if len(record.levelname) < desired_level_name_len:
-            record.levelname = record.levelname + " " * (desired_level_name_len - len(record.levelname))
+        if len(record.levelname) < DESIRED_LEVEL_NAME_LEN:
+            record.levelname = record.levelname + " " * (DESIRED_LEVEL_NAME_LEN - len(record.levelname))
 
         if len(record.name) < DESIRED_NAME_LEN:
             record.name = record.name + " " * (DESIRED_NAME_LEN - len(record.name))
