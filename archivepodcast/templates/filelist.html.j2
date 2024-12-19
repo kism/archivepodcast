@@ -17,10 +17,29 @@
     <script type="module" src="/static/filelist.js"></script>
     <link rel="stylesheet" href="/static/main.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <noscript>
+        <style>
+            #file_list {
+                display: block !important;
+            }
+        </style>
+    </noscript>
 </head>
 
 <body>
     <main>
+        <h1>{{ app_config['web_page']['title']|e }} File List</h1>
+        <header>
+            <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
+                href="/guide.html">Guide</a> | <a href="/filelist.html">File list</a>
+            <hr>
+        </header>
+        <p>Please don't listen to podcast episodes this way, use the guide on the website to add the feeds to a podcast
+            app. Anything in the /content/_adhoc folder is not in a podcast feed.{% if app_config['storage_backend'] ==
+            "s3" %} Files are sent via the CDN.{% endif %}</p>
+        <noscript>
+        <div id="breadcrumb" class="file-list" style="display: block;"><a>Javascript is disabled, listing everything.</a></div>
+        </noscript>
         <div class="contained-content">
             <h1>{{ app_config['web_page']['title']|e }} File List</h1>
             <header>
@@ -36,7 +55,7 @@
         </div>
         <div id="breadcrumb_js" class="file-list" style="display: none;"></div><br>
         <ul id="file_list_js" class="file-list" style="display: none;"></ul>
-        <ul id="file_list" class="file-list" style="">
+        <ul id="file_list" class="file-list" style="display: none;">
             {% for file in file_list %}<li><a href="{{ base_url }}{{ file }}">/{{ file }}</a></li>
             {% endfor %}
         </ul>
