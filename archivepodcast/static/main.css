@@ -124,8 +124,7 @@ footer {
   background-color: #101010;
   font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
   font-weight: 500;
-  /* min-width: 100%; */
-  width: 100%;
+  width: auto;
   white-space: nowrap; /* Prevent line breaks */
   overflow-x: auto; /* Enable horizontal scrolling */
 }
