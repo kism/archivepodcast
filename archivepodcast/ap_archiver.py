@@ -261,6 +261,8 @@ class PodcastArchiver:
         else:
             logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
 
+        return tree
+
     def _grab_podcast(self, podcast: dict) -> None:
         """Function to download a podcast and store the rss."""
         tree = None
