@@ -129,3 +129,4 @@ An example guide on setting it up start to finish, with all features and saving 
     - podcast list
     - flask health
 - check last generated
+- prevent arbitrary object fields being created

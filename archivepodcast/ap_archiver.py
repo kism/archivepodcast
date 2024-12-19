@@ -111,11 +111,11 @@ class PodcastArchiver:
                 aws_secret_access_key=self.app_config["s3"]["secret_access_key"],
             )
             logger.info(f"⛅ Authenticated s3, using bucket: {self.app_config['s3']['bucket']}")
-            self.health.update_s3_status(s3_enabled=True)
+            self.health.update_core_status(s3_enabled=True)
             self.check_s3_files()
         else:
             logger.info("⛅ Not using s3")
-            self.health.update_s3_status(s3_enabled=False)
+            self.health.update_core_status(s3_enabled=False)
 
     def check_s3_files(self) -> None:
         """Function to list files in s3 bucket."""
@@ -158,6 +158,9 @@ class PodcastArchiver:
             self.render_filelist_html()
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
+
+        current_datetime = int(time.time())
+        self.health.update_core_status(last_run=current_datetime)
 
     def _load_rss_from_file(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
         """Load the rss from file."""
