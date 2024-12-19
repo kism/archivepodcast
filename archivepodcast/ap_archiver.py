@@ -12,6 +12,8 @@ from jinja2 import Environment, FileSystemLoader
 from lxml import etree
 
 from .ap_downloader import PodcastDownloader
+from .ap_health import PodcastArchiverHealth
+from .ap_webpages import Webpages
 from .helpers import list_all_s3_objects
 from .logger import get_logger
 
@@ -23,53 +25,12 @@ else:
 logger = get_logger(__name__)
 
 
-class Webpage:
-    """Webpage object."""
-
-    def __init__(self, path: str, mime: str, content: str | bytes) -> None:
-        """Initialise the Webpages object."""
-        # Mime types that magic doesn't always get right
-        if path.endswith(".js"):
-            mime = "text/javascript"
-        elif path.endswith(".css"):
-            mime = "text/css"
-        elif path.endswith(".woff2"):
-            mime = "font/woff2"
-
-        self.path: str = path
-        self.mime: str = mime
-        self.content: str | bytes = content
-
-
-class Webpages:
-    """Webpage object."""
-
-    def __init__(self) -> None:
-        """Initialise the Webpages object."""
-        self._webpages: dict[str, Webpage] = {}
-
-    def __len__(self) -> int:
-        """Return the length of the webpages."""
-        return len(self._webpages)
-
-    def add(self, path: str, mime: str, content: str | bytes) -> None:
-        """Add a webpage."""
-        self._webpages[path] = Webpage(path=path, mime=mime, content=content)
-
-    def get_all(self) -> dict[str, Webpage]:
-        """Return the webpages."""
-        return self._webpages
-
-    def get_webpage(self, path: str) -> Webpage:
-        """Get a webpage."""
-        return self._webpages[path]
-
-
 class PodcastArchiver:
     """ArchivePodcast object."""
 
     def __init__(self, app_config: dict, podcast_list: list, instance_path: str, root_path: str) -> None:
         """Initialise the ArchivePodcast object."""
+        self.health = PodcastArchiverHealth()
         self.root_path = root_path
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
@@ -150,6 +111,7 @@ class PodcastArchiver:
                 aws_secret_access_key=self.app_config["s3"]["secret_access_key"],
             )
             logger.info(f"⛅ Authenticated s3, using bucket: {self.app_config['s3']['bucket']}")
+            self.health.update_s3_status(s3_available=True)
             self.check_s3_files()
         else:
             logger.info("⛅ Not using s3")
@@ -246,6 +208,7 @@ class PodcastArchiver:
                 logger.info('📄⛅ Uploaded feed "%s" to s3', podcast["name_one_word"])
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
+        self.health.update_podcast_status(podcast["name_one_word"], rss_available=True)
 
     def _download_podcast(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
         tree = self.podcast_downloader.download_podcast(podcast)
@@ -276,8 +239,11 @@ class PodcastArchiver:
 
         if podcast["live"] is True:  # download all the podcasts
             tree = self._download_podcast(podcast, rss_file_path)
+            self.health.update_podcast_status(podcast["name_one_word"], rss_live=True)
         else:
             logger.info('📄 "live": false, in config so not fetching new episodes')
+            self.health.update_podcast_status(podcast["name_one_word"], rss_live=False)
+
 
         if tree is None:  # Serving a podcast that we can't currently download?, load it from file
             tree = self._load_rss_from_file(podcast, rss_file_path)
@@ -332,11 +298,13 @@ class PodcastArchiver:
             logger.debug("💾 Rendering template: %s to %s", template_path, output_path)
 
             template = env.get_template(template_path)
+            current_time = int(time.time())
+            logger.warning("TMEP Rendering template: %s, at time %s", template_path, current_time)
             rendered_output = template.render(
                 app_config=self.app_config,
                 podcasts=self.podcast_list,
                 about_page=self.about_page_exists,
-                last_generated_date=int(time.time()),
+                last_generated_date=current_time,
             )
 
             self.webpages.add(output_filename, "text/html", rendered_output)
@@ -375,7 +343,7 @@ class PodcastArchiver:
 
         self.write_webpages([self.webpages.get_webpage(output_filename)])
 
-    def write_webpages(self, webpages: list[Webpage]) -> None:
+    def write_webpages(self, webpages: list) -> None:
         """Write files to disk, and to s3 if needed."""
         str_webpages = f"{(len(webpages))} pages to files"
         if len(webpages) == 1:
