@@ -7,13 +7,18 @@ from flask import Flask, Response
 from . import bp_archivepodcast, logger
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 
-__version__ = "1.1.13"  # This is the version of the app, used in pyproject.toml, enforced in a test.
+__version__ = "1.1.14"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
 
 def create_app(test_config: dict | None = None, instance_path: str | None = None) -> Flask:
     """Create and configure an instance of the Flask application."""
     start_time = time.time()
-    app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)  # Create Flask app object
+    app = Flask(
+        __name__,
+        instance_relative_config=True,
+        instance_path=instance_path,
+        static_folder=None,
+    )  # Create Flask app object
 
     logger.setup_logger(app, DEFAULT_LOGGING_CONFIG)  # Setup logger with defaults defined in config module
 
