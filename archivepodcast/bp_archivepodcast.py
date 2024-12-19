@@ -117,6 +117,14 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
     return seconds_until_next_run
 
 
+@bp.route("/health")
+def health() -> Response:
+    """Health check."""
+    if not ap:
+        return generate_not_initialized_error()
+
+    return Response(ap.health.get_health(), mimetype="application/json", status=HTTPStatus.OK)
+
 def send_ap_cached_webpage(webpage_name: str) -> Response:
     """Send a cached webpage."""
     if not ap:
