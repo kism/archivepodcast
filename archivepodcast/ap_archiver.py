@@ -147,15 +147,16 @@ class PodcastArchiver:
         for podcast in self.podcast_list:
             try:
                 self._grab_podcast(podcast)
+                self.health.update_podcast_status(podcast["name_one_word"], healthy=True)
                 logger.debug("💾 Updating filelist.html")
             except Exception:
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
+                self.health.update_podcast_status(podcast["name_one_word"], healthy=False)
 
         try:
             self.render_filelist_html()
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
-            self.health.update_podcast_status("filelist.html", full_crash=True)
 
     def _load_rss_from_file(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
         """Load the rss from file."""
@@ -245,7 +246,6 @@ class PodcastArchiver:
             logger.info('📄 "live": false, in config so not fetching new episodes')
             self.health.update_podcast_status(podcast["name_one_word"], rss_live=False)
 
-
         if tree is None:  # Serving a podcast that we can't currently download?, load it from file
             tree = self._load_rss_from_file(podcast, rss_file_path)
 
@@ -310,6 +310,7 @@ class PodcastArchiver:
             )
 
             self.webpages.add(output_filename, "text/html", rendered_output)
+            self.health.update_template_status(output_filename, last_rendered=current_time)
 
         logger.debug("💾 Done rendering static pages")
         webpage_list = list({k: v for k, v in self.webpages.get_all().items() if k != "filelist.html"}.values())
@@ -333,16 +334,18 @@ class PodcastArchiver:
 
         template = env.get_template(template_filename)
 
+        current_time = int(time.time())
+
         rendered_output = template.render(
             app_config=self.app_config,
             base_url=base_url,
             file_list=file_list,
             about_page=self.about_page_exists,
-            last_generated_date=int(time.time()),
+            last_generated_date=current_time,
         )
 
         self.webpages.add(path=output_filename, mime="text/html", content=rendered_output)
-
+        self.health.update_template_status(output_filename, last_rendered=current_time)
         self.write_webpages([self.webpages.get_webpage(output_filename)])
 
     def write_webpages(self, webpages: list) -> None:
