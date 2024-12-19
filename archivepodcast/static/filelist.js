@@ -3,11 +3,11 @@ export const file_structure = new Object();
 export function showJSDivs() {
   const breadcrumbJSDiv = document.getElementById("breadcrumb_js");
   if (breadcrumbJSDiv) {
-    breadcrumbJSDiv.style.display = "inline-block";
+    breadcrumbJSDiv.style.display = "block";
   }
   const fileListJSDiv = document.getElementById("file_list_js");
   if (fileListJSDiv) {
-    fileListJSDiv.style.display = "inline-block";
+    fileListJSDiv.style.display = "block";
   }
 }
 
