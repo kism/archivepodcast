@@ -343,7 +343,7 @@ class PodcastArchiver:
 
             self.webpages.add(output_filename, "text/html", rendered_output)
 
-        logger.info("💾 Done rendering static pages")
+        logger.debug("💾 Done rendering static pages")
         webpage_list = list({k: v for k, v in self.webpages.get_all().items() if k != "filelist.html"}.values())
         self.write_webpages(webpage_list)
 
@@ -416,3 +416,6 @@ class PodcastArchiver:
                     Key=webpage.path,
                     ContentType=webpage.mime,
                 )
+
+        logger.info(f"💾 Done writing {str_webpages}")
+
