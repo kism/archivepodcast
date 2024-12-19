@@ -10,7 +10,8 @@ class PodcastHealth:
         """Initialise the Podcast Health object."""
         self.rss_available: bool = False
         self.rss_live: bool = False
-        self.last_episode: str = ""
+        self.full_crash: bool = False
+        self.last_episode: str = "NOT IMPLEMENTED"
 
 
 class PodcastArchiverHealth:
@@ -18,7 +19,7 @@ class PodcastArchiverHealth:
 
     def __init__(self) -> None:
         """Initialise the Podcast Archiver Health object."""
-        self.s3_available: bool = False
+        self.s3_enabled: bool = False
         self.podcasts: dict[str, PodcastHealth] = {}
 
     def get_health(self) -> str:
@@ -31,6 +32,7 @@ class PodcastArchiverHealth:
         rss_available: bool | None = None,
         rss_live: bool | None = None,
         last_episode: str | None = None,
+        full_crash: bool | None = None,
     ) -> None:
         """Update the podcast."""
         if podcast not in self.podcasts:
@@ -45,7 +47,10 @@ class PodcastArchiverHealth:
         if last_episode is not None:
             self.podcasts[podcast].last_episode = last_episode
 
-    def update_s3_status(self, s3_available: bool | None = None) -> None:
+        if full_crash is not None:
+            self.podcasts[podcast].full_crash = full_crash
+
+    def update_s3_status(self, s3_enabled: bool | None = None) -> None:
         """Update the S3 status."""
-        if s3_available is not None:
-            self.s3_available = s3_available
+        if s3_enabled is not None:
+            self.s3_enabled = s3_enabled
