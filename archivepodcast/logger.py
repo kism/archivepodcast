@@ -1,7 +1,6 @@
 """Setup the logger functionality for archivepodcast."""
 
 import logging
-import os
 import typing
 from logging.handlers import RotatingFileHandler
 from typing import cast
@@ -30,11 +29,6 @@ class ColorFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         """Format the log message."""
-        # Formatting
-        record.name = record.name.replace("archivepodcast", "ap")
-        if record.threadName.startswith("Thread-"):
-            record.threadName = record.threadName[record.threadName.find("(") + 1 : record.threadName.find(")")]
-
         # Type Formatting
         if isinstance(record.msg, tuple):
             record.msg = "  ".join(map(str, record.msg))
@@ -45,7 +39,11 @@ class ColorFormatter(logging.Formatter):
         elif isinstance(record.msg, list):
             record.msg = "  \n".join(map(str, record.msg))
 
-        # Extra Formatting
+        # Text Formatting
+        record.name = record.name.replace("archivepodcast", "ap")
+        if record.threadName and record.threadName.startswith("Thread-"):
+            record.threadName = record.threadName[record.threadName.find("(") + 1 : record.threadName.find(")")]
+
         if record.name.startswith("ap"):
             if len(record.levelname) < DESIRED_LEVEL_NAME_LEN:
                 record.levelname = record.levelname + " " * (DESIRED_LEVEL_NAME_LEN - len(record.levelname))
@@ -53,7 +51,7 @@ class ColorFormatter(logging.Formatter):
             if len(record.name) < DESIRED_NAME_LEN:
                 record.name = record.name + " " * (DESIRED_NAME_LEN - len(record.name))
 
-            if len(record.threadName) < DESIRED_THREAD_NAME_LEN:
+            if record.threadName and len(record.threadName) < DESIRED_THREAD_NAME_LEN:
                 record.threadName = record.threadName + " " * (DESIRED_THREAD_NAME_LEN - len(record.threadName))
         else:
             record.threadName = ""

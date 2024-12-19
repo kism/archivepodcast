@@ -123,4 +123,3 @@ An example guide on setting it up start to finish, with all features and saving 
 - Better css
 - Prefetching
 - implement api
-

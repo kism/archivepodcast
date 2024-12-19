@@ -295,8 +295,6 @@ class PodcastArchiver:
 
     def _render_files(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
-        # logger = get_logger(__name__ + ".render_files")
-
         app_directory = "archivepodcast"
         static_directory = os.path.join(app_directory, "static")
         template_directory = os.path.join(app_directory, "templates")
@@ -379,8 +377,6 @@ class PodcastArchiver:
 
     def write_webpages(self, webpages: list[Webpage]) -> None:
         """Write files to disk, and to s3 if needed."""
-        # logger = get_logger(__name__ + ".write_webpages")
-
         str_webpages = f"{(len(webpages))} pages to files"
         if len(webpages) == 1:
             str_webpages = f"{webpages[0].path} to file"
