@@ -104,7 +104,7 @@ class PodcastArchiver:
             with open(about_page_desired_path, encoding="utf-8") as about_page:
                 self.webpages.add(about_page_filename, mime="text/html", content=about_page.read())
             self.about_page_exists = True
-            logger.info("About page exists!")
+            logger.info("💾 About page exists!")
             self.write_webpages([self.webpages.get_webpage(about_page_filename)])
         else:
             logger.debug("About page doesn't exist")
@@ -194,7 +194,77 @@ class PodcastArchiver:
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
 
+    def _load_rss_from_file(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
+        """Load the rss from file."""
+        tree = None
+        if podcast["live"] is False:
+            logger.info("📄 Loading rss from file: %s", rss_file_path)
+        else:
+            logger.warning("📄 Loading rss from file: %s", rss_file_path)
+        if os.path.exists(rss_file_path):
+            try:
+                tree = etree.parse(rss_file_path)
+            except etree.XMLSyntaxError:
+                logger.exception("❌ Error parsing rss file: %s", rss_file_path)
+        else:
+            logger.error("❌ Cannot find rss feed file: %s", rss_file_path)
+
+        return tree
+
+    def _update_rss_feed(self, podcast: dict, tree: etree._ElementTree, previous_feed: str) -> None:
+        """Update the rss feed, in memory and s3."""
+        self.podcast_rss.update(
+            {
+                podcast["name_one_word"]: etree.tostring(
+                    tree.getroot(),
+                    encoding="utf-8",
+                    method="xml",
+                    xml_declaration=True,
+                )
+            }
+        )
+        logger.info(
+            f"📄 Hosted: {self.app_config['inet_path']}rss/{ podcast['name_one_word'] }",
+        )
+
+        # Upload to s3 if we are in s3 mode
+        if (
+            self.s3
+            and previous_feed
+            != self.podcast_rss[
+                podcast["name_one_word"]
+            ]  # This doesn't work when feed has build dates times on it, patreon for one
+        ):
+            try:
+                # Upload the file
+                self.s3.put_object(
+                    Body=self.podcast_rss[podcast["name_one_word"]],
+                    Bucket=self.app_config["s3"]["bucket"],
+                    Key="rss/" + podcast["name_one_word"],
+                    ContentType="application/rss+xml",
+                )
+                logger.info('📄⛅ Uploaded feed "%s" to s3', podcast["name_one_word"])
+            except Exception:  # pylint: disable=broad-exception-caught
+                logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
+
+    def _download_podcast(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
+        tree = self.podcast_downloader.download_podcast(podcast)
+        if tree:
+            # Write rss to disk
+            tree.write(
+                rss_file_path,
+                encoding="utf-8",
+                xml_declaration=True,
+            )
+            logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
+
+        else:
+            logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
+
+        return tree
+
     def _grab_podcast(self, podcast: dict) -> None:
+        """Function to download a podcast and store the rss."""
         tree = None
         previous_feed = ""
         logger.info("📜 Processing podcast to archive: %s", podcast["new_name"])
@@ -205,79 +275,26 @@ class PodcastArchiver:
         rss_file_path = os.path.join(self.web_root, "rss", podcast["name_one_word"])
 
         if podcast["live"] is True:  # download all the podcasts
-            tree = self.podcast_downloader.download_podcast(podcast)
-            if tree:
-                # Write rss to disk
-                tree.write(
-                    rss_file_path,
-                    encoding="utf-8",
-                    xml_declaration=True,
-                )
-                logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
-
-            else:
-                logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
+            tree = self._download_podcast(podcast, rss_file_path)
         else:
             logger.info('📄 "live": false, in config so not fetching new episodes')
 
-        # Serving a podcast that we can't currently download?, load it from file
-        if tree is None:
-            logger.warning("📄 Loading rss from file: %s", rss_file_path)
-            if os.path.exists(rss_file_path):
-                try:
-                    tree = etree.parse(rss_file_path)
-                except etree.XMLSyntaxError:
-                    logger.exception("❌ Error parsing rss file: %s", rss_file_path)
-            else:
-                logger.exception("❌ Cannot find rss feed file: %s", rss_file_path)
+        if tree is None:  # Serving a podcast that we can't currently download?, load it from file
+            tree = self._load_rss_from_file(podcast, rss_file_path)
 
         if tree is not None:
-            self.podcast_rss.update(
-                {
-                    podcast["name_one_word"]: etree.tostring(
-                        tree.getroot(),
-                        encoding="utf-8",
-                        method="xml",
-                        xml_declaration=True,
-                    )
-                }
-            )
-            logger.info(
-                f"📄 Hosted: {self.app_config['inet_path']}rss/{ podcast['name_one_word'] }",
-            )
-
-            # Upload to s3 if we are in s3 mode
-            if (
-                self.s3
-                and previous_feed
-                != self.podcast_rss[
-                    podcast["name_one_word"]
-                ]  # This doesn't work when feed has build dates times on it, patreon for one
-            ):
-                try:
-                    # Upload the file
-                    self.s3.put_object(
-                        Body=self.podcast_rss[podcast["name_one_word"]],
-                        Bucket=self.app_config["s3"]["bucket"],
-                        Key="rss/" + podcast["name_one_word"],
-                        ContentType="application/rss+xml",
-                    )
-                    logger.info('📄⛅ Uploaded feed "%s" to s3', podcast["name_one_word"])
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
+            self._update_rss_feed(podcast, tree, previous_feed)
 
         else:
             logger.error(f"❌ Unable to host podcast: {podcast['name_one_word']}, something is wrong")
 
     def render_files(self) -> None:
         """Function to upload static to s3 and copy index.html."""
+        logger.info("💾 Rendering static pages in thread")
         threading.Thread(target=self._render_files, daemon=True).start()
 
     def _render_files(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
-        logger = get_logger(__name__ + ".render_files")
-        logger.info("💾 Rendering static pages in thread")
-
         app_directory = "archivepodcast"
         static_directory = os.path.join(app_directory, "static")
         template_directory = os.path.join(app_directory, "templates")
@@ -324,7 +341,7 @@ class PodcastArchiver:
 
             self.webpages.add(output_filename, "text/html", rendered_output)
 
-        logger.info("💾 Done rendering static pages")
+        logger.debug("💾 Done rendering static pages")
         webpage_list = list({k: v for k, v in self.webpages.get_all().items() if k != "filelist.html"}.values())
         self.write_webpages(webpage_list)
 
@@ -360,8 +377,6 @@ class PodcastArchiver:
 
     def write_webpages(self, webpages: list[Webpage]) -> None:
         """Write files to disk, and to s3 if needed."""
-        logger = get_logger(__name__ + ".write_webpages")
-
         str_webpages = f"{(len(webpages))} pages to files"
         if len(webpages) == 1:
             str_webpages = f"{webpages[0].path} to file"
@@ -397,3 +412,5 @@ class PodcastArchiver:
                     Key=webpage.path,
                     ContentType=webpage.mime,
                 )
+
+        logger.info(f"💾 Done writing {str_webpages}")

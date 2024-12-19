@@ -1,15 +1,18 @@
 """Flask webapp archivepodcast."""
 
+import time
+
 from flask import Flask, Response
 
 from . import bp_archivepodcast, logger
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 
-__version__ = "1.1.11"  # This is the version of the app, used in pyproject.toml, enforced in a test.
+__version__ = "1.1.12"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
 
 def create_app(test_config: dict | None = None, instance_path: str | None = None) -> Flask:
     """Create and configure an instance of the Flask application."""
+    start_time = time.time()
     app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)  # Create Flask app object
 
     logger.setup_logger(app, DEFAULT_LOGGING_CONFIG)  # Setup logger with defaults defined in config module
@@ -52,6 +55,8 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
         app.logger.debug(f"Error handler: invalid_route: {e}")
         return bp_archivepodcast.generate_404()
 
+    app.logger.info(
+        f"🙋 ArchivePodcast Version: {__version__} webapp initialised in {time.time() - start_time:.2f} seconds."
+    )
     app.logger.info("🙋 Starting Web Server")
-    app.logger.info("🙋 ArchivePodcast Version: %s", __version__)
     return app

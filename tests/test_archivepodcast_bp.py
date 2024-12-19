@@ -46,8 +46,14 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
         assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_app_paths_not_generated(apa, client_live):
+
+
+
+def test_app_paths_not_generated(apa, client_live, monkeypatch):
     """Test the error for when a page has not been generated."""
+    # Ensure that no webpages can be added by the thread.
+    monkeypatch.setattr("archivepodcast.ap_archiver.Webpages.add", lambda _: None)
+
     from archivepodcast import bp_archivepodcast
     from archivepodcast.ap_archiver import Webpages
 

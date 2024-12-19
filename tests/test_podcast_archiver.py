@@ -105,8 +105,6 @@ def test_grab_podcasts_invalid_rss(
     monkeypatch,
 ):
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid.rss")
-
     apa.podcast_list[0]["live"] = False
 
     rss = "INVALID"
@@ -161,6 +159,8 @@ def test_grab_podcasts_live(
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
     assert "Wrote rss to disk:" in caplog.text
     assert "Hosted: http://localhost:5000/rss/test" in caplog.text
+
+    assert "Loading rss from file" not in caplog.text
 
     rss = str(apa.get_rss_feed("test"))
 

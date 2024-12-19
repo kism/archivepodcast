@@ -11,6 +11,12 @@ uv sync
 flask --app archivepodcast run --port 5000
 ```
 
+If you wish to upgrade packages
+
+```bash
+uv sync --upgrade
+```
+
 ### Javascript/Spellcheck/Frontend Setup
 
 Frontend tools are all handled by npm
@@ -18,6 +24,12 @@ Frontend tools are all handled by npm
 ```bash
 nvm use 22
 npm install
+```
+
+If you wish to upgrade packages
+
+```bash
+npm upgrade
 ```
 
 Extra setup dictionaries for spellcheck
@@ -56,6 +68,14 @@ Run
 
 ```bash
 npx cspell .
+```
+
+### Markdown lint
+
+Run
+
+```bash
+npx markdownlint-cli --fix *.md
 ```
 
 ### Biome (JS Lint, Format)

@@ -19,12 +19,17 @@ COLOURS = {
     "CRITICAL": Fore.RED,
 }
 
+DESIRED_LEVEL_NAME_LEN = 5
+DESIRED_NAME_LEN = 16
+DESIRED_THREAD_NAME_LEN = 13
+
 
 class ColorFormatter(logging.Formatter):
     """Formatter for coloring the log messages."""
 
     def format(self, record: logging.LogRecord) -> str:
         """Format the log message."""
+        # Type Formatting
         if isinstance(record.msg, tuple):
             record.msg = "  ".join(map(str, record.msg))
 
@@ -34,11 +39,30 @@ class ColorFormatter(logging.Formatter):
         elif isinstance(record.msg, list):
             record.msg = "  \n".join(map(str, record.msg))
 
+        # Text Formatting
+        record.name = record.name.replace("archivepodcast", "ap")
+        if record.threadName and record.threadName.startswith("Thread-"):
+            record.threadName = record.threadName[record.threadName.find("(") + 1 : record.threadName.find(")")]
+
+        if record.name.startswith("ap"):
+            if len(record.levelname) < DESIRED_LEVEL_NAME_LEN:
+                record.levelname = record.levelname + " " * (DESIRED_LEVEL_NAME_LEN - len(record.levelname))
+
+            if len(record.name) < DESIRED_NAME_LEN:
+                record.name = record.name + " " * (DESIRED_NAME_LEN - len(record.name))
+
+            if record.threadName and len(record.threadName) < DESIRED_THREAD_NAME_LEN:
+                record.threadName = record.threadName + " " * (DESIRED_THREAD_NAME_LEN - len(record.threadName))
+        else:
+            record.threadName = ""
+
+        # Colour Formatting
         colour = COLOURS.get(record.levelname, "")
         if colour:
             record.name = f"{colour}{record.name}"
             record.levelname = f"{colour}{record.levelname}"
             record.msg = f"{colour}{record.msg}"
+
         return super().format(record)
 
 
@@ -53,7 +77,7 @@ LOG_LEVELS = [
 
 # This is the logging message format that I like.
 # LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # noqa: ERA001
-LOG_FORMAT = "%(levelname)s:%(name)s:%(message)s"
+LOG_FORMAT = "%(levelname)s:%(name)s:%(threadName)s:%(message)s"
 TRACE_LEVEL_NUM = 5
 
 

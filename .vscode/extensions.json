@@ -5,6 +5,7 @@
     "samuelcolvin.jinjahtml",
     "charliermarsh.ruff",
     "biomejs.biome",
-    "vitest.explorer"
+    "vitest.explorer",
+    "davidanson.vscode-markdownlint"
   ]
 }

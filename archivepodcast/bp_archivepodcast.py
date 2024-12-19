@@ -68,7 +68,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
         ap.load_config(current_app.config["app"], current_app.config["podcast"])
 
         # This is the slow part of the reload, no app context required so we can give run it in a thread.
-        logger.info("Grabbing podcasts in a thread")
+        logger.info("🙋 Ad-Hoc grabbing podcasts in a thread")
         threading.Thread(target=ap.grab_podcasts, daemon=True).start()
 
     except Exception:
@@ -81,10 +81,10 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
 
 def podcast_loop() -> None:
     """Main loop, grabs new podcasts every hour."""
-    logger.info("🙋 Starting podcast loop: grabbing episodes, building rss feeds. Repeating hourly.")
+    logger.info("🙋 Started thread: podcast_loop. Grabbing episodes, building rss feeds. Repeating hourly.")
 
     if ap is None:
-        logger.error("❌ ArchivePodcast object not initialized")
+        logger.critical("❌ ArchivePodcast object not initialized, podcast_loop dead")
         return
 
     if ap.s3 is not None:

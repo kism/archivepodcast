@@ -118,5 +118,9 @@ An example guide on setting it up start to finish, with all features and saving 
 - Container Registry
 - ~~make mypy more sensitive~~
 - ~~fix css~~
+- ~~use noscript~~
+- ~~Better css~~
+- ~~Prefetching~~
 - put rss into the page cache maybe
+- mime type in file list?
 - implement api

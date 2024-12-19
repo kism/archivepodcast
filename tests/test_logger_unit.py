@@ -99,14 +99,15 @@ def test_colour():
     formatter = ColorFormatter()
 
     class TestRecord(logging.LogRecord):
-        def __init__(self, levelno, msg) -> None:
+        def __init__(self, levelno, msg, thread_name="TestThread", name="Test_Logger") -> None:
             self.levelno = levelno
             self.msg = msg
-            self.name = "Test_Logger"
+            self.name = name
             self.args = ()
             self.exc_info = None
             self.exc_text = None
             self.stack_info = None
+            self.threadName = thread_name
             self.levelname = logging.getLevelName(levelno)
 
     log_records = [
@@ -114,6 +115,8 @@ def test_colour():
         TestRecord(levelno=10, msg=None),
         TestRecord(levelno=10, msg=["Test", "message", "list"]),
         TestRecord(levelno=10, msg=("Test", "message", "tuple")),
+        TestRecord(levelno=10, msg="Test", thread_name="Thread-"),
+        TestRecord(levelno=20, msg="Test", name="ap."),
     ]
 
     for i in log_records:

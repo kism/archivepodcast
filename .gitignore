@@ -1,6 +1,7 @@
 # This app
 # Stop poetry coming back
 poetry.lock
+temp.py
 
 # Just incase
 *.mp3
