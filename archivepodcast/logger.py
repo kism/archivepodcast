@@ -1,6 +1,7 @@
 """Setup the logger functionality for archivepodcast."""
 
 import logging
+import os
 import typing
 from logging.handlers import RotatingFileHandler
 from typing import cast
@@ -19,12 +20,20 @@ COLOURS = {
     "CRITICAL": Fore.RED,
 }
 
+desired_level_name_len = 10
+DESIRED_NAME_LEN = 21
+DESIRED_THREAD_NAME_LEN = 13
+
 
 class ColorFormatter(logging.Formatter):
     """Formatter for coloring the log messages."""
 
     def format(self, record: logging.LogRecord) -> str:
         """Format the log message."""
+        record.name = record.name.replace("archivepodcast", "ap")
+        if record.threadName.startswith("Thread-"):
+            record.threadName = record.threadName[record.threadName.find("(") + 1 : record.threadName.find(")")]
+
         if isinstance(record.msg, tuple):
             record.msg = "  ".join(map(str, record.msg))
 
@@ -39,6 +48,18 @@ class ColorFormatter(logging.Formatter):
             record.name = f"{colour}{record.name}"
             record.levelname = f"{colour}{record.levelname}"
             record.msg = f"{colour}{record.msg}"
+
+
+        if len(record.levelname) < desired_level_name_len:
+            record.levelname = record.levelname + " " * (desired_level_name_len - len(record.levelname))
+
+        if len(record.name) < DESIRED_NAME_LEN:
+            record.name = record.name + " " * (DESIRED_NAME_LEN - len(record.name))
+
+        if len(record.threadName) < DESIRED_THREAD_NAME_LEN:
+            record.threadName = record.threadName + " " * (DESIRED_THREAD_NAME_LEN - len(record.threadName))
+
+
         return super().format(record)
 
 
@@ -53,7 +74,7 @@ LOG_LEVELS = [
 
 # This is the logging message format that I like.
 # LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # noqa: ERA001
-LOG_FORMAT = "%(levelname)s:%(name)s:%(message)s"
+LOG_FORMAT = "%(levelname)s:%(name)s:%(threadName)s:%(message)s"
 TRACE_LEVEL_NUM = 5
 
 

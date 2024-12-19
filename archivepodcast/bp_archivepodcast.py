@@ -68,7 +68,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
         ap.load_config(current_app.config["app"], current_app.config["podcast"])
 
         # This is the slow part of the reload, no app context required so we can give run it in a thread.
-        logger.info("Ad-Hoc grabbing podcasts in a thread")
+        logger.info("🙋 Ad-Hoc grabbing podcasts in a thread")
         threading.Thread(target=ap.grab_podcasts, daemon=True).start()
 
     except Exception:
