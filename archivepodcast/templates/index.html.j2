@@ -21,31 +21,31 @@
 </head>
 
 <body>
-    <main>
-        <h1>{{ app_config['web_page']['title']|e }}</h1>
-        <header>
-            <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
-                href="/guide.html">Guide</a> | <a href="/filelist.html">File list</a>
-            <hr>
-        </header>
-        <h3>{{ app_config['web_page']['description']|e }}</h3>
-        <h3>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
-                guide</a>.</p>
-            {% for podcast in podcasts -%}
-            <h2>{{ podcast['new_name']|e }}
-        </h3>
-        <h3>{{ podcast['description']|e }}</h3>
-        <input type="text" readonly="readonly" value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
-            id="{{ podcast['name_one_word']}}">
-        <button class="button" onclick="window.grabToClipboard('{{ podcast['name_one_word']}}')"
-            id="{{ podcast['name_one_word']}}_button">Copy url</button>
-        {% endfor %}
-        <footer>
-            <hr>
-            Contact: <a href="mailto:{{ app_config['web_page']['contact']|e }}">{{
-                app_config['web_page']['contact']|e }}</a>
-        </footer>
-        <p style="display: none;">Last generated: {{ last_generated_date }}</p>
+    <main class="contained-content">
+            <h1>{{ app_config['web_page']['title']|e }}</h1>
+            <header>
+                <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
+                    href="/guide.html">Guide</a> | <a href="/filelist.html">File list</a>
+                <hr>
+            </header>
+            <h3>{{ app_config['web_page']['description']|e }}</h3>
+            <h3>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
+                    guide</a>.</p>
+                {% for podcast in podcasts -%}
+                <h2>{{ podcast['new_name']|e }}
+            </h3>
+            <h3>{{ podcast['description']|e }}</h3>
+            <input type="text" readonly="readonly" value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
+                id="{{ podcast['name_one_word']}}">
+            <button class="button" onclick="window.grabToClipboard('{{ podcast['name_one_word']}}')"
+                id="{{ podcast['name_one_word']}}_button">Copy url</button>
+            {% endfor %}
+            <footer>
+                <hr>
+                Contact: <a href="mailto:{{ app_config['web_page']['contact']|e }}">{{
+                    app_config['web_page']['contact']|e }}</a>
+            </footer>
+            <p style="display: none;">Last generated: {{ last_generated_date }}</p>
     </main>
 </body>
 
