@@ -123,4 +123,5 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Prefetching~~
 - put rss into the page cache maybe
 - mime type in file list?
+  - implement audio player
 - implement api
