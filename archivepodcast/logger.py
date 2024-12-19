@@ -25,40 +25,31 @@ DESIRED_THREAD_NAME_LEN = 13
 
 
 class ColorFormatter(logging.Formatter):
-    """Formatter for coloring the log messages."""
+    """Custom formatter to add colour to the log messages."""
+
+    def _format_value(self, value: typing.Any) -> str:  # noqa: ANN401
+        if isinstance(value, tuple):
+            return "  ".join(map(str, value))
+        if isinstance(value, list):
+            return "  \n".join(map(str, value))
+        return str(value) if value is not None else "<NoneType>"
 
     def format(self, record: logging.LogRecord) -> str:
-        """Format the log message."""
-        # Type Formatting
-        if isinstance(record.msg, tuple):
-            record.msg = "  ".join(map(str, record.msg))
-
-        elif record.msg is None:
-            record.msg = "<NoneType>"
-
-        elif isinstance(record.msg, list):
-            record.msg = "  \n".join(map(str, record.msg))
-
-        # Text Formatting
+        """Format the log record."""
+        record.msg = self._format_value(record.msg)
         record.name = record.name.replace("archivepodcast", "ap")
-        if record.threadName and record.threadName.startswith("Thread-"):
+
+        if record.threadName and "Thread-" in record.threadName:
             record.threadName = record.threadName[record.threadName.find("(") + 1 : record.threadName.find(")")]
 
         if record.name.startswith("ap") and record.levelno <= logging.INFO:
-            if len(record.levelname) < DESIRED_LEVEL_NAME_LEN:
-                record.levelname = record.levelname + " " * (DESIRED_LEVEL_NAME_LEN - len(record.levelname))
-
-            if len(record.name) < DESIRED_NAME_LEN:
-                record.name = record.name + " " * (DESIRED_NAME_LEN - len(record.name))
-
-            if record.threadName and len(record.threadName) < DESIRED_THREAD_NAME_LEN:
-                record.threadName = record.threadName + " " * (DESIRED_THREAD_NAME_LEN - len(record.threadName))
+            record.levelname = record.levelname.ljust(DESIRED_LEVEL_NAME_LEN)
+            record.name = record.name.ljust(DESIRED_NAME_LEN)
+            record.threadName = record.threadName.ljust(DESIRED_THREAD_NAME_LEN) if record.threadName else ""
         elif not record.name.startswith("ap"):
             record.threadName = ""
 
-        # Colour Formatting
-        colour = COLOURS.get(record.levelname, "")
-        if colour:
+        if colour := COLOURS.get(record.levelname):
             record.name = f"{colour}{record.name}"
             record.levelname = f"{colour}{record.levelname}"
             record.msg = f"{colour}{record.msg}"
