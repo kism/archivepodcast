@@ -254,7 +254,7 @@ def rss(feed: str) -> Response:
 
 
 @bp.route("/robots.txt")
-def static_from_root() -> Response:
+def send_robots() -> Response:
     """Serve robots.txt."""
     return send_ap_cached_webpage("robots.txt")
 
@@ -263,6 +263,12 @@ def static_from_root() -> Response:
 def favicon() -> Response:
     """Return the favicon."""
     return send_ap_cached_webpage("static/favicon.ico")
+
+
+@bp.route("/static/<path:path>")
+def send_static(path: str) -> Response:
+    """Serve static files."""
+    return send_ap_cached_webpage(f"static/{path}")
 
 
 def generate_not_initialized_error() -> Response:
