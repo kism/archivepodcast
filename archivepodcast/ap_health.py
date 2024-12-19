@@ -10,7 +10,7 @@ class PodcastHealth:
         """Initialise the Podcast Health object."""
         self.rss_available: bool = False
         self.rss_live: bool = False
-        self.full_crash: bool = False
+        self.healthy: bool = False
         self.last_episode: str = "NOT IMPLEMENTED"
 
 class WebpageHealth:
@@ -63,7 +63,7 @@ class PodcastArchiverHealth:
             self.podcasts[podcast].last_episode = last_episode
 
         if healthy is not None:
-            self.podcasts[podcast].full_crash = healthy
+            self.podcasts[podcast].healthy = healthy
 
     def update_s3_status(self, s3_enabled: bool | None = None) -> None:
         """Update the S3 status."""
