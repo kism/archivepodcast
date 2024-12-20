@@ -36,6 +36,7 @@ def pytest_configure():
     pytest.TEST_CONFIGS_LOCATION = TEST_CONFIGS_LOCATION
     pytest.TEST_WAV_FILE = TEST_WAV_FILE
     pytest.DUMMY_RSS_STR = DUMMY_RSS_STR
+    pytest.TEST_RSS_LOCATION = TEST_RSS_LOCATION
 
 
 # region: Flask

@@ -125,3 +125,8 @@ An example guide on setting it up start to finish, with all features and saving 
 - mime type in file list?
   - implement audio player
 - implement api
+  - health page
+    - podcast list
+    - flask health
+- check last generated
+- prevent arbitrary object fields being created

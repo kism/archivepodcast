@@ -1,6 +1,7 @@
 """Blueprint and helpers for the ArchivePodcast app."""
 
 import datetime
+import json
 import os
 import signal
 import threading
@@ -93,8 +94,10 @@ def podcast_loop() -> None:
     while True:
         ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
+        current_datetime = datetime.datetime.now()
+
         # Calculate time until next run
-        seconds_until_next_run = _get_time_until_next_run(datetime.datetime.now())
+        seconds_until_next_run = _get_time_until_next_run(current_datetime)
 
         msg = f"🛌 Sleeping for {int(seconds_until_next_run / 60)} minutes"
         logger.info(msg)
@@ -115,6 +118,21 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
         seconds_until_next_run -= one_hour_in_seconds
 
     return seconds_until_next_run
+
+
+@bp.route("/api/health")
+def health() -> Response:
+    """Health check."""
+    if not ap:
+        return generate_not_initialized_error()
+
+    try:
+        health_json = ap.health.get_health()
+    except Exception:
+        logger.exception("❌ Error getting health")
+        health_json = json.dumps({"core": {"alive": False}})
+
+    return Response(health_json, mimetype="application/json", status=HTTPStatus.OK)
 
 
 def send_ap_cached_webpage(webpage_name: str) -> Response:
