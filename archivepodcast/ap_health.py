@@ -71,6 +71,8 @@ class CoreHealth:
         self.last_run: int = 0
         self.about_page_exists: bool = False
         self.last_startup: int = int(datetime.datetime.now().timestamp())
+        self.currently_rendering: bool = False
+        self.currently_loading_config: bool = False
 
 
 class PodcastArchiverHealth:

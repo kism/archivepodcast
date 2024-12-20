@@ -31,6 +31,7 @@ class PodcastArchiver:
     def __init__(self, app_config: dict, podcast_list: list, instance_path: str, root_path: str) -> None:
         """Initialise the ArchivePodcast object."""
         self.health = PodcastArchiverHealth()
+        self.health.update_core_status(currently_loading_config=True)
         self.root_path = root_path
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
@@ -41,6 +42,7 @@ class PodcastArchiver:
         self.s3: S3Client | None = None
         self.about_page_exists = False
         self.load_config(app_config, podcast_list)
+        self.health.update_core_status(currently_loading_config=False)
 
     def load_config(self, app_config: dict, podcast_list: list) -> None:
         """Load the config from the config file."""
@@ -271,6 +273,7 @@ class PodcastArchiver:
 
     def _render_files(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
+        self.health.update_core_status(currently_rendering=True)
         app_directory = "archivepodcast"
         static_directory = os.path.join(app_directory, "static")
         template_directory = os.path.join(app_directory, "templates")
@@ -324,6 +327,7 @@ class PodcastArchiver:
         self.write_webpages(webpage_list)
 
         self.render_filelist_html()  # Separate, we need to adhoc call this one
+        self.health.update_core_status(currently_rendering=False)
 
     def render_filelist_html(self) -> None:
         """Function to render filelist.html.
