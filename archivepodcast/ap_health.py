@@ -20,17 +20,20 @@ class LatestEpisodeInfo:
         self.title = "Unknown"
         self.pubdate: str | int = "Unknown"
 
-        if tree:
-            latest_episode = tree.xpath("//item")[0]
-            self.title = latest_episode.xpath("title")[0].text
-            pod_pubdate = latest_episode.xpath("pubDate")[0].text
+        try:
+            if tree:
+                latest_episode = tree.xpath("//item")[0]
+                self.title = latest_episode.xpath("title")[0].text
+                pod_pubdate = latest_episode.xpath("pubDate")[0].text
 
-            for podcast_date_format in PODCAST_DATE_FORMATS:
-                try:
-                    self.pubdate = int(datetime.datetime.strptime(pod_pubdate, podcast_date_format).timestamp())
-                    break
-                except ValueError:
-                    pass
+                for podcast_date_format in PODCAST_DATE_FORMATS:
+                    try:
+                        self.pubdate = int(datetime.datetime.strptime(pod_pubdate, podcast_date_format).timestamp())
+                        break
+                    except ValueError:
+                        pass
+        except Exception:
+            logger.exception("Error parsing latest episode info")
 
 
 class PodcastHealth:

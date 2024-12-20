@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.2.0"
+version = "1.2.1"
 description = ""
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
