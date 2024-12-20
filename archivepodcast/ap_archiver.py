@@ -65,9 +65,11 @@ class PodcastArchiver:
             with open(about_page_desired_path, encoding="utf-8") as about_page:
                 self.webpages.add(about_page_filename, mime="text/html", content=about_page.read())
             self.about_page_exists = True
+            self.health.update_core_status(about_page_exists=True)
             logger.info("💾 About page exists!")
             self.write_webpages([self.webpages.get_webpage(about_page_filename)])
         else:
+            self.health.update_core_status(about_page_exists=False)
             logger.debug("About page doesn't exist")
 
     def make_folder_structure(self) -> None:
@@ -145,10 +147,14 @@ class PodcastArchiver:
 
     def grab_podcasts(self) -> None:
         """Loop through defined podcasts, download and store the rss."""
+        current_datetime = int(time.time())
+        self.health.update_core_status(last_run=current_datetime)
+
         for podcast in self.podcast_list:
             try:
                 self._grab_podcast(podcast)
-                self.health.update_podcast_status(podcast["name_one_word"], healthy=True)
+                last_fetched = int(time.time())
+                self.health.update_podcast_status(podcast["name_one_word"], healthy=True, last_fetched=last_fetched)
                 logger.debug("💾 Updating filelist.html")
             except Exception:
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
@@ -158,9 +164,6 @@ class PodcastArchiver:
             self.render_filelist_html()
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
-
-        current_datetime = int(time.time())
-        self.health.update_core_status(last_run=current_datetime)
 
     def _load_rss_from_file(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
         """Load the rss from file."""
@@ -255,6 +258,7 @@ class PodcastArchiver:
 
         if tree is not None:
             self._update_rss_feed(podcast, tree, previous_feed)
+            self.health.update_podcast_episode_info(podcast["name_one_word"], tree)
 
         else:
             logger.error(f"❌ Unable to host podcast: {podcast['name_one_word']}, something is wrong")
