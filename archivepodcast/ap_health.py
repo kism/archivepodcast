@@ -5,8 +5,11 @@ import json
 
 from lxml import etree
 
-PODCAST_DATE_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
+from .logger import get_logger
 
+logger = get_logger(__name__)
+
+PODCAST_DATE_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
 
 class LatestEpisodeInfo:
     """Episode Info object."""
@@ -17,11 +20,14 @@ class LatestEpisodeInfo:
         self.pubdate = 0
 
         if tree:
-            latest_episode = tree.xpath("//item")[0]
-            self.title = latest_episode.xpath("title")[0].text
-            pod_pubdate = latest_episode.xpath("pubDate")[0].text
+            try:
+                latest_episode = tree.xpath("//item")[0]
+                self.title = latest_episode.xpath("title")[0].text
+                pod_pubdate = latest_episode.xpath("pubDate")[0].text
 
-            self.pubdate = int(datetime.datetime.strptime(pod_pubdate, PODCAST_DATE_FORMAT).timestamp())
+                self.pubdate = int(datetime.datetime.strptime(pod_pubdate, PODCAST_DATE_FORMAT).timestamp())
+            except Exception:
+                logger.exception("Error parsing latest episode info")
 
 
 class PodcastHealth:
