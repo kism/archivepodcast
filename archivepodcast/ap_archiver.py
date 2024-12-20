@@ -153,8 +153,7 @@ class PodcastArchiver:
         for podcast in self.podcast_list:
             try:
                 self._grab_podcast(podcast)
-                last_fetched = int(time.time())
-                self.health.update_podcast_status(podcast["name_one_word"], healthy=True, last_fetched=last_fetched)
+                self.health.update_podcast_status(podcast["name_one_word"], healthy=True)
                 logger.debug("💾 Updating filelist.html")
             except Exception:
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
@@ -248,7 +247,8 @@ class PodcastArchiver:
 
         if podcast["live"] is True:  # download all the podcasts
             tree = self._download_podcast(podcast, rss_file_path)
-            self.health.update_podcast_status(podcast["name_one_word"], rss_live=True)
+            last_fetched = int(time.time())
+            self.health.update_podcast_status(podcast["name_one_word"], rss_live=True, last_fetched=last_fetched)
         else:
             logger.info('📄 "live": false, in config so not fetching new episodes')
             self.health.update_podcast_status(podcast["name_one_word"], rss_live=False)
