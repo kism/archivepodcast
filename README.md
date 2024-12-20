@@ -131,3 +131,5 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~check last generated~~
 - prevent arbitrary object fields being created
 - test dumb time formats
+- remove psutil
+  - docker too
