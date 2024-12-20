@@ -45,7 +45,6 @@ class PodcastHealth:
                 pod_pubdate = latest_episode.xpath("pubDate")[0].text
                 for podcast_date_format in PODCAST_DATE_FORMATS:
                     try:
-                        logger.warning("Trying to parse pubdate: %s", pod_pubdate)
                         self.latest_episode["pubdate"] = int(
                             datetime.datetime.strptime(pod_pubdate, podcast_date_format).timestamp()
                         )
