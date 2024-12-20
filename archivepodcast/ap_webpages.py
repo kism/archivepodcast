@@ -1,5 +1,6 @@
 """Webpage cache module."""
 
+
 class Webpage:
     """Webpage object."""
 

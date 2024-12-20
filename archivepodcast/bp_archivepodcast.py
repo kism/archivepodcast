@@ -120,7 +120,7 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
     return seconds_until_next_run
 
 
-@bp.route("/health")
+@bp.route("/api/health")
 def health() -> Response:
     """Health check."""
     if not ap:
