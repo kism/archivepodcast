@@ -130,3 +130,4 @@ An example guide on setting it up start to finish, with all features and saving 
     - flask health
 - check last generated
 - prevent arbitrary object fields being created
+- test dumb time formats

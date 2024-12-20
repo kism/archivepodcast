@@ -9,7 +9,8 @@ from .logger import get_logger
 
 logger = get_logger(__name__)
 
-PODCAST_DATE_FORMAT = "%a, %d %b %Y %H:%M:%S %z"
+PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
+
 
 class LatestEpisodeInfo:
     """Episode Info object."""
@@ -17,17 +18,19 @@ class LatestEpisodeInfo:
     def __init__(self, tree: etree._ElementTree | None = None) -> None:
         """Initialise the Episode Info object."""
         self.title = "Unknown"
-        self.pubdate = 0
+        self.pubdate: str | int = "Unknown"
 
         if tree:
-            try:
-                latest_episode = tree.xpath("//item")[0]
-                self.title = latest_episode.xpath("title")[0].text
-                pod_pubdate = latest_episode.xpath("pubDate")[0].text
+            latest_episode = tree.xpath("//item")[0]
+            self.title = latest_episode.xpath("title")[0].text
+            pod_pubdate = latest_episode.xpath("pubDate")[0].text
 
-                self.pubdate = int(datetime.datetime.strptime(pod_pubdate, PODCAST_DATE_FORMAT).timestamp())
-            except Exception:
-                logger.exception("Error parsing latest episode info")
+            for podcast_date_format in PODCAST_DATE_FORMATS:
+                try:
+                    self.pubdate = int(datetime.datetime.strptime(pod_pubdate, podcast_date_format).timestamp())
+                    break
+                except ValueError:
+                    pass
 
 
 class PodcastHealth:
