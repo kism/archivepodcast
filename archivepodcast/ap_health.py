@@ -43,15 +43,18 @@ class PodcastHealth:
                     self.episode_count = len(tree.xpath("//item"))
 
                 pod_pubdate = latest_episode.xpath("pubDate")[0].text
+                found_pubdate = False
                 for podcast_date_format in PODCAST_DATE_FORMATS:
                     try:
                         self.latest_episode["pubdate"] = int(
                             datetime.datetime.strptime(pod_pubdate, podcast_date_format).timestamp()
                         )
+                        found_pubdate = True
                         break
                     except ValueError:
                         pass
-                logger.error("Unable to parse pubDate: %s", pod_pubdate)
+                if not found_pubdate:
+                    logger.error("Unable to parse pubDate: %s", pod_pubdate)
         except Exception:
             logger.exception("Error parsing podcast episode info")
 
