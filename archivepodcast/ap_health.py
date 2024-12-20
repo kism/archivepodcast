@@ -15,6 +15,7 @@ PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
 
 PROCESS = psutil.Process()
 
+
 class PodcastHealth:
     """Podcast Health object."""
 
@@ -75,6 +76,7 @@ class CoreHealth:
         self.last_startup: int = int(datetime.datetime.now().timestamp())
         self.currently_rendering: bool = False
         self.currently_loading_config: bool = False
+        self.memory_mb: float = -0.0
 
 
 class PodcastArchiverHealth:
