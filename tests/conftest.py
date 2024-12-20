@@ -5,6 +5,7 @@ Fixtures defined in a conftest.py can be used by any test in that package withou
 
 import os
 import shutil
+import time
 import typing
 from collections.abc import Callable
 
@@ -193,9 +194,14 @@ def apa(tmp_path, get_test_config, caplog):
     config_file = "testing_true_valid.toml"
     config = get_test_config(config_file)
 
-    return PodcastArchiver(
+    apa = PodcastArchiver(
         app_config=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
     )
+
+    while apa.health.core.currently_loading_config:
+        time.sleep(0.05)
+
+    return apa
 
 
 @pytest.fixture
@@ -217,12 +223,17 @@ def apa_aws(tmp_path, get_test_config, no_render_files, caplog, s3):
 
     from archivepodcast.ap_archiver import PodcastArchiver
 
-    return PodcastArchiver(
+    apa_aws = PodcastArchiver(
         app_config=config["app"],
         podcast_list=config["podcast"],
         instance_path=tmp_path,
         root_path=FLASK_ROOT_PATH,
     )
+
+    while apa_aws.health.core.currently_loading_config:
+        time.sleep(0.05)
+
+    return apa_aws
 
 
 # endregion

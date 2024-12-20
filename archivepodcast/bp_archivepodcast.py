@@ -53,6 +53,8 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
         logger.error("❌ ArchivePodcast object not initialized")
         return
 
+    ap.health.update_core_status(currently_loading_config=True)
+
     logger.debug("Handle Sighup %s %s", signal_num, handler)
 
     logger.info("🙋 Got SIGHUP, Reloading Config")
@@ -78,6 +80,8 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     end_time = time.time()  # Record the end time
     duration = end_time - start_time  # Calculate the duration
     logger.info("🙋 Finished adhoc config reload in  %.2f seconds", duration)
+    ap.health.update_core_status(currently_loading_config=False)
+
 
 
 def podcast_loop() -> None:

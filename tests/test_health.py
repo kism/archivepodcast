@@ -1,5 +1,6 @@
 """Test the health API endpoint."""
 
+import logging
 import os
 from http import HTTPStatus
 
@@ -58,3 +59,26 @@ def test_update_podcast_health() -> None:
     ap_health.update_podcast_status("test", rss_available=True)
     ap_health.update_podcast_status("test", last_fetched=0)
     ap_health.update_podcast_status("test", healthy=True)
+
+
+def test_podcast_health_errors(caplog) -> None:
+    """Test the podcast section of the health API endpoint."""
+    rss_str = pytest.DUMMY_RSS_STR.replace("encoding='utf-8'", "")
+    assert "encoding" not in rss_str
+    tree = etree.fromstring(rss_str)
+
+    ap_health = PodcastArchiverHealth()
+
+    with caplog.at_level(logging.ERROR):
+        ap_health.update_podcast_episode_info("test", tree)
+
+    assert "Error parsing podcast episode info" in caplog.text
+
+    tree = etree.fromstring(
+        "<?xml version='1.0'?><rss><channel><item><pubDate>INVALID</pubDate></item></channel></rss>"
+    )
+
+    with caplog.at_level(logging.ERROR):
+        ap_health.update_podcast_episode_info("test", tree)
+
+    assert "Unable to parse pubDate: INVALID" in caplog.text

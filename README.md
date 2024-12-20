@@ -124,10 +124,10 @@ An example guide on setting it up start to finish, with all features and saving 
 - put rss into the page cache maybe
 - mime type in file list?
   - implement audio player
-- implement api
-  - health page
-    - podcast list
+- ~~implement api~~
+  - ~~health page~~
+    - ~~podcast list~~
     - flask health
-- check last generated
+- ~~check last generated~~
 - prevent arbitrary object fields being created
 - test dumb time formats
