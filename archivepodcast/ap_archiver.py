@@ -309,7 +309,6 @@ class PodcastArchiver:
 
             template = env.get_template(template_path)
             current_time = int(time.time())
-            logger.warning("TMEP Rendering template: %s, at time %s", template_path, current_time)
             rendered_output = template.render(
                 app_config=self.app_config,
                 podcasts=self.podcast_list,

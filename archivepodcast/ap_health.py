@@ -2,7 +2,6 @@
 
 import datetime
 import json
-from typing import TYPE_CHECKING
 
 from lxml import etree
 
@@ -34,7 +33,7 @@ class PodcastHealth:
         self.rss_live: bool = False
         self.last_fetched: int = 0
         self.healthy: bool = False
-        self.latest_episode_info: LatestEpisodeInfo  = LatestEpisodeInfo()
+        self.latest_episode_info: LatestEpisodeInfo = LatestEpisodeInfo()
 
 
 class WebpageHealth:
