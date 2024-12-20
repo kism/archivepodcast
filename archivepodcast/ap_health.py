@@ -4,6 +4,7 @@ import contextlib
 import datetime
 import json
 
+import psutil
 from lxml import etree
 
 from .logger import get_logger
@@ -12,6 +13,7 @@ logger = get_logger(__name__)
 
 PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
 
+PROCESS = psutil.Process()
 
 class PodcastHealth:
     """Podcast Health object."""
@@ -89,6 +91,7 @@ class PodcastArchiverHealth:
 
     def get_health(self) -> str:
         """Return the health."""
+        self.core.memory_mb = PROCESS.memory_info().rss / (1024 * 1024)
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def update_template_status(self, webpage: str, **kwargs: bool | str | int) -> None:
