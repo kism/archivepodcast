@@ -12,9 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     const table = generateTable(sectionData);
                     healthDiv.appendChild(table);
                 } else {
-                    const valueParagraph = document.createElement('p');
-                    valueParagraph.textContent = sectionData;
-                    healthDiv.appendChild(valueParagraph);
+                    const table = document.createElement('table');
+                    const row = document.createElement('tr');
+                    const cell = document.createElement('td');
+                    cell.textContent = sectionData;
+                    row.appendChild(cell);
+                    table.appendChild(row);
+                    healthDiv.appendChild(table);
                 }
             }
         })
