@@ -25,17 +25,20 @@ function generateTable(data) {
     const table = document.createElement('table');
     for (const [key, value] of Object.entries(data)) {
         const row = document.createElement('tr');
-        const keyCell = document.createElement('td');
-        keyCell.textContent = key;
-        row.appendChild(keyCell);
+        const cellKey = document.createElement('td');
+        cellKey.textContent = key;
+        row.appendChild(cellKey);
 
-        const valueCell = document.createElement('td');
-        if (typeof value === 'object' && value !== null) {
-            valueCell.appendChild(generateTable(value));
+        const cellValue = document.createElement('td');
+        if (typeof value === 'number' && (key.toLowerCase().includes('date') || key.toLowerCase().includes('last') || key.toLowerCase().includes('time'))) {
+            const date = new Date(value * 1000);
+            cellValue.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        } else if (typeof value === 'object' && value !== null) {
+            cellValue.appendChild(generateTable(value));
         } else {
-            valueCell.textContent = value;
+            cellValue.textContent = value;
         }
-        row.appendChild(valueCell);
+        row.appendChild(cellValue);
 
         table.appendChild(row);
     }
