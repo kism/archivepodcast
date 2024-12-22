@@ -22,7 +22,7 @@ class PodcastHealth:
     def __init__(self) -> None:
         """Initialise the Podcast Health object."""
         self.rss_available: bool = False
-        self.rss_live: bool = False
+        self.rss_fetching_live: bool = False
         self.last_fetched: int = 0
         self.healthy: bool = False
         self.update_episode_info()

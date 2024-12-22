@@ -55,7 +55,7 @@ def test_update_podcast_health() -> None:
     ap_health = PodcastArchiverHealth()
 
     ap_health.update_podcast_episode_info("test", tree)
-    ap_health.update_podcast_status("test", rss_live=True)
+    ap_health.update_podcast_status("test", rss_fetching_live=True)
     ap_health.update_podcast_status("test", rss_available=True)
     ap_health.update_podcast_status("test", last_fetched=0)
     ap_health.update_podcast_status("test", healthy=True)
