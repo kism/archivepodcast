@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             const healthDiv = document.getElementById('health');
             for (const [section, sectionData] of Object.entries(data)) {
-                const sectionTitle = document.createElement('h2');
+                const sectionTitle = document.createElement('h3');
                 sectionTitle.textContent = section;
                 healthDiv.appendChild(sectionTitle);
 
