@@ -26,6 +26,7 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
             "/",
             "/index.html",
             "/guide.html",
+            "/health",
             "/robots.txt",
             "/static/clipboard.js",
             "/favicon.ico",
@@ -64,6 +65,7 @@ def test_app_paths_not_generated(apa, client_live, monkeypatch):
         "/guide.html",
         "/robots.txt",
         "/favicon.ico",
+        "/health",
     ]
 
     for webpage in webpage_list:
@@ -110,7 +112,7 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
         bp_archivepodcast.home_index,
         bp_archivepodcast.home_guide,
         bp_archivepodcast.home_filelist,
-        bp_archivepodcast.health,
+        bp_archivepodcast.api_health,
     ]
 
     for function_path in required_to_be_initialized_http:
