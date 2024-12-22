@@ -257,3 +257,21 @@ label > .label-body {
   margin-left: 0.5rem;
   font-weight: normal;
 }
+
+table {
+  width: 100%;
+  margin-bottom: 16px;
+  border: 2px solid #ababab;
+  border-collapse: collapse;
+}
+
+tr {
+  border: 2px solid #ababab;
+  border-bottom: 2px solid #ababab;
+}
+
+th,
+td {
+  padding: 8px;
+  text-align: left;
+}
