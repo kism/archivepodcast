@@ -125,7 +125,7 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
 
 
 @bp.route("/api/health")
-def health() -> Response:
+def api_health() -> Response:
     """Health check."""
     if not ap:
         return generate_not_initialized_error()
@@ -185,6 +185,10 @@ def home_about() -> Response:
 
     return generate_404()
 
+@bp.route("/health")
+def health() -> Response:
+    """Health check."""
+    return send_ap_cached_webpage("health.html")
 
 @bp.route("/content/<path:path>")
 def send_content(path: str) -> Response:

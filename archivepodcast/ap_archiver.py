@@ -301,7 +301,7 @@ class PodcastArchiver:
 
         # Templates
         env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
-        templates_to_render = ["guide.html.j2", "index.html.j2"]
+        templates_to_render = ["guide.html.j2", "index.html.j2", "health.html.j2"]
 
         logger.debug("💾 Templates to render: %s", templates_to_render)
 

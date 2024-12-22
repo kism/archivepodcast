@@ -31,7 +31,7 @@ DEFAULT_CONFIG: dict[str, dict | list] = {
         "inet_path": "http://localhost:5000/",
         "storage_backend": "local",
         "s3": {
-            "cdn_domain": "https://optional_only_for_s3_storage_backend/",
+            "cdn_domain": "https://public_url_of_s3_bucket/",
             "api_url": "",
             "bucket": "",
             "access_key_id": "",
