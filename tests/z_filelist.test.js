@@ -17,10 +17,10 @@ beforeEach(() => {
 describe.each([
   {
     in_hash: "#/content/vitest",
-    expected_html: `📂 <a href="#/content/">..</a><br>💾 <a href="https://cdn.vitest.internal/content/vitest/test.mp3">test.mp3</a><br>`,
+    expected_html: `<li>📂 <a href="#/content/">..</a></li><li>💾 <a href="https://cdn.vitest.internal/content/vitest/test.mp3">test.mp3</a></li>`,
   },
-  { in_hash: "#/content", expected_html: `📂 <a href="#/">..</a><br>📂 <a href="#/content/vitest/">vitest/</a><br>` },
-  { in_hash: "#/content/", expected_html: `📂 <a href="#/">..</a><br>📂 <a href="#/content/vitest/">vitest/</a><br>` },
+  { in_hash: "#/content", expected_html: `<li>📂 <a href="#/">..</a></li><li>📂 <a href="#/content/vitest/">vitest/</a></li>` },
+  { in_hash: "#/content/", expected_html: `<li>📂 <a href="#/">..</a></li><li>📂 <a href="#/content/vitest/">vitest/</a></li>` },
 ])("fileListJSDiv is displayed and populated on hash", ({ in_hash, expected_html }) => {
   test(`fileListJSDiv on hash: ${in_hash}`, () => {
     window.location.hash = in_hash;
@@ -35,7 +35,7 @@ test.each([["#"], ["#/"], [""]])("fileListJSDiv initial", (in_hash) => {
   window.location.hash = in_hash;
   const fileListJSDiv = document.getElementById("file_list_js");
   showCurrentDirectory();
-  expect(fileListJSDiv.innerHTML).toBe(`📂 <a href="#/content/">content/</a><br>`);
+  expect(fileListJSDiv.innerHTML).toBe(`<li>📂 <a href="#/content/">content/</a></li>`);
 });
 
 test("DOMContentLoaded event", () => {
@@ -43,7 +43,7 @@ test("DOMContentLoaded event", () => {
   const fileListDiv = document.getElementById("file_list");
   expect(fileListDiv.style.display).toBe("none");
   const fileListJSDiv = document.getElementById("file_list_js");
-  expect(fileListJSDiv.innerHTML).toBe(`📂 <a href="#/content/">content/</a><br>`);
+  expect(fileListJSDiv.innerHTML).toBe(`<li>📂 <a href="#/content/">content/</a></li>`);
 });
 
 test("fileListJSDiv invalid path", () => {
