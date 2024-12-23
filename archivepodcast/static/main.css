@@ -65,7 +65,9 @@ h2 {
 }
 h1 {
   /* font-size: 40px; */
-  font-size: clamp(20px, 6vw, 40px);
+  font-size: clamp(24px, 5vw, 40px);
+  height: 40px;
+  width: 100%;
   white-space: nowrap;
   font-weight: 700;
   margin: 20px 0 8px;
@@ -285,7 +287,6 @@ td {
   padding-top: 2px;
   padding-right: 4px;
   text-align: left;
-  /* border: 1px solid #ababab; */
 }
 
 td:first-child {
