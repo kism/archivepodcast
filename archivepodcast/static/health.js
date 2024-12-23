@@ -33,7 +33,6 @@ export function populateHealth(data) {
       sectionContainer.appendChild(table);
     }
     healthDiv.appendChild(sectionContainer);
-
   }
 }
 

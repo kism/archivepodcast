@@ -19,8 +19,14 @@ describe.each([
     in_hash: "#/content/vitest",
     expected_html: `<li>📂 <a href="#/content/">..</a></li><li>💾 <a href="https://cdn.vitest.internal/content/vitest/test.mp3">test.mp3</a></li>`,
   },
-  { in_hash: "#/content", expected_html: `<li>📂 <a href="#/">..</a></li><li>📂 <a href="#/content/vitest/">vitest/</a></li>` },
-  { in_hash: "#/content/", expected_html: `<li>📂 <a href="#/">..</a></li><li>📂 <a href="#/content/vitest/">vitest/</a></li>` },
+  {
+    in_hash: "#/content",
+    expected_html: `<li>📂 <a href="#/">..</a></li><li>📂 <a href="#/content/vitest/">vitest/</a></li>`,
+  },
+  {
+    in_hash: "#/content/",
+    expected_html: `<li>📂 <a href="#/">..</a></li><li>📂 <a href="#/content/vitest/">vitest/</a></li>`,
+  },
 ])("fileListJSDiv is displayed and populated on hash", ({ in_hash, expected_html }) => {
   test(`fileListJSDiv on hash: ${in_hash}`, () => {
     window.location.hash = in_hash;
