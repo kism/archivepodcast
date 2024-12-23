@@ -40,3 +40,4 @@ export function fitTextToContainer() {
 
 window.addEventListener("load", fitTextToContainer);
 window.addEventListener("resize", fitTextToContainer);
+
