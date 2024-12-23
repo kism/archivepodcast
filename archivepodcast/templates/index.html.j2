@@ -16,13 +16,25 @@
     <link rel="preload" href="/static/fonts/noto-sans-display-latin-500italic.woff2" as="font" type="font/woff2"
         crossorigin>
     <link rel="stylesheet" href="/static/main.css" />
+    <script type="module" src="/static/fit_h1.js"></script>
     <script type="module" src="/static/clipboard.js"></script>
-
+    <noscript>
+        <style>
+            button {
+                display: none !important;
+            }
+            input {
+                width: 350px;
+            }
+        </style>
+    </noscript>
 </head>
 
 <body>
     <main class="contained-content">
-        <h1>{{ app_config['web_page']['title']|e }}</h1>
+        <div class="h1-div">
+            <h1>{{ app_config['web_page']['title']|e }}</h1>
+        </div>
         <header>
             <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
                 href="/guide.html">Guide</a> | <a href="/filelist.html">File list</a>
@@ -45,6 +57,9 @@
             Contact: <a href="mailto:{{ app_config['web_page']['contact']|e }}">{{
                 app_config['web_page']['contact']|e }}</a>
         </footer>
+        <noscript>
+            <p>Javascript is disabled!</p>
+        </noscript>
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
     </main>
 </body>
