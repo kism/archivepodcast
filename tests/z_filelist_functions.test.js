@@ -34,6 +34,6 @@ test("generateCurrentListHTML with path", () => {
       url: "http://localhost:5000/rss/test",
     },
   };
-  const expected_html = `📂 <a href="#/test/">..</a><br>💾 <a href="http://localhost:5000/rss/test">file1</a><br>💾 <a href="http://localhost:5000/rss/test">file2</a><br>`;
+  const expected_html = `<li>📂 <a href="#/test/">..</a></li><li>💾 <a href="http://localhost:5000/rss/test">file1</a></li><li>💾 <a href="http://localhost:5000/rss/test">file2</a></li>`;
   expect(generateCurrentListHTML(current_path, items)).toBe(expected_html);
 });

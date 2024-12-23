@@ -250,10 +250,12 @@ class PodcastArchiver:
         if podcast["live"] is True:  # download all the podcasts
             tree = self._download_podcast(podcast, rss_file_path)
             last_fetched = int(time.time())
-            self.health.update_podcast_status(podcast["name_one_word"], rss_live=True, last_fetched=last_fetched)
+            self.health.update_podcast_status(
+                podcast["name_one_word"], rss_fetching_live=True, last_fetched=last_fetched
+            )
         else:
             logger.info('📄 "live": false, in config so not fetching new episodes')
-            self.health.update_podcast_status(podcast["name_one_word"], rss_live=False)
+            self.health.update_podcast_status(podcast["name_one_word"], rss_fetching_live=False)
 
         if tree is None:  # Serving a podcast that we can't currently download?, load it from file
             tree = self._load_rss_from_file(podcast, rss_file_path)
@@ -301,7 +303,7 @@ class PodcastArchiver:
 
         # Templates
         env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
-        templates_to_render = ["guide.html.j2", "index.html.j2"]
+        templates_to_render = ["guide.html.j2", "index.html.j2", "health.html.j2"]
 
         logger.debug("💾 Templates to render: %s", templates_to_render)
 

@@ -3,8 +3,8 @@
 
 [project]
 name = "archivepodcast"
-version = "1.2.2"
-description = ""
+version = "1.2.3"
+description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.10"

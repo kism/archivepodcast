@@ -51,7 +51,7 @@ export function generateCurrentListHTML(in_current_path, items) {
     let current_path_split = current_path_nice.split("/");
     current_path_split.pop();
     current_path_split = current_path_split.join("/");
-    html += `📂 <a href="#${current_path_split}/">..</a><br>`;
+    html += `<li>📂 <a href="#${current_path_split}/">..</a></li>`;
   } else {
     current_path_nice = "";
   }
@@ -59,13 +59,13 @@ export function generateCurrentListHTML(in_current_path, items) {
   if (items && typeof items === "object") {
     for (const [key, value] of Object.entries(items)) {
       if (value.url === undefined) {
-        html += `📂 <a href="#${current_path_nice}/${key}/" ;>${key}/</a><br>`;
+        html += `<li>📂 <a href="#${current_path_nice}/${key}/" ;>${key}/</a></li>`;
       }
     }
 
     for (const [key, value] of Object.entries(items)) {
       if (value.url !== undefined) {
-        html += `💾 <a href="${value.url}">${key}</a><br>`;
+        html += `<li>💾 <a href="${value.url}">${key}</a></li>`;
       }
     }
   }

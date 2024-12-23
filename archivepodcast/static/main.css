@@ -64,7 +64,9 @@ h2 {
   color: rgb(220, 220, 220);
 }
 h1 {
-  font-size: 40px;
+  /* font-size: 40px; */
+  font-size: clamp(20px, 6vw, 40px);
+  white-space: nowrap;
   font-weight: 700;
   margin: 20px 0 8px;
 }
@@ -117,14 +119,16 @@ footer {
   margin: 20px 0 16px;
 }
 
+.last-generated {
+  display: none;
+}
+
 .file-list {
   display: list-item;
   list-style-type: none;
   padding: 0;
   margin: 0;
-  padding-left: 10px;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding: 10px;
   background-color: #101010;
   font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
   font-weight: 500;
@@ -256,4 +260,29 @@ label > .label-body {
   display: inline-block;
   margin-left: 0.5rem;
   font-weight: normal;
+}
+
+/* Table */
+
+table {
+  width: 100%;
+  font-size: 11px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  border: 1px solid #ababab;
+  border-collapse: collapse;
+}
+
+tr {
+  border: 1px solid #ababab;
+  border-bottom: 1px solid #ababab;
+}
+
+th,
+td {
+  padding-left: 4px;
+  padding-bottom: 2px;
+  padding-top: 2px;
+  padding-right: 4px;
+  text-align: left;
 }
