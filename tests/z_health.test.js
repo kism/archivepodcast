@@ -1,6 +1,6 @@
 // // @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach, test } from "vitest";
-import { APHealthListener } from "../archivepodcast/static/health";
+import { beforeEach, describe, expect, it, test, vi } from "vitest";
+import { populateHealth } from "../archivepodcast/static/health";
 
 beforeEach(() => {
   document.body.innerHTML = '<div id="health" style="display: block;"></div>';
@@ -67,10 +67,21 @@ test("DOMContentLoaded event", () => {
   document.dispatchEvent(new Event("DOMContentLoaded"));
   expect(global.fetch).toHaveBeenCalledTimes(1);
   expect(global.fetch).toHaveBeenCalledWith("/api/health");
+});
 
+test("populateHealth generates", () => {
+  populateHealth(healthData);
   const healthDiv = document.getElementById("health");
-  // expect(document.children.length).toBe(6);
+  expect(healthDiv.children.length).greaterThan(0);
+});
 
-  // const table = healthDiv.querySelector("table");
-  // expect(table).not.toBeNull();
+test("check date fields in health div", () => {
+  populateHealth(healthData);
+  const healthDiv = document.getElementById("health");
+  const dateFields = healthDiv.querySelectorAll("[id*='date'], [id*='last']");
+
+  for (const field of dateFields) {
+    const dateValue = new Date(field.textContent);
+    expect(dateValue.toString()).not.toBe("Invalid Date");
+  }
 });

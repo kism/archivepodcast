@@ -83,7 +83,6 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     ap.health.update_core_status(currently_loading_config=False)
 
 
-
 def podcast_loop() -> None:
     """Main loop, grabs new podcasts every hour."""
     logger.info("🙋 Started thread: podcast_loop. Grabbing episodes, building rss feeds. Repeating hourly.")
@@ -185,10 +184,12 @@ def home_about() -> Response:
 
     return generate_404()
 
+
 @bp.route("/health")
 def health() -> Response:
     """Health check."""
     return send_ap_cached_webpage("health.html")
+
 
 @bp.route("/content/<path:path>")
 def send_content(path: str) -> Response:

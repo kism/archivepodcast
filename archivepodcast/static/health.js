@@ -1,30 +1,37 @@
-export function APHealthListener() {
-  document.addEventListener("DOMContentLoaded", () => {
-    fetch("/api/health")
-      .then((response) => response.json())
-      .then((data) => {
-        const healthDiv = document.getElementById("health");
-        for (const [section, sectionData] of Object.entries(data)) {
-          const sectionTitle = document.createElement("h3");
-          sectionTitle.textContent = section;
-          healthDiv.appendChild(sectionTitle);
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM fully loaded and parsed");
+  fetch("/api/health")
+    .then((response) => {
+      console.log("Fetch response received");
+      return response.json();
+    })
+    .then((data) => {
+      console.log("Health data received");
+      populateHealth(data);
+    })
+    .catch((error) => console.error("Error fetching health data:", error));
+});
 
-          if (typeof sectionData === "object" && sectionData !== null) {
-            const table = generateTable(sectionData);
-            healthDiv.appendChild(table);
-          } else {
-            const table = document.createElement("table");
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
-            cell.textContent = sectionData;
-            row.appendChild(cell);
-            table.appendChild(row);
-            healthDiv.appendChild(table);
-          }
-        }
-      })
-      .catch((error) => console.error("Error fetching health data:", error));
-  });
+export function populateHealth(data) {
+  const healthDiv = document.getElementById("health");
+  for (const [section, sectionData] of Object.entries(data)) {
+    const sectionTitle = document.createElement("h3");
+    sectionTitle.textContent = section;
+    healthDiv.appendChild(sectionTitle);
+
+    if (typeof sectionData === "object" && sectionData !== null) {
+      const table = generateTable(sectionData);
+      healthDiv.appendChild(table);
+    } else {
+      const table = document.createElement("table");
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.textContent = sectionData;
+      row.appendChild(cell);
+      table.appendChild(row);
+      healthDiv.appendChild(table);
+    }
+  }
 }
 
 function generateTable(data) {
@@ -60,5 +67,3 @@ function generateTable(data) {
   }
   return table;
 }
-
-APHealthListener();
