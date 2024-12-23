@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 export function populateHealth(data) {
   const healthDiv = document.getElementById("health");
   for (const [section, sectionData] of Object.entries(data)) {
+    const sectionContainer = document.createElement("p");
     const sectionTitle = document.createElement("h3");
     sectionTitle.textContent = section;
     healthDiv.appendChild(sectionTitle);
@@ -31,6 +32,8 @@ export function populateHealth(data) {
       table.appendChild(row);
       healthDiv.appendChild(table);
     }
+    healthDiv.appendChild(sectionContainer);
+
   }
 }
 
