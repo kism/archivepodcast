@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
   fetch("/api/health")
     .then((response) => {
-      console.log("Fetch response received");
       return response.json();
     })
     .then((data) => {
@@ -41,7 +40,11 @@ function generateTable(data) {
   for (const [key, value] of Object.entries(data)) {
     const row = document.createElement("tr");
     const cellKey = document.createElement("td");
-    cellKey.textContent = key;
+    if (typeof value === "object" && value !== null) {
+      cellKey.textContent = key;
+    } else {
+      cellKey.textContent = `${key}:`;
+    }
     row.appendChild(cellKey);
 
     const cellValue = document.createElement("td");

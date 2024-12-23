@@ -285,4 +285,9 @@ td {
   padding-top: 2px;
   padding-right: 4px;
   text-align: left;
+  /* border: 1px solid #ababab; */
+}
+
+td:first-child {
+  width: 0px;
 }
