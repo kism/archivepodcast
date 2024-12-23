@@ -6,6 +6,7 @@ export function fitTextToContainer() {
     console.log(h1Div);
     h1Div.style.display = "flex";
     h1Div.style.marginTop = "20px";
+    // h1Div.style.width = "auto";
   }
 
   const h1Elements = document.querySelectorAll("h1"); // Ensure you are selecting the correct elements

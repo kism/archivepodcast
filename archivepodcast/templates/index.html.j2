@@ -23,8 +23,9 @@
             button {
                 display: none !important;
             }
+
             input {
-                width: 350px;
+                width: 350px !important;
             }
         </style>
     </noscript>
@@ -42,25 +43,27 @@
         </header>
         <h3>{{ app_config['web_page']['description']|e }}</h3>
         <h3>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
-                guide</a>.</p>
-            {% for podcast in podcasts -%}
-            <h2>{{ podcast['new_name']|e }}
-        </h3>
-        <h3>{{ podcast['description']|e }}</h3>
-        <input type="text" readonly="readonly" value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
-            id="{{ podcast['name_one_word']}}">
-        <button class="button" onclick="window.grabToClipboard('{{ podcast['name_one_word']}}')"
-            id="{{ podcast['name_one_word']}}_button">Copy url</button>
-        {% endfor %}
-        <footer>
-            <hr>
-            Contact: <a href="mailto:{{ app_config['web_page']['contact']|e }}">{{
-                app_config['web_page']['contact']|e }}</a>
-        </footer>
+                guide</a>.</h3>
+        </p>
         <noscript>
-            <p>Javascript is disabled!</p>
+            <p>Javascript is disabled! No copy button.</p>
         </noscript>
-        <p class="last-generated">Last generated: {{ last_generated_date }}</p>
+        {% for podcast in podcasts -%}
+        <h2>{{ podcast['new_name']|e }}
+
+            <h3>{{ podcast['description']|e }}</h3>
+
+            <input type="text" readonly="readonly" value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
+                id="{{ podcast['name_one_word']}}">
+            <button class="button" onclick="window.grabToClipboard('{{ podcast['name_one_word']}}')"
+                id="{{ podcast['name_one_word']}}_button">Copy url</button>
+            {% endfor %}
+            <footer>
+                <hr>
+                Contact: <a href="mailto:{{ app_config['web_page']['contact']|e }}">{{
+                    app_config['web_page']['contact']|e }}</a>
+            </footer>
+            <p class="last-generated">Last generated: {{ last_generated_date }}</p>
     </main>
 </body>
 
