@@ -25,8 +25,6 @@ export function fitTextToContainer() {
     h1.style.fontSize = `${fontSize}px`;
     h1.style.height = "auto";
 
-    console.log(h1.offsetWidth, container.offsetWidth, h1.offsetHeight, maxHeight);
-
     // Increase font size until text overflows container width or exceeds max height
     while (
       h1.offsetWidth < container.offsetWidth &&
