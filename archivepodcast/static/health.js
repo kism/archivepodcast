@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM fully loaded and parsed");
   fetch("/api/health")
     .then((response) => {
       return response.json();

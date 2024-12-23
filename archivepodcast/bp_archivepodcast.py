@@ -135,7 +135,9 @@ def api_health() -> Response:
         logger.exception("❌ Error getting health")
         health_json = json.dumps({"core": {"alive": False}})
 
-    return Response(health_json, mimetype="application/json", status=HTTPStatus.OK)
+    return Response(
+        health_json, mimetype="application/json", content_type="application/json; charset=utf-8", status=HTTPStatus.OK
+    )
 
 
 def send_ap_cached_webpage(webpage_name: str) -> Response:

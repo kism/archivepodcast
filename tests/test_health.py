@@ -22,7 +22,7 @@ def test_health_api(client, apa):
     # TEST: HTTP OK
     assert response.status_code == HTTPStatus.OK
     # TEST: Content type
-    assert response.content_type == "application/json"
+    assert response.content_type == "application/json; charset=utf-8"
 
     data = response.get_json()
 
@@ -41,7 +41,7 @@ def test_health_api_error(client, apa, monkeypatch):
     data = response.get_json()
 
     assert response.status_code == HTTPStatus.OK
-    assert response.content_type == "application/json"
+    assert response.content_type == "application/json; charset=utf-8"
     assert not data["core"]["alive"]
 
 
