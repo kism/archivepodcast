@@ -1,12 +1,10 @@
 export function fitTextToContainer() {
-  console.log("fitTextToContainer");
   const h1Divs = document.querySelectorAll(".h1-div"); // Ensure you are selecting the correct elements
 
   for (const h1Div of h1Divs) {
     console.log(h1Div);
     h1Div.style.display = "flex";
     h1Div.style.marginTop = "20px";
-    // h1Div.style.width = "auto";
   }
 
   const h1Elements = document.querySelectorAll("h1"); // Ensure you are selecting the correct elements
@@ -35,8 +33,7 @@ export function fitTextToContainer() {
       h1.offsetHeight < maxHeight &&
       fontSize < 1000 // Safety limit to prevent infinite loop
     ) {
-      console.log(h1.offsetWidth, container.offsetWidth, h1.offsetHeight, maxHeight);
-      fontSize++;
+      fontSize = fontSize + 0.1;
       h1.style.fontSize = `${fontSize}px`;
     }
     h1.style.marginTop = `${maxHeight / 2 - h1.offsetHeight / 2}px`;
