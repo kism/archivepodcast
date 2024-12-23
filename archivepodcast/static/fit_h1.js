@@ -2,7 +2,6 @@ export function fitTextToContainer() {
   const h1Divs = document.querySelectorAll(".h1-div"); // Ensure you are selecting the correct elements
 
   for (const h1Div of h1Divs) {
-    console.log(h1Div);
     h1Div.style.display = "flex";
     h1Div.style.marginTop = "20px";
   }
