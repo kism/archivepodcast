@@ -18,11 +18,11 @@ export function populateHealth(data) {
     const sectionContainer = document.createElement("p");
     const sectionTitle = document.createElement("h3");
     sectionTitle.textContent = section;
-    healthDiv.appendChild(sectionTitle);
+    sectionContainer.appendChild(sectionTitle);
 
     if (typeof sectionData === "object" && sectionData !== null) {
       const table = generateTable(sectionData);
-      healthDiv.appendChild(table);
+      sectionContainer.appendChild(table);
     } else {
       const table = document.createElement("table");
       const row = document.createElement("tr");
@@ -30,7 +30,7 @@ export function populateHealth(data) {
       cell.textContent = sectionData;
       row.appendChild(cell);
       table.appendChild(row);
-      healthDiv.appendChild(table);
+      sectionContainer.appendChild(table);
     }
     healthDiv.appendChild(sectionContainer);
 
