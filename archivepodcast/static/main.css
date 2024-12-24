@@ -325,6 +325,10 @@ td:first-child {
 }
 
 /* Audio */
+audio::-webkit-media-controls-enclosure {
+    border-radius: 0;
+}
+
 audio::-webkit-media-controls-panel {
   background-color: #bbbbbb;
 }
