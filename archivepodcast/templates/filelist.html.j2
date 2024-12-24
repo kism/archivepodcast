@@ -48,11 +48,10 @@
                 "s3" %} Files are sent via the CDN.{% endif %}</p>
         </div>
         <noscript>
-            <div id="breadcrumb" class="file-list"><a>Javascript is disabled, listing
+            <div id="breadcrumb_non_js" class="breadcrumb"><a>Javascript is disabled, listing
                     everything.</a></div>
         </noscript>
-        <div id="breadcrumb_js" class="file-list"></div>
-        <br>
+        <div id="breadcrumb_js" class="breadcrumb"></div>
         <ul id="file_list_js" class="file-list"></ul>
         <ul id="file_list" class="file-list">
             {% for file in file_list %}<li><a href="{{ base_url }}{{ file }}">/{{ file }}</a></li>
