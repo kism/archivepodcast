@@ -211,7 +211,7 @@ def no_render_files(monkeypatch):
 
 
 @pytest.fixture
-def apa_aws(tmp_path, get_test_config, no_render_files, caplog, s3):
+def apa_aws(tmp_path, get_test_config, no_render_files, caplog, s3, mocked_aws):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)

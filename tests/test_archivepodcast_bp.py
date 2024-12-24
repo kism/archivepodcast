@@ -112,6 +112,7 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
         bp_archivepodcast.home_index,
         bp_archivepodcast.home_guide,
         bp_archivepodcast.home_filelist,
+        bp_archivepodcast.home_web_player,
         bp_archivepodcast.api_health,
     ]
 
