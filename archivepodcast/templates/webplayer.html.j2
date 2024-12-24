@@ -14,7 +14,7 @@
     <link rel="preload" href="/static/fonts/fira-code-v12-latin-700.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/noto-sans-display-latin-500italic.woff2" as="font" type="font/woff2"
         crossorigin>
-    <script type="module" src="/static/filelist.js"></script>
+    <script src="/static/webplayer.js"></script>
     <link rel="stylesheet" href="/static/main.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
@@ -38,25 +38,12 @@
             <h1>{{ app_config['web_page']['title']|e }} File List</h1>
             <header>
                 <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
-                    href="/guide.html">Guide</a> | <a href="/filelist.html">File list</a> | <a href="/webplayer.html">Web player</a>
+                    href="/guide.html">Guide</a> | <a href="/filelist.html">File list </a> | <a href="/webplayer.html">Web player</a>
                 <hr>
             </header>
-            <p>Please don't listen to podcast episodes this way, use the guide on the website to add the feeds to a
-                podcast
-                app. Anything in the /content/_adhoc folder is not in a podcast feed.{% if app_config['storage_backend']
-                ==
-                "s3" %} Files are sent via the CDN.{% endif %}</p>
+            <p>For your convenience, a little web player for your browser.</p>
         </div>
-        <noscript>
-            <div id="breadcrumb_non_js" class="breadcrumb"><a>Javascript is disabled, listing
-                    everything.</a></div>
-        </noscript>
-        <div id="breadcrumb_js" class="breadcrumb"></div>
-        <ul id="file_list_js" class="file-list"></ul>
-        <ul id="file_list" class="file-list">
-            {% for file in file_list %}<li><a href="{{ base_url }}{{ file }}">/{{ file }}</a></li>
-            {% endfor %}
-        </ul>
+        <ul id="podcast_list" class="file-list"></ul>
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
     </main>
 </body>
