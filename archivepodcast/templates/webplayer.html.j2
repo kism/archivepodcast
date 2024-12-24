@@ -33,25 +33,32 @@
 </head>
 
 <body>
-    <main>
-        <div class="contained-content">
-            <h1>{{ app_config['web_page']['title']|e }} File List</h1>
-            <header>
-                <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
-                    href="/guide.html">Guide</a> | <a href="/filelist.html">File list </a> | <a
-                    href="/webplayer.html">Web player</a>
-                <hr>
-            </header>
-            <p>For your convenience, a little web player.</p>
-        </div>
+    <main class="contained-content">
+        <h1>{{ app_config['web_page']['title']|e }} Player</h1>
+        <header>
+            <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
+                href="/guide.html">Guide</a> | <a href="/filelist.html">File list </a> | <a href="/webplayer.html">Web
+                player</a>
+            <hr>
+        </header>
+        <select id="podcast_select" onchange="loadPodcast(event)">
+            <option value="">Select a podcast</option>
+            {% for podcast in podcasts %}
+            <option value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}">{{ podcast['new_name'] }}
+            </option>
+            {% endfor %}
+        </select>
         <ul id="podcast_episode_list" class="file-list"></ul>
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
+    </main>
+    <div class="podcast-player-offset"></div>
+    <div class="podcast-player-footer">
         <div class="podcast-player">
             <hr>
-            <p id="podcast_player_episode_name">No episode loaded</p>
-            <audio id="podcast_player" class="contained-content" controls preload="none" style="width: 100%;"/>
+            <p id="podcast_player_episode_name">Player: No episode loaded</p>
+            <audio id="podcast_player" class="contained-content" controls preload="metadata" style="width: 100%;" />
         </div>
-    </main>
+    </div>
 </body>
 
 </html>

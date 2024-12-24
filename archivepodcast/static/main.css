@@ -35,8 +35,12 @@
 
 @media screen and (max-width: 430px) {
   body {
-    padding-left: 4px !important;
-    padding-right: 4px !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+  }
+  .podcast-player {
+    margin-left: 12px !important;
+    margin-right: 12px !important;
   }
 }
 
@@ -49,8 +53,9 @@ body {
   background-color: rgb(26, 26, 26);
   color: rgb(200, 200, 200);
   line-height: 1.5;
-  padding-left: 15px;
-  padding-right: 15px;
+  margin-top: 20px;
+  margin-left: 23px;
+  margin-right: 23px;
 }
 
 .contained-content {
@@ -66,7 +71,7 @@ h2 {
 h1 {
   font-size: 40px;
   font-weight: 700;
-  margin: 20px 0 8px;
+  margin: 8px 0 4px;
 }
 h2 {
   font-size: 24px;
@@ -88,8 +93,8 @@ h4 {
 }
 
 p {
-  margin: 0;
-  margin-bottom: 16px;
+  margin-top: 6px;
+  margin-bottom: 10px;
 }
 ol {
   margin: 0;
@@ -154,6 +159,10 @@ footer {
   background-color: #555; /* Darker color on hover */
 }
 
+#podcast_episode_list a:visited {
+  color: #008080;
+}
+
 /* BUTTON */
 .button,
 button,
@@ -179,6 +188,7 @@ input[type="button"] {
   box-sizing: border-box;
   min-width: 100px;
 }
+
 .button:hover,
 button:hover,
 input[type="submit"]:hover,
@@ -205,8 +215,6 @@ input[type="url"],
 input[type="password"],
 textarea,
 select {
-  height: 23px;
-  padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
   font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   background-color: #464646;
   border: 1px solid #d1d1d1;
@@ -218,6 +226,24 @@ select {
   margin-top: 3px;
   margin-bottom: 3px;
 }
+
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="text"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+textarea {
+  height: 24px;
+  padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+}
+
+select {
+  height: 26px;
+  padding: 2px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+}
+
 /* Removes awkward default styles on some inputs for iOS */
 input[type="email"],
 input[type="number"],
@@ -296,4 +322,34 @@ td {
 
 td:first-child {
   width: 1px;
+}
+
+/* Audio */
+audio::-webkit-media-controls-panel {
+  background-color: #bbbbbb;
+}
+audio::-webkit-current-time-display,
+audio::-webkit-time-divider,
+audio::-webkit-time-display {
+  color: #000000;
+  text-shadow: none;
+}
+
+.podcast-player-offset,
+.podcast-player-footer {
+  height: 120px;
+}
+
+.podcast-player-footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: rgb(26, 26, 26);
+}
+
+.podcast-player {
+  margin-left: 23px;
+  margin-right: 23px;
+  max-width: 700px;
 }

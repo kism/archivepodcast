@@ -1,8 +1,9 @@
 function playerSetCurrentEpisode(url, type, episodeName) {
+  console.log("Setting player src to:", url);
   const player = document.getElementById("podcast_player");
   // const source = document.getElementById("podcast_player_source");
   const episodeTitle = document.getElementById("podcast_player_episode_name");
-  episodeTitle.textContent = `Episode: ${episodeName}`;
+  episodeTitle.textContent = `Player: ${episodeName}`;
   player.src = url;
   player.type = type;
 }
@@ -22,6 +23,7 @@ async function fetchAndParseXML(url) {
 function populateEpisodeList(url) {
   fetchAndParseXML(url).then((xmlDoc) => {
     const episodeList = document.getElementById("podcast_episode_list");
+    episodeList.innerHTML = "";
     episodeList.style.display = "block";
 
     const items = xmlDoc.getElementsByTagName("item");
@@ -42,6 +44,7 @@ function populateEpisodeList(url) {
   });
 }
 
-// Example usage:
-const url = "http://localhost:5100/rss/stown";
-populateEpisodeList(url);
+function loadPodcast(event) {
+  const selectedPodcast = event.target.value;
+  populateEpisodeList(selectedPodcast);
+}
