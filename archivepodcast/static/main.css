@@ -287,5 +287,5 @@ td {
 }
 
 td:first-child {
-  width: 0px;
+  width: 1px;
 }
