@@ -21,9 +21,10 @@ async function fetchAndParseXML(url) {
 }
 
 function populateEpisodeList(url) {
+  const episodeList = document.getElementById("podcast_episode_list");
+  episodeList.innerHTML = "Loading...";
+
   fetchAndParseXML(url).then((xmlDoc) => {
-    const episodeList = document.getElementById("podcast_episode_list");
-    episodeList.innerHTML = "";
     episodeList.style.display = "block";
 
     const items = xmlDoc.getElementsByTagName("item");
