@@ -150,11 +150,9 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
     except KeyError:
         return generate_not_generated_error(webpage_name)
 
-    cache_control = "public, max-age=60"
+    cache_control = "public, max-age=180"
     if "woff2" in webpage_name:
         cache_control = "public, max-age=31536000"  # 1 year
-    elif "filelist" not in webpage_name:
-        cache_control = "public, max-age=10800"  # 3 hours
 
     return Response(
         webpage.content,
