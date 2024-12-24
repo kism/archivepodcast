@@ -125,7 +125,7 @@ class PodcastArchiver:
         """Function to list files in s3 bucket."""
         logger.info("⛅ Checking state of s3 bucket")
         if not self.s3:
-            logger.warning("⛅ No s3 client to list files")
+            logger.debug("⛅ No s3 client to list files")
             return
 
         contents_list = list_all_s3_objects(self.s3, self.app_config["s3"]["bucket"])

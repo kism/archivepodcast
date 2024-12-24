@@ -38,13 +38,19 @@
             <h1>{{ app_config['web_page']['title']|e }} File List</h1>
             <header>
                 <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
-                    href="/guide.html">Guide</a> | <a href="/filelist.html">File list </a> | <a href="/webplayer.html">Web player</a>
+                    href="/guide.html">Guide</a> | <a href="/filelist.html">File list </a> | <a
+                    href="/webplayer.html">Web player</a>
                 <hr>
             </header>
-            <p>For your convenience, a little web player for your browser.</p>
+            <p>For your convenience, a little web player.</p>
         </div>
         <ul id="podcast_episode_list" class="file-list"></ul>
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
+        <div class="podcast-player">
+            <hr>
+            <p id="podcast_player_episode_name">No episode loaded</p>
+            <audio id="podcast_player" class="contained-content" controls preload="none" style="width: 100%;"/>
+        </div>
     </main>
 </body>
 
