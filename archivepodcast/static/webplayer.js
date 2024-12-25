@@ -37,7 +37,7 @@ function populateEpisodeList(url) {
       const type = item.getElementsByTagName("enclosure")[0].getAttribute("type");
       const li = document.createElement("li");
       const playLink = document.createElement("a");
-      playLink.href = "";
+      playLink.href = "#";
       playLink.onclick = () => playerSetCurrentEpisode(url, type, title);
       playLink.textContent = title;
       li.appendChild(playLink);
