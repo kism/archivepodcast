@@ -164,6 +164,7 @@ footer {
   /* background: #c8c8c8; */
   /* color: #c8c8c8; */
   border-bottom: 1px solid #ababab;
+  cursor: pointer;
 }
 
 #podcast_episode_list li:hover {
@@ -348,70 +349,9 @@ td:first-child {
   width: 1px;
 }
 
-audio::-webkit-media-controls-enclosure,
-audio::-webkit-media-controls-panel,
-audio::-webkit-media-controls-play-button,
-audio::-webkit-media-controls-volume-slider,
-audio::-webkit-media-controls-mute-button,
-audio::-webkit-media-controls-timeline,
-audio::-webkit-media-controls-current-time-display,
-audio::-webkit-media-controls-time-remaining-display,
-audio::-webkit-time-display {
-  border-radius: 4px;
-  text-shadow: none;
-}
-
-/* Audio */
-audio::-webkit-media-controls-enclosure {
-  /* border-radius: 0; */
-  /* padding: 0px; */
-  /* background-color: #101010; */
-  border: none;
-  margin: none;
-}
-
-audio::-webkit-media-controls-panel {
-  /* background-color: #101010; */
-  /* padding: 0px; */
-  border: none;
-  margin: none;
-}
-
-audio::-webkit-media-controls-play-button {
-  background-color: #008080;
-  color: #ffffff;
-  /* border-radius: 25%; */
-}
-
-audio::-webkit-media-controls-volume-slider {
-  /* background-color: #ffffff; */
-  /* padding-top: 0; */
-  /* margin-top: 20px; */
-  /* padding-bottom: 0; */
-}
-
-audio::-webkit-media-controls-mute-button {
-  /* background-color: #ffffff; */
-  /* border-radius: 25%; */
-  padding: 0px;
-}
-
-audio::-webkit-media-controls-timeline {
-  color: #008080;
-  /* background-color: #ffffff; */
-  /* padding-bottom: 0; */
-  /* margin-bottom: 20px; */
-}
-
-audio::-webkit-media-controls-current-time-display,
-audio::-webkit-media-controls-time-remaining-display,
-audio::-webkit-time-display {
-  text-shadow: none;
-}
-
 .podcast-player-offset,
 .podcast-player-footer {
-  height: 120px;
+  height: 90px;
 }
 
 .podcast-player-footer {
@@ -427,3 +367,71 @@ audio::-webkit-time-display {
   margin-right: 23px;
   max-width: 700px;
 }
+
+/*#region: Webkit Audio*/
+
+audio {
+  height: 25px;
+}
+
+audio::-webkit-media-controls-enclosure,
+audio::-webkit-media-controls-panel,
+audio::-webkit-media-controls-play-button,
+audio::-webkit-media-controls-volume-slider,
+audio::-webkit-media-controls-mute-button,
+audio::-webkit-media-controls-timeline,
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display,
+audio::-webkit-time-display {
+  border-radius: 4px;
+  text-shadow: none;
+}
+
+audio::-webkit-media-controls-enclosure {
+  height: 25px;
+}
+
+audio::-webkit-media-controls-panel,
+video::-webkit-media-controls-panel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  /* We use flex-start here to ensure that the play button is visible even
+   * if we are too small to show all controls.
+   */
+  justify-content: flex-start;
+  -webkit-user-select: none;
+  position: relative;
+  width: 100%;
+  z-index: 0;
+  overflow: hidden;
+  text-align: right;
+  bottom: auto;
+  height: 25px;
+  /* background-color: rgba(20, 20, 20, 0.8); */
+  border-radius: 5px;
+  /* The duration is also specified in MediaControlElements.cpp and LayoutTests/media/media-controls.js */
+  transition: opacity 0.3s;
+}
+
+audio::-webkit-media-controls-panel {
+  /* background-color: #101010; */
+  /* padding: 0px; */
+  border: none;
+  margin: none;
+}
+
+audio::-webkit-media-controls-play-button {
+  background-color: #008080;
+  color: #ffffff;
+  height: 18px;
+  width: 10px;
+}
+
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display,
+audio::-webkit-time-display {
+  text-shadow: none;
+}
+
+/*#endregion*/
