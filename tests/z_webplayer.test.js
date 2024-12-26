@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
 test("webplayer", () => {
-    expect(true).toBe(true);
+  expect(true).toBe(true);
 });
 
 // import { playerSetCurrentEpisode, populateEpisodeList, loadPodcast } from "../archivepodcast/static/webplayer";
