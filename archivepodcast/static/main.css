@@ -165,6 +165,7 @@ footer {
   /* color: #c8c8c8; */
   border-bottom: 1px solid #ababab;
   cursor: pointer;
+  white-space: pre-line;
 }
 
 #podcast_episode_list li:hover {
