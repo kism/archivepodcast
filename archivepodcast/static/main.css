@@ -50,8 +50,8 @@ body {
   font-size: 14px;
   font-weight: 500;
 
-  background-color: rgb(26, 26, 26);
-  color: rgb(200, 200, 200);
+  background-color: #1a1a1a;
+  color: #c8c8c8;
   line-height: 1.5;
   margin-top: 20px;
   margin-left: 23px;
@@ -66,7 +66,7 @@ h1,
 h2 {
   font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
   line-height: 1.2;
-  color: rgb(220, 220, 220);
+  color: #c8c8c8;
 }
 h1 {
   font-size: 40px;
@@ -82,7 +82,7 @@ h3,
 h4 {
   font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  color: rgb(220, 220, 220);
+  color: #c8c8c8;
   font-weight: 500;
   margin-top: 4px;
   margin-bottom: 6px;
@@ -101,14 +101,14 @@ ol {
 }
 
 a:link {
-  color: rgb(0, 128, 128);
+  color: #008080;
 }
 a:visited {
-  color: rgb(136, 86, 109);
+  color: #885560;
 }
 
 ::selection {
-  color: rgb(200, 200, 200);
+  color: #c8c8c8;
   background: #008080;
 }
 
@@ -136,6 +136,7 @@ footer {
 
 .file-list,
 .breadcrumb {
+  border-radius: 4px;
   display: list-item;
   list-style-type: none;
   padding: 0;
@@ -159,8 +160,32 @@ footer {
   background-color: #555; /* Darker color on hover */
 }
 
+#podcast_episode_list li {
+  /* background: #c8c8c8; */
+  /* color: #c8c8c8; */
+  border-bottom: 1px solid #ababab;
+  cursor: pointer;
+}
+
+#podcast_episode_list li:hover {
+  background: #008080;
+}
+/*
+#podcast_episode_list li:nth-child(odd) {
+  background: #bbbbbb;
+} */
+
+#podcast_episode_list a:link {
+  color: #c8c8c8;
+  margin-top: 10px;
+  font-style: unset;
+  text-decoration: unset;
+}
+
 #podcast_episode_list a:visited {
-  color: #008080;
+  color: #c8c8c8;
+  font-style: unset;
+  text-decoration: unset;
 }
 
 /* BUTTON */
@@ -324,20 +349,9 @@ td:first-child {
   width: 1px;
 }
 
-/* Audio */
-audio::-webkit-media-controls-panel {
-  background-color: #bbbbbb;
-}
-audio::-webkit-current-time-display,
-audio::-webkit-time-divider,
-audio::-webkit-time-display {
-  color: #000000;
-  text-shadow: none;
-}
-
 .podcast-player-offset,
 .podcast-player-footer {
-  height: 120px;
+  height: 90px;
 }
 
 .podcast-player-footer {
@@ -345,7 +359,7 @@ audio::-webkit-time-display {
   left: 0;
   bottom: 0;
   width: 100%;
-  background-color: rgb(26, 26, 26);
+  background-color: #1a1a1a;
 }
 
 .podcast-player {
@@ -353,3 +367,71 @@ audio::-webkit-time-display {
   margin-right: 23px;
   max-width: 700px;
 }
+
+/*#region: Webkit Audio*/
+
+audio {
+  height: 25px;
+}
+
+audio::-webkit-media-controls-enclosure,
+audio::-webkit-media-controls-panel,
+audio::-webkit-media-controls-play-button,
+audio::-webkit-media-controls-volume-slider,
+audio::-webkit-media-controls-mute-button,
+audio::-webkit-media-controls-timeline,
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display,
+audio::-webkit-time-display {
+  border-radius: 4px;
+  text-shadow: none;
+}
+
+audio::-webkit-media-controls-enclosure {
+  height: 25px;
+}
+
+audio::-webkit-media-controls-panel,
+video::-webkit-media-controls-panel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  /* We use flex-start here to ensure that the play button is visible even
+   * if we are too small to show all controls.
+   */
+  justify-content: flex-start;
+  -webkit-user-select: none;
+  position: relative;
+  width: 100%;
+  z-index: 0;
+  overflow: hidden;
+  text-align: right;
+  bottom: auto;
+  height: 25px;
+  /* background-color: rgba(20, 20, 20, 0.8); */
+  border-radius: 5px;
+  /* The duration is also specified in MediaControlElements.cpp and LayoutTests/media/media-controls.js */
+  transition: opacity 0.3s;
+}
+
+audio::-webkit-media-controls-panel {
+  /* background-color: #101010; */
+  /* padding: 0px; */
+  border: none;
+  margin: none;
+}
+
+audio::-webkit-media-controls-play-button {
+  background-color: #008080;
+  color: #ffffff;
+  height: 18px;
+  width: 10px;
+}
+
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display,
+audio::-webkit-time-display {
+  text-shadow: none;
+}
+
+/*#endregion*/
