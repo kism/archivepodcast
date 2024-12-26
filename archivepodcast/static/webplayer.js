@@ -1,4 +1,4 @@
-function playerSetCurrentEpisode(url, type, episodeName) {
+export function playerSetCurrentEpisode(url, type, episodeName) {
   console.log("Setting player src to:", url);
   const player = document.getElementById("podcast_player");
   // const source = document.getElementById("podcast_player_source");
@@ -20,7 +20,7 @@ async function fetchAndParseXML(url) {
   }
 }
 
-function populateEpisodeList(url) {
+export function populateEpisodeList(url) {
   const episodeList = document.getElementById("podcast_episode_list");
   episodeList.innerHTML = "Loading...";
   episodeList.style.display = "block";
@@ -46,7 +46,7 @@ function populateEpisodeList(url) {
   });
 }
 
-function loadPodcast(event) {
+export function loadPodcast(event) {
   const selectedPodcast = event.target.value;
   populateEpisodeList(selectedPodcast);
 }
