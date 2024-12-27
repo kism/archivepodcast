@@ -51,4 +51,13 @@ export function loadPodcast(event) {
   populateEpisodeList(selectedPodcast);
 }
 
+export function showJSDivs() {
+  const breadcrumbJSDiv = document.getElementById("podcast_select");
+  if (breadcrumbJSDiv) {
+    breadcrumbJSDiv.style.display = "block";
+  }
+}
+
 window.loadPodcast = loadPodcast;
+
+showJSDivs();

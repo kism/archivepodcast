@@ -18,9 +18,12 @@
     <link rel="stylesheet" href="/static/main.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
+        #podcast_select,
+
         .file-list {
             display: none;
         }
+
     </style>
     <noscript>
         <style>
@@ -41,6 +44,7 @@
                 player</a>
             <hr>
         </header>
+        <noscript><p>This does not work without Javascript enabled!</p></noscript>
         <p>Use a podcast app per the guide if you want to track what you have listened to.</p>
         <select id="podcast_select" onchange="loadPodcast(event)">
             <option value="">Select a podcast</option>
