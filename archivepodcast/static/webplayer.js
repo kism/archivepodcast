@@ -1,7 +1,6 @@
 export function playerSetCurrentEpisode(url, type, episodeName) {
   console.log("Setting player src to:", url);
   const player = document.getElementById("podcast_player");
-  // const source = document.getElementById("podcast_player_source");
   const episodeTitle = document.getElementById("podcast_player_episode_name");
   episodeTitle.textContent = `Player: ${episodeName}`;
   player.src = url;
@@ -16,7 +15,7 @@ async function fetchAndParseXML(url) {
     const xmlDoc = parser.parseFromString(text, "application/xml");
     return xmlDoc;
   } catch (error) {
-    console.error("Error fetching and parsing XML:", error);
+    console.log("Error fetching and parsing XML:", error);
   }
 }
 
@@ -25,25 +24,30 @@ export function populateEpisodeList(url) {
   episodeList.innerHTML = "Loading...";
   episodeList.style.display = "block";
 
-  fetchAndParseXML(url).then((xmlDoc) => {
-    episodeList.innerHTML = "";
+  fetchAndParseXML(url)
+    .then((xmlDoc) => {
+      episodeList.innerHTML = "";
 
-    const items = xmlDoc.getElementsByTagName("item");
+      const items = xmlDoc.getElementsByTagName("item");
 
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const title = item.getElementsByTagName("title")[0].textContent;
-      const url = item.getElementsByTagName("enclosure")[0].getAttribute("url");
-      const type = item.getElementsByTagName("enclosure")[0].getAttribute("type");
-      const li = document.createElement("li");
-      // const playLink = document.createElement("a");
-      // li.href = "#";
-      li.onclick = () => playerSetCurrentEpisode(url, type, title);
-      li.textContent = `${title}`;
-      // li.appendChild(playLink);
-      episodeList.appendChild(li);
-    }
-  });
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const title = item.getElementsByTagName("title")[0].textContent;
+        const url = item.getElementsByTagName("enclosure")[0].getAttribute("url");
+        const type = item.getElementsByTagName("enclosure")[0].getAttribute("type");
+        const li = document.createElement("li");
+        // const playLink = document.createElement("a");
+        // li.href = "#";
+        li.onclick = () => playerSetCurrentEpisode(url, type, title);
+        li.textContent = `${title}`;
+        // li.appendChild(playLink);
+        episodeList.appendChild(li);
+      }
+    })
+    .catch((error) => {
+      console.error("Error loading episodes:", error);
+      episodeList.innerHTML = `Error loading episodes: ${error}`;
+    });
 }
 
 export function loadPodcast(event) {

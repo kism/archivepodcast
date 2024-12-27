@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
-import { playerSetCurrentEpisode, populateEpisodeList, loadPodcast } from "../archivepodcast/static/webplayer";
+import { playerSetCurrentEpisode, populateEpisodeList, loadPodcast, showJSDivs } from "../archivepodcast/static/webplayer";
 
 test("playerSetCurrentEpisode sets player src and episode title", () => {
   document.body.innerHTML = `
@@ -24,7 +24,8 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
             <select id="podcast_select">
                 <option value="http://example.com/rss.xml">Test Podcast</option>
             </select><ul id="podcast_episode_list"></ul>
-
+            <p id="podcast_player_episode_name"></p>
+            <audio id="podcast_player"></audio>
         `;
 
   global.fetch = vi.fn().mockResolvedValue({
@@ -52,7 +53,51 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
 
   expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml");
 
-  const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li:nth-child(1)"));
+  const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li:nth-child(2)"));
 
-  expect(element.innerHTML).toContain("Test Episode 1");
+  expect(element.innerHTML).toContain("Test Episode 2");
+
+  // Now we try play an episode
+  element.click();
+
+  const player = document.getElementById("podcast_player");
+  const episodeTitle = document.getElementById("podcast_player_episode_name");
+
+  expect(player.src).toBe("http://example.com/test2.mp3");
+  expect(player.type).toBe("audio/mpeg");
+  expect(episodeTitle.textContent).toBe("Player: Test Episode 2");
 });
+
+test("Fail to fetch podcast, 404", async () => {
+  document.body.innerHTML = `
+            <select id="podcast_select">
+                <option value="http://example.com/rss.xml">Test Podcast</option>
+            </select><ul id="podcast_episode_list"></ul>
+        `;
+
+  global.fetch = vi.fn().mockResolvedValue({
+    status: 404,
+  });
+
+  const select = document.getElementById("podcast_select");
+  select.value = "http://example.com/rss.xml";
+  select.onchange = loadPodcast;
+
+  select.dispatchEvent(new Event("change"));
+
+  const episodeList = document.getElementById("podcast_episode_list");
+
+  expect(episodeList.innerHTML).toBe("Loading...");
+} );
+
+test("showJSDivs shows the podcast_select div", () => {
+  document.body.innerHTML = `
+        <div id="podcast_select"></div>
+    `;
+
+  showJSDivs();
+
+  const breadcrumbJSDiv = document.getElementById("podcast_select");
+
+  expect(breadcrumbJSDiv.style.display).toBe("block");
+} );
