@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
-
 import { playerSetCurrentEpisode, populateEpisodeList, loadPodcast } from "../archivepodcast/static/webplayer";
 
 test("playerSetCurrentEpisode sets player src and episode title", () => {
@@ -20,34 +19,7 @@ test("playerSetCurrentEpisode sets player src and episode title", () => {
   expect(episodeTitle.textContent).toBe("Player: Test Episode");
 });
 
-test("populateEpisodeList fetches and populates episode list", async () => {
-  document.body.innerHTML = `
-        <ul id="podcast_episode_list"></ul>
-    `;
-
-  global.fetch = vi.fn().mockResolvedValue({
-    text: () => `
-        <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
-            <channel>
-            <item>
-                <title>Test Episode 1</title>
-                <enclosure url="http://example.com/test1.mp3" type="audio/mpeg" />
-            </item>
-            <item>
-                <title>Test Episode 2</title>
-                <enclosure url="http://example.com/test2.mp3" type="audio/mpeg" />
-            </item>
-            </channel>
-        </rss>
-        `,
-  });
-
-  await populateEpisodeList("http://example.com/rss.xml");
-
-  // Actually test something
-});
-
-test("loadPodcast calls populateEpisodeList with selected podcast", () => {
+test("loadPodcast calls populateEpisodeList with selected podcast", async () => {
   document.body.innerHTML = `
             <select id="podcast_select">
                 <option value="http://example.com/rss.xml">Test Podcast</option>
@@ -80,8 +52,7 @@ test("loadPodcast calls populateEpisodeList with selected podcast", () => {
 
   expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml");
 
-  // await
+  const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li:nth-child(1)"));
 
-  const new_list = document.getElementById("podcast_episode_list");
-  expect(new_list.innerHTML).not.toBe("Loading...");
+  expect(element.innerHTML).toContain("Test Episode 1");
 });
