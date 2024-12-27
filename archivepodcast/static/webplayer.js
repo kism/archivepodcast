@@ -44,7 +44,7 @@ export function populateEpisodeList(url) {
     })
     .catch((error) => {
       console.error("Error loading episodes:", error);
-      episodeList.innerHTML = `${error}`;
+      episodeList.innerHTML = `<li>${error}</li>`;
     });
 }
 

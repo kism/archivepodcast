@@ -34,6 +34,7 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
         `;
 
   global.fetch = vi.fn().mockResolvedValue({
+    ok: true,
     text: () => `
             <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
                 <channel>
@@ -58,7 +59,7 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
 
   expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml");
 
-  const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li:nth-child(1)"));
+  const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li:nth-child(2)"));
 
   expect(element.innerHTML).toContain("Test Episode 2");
 
@@ -73,30 +74,28 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
   expect(episodeTitle.textContent).toBe("Player: Test Episode 2");
 });
 
-// test("Fail to fetch podcast, 404", async () => {
-//   document.body.innerHTML = `
-//             <select id="podcast_select">
-//                 <option value="http://example.com/rss.xml">Test Podcast</option>
-//             </select><ul id="podcast_episode_list"></ul>
-//         `;
+test("Fail to fetch podcast, 404", async () => {
+  document.body.innerHTML = `
+            <select id="podcast_select">
+                <option value="http://example.com/rss.xml">Test Podcast</option>
+            </select><ul id="podcast_episode_list"></ul>
+        `;
 
-//   global.fetch = vi.fn().mockResolvedValue({
-//     status: 404,
-//   });
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: false,
+    status: 404,
+  });
 
-//   const select = document.getElementById("podcast_select");
-//   select.value = "http://example.com/rss.xml";
-//   select.onchange = loadPodcast;
+  const select = document.getElementById("podcast_select");
+  select.value = "http://example.com/rss.xml";
+  select.onchange = loadPodcast;
 
-//   select.dispatchEvent(new Event("change"));
+  select.dispatchEvent(new Event("change"));
 
-//   const episodeList = document.getElementById("podcast_episode_list");
+  const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li"));
 
-//   const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li"));
-
-//   expect(element.innerHTML).toContain("Error: 404");
-
-// });
+  expect(element.innerHTML).toContain("Error: HTTP error! status: 404");
+});
 
 test("showJSDivs shows the podcast_select div", () => {
   document.body.innerHTML = `
