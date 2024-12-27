@@ -92,7 +92,10 @@ test("Fail to fetch podcast, 404", async () => {
 
   const episodeList = document.getElementById("podcast_episode_list");
 
-  expect(episodeList.innerHTML).toBe("Loading...");
+  const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li:nth-child(1)"));
+
+  expect(element.innerHTML).toContain("Error loading episodes: Error: 404");
+
 });
 
 test("showJSDivs shows the podcast_select div", () => {

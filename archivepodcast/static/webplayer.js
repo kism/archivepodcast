@@ -8,15 +8,16 @@ export function playerSetCurrentEpisode(url, type, episodeName) {
 }
 
 async function fetchAndParseXML(url) {
-  try {
-    const response = await fetch(url);
-    const text = await response.text();
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(text, "application/xml");
-    return xmlDoc;
-  } catch (error) {
-    console.log("Error fetching and parsing XML:", error);
+  console.log("Fetching and parsing XML from:", url);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
+  const text = await response.text();
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(text, "application/xml");
+  return xmlDoc;
 }
 
 export function populateEpisodeList(url) {
@@ -36,17 +37,14 @@ export function populateEpisodeList(url) {
         const url = item.getElementsByTagName("enclosure")[0].getAttribute("url");
         const type = item.getElementsByTagName("enclosure")[0].getAttribute("type");
         const li = document.createElement("li");
-        // const playLink = document.createElement("a");
-        // li.href = "#";
         li.onclick = () => playerSetCurrentEpisode(url, type, title);
         li.textContent = `${title}`;
-        // li.appendChild(playLink);
         episodeList.appendChild(li);
       }
     })
     .catch((error) => {
       console.error("Error loading episodes:", error);
-      episodeList.innerHTML = `Error loading episodes: ${error}`;
+      episodeList.innerHTML = `${error}`;
     });
 }
 
