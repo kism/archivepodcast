@@ -1,7 +1,12 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
-import { playerSetCurrentEpisode, populateEpisodeList, loadPodcast, showJSDivs } from "../archivepodcast/static/webplayer";
+import {
+  loadPodcast,
+  playerSetCurrentEpisode,
+  populateEpisodeList,
+  showJSDivs,
+} from "../archivepodcast/static/webplayer";
 
 test("playerSetCurrentEpisode sets player src and episode title", () => {
   document.body.innerHTML = `
@@ -88,7 +93,7 @@ test("Fail to fetch podcast, 404", async () => {
   const episodeList = document.getElementById("podcast_episode_list");
 
   expect(episodeList.innerHTML).toBe("Loading...");
-} );
+});
 
 test("showJSDivs shows the podcast_select div", () => {
   document.body.innerHTML = `
@@ -100,4 +105,4 @@ test("showJSDivs shows the podcast_select div", () => {
   const breadcrumbJSDiv = document.getElementById("podcast_select");
 
   expect(breadcrumbJSDiv.style.display).toBe("block");
-} );
+});
