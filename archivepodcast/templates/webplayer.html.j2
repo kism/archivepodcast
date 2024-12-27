@@ -14,13 +14,16 @@
     <link rel="preload" href="/static/fonts/fira-code-v12-latin-700.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/noto-sans-display-latin-500italic.woff2" as="font" type="font/woff2"
         crossorigin>
-    <script src="/static/webplayer.js"></script>
+    <script type="module" src="/static/webplayer.js"></script>
     <link rel="stylesheet" href="/static/main.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
+        #podcast_select,
+
         .file-list {
             display: none;
         }
+
     </style>
     <noscript>
         <style>
@@ -41,6 +44,7 @@
                 player</a>
             <hr>
         </header>
+        <noscript><p>This does not work without Javascript enabled!</p></noscript>
         <p>Use a podcast app per the guide if you want to track what you have listened to.</p>
         <select id="podcast_select" onchange="loadPodcast(event)">
             <option value="">Select a podcast</option>
