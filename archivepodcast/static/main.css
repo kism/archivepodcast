@@ -166,7 +166,7 @@ footer {
   border-bottom: 1px solid #ababab;
   cursor: pointer;
   white-space: nowrap;
-  overflow:hidden;
+  overflow: hidden;
 }
 
 #podcast_episode_list li:hover {
