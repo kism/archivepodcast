@@ -425,6 +425,11 @@ thead th {
   margin-right: 23px;
   max-width: 700px;
 }
+
+#podcast_player_episode_name {
+  white-space: nowrap;
+  overflow: hidden;
+}
 /*#endregion*/
 
 /*#region: Webkit Audio*/
