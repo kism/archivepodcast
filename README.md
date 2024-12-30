@@ -131,6 +131,6 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~check last generated~~
 - prevent arbitrary object fields being created
 - test dumb time formats
-- better header generation
+- ~~better header generation~~
 - render about page from markdown
 - live reload in debug mode

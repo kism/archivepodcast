@@ -14,6 +14,7 @@ export function populateHealth(data) {
   const healthDiv = document.getElementById("health");
   for (const [section, sectionData] of Object.entries(data)) {
     const sectionContainer = document.createElement("p");
+    sectionContainer.classList.add("health-table");
     const sectionTitle = document.createElement("h3");
     sectionTitle.textContent = section;
     sectionContainer.appendChild(sectionTitle);
@@ -25,6 +26,7 @@ export function populateHealth(data) {
       const table = document.createElement("table");
       const row = document.createElement("tr");
       const cell = document.createElement("td");
+
       cell.textContent = sectionData;
       row.appendChild(cell);
       table.appendChild(row);
@@ -39,6 +41,7 @@ function generateTable(data) {
   for (const [key, value] of Object.entries(data)) {
     const row = document.createElement("tr");
     const cellKey = document.createElement("td");
+
     if (typeof value === "object" && value !== null) {
       cellKey.textContent = key;
     } else {
