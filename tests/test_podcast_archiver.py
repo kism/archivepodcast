@@ -18,7 +18,7 @@ def test_no_about_page(apa, caplog):
 
 def test_about_page(apa, caplog, tmp_path):
     """Test about page."""
-    with open(os.path.join(tmp_path, "web", "about.html"), "w") as f:
+    with open(os.path.join(tmp_path, "about.md"), "w") as f:
         f.write("About page exists!")
 
     with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):
@@ -85,7 +85,7 @@ def test_grab_podcasts_unhandled_exception(
     with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
         f.write(pytest.DUMMY_RSS_STR)
 
-    def mock_get_rss_feed_exception(*args, **kwargs) -> None:
+    def mock_get_rss_feed_exception(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr(apa, "_grab_podcast", mock_get_rss_feed_exception)
@@ -177,7 +177,7 @@ def test_grab_podcasts_live(
 def test_create_folder_structure_no_perms(apa, monkeypatch):
     """Test creating folder structure with permissions error."""
 
-    def mock_os_makedirs_permission_error() -> None:
+    def mock_os_makedirs_permission_error():
         raise PermissionError
 
     monkeypatch.setattr("os.mkdir", lambda _: mock_os_makedirs_permission_error())

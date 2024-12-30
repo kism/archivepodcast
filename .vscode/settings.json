@@ -30,5 +30,6 @@
   "ansible.python.interpreterPath": "/home/codespace/.python/current/bin/python3",
   "python.analysis.enablePytestSupport": false,
   "mypy-type-checker.preferDaemon": true,
-  "mypy-type-checker.reportingScope": "workspace"
+  "mypy-type-checker.reportingScope": "workspace",
+  "mypy.dmypyExecutable": "${workspaceFolder}/.venv/bin/dmypy"
 }

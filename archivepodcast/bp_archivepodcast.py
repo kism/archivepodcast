@@ -32,7 +32,11 @@ def initialise_archivepodcast() -> None:
     global ap  # noqa: PLW0603
 
     ap = PodcastArchiver(
-        current_app.config["app"], current_app.config["podcast"], current_app.instance_path, current_app.root_path
+        current_app.config["app"],
+        current_app.config["podcast"],
+        current_app.instance_path,
+        current_app.root_path,
+        current_app.debug,
     )
 
     signal.signal(signal.SIGHUP, reload_config)
@@ -40,6 +44,7 @@ def initialise_archivepodcast() -> None:
     pid = os.getpid()
     logger.info("🙋 Podcast Archive running! PID: %s", pid)
     logger.debug(f"Get ram usage in % kb: ps -p {pid} -o %mem,rss")
+    logger.debug("Reload with: kill -HUP %s", pid)
 
     # Start thread: podcast backup loop
     threading.Thread(target=podcast_loop, daemon=True).start()
@@ -125,6 +130,23 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
     return seconds_until_next_run
 
 
+@bp.route("/api/reload")
+def api_reload() -> Response:
+    """Reload the config."""
+    if not ap:
+        return generate_not_initialized_error()
+
+    msg_success = {"msg": "Config reload command sent"}
+    msg_forbidden = {"msg": "Config reload not allowed in production"}
+
+    if not ap.debug:
+        return Response(json.dumps(msg_forbidden), status=HTTPStatus.FORBIDDEN)
+
+    reload_config(signal.SIGHUP)
+
+    return Response(json.dumps(msg_success), status=HTTPStatus.OK)
+
+
 @bp.route("/api/health")
 def api_health() -> Response:
     """Health check."""
@@ -132,7 +154,7 @@ def api_health() -> Response:
         return generate_not_initialized_error()
 
     try:
-        health_json = ap.health.get_health()
+        health_json = ap.health.get_health(ap)
     except Exception:
         logger.exception("❌ Error getting health")
         health_json = json.dumps({"core": {"alive": False}})
@@ -334,6 +356,9 @@ def generate_not_initialized_error() -> Response:
 
 def generate_not_generated_error(webpage_name: str) -> Response:
     """Generate a 500 error."""
+    if not ap:
+        return generate_not_initialized_error()
+
     logger.error(f"❌ Requested page: {webpage_name} not generated")
     return Response(
         render_template(
@@ -350,6 +375,9 @@ def generate_not_generated_error(webpage_name: str) -> Response:
 
 def generate_404() -> Response:
     """We use the 404 template in a couple places."""
+    if not ap:
+        return generate_not_initialized_error()
+
     returncode = HTTPStatus.NOT_FOUND
     render = render_template(
         "error.html.j2",

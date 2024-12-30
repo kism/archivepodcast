@@ -3,8 +3,9 @@
 import logging
 import os
 
+import pytest
+
 from archivepodcast.ap_downloader import PodcastDownloader
-from archivepodcast.logger import TRACE_LEVEL_NUM
 
 from . import FakeExceptionError
 
@@ -21,7 +22,7 @@ def test_init(s3, get_test_config, tmp_path, caplog):
 
     web_root = os.path.join(tmp_path, "web")
 
-    with caplog.at_level(TRACE_LEVEL_NUM):
+    with caplog.at_level(pytest.TRACE_LEVEL_NUM):
         pd = PodcastDownloader(app_config=config["app"], s3=s3, web_root=web_root)
 
     assert "PodcastDownloader config (re)loaded" in caplog.text
@@ -114,7 +115,7 @@ def test_upload_asset_s3_file_not_found(apd_aws, caplog):
 def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
     """Test upload failure when no s3 client."""
 
-    def unhandled_exception(*args, **kwargs) -> None:
+    def unhandled_exception(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr(apd_aws.s3, "upload_file", unhandled_exception)
@@ -147,7 +148,7 @@ def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
     """Test non-404 s3 client error handling."""
     from botocore.exceptions import ClientError
 
-    def client_error_not_404(*args, **kwargs) -> None:
+    def client_error_not_404(*args, **kwargs):
         raise ClientError({"Error": {"Code": "LimitExceededException"}}, "LimitExceededException")
 
     monkeypatch.setattr(apd_aws.s3, "head_object", client_error_not_404)
@@ -161,7 +162,7 @@ def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
 def test_check_path_exists_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
     """Test unhandled exception handling."""
 
-    def unhandled_exception(*args, **kwargs) -> None:
+    def unhandled_exception(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr(apd_aws.s3, "head_object", unhandled_exception)

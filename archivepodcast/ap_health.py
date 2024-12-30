@@ -3,11 +3,17 @@
 import contextlib
 import datetime
 import json
+from typing import TYPE_CHECKING
 
 import psutil
 from lxml import etree
 
 from .logger import get_logger
+
+if TYPE_CHECKING:
+    from .ap_archiver import PodcastArchiver  # pragma: no cover
+else:
+    PodcastArchiver = object
 
 logger = get_logger(__name__)
 
@@ -79,6 +85,7 @@ class CoreHealth:
         self.currently_rendering: bool = False
         self.currently_loading_config: bool = False
         self.memory_mb: float = -0.0
+        self.debug: bool = False
 
 
 class PodcastArchiverHealth:
@@ -92,10 +99,12 @@ class PodcastArchiverHealth:
         self.podcasts: dict[str, PodcastHealth] = {}
         self.templates: dict[str, WebpageHealth] = {}
         self.version: str = __version__
+        self.assets: dict[str, str] = {}
 
-    def get_health(self) -> str:
+    def get_health(self, ap: PodcastArchiver) -> str:
         """Return the health."""
         self.core.memory_mb = PROCESS.memory_info().rss / (1024 * 1024)
+        self.assets = ap.webpages.get_list()
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def update_template_status(self, webpage: str, **kwargs: bool | str | int) -> None:
