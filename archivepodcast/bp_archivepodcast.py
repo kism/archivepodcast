@@ -40,6 +40,7 @@ def initialise_archivepodcast() -> None:
     pid = os.getpid()
     logger.info("🙋 Podcast Archive running! PID: %s", pid)
     logger.debug(f"Get ram usage in % kb: ps -p {pid} -o %mem,rss")
+    logger.debug("Reload with: kill -HUP %s", pid)
 
     # Start thread: podcast backup loop
     threading.Thread(target=podcast_loop, daemon=True).start()

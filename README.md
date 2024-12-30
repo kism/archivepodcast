@@ -132,5 +132,6 @@ An example guide on setting it up start to finish, with all features and saving 
 - prevent arbitrary object fields being created
 - test dumb time formats
 - ~~better header generation~~
-- render about page from markdown
+- ~~render about page from markdown~~
 - live reload in debug mode
+- all pages in health
