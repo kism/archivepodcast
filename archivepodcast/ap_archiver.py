@@ -319,6 +319,7 @@ class PodcastArchiver:
                 podcasts=self.podcast_list,
                 about_page=self.about_page_exists,
                 last_generated_date=current_time,
+                header=self.webpages.generate_header(output_filename),
             )
 
             self.webpages.add(output_filename, "text/html", rendered_output)
@@ -355,6 +356,7 @@ class PodcastArchiver:
             file_list=file_list,
             about_page=self.about_page_exists,
             last_generated_date=current_time,
+            header=self.webpages.generate_header(output_filename),
         )
 
         self.webpages.add(path=output_filename, mime="text/html", content=rendered_output)

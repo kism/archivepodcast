@@ -121,9 +121,9 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~use noscript~~
 - ~~Better css~~
 - ~~Prefetching~~
-- put rss into the page cache maybe
-- mime type in file list?
-  - implement audio player
+- ~~put rss into the page cache maybe~~ naa
+- ~~mime type in file list?~~
+  - ~~implement audio player~~
 - ~~implement api~~
   - ~~health page~~
     - ~~podcast list~~
@@ -131,6 +131,6 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~check last generated~~
 - prevent arbitrary object fields being created
 - test dumb time formats
-- remove psutil
-  - docker too
 - better header generation
+- render about page from markdown
+- live reload in debug mode

@@ -1,5 +1,7 @@
 """Webpage cache module."""
 
+from typing import ClassVar
+
 
 class Webpage:
     """Webpage object."""
@@ -22,6 +24,14 @@ class Webpage:
 class Webpages:
     """Webpage object."""
 
+    WEBPAGE_NICE_NAMES: ClassVar[dict[str, str]] = {
+        "index.html": "Home",
+        "about.html": "About",
+        "guide.html": "Guide",
+        "filelist.html": "File List",
+        "webplayer.html": "Web Player",
+    }
+
     def __init__(self) -> None:
         """Initialise the Webpages object."""
         self._webpages: dict[str, Webpage] = {}
@@ -41,3 +51,23 @@ class Webpages:
     def get_webpage(self, path: str) -> Webpage:
         """Get a webpage."""
         return self._webpages[path]
+
+    def generate_header(self, path: str) -> str:
+        """Get the header for a webpage."""
+        header = "<header>"
+
+        for webpage in self.WEBPAGE_NICE_NAMES:
+            if webpage == "about.html":
+                about_page_exists = self._webpages.get("about.html")
+                if not about_page_exists:
+                    continue
+
+            if webpage == path:
+                header += f'<a href="{webpage}" class="active">{self.WEBPAGE_NICE_NAMES[webpage]}</a> | '
+            else:
+                header += f'<a href="{webpage}">{self.WEBPAGE_NICE_NAMES[webpage]}</a> | '
+
+        header = header[:-3]
+
+        header += "<hr></header>"
+        return header
