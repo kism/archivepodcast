@@ -65,7 +65,7 @@ class Webpages:
     def generate_header(self, path: str, debug: bool = False) -> str:  # noqa: FBT001, FBT002
         """Get the header for a webpage."""
         reload_a_tag = """
- | <a href='#' onclick="
+ | <a href="#" onclick="
 const originalText = document.getElementById('debug_status').innerHTML;
 
 function resetText() {
@@ -80,7 +80,7 @@ fetch('/api/reload')
     setTimeout(resetText, 3000);
 })
 .catch(error => console.error(error));
-return false;"
+return false;
 ">Reload</a>"""
 
         header = "<header>"
@@ -99,10 +99,10 @@ return false;"
         header = header[:-3]
 
         if debug:
-            header += " | <a href='/health'>Health</a>"
-            header += reload_a_tag
-            header += " | <a href='/console'>Flask Console</a>"
-            header += " | <a id='debug_status' style='color: #ff0000'>DEBUG ENABLED</a>"
+            header += ' | <a href="/health">Health</a>'
+            header += reload_a_tag.replace("\n","")
+            header += ' | <a href="/console">Flask Console</a>'
+            header += ' | <a id="debug_status" style="color: #ff0000">DEBUG ENABLED</a>'
 
         header += "<hr></header>"
         return header
