@@ -1,14 +1,13 @@
 """Unit testing for the config module."""
 
 import pytest
-import pytest_mock
 
 import archivepodcast
 
 DEFAULT_CONFIG = archivepodcast.config.DEFAULT_CONFIG
 
 
-def test_config_permissions_error_read(place_test_config, tmp_path, mocker: pytest_mock.plugin.MockerFixture):
+def test_config_permissions_error_read(place_test_config, tmp_path, mocker):
     """Mock a Permissions error with mock_open."""
     place_test_config("testing_true_valid.toml", tmp_path)
 
@@ -22,7 +21,7 @@ def test_config_permissions_error_read(place_test_config, tmp_path, mocker: pyte
         archivepodcast.config.ArchivePodcastConfig(instance_path=tmp_path)
 
 
-def test_config_permissions_error_write(place_test_config, tmp_path, mocker: pytest_mock.plugin.MockerFixture):
+def test_config_permissions_error_write(place_test_config, tmp_path, mocker):
     """Mock a Permissions error with mock_open."""
     place_test_config("testing_true_valid.toml", tmp_path)
 
@@ -86,7 +85,7 @@ def test_config_dictionary_merge(place_test_config, tmp_path, get_test_config):
     assert result_dict["TEST_CONFIG_ENTRY_NOT_IN_SCHEMA"]
 
 
-def test_config_dictionary_not_in_schema(place_test_config, tmp_path, caplog: pytest.LogCaptureFixture):
+def test_config_dictionary_not_in_schema(place_test_config, tmp_path, caplog):
     """Unit test _warn_unexpected_keys."""
     place_test_config("testing_true_valid.toml", tmp_path)
 
@@ -120,7 +119,7 @@ def test_load_write_no_config_path(place_test_config, tmp_path):
         conf._write_config()
 
 
-def test_config_no_url_forward_slash(place_test_config, tmp_path, caplog: pytest.LogCaptureFixture):
+def test_config_no_url_forward_slash(place_test_config, tmp_path, caplog):
     """Test config file loading, use tmp_path."""
     place_test_config("testing_true_no_forward_slash.toml", tmp_path)
 
