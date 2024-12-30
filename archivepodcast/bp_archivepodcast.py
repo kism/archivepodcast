@@ -146,6 +146,7 @@ def api_reload() -> Response:
 
     return Response("Config reloaded", status=HTTPStatus.OK)
 
+
 @bp.route("/api/health")
 def api_health() -> Response:
     """Health check."""
@@ -355,6 +356,9 @@ def generate_not_initialized_error() -> Response:
 
 def generate_not_generated_error(webpage_name: str) -> Response:
     """Generate a 500 error."""
+    if not ap:
+        return generate_not_initialized_error()
+
     logger.error(f"❌ Requested page: {webpage_name} not generated")
     return Response(
         render_template(

@@ -6,6 +6,7 @@
     "charliermarsh.ruff",
     "biomejs.biome",
     "vitest.explorer",
-    "davidanson.vscode-markdownlint"
+    "davidanson.vscode-markdownlint",
+    "matangover.mypy"
   ]
 }

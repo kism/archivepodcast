@@ -40,7 +40,7 @@ class Webpages:
         """Return the length of the webpages."""
         return len(self._webpages)
 
-    def get_list(self) -> list[str]:
+    def get_list(self) -> dict[str, str]:
         """Return the items of the webpages."""
         item_list = self._webpages.items()
 
