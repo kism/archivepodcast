@@ -115,7 +115,7 @@ def test_upload_asset_s3_file_not_found(apd_aws, caplog):
 def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
     """Test upload failure when no s3 client."""
 
-    def unhandled_exception(*args, **kwargs) -> None:
+    def unhandled_exception(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr(apd_aws.s3, "upload_file", unhandled_exception)
@@ -148,7 +148,7 @@ def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
     """Test non-404 s3 client error handling."""
     from botocore.exceptions import ClientError
 
-    def client_error_not_404(*args, **kwargs) -> None:
+    def client_error_not_404(*args, **kwargs):
         raise ClientError({"Error": {"Code": "LimitExceededException"}}, "LimitExceededException")
 
     monkeypatch.setattr(apd_aws.s3, "head_object", client_error_not_404)
@@ -162,7 +162,7 @@ def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
 def test_check_path_exists_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
     """Test unhandled exception handling."""
 
-    def unhandled_exception(*args, **kwargs) -> None:
+    def unhandled_exception(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr(apd_aws.s3, "head_object", unhandled_exception)

@@ -51,8 +51,7 @@ def test_app_paths_not_generated(apa, client_live, monkeypatch):
     """Test the error for when a page has not been generated."""
     # Ensure that no webpages can be added by the thread.
 
-
-    def mock_add_webpage(*args, **kwargs) -> None:
+    def mock_add_webpage(*args, **kwargs):
         pass
 
     monkeypatch.setattr("archivepodcast.ap_archiver.Webpages.add", mock_add_webpage)
@@ -127,9 +126,8 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
         response = function_path()
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
-    response = bp_archivepodcast.generate_not_generated_error("test.html") # This one needs a parameter
+    response = bp_archivepodcast.generate_not_generated_error("test.html")  # This one needs a parameter
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-
 
     required_to_be_initialized_str_arg = [
         bp_archivepodcast.send_content,
@@ -209,7 +207,7 @@ def test_rss_feed_type_error(
 
     client_live = app_live.test_client()
 
-    def return_type_error(*args, **kwargs) -> None:
+    def return_type_error(*args, **kwargs):
         raise TypeError
 
     monkeypatch.setattr(ap, "get_rss_feed", return_type_error)
@@ -238,12 +236,12 @@ def test_rss_feed_unhandled_error(
     with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
         file.write(pytest.DUMMY_RSS_STR)
 
-    def return_key_error(*args, **kwargs) -> None:
+    def return_key_error(*args, **kwargs):
         raise KeyError
 
     monkeypatch.setattr(ap, "get_rss_feed", return_key_error)
 
-    def return_unhandled_error(*args, **kwargs) -> None:
+    def return_unhandled_error(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr("lxml.etree.tostring", return_unhandled_error)
@@ -293,7 +291,7 @@ def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, ca
 
     get_test_config("testing_true_valid.toml")
 
-    def load_config_exception(*args, **kwargs) -> None:
+    def load_config_exception(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr(bp_archivepodcast.ap, "load_config", load_config_exception)
@@ -376,6 +374,7 @@ def test_api_reload(apa, client_live, caplog):
 
     response = client_live.get("/api/reload")
     assert response.status_code == HTTPStatus.OK
+
 
 def test_api_reload_no_debug(apa, client_live, caplog):
     """Test the reload API endpoint."""
