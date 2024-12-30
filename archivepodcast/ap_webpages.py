@@ -100,7 +100,7 @@ return false;
 
         if debug:
             header += ' | <a href="/health">Health</a>'
-            header += reload_a_tag.replace("\n","")
+            header += reload_a_tag.replace("\n", "")
             header += ' | <a href="/console">Flask Console</a>'
             header += ' | <a id="debug_status" style="color: #ff0000">DEBUG ENABLED</a>'
 
