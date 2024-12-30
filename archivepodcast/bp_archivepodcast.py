@@ -32,7 +32,11 @@ def initialise_archivepodcast() -> None:
     global ap  # noqa: PLW0603
 
     ap = PodcastArchiver(
-        current_app.config["app"], current_app.config["podcast"], current_app.instance_path, current_app.root_path
+        current_app.config["app"],
+        current_app.config["podcast"],
+        current_app.instance_path,
+        current_app.root_path,
+        current_app.debug,
     )
 
     signal.signal(signal.SIGHUP, reload_config)
@@ -126,6 +130,22 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
     return seconds_until_next_run
 
 
+@bp.route("/api/reload")
+def api_reload() -> Response:
+    """Reload the config."""
+    if not ap:
+        return generate_not_initialized_error()
+
+    if not ap.debug:
+        return Response("Config reload not allowed in production", status=HTTPStatus.FORBIDDEN)
+
+    try:
+        reload_config(signal.SIGHUP)
+    except Exception:
+        logger.exception("❌ Error reloading config")
+
+    return Response("Config reloaded", status=HTTPStatus.OK)
+
 @bp.route("/api/health")
 def api_health() -> Response:
     """Health check."""
@@ -133,7 +153,7 @@ def api_health() -> Response:
         return generate_not_initialized_error()
 
     try:
-        health_json = ap.health.get_health()
+        health_json = ap.health.get_health(ap)
     except Exception:
         logger.exception("❌ Error getting health")
         health_json = json.dumps({"core": {"alive": False}})

@@ -85,6 +85,7 @@ class CoreHealth:
         self.currently_rendering: bool = False
         self.currently_loading_config: bool = False
         self.memory_mb: float = -0.0
+        self.debug: bool = False
 
 
 class PodcastArchiverHealth:

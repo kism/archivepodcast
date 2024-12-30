@@ -62,7 +62,7 @@ class Webpages:
         """Get a webpage."""
         return self._webpages[path]
 
-    def generate_header(self, path: str) -> str:
+    def generate_header(self, path: str, debug: bool = False) -> str:  # noqa: FBT001, FBT002
         """Get the header for a webpage."""
         header = "<header>"
 
@@ -78,6 +78,12 @@ class Webpages:
                 header += f'<a href="{webpage}">{self.WEBPAGE_NICE_NAMES[webpage]}</a> | '
 
         header = header[:-3]
+
+        if debug:
+            header += " | <a href='/health'>Health</a>"
+            header += " | <a href='/api/reload' target='_blank' >Reload</a>"
+            header += " | <a href='/console'>Flask Console</a>"
+            header += " | <a style='color: #ff0000'>DEBUG ENABLED</a>"
 
         header += "<hr></header>"
         return header
