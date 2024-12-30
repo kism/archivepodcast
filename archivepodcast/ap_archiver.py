@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import boto3
 import magic
+import markdown
 from jinja2 import Environment, FileSystemLoader
 from lxml import etree
 
@@ -30,11 +31,19 @@ class PodcastArchiver:
 
     def __init__(self, app_config: dict, podcast_list: list, instance_path: str, root_path: str) -> None:
         """Initialise the ArchivePodcast object."""
+        # Health object
         self.health = PodcastArchiverHealth()
         self.health.update_core_status(currently_loading_config=True)
+
+        # Set the paths, TODO: There are too many
         self.root_path = root_path
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
+        self.app_directory = os.path.join("archivepodcast")
+        self.static_directory = os.path.join("archivepodcast", "static")
+        self.template_directory = os.path.join("archivepodcast", "templates")
+
+        # Set the config and podcast list
         self.app_config: dict = {}
         self.podcast_list: list = []
         self.podcast_rss: dict[str, str] = {}
@@ -42,6 +51,8 @@ class PodcastArchiver:
         self.s3: S3Client | None = None
         self.about_page_exists = False
         self.load_config(app_config, podcast_list)
+
+        # Done, update health
         self.health.update_core_status(currently_loading_config=False)
 
     def load_config(self, app_config: dict, podcast_list: list) -> None:
@@ -60,12 +71,32 @@ class PodcastArchiver:
 
     def load_about_page(self) -> None:
         """Create about page if needed."""
+        about_page_md_filename = "about.md"
+        about_page_md_expected_path = os.path.join(self.instance_path, about_page_md_filename)
         about_page_filename = "about.html"
-        about_page_desired_path = os.path.join(self.web_root, about_page_filename)
 
-        if os.path.exists(about_page_desired_path):  # Check if about.html exists, affects index.html so it's first.
-            with open(about_page_desired_path, encoding="utf-8") as about_page:
-                self.webpages.add(about_page_filename, mime="text/html", content=about_page.read())
+        if os.path.exists(about_page_md_expected_path):  # Check if about.html exists, affects index.html so it's first.
+            with open(about_page_md_expected_path, encoding="utf-8") as about_page:
+                about_page_md_rendered = markdown.markdown(about_page.read(), extensions=["tables"])
+
+            env = Environment(loader=FileSystemLoader(self.template_directory), autoescape=True)
+
+            template_filename = "about.html.j2"
+            output_filename = template_filename.replace(".j2", "")
+
+            template = env.get_template(template_filename)
+
+            current_time = int(time.time())
+
+            about_page_str = template.render(
+                app_config=self.app_config,
+                podcasts=self.podcast_list,
+                last_generated_date=current_time,
+                header=self.webpages.generate_header(output_filename),
+                about_content=about_page_md_rendered,
+            )
+
+            self.webpages.add(output_filename, mime="text/html", content=about_page_str)
             self.about_page_exists = True
             self.health.update_core_status(about_page_exists=True)
             logger.info("💾 About page exists!")
@@ -276,9 +307,6 @@ class PodcastArchiver:
     def _render_files(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
         self.health.update_core_status(currently_rendering=True)
-        app_directory = "archivepodcast"
-        static_directory = os.path.join(app_directory, "static")
-        template_directory = os.path.join(app_directory, "templates")
 
         # robots.txt
         robots_txt_content = "User-Agent: *\nDisallow: /\n"
@@ -286,11 +314,11 @@ class PodcastArchiver:
 
         # Static items
         static_items_to_copy = [
-            os.path.join(root, file) for root, __, files in os.walk(static_directory) for file in files
+            os.path.join(root, file) for root, __, files in os.walk(self.static_directory) for file in files
         ]
 
         for item in static_items_to_copy:
-            item_relative_path = os.path.relpath(item, app_directory)
+            item_relative_path = os.path.relpath(item, self.app_directory)
             item_mime = magic.from_file(item, mime=True)
             logger.debug("💾 Registering static item: %s, mime: %s", item, item_mime)
 
@@ -302,7 +330,7 @@ class PodcastArchiver:
                     self.webpages.add(path=item_relative_path, mime=item_mime, content=static_item.read())
 
         # Templates
-        env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
+        env = Environment(loader=FileSystemLoader(self.template_directory), autoescape=True)
         templates_to_render = ["guide.html.j2", "index.html.j2", "health.html.j2", "webplayer.html.j2"]
 
         logger.debug("💾 Templates to render: %s", templates_to_render)
@@ -340,8 +368,7 @@ class PodcastArchiver:
         self.check_s3_files()
         base_url, file_list = self.podcast_downloader.get_file_list()
 
-        template_directory = os.path.join("archivepodcast", "templates")
-        env = Environment(loader=FileSystemLoader(template_directory), autoescape=True)
+        env = Environment(loader=FileSystemLoader(self.template_directory), autoescape=True)
 
         template_filename = "filelist.html.j2"
         output_filename = template_filename.replace(".j2", "")
