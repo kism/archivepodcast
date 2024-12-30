@@ -11,7 +11,6 @@ import time
 import boto3
 import pytest
 import tomlkit
-from flask import Flask
 from moto import mock_aws
 
 from archivepodcast.ap_archiver import PodcastArchiver, PodcastDownloader
@@ -95,13 +94,13 @@ def app_live_s3(
 
 
 @pytest.fixture
-def client(app: Flask):
+def client(app):
     """This returns a test client for the default app()."""
     return app.test_client()
 
 
 @pytest.fixture
-def client_live(app_live: Flask):
+def client_live(app_live):
     """This returns a test client for the default app()."""
     return app_live.test_client()
 
@@ -113,7 +112,7 @@ def client_live_s3(app_live_s3):
 
 
 @pytest.fixture
-def runner(app: Flask):
+def runner(app):
     """TODO?????"""
     return app.test_cli_runner()
 
@@ -127,7 +126,7 @@ def runner(app: Flask):
 def get_test_config():
     """Function returns a function, which is how it needs to be."""
 
-    def _get_test_config(config_name: str):
+    def _get_test_config(config_name):
         """Load all the .toml configs into a single dict."""
         filepath = os.path.join(TEST_CONFIGS_LOCATION, config_name)
 
@@ -144,7 +143,7 @@ def place_test_config():
     Returns: a function to place a config in the tmp_path.
     """
 
-    def _place_test_config(config_name: str, path: str):
+    def _place_test_config(config_name, path):
         """Place config in tmp_path by name."""
         filepath = os.path.join(TEST_CONFIGS_LOCATION, config_name)
 
@@ -273,7 +272,7 @@ def apd_aws(apa_aws, get_test_config, mocked_aws, caplog):
 def mock_get_podcast_source_rss(requests_mock):
     """Return a podcast definition from the config."""
 
-    def _mock_get_podcast_source_rss(rss_name: str):
+    def _mock_get_podcast_source_rss(rss_name):
         """Return the rss file."""
         filepath = os.path.join(TEST_RSS_LOCATION, rss_name)
 

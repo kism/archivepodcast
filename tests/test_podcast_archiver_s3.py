@@ -219,7 +219,7 @@ def test_load_s3_api_url(apa, monkeypatch, caplog):
     apa_no_mocked_aws.app_config["s3"]["secret_access_key"] = "xyz"
     apa_no_mocked_aws.app_config["s3"]["bucket"] = "test"
 
-    def check_url_set(_, endpoint_url: str, *args, **kwargs):
+    def check_url_set(_, endpoint_url, *args, **kwargs):
         assert endpoint_url == test_url
 
     monkeypatch.setattr("boto3.client", check_url_set)

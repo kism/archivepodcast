@@ -4,8 +4,6 @@ import logging
 import os
 
 import pytest
-import pytest_mock
-from flask import Flask
 
 import archivepodcast.logger
 
@@ -25,7 +23,7 @@ def logger():
         handler.close()
 
 
-def test_logging_permissions_error(logger, tmp_path, mocker: pytest_mock.plugin.MockerFixture):
+def test_logging_permissions_error(logger, tmp_path, mocker):
     """Test logging, mock a permission error."""
     from archivepodcast.logger import _add_file_handler
 
@@ -47,7 +45,7 @@ def test_config_logging_to_dir(logger, tmp_path):
         _add_file_handler(logger, tmp_path)
 
 
-def test_handler_console_added(logger, app: Flask):
+def test_handler_console_added(logger, app):
     """Test logging console handler."""
     logging_conf = {"path": "", "level": "INFO"}  # Test only console handler
 
@@ -60,7 +58,7 @@ def test_handler_console_added(logger, app: Flask):
     assert len(logger.handlers) == 1
 
 
-def test_handler_file_added(logger, tmp_path, app: Flask):
+def test_handler_file_added(logger, tmp_path, app):
     """Test logging file handler."""
     logging_conf = {"path": os.path.join(tmp_path, "test.log"), "level": "INFO"}  # Test file handler
 
@@ -82,7 +80,7 @@ def test_handler_file_added(logger, tmp_path, app: Flask):
         ("INVALID", 20),
     ],
 )
-def test_set_log_level(log_level_in: str | int, log_level_expected: int, logger):
+def test_set_log_level(log_level_in, log_level_expected, logger):
     """Test if _set_log_level results in correct log_level."""
     from archivepodcast.logger import _set_log_level
 
