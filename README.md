@@ -127,11 +127,12 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~implement api~~
   - ~~health page~~
     - ~~podcast list~~
-    - flask health
+    - ~~flask health~~
 - ~~check last generated~~
-- prevent arbitrary object fields being created
-- test dumb time formats
+- ~~prevent arbitrary object fields being created~~
 - ~~better header generation~~
 - ~~render about page from markdown~~
-- live reload in debug mode
-- all pages in health
+- ~~live reload in debug mode~~
+- ~~all pages in health~~
+- header shows current page in different style
+- test dumb time formats
