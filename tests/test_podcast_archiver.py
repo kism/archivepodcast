@@ -18,7 +18,7 @@ def test_no_about_page(apa, caplog):
 
 def test_about_page(apa, caplog, tmp_path):
     """Test about page."""
-    with open(os.path.join(tmp_path, "web", "about.html"), "w") as f:
+    with open(os.path.join(tmp_path, "about.md"), "w") as f:
         f.write("About page exists!")
 
     with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):

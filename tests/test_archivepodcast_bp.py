@@ -82,8 +82,8 @@ def test_app_path_about(apa, client_live, tmp_path):
     bp_archivepodcast.ap = apa
 
     # Since we are looping...
-    if os.path.exists(os.path.join(tmp_path, "web", "about.html")):
-        os.remove(os.path.join(tmp_path, "web", "about.html"))
+    if os.path.exists(os.path.join(tmp_path, "about.md")):
+        os.remove(os.path.join(tmp_path, "about.md"))
 
     apa.load_about_page()
     response = client_live.get("/about.html")
@@ -91,7 +91,7 @@ def test_app_path_about(apa, client_live, tmp_path):
         response.status_code == HTTPStatus.NOT_FOUND
     ), f"About page should not exist, got status code: {response.status_code}"
 
-    with open(os.path.join(tmp_path, "web", "about.html"), "w") as file:
+    with open(os.path.join(tmp_path, "about.md"), "w") as file:
         file.write("Test")
 
     apa.load_about_page()
@@ -320,7 +320,7 @@ def test_file_list(apa, client_live, tmp_path):
         file.write("test")
 
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
-    ap.render_filelist_html()
+    ap._render_files()
 
     response = client_live.get("/filelist.html")
 
@@ -345,7 +345,7 @@ def test_file_list_s3(apa_aws, client_live_s3):
     assert content_s3_path in file_cache
 
     # Check that the file is in filelist.html
-    apa_aws.render_filelist_html()
+    apa_aws._render_files()
 
     response = client_live_s3.get("/filelist.html")
     assert response.status_code == HTTPStatus.OK
