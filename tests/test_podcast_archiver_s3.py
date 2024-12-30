@@ -62,7 +62,7 @@ def test_check_s3_files(apa_aws, caplog):
     """Test that s3 files are checked."""
     apa_aws._render_files()
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=pytest.TRACE_LEVEL_NUM, logger="archivepodcast.ap_archiver"):
         apa_aws.check_s3_files()
 
     assert "Checking state of s3 bucket" in caplog.text

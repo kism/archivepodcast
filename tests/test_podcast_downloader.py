@@ -8,7 +8,6 @@ import magic
 import pytest
 
 from archivepodcast.ap_downloader import PodcastDownloader
-from archivepodcast.logger import TRACE_LEVEL_NUM
 
 FLASK_ROOT_PATH = os.getcwd()
 
@@ -20,7 +19,7 @@ def test_init(get_test_config, tmp_path, caplog):
 
     web_root = os.path.join(tmp_path, "web")
 
-    with caplog.at_level(TRACE_LEVEL_NUM):
+    with caplog.at_level(pytest.TRACE_LEVEL_NUM):
         apd = PodcastDownloader(app_config=config["app"], s3=None, web_root=web_root)
 
     assert "PodcastDownloader config (re)loaded" in caplog.text

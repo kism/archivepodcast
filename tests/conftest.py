@@ -17,6 +17,7 @@ from flask.testing import FlaskClient, FlaskCliRunner
 from moto import mock_aws
 
 from archivepodcast.ap_archiver import PodcastArchiver, PodcastDownloader
+from archivepodcast.logger import TRACE_LEVEL_NUM
 
 FLASK_ROOT_PATH = os.getcwd()
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
@@ -38,6 +39,7 @@ def pytest_configure():
     pytest.TEST_WAV_FILE = TEST_WAV_FILE
     pytest.DUMMY_RSS_STR = DUMMY_RSS_STR
     pytest.TEST_RSS_LOCATION = TEST_RSS_LOCATION
+    pytest.TRACE_LEVEL_NUM = TRACE_LEVEL_NUM
 
 
 # region: Flask
