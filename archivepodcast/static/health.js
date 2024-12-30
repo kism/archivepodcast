@@ -18,8 +18,10 @@ export function populateHealth(data) {
   const healthDiv = document.getElementById("health");
   healthDiv.innerHTML = "";
 
+  const currentTime = new Date().toLocaleTimeString();
+
   const description = document.createElement("p");
-  description.textContent = "Health per: /api/health";
+  description.textContent = `Health per: /api/health @ ${currentTime}`;
   healthDiv.appendChild(description);
 
   for (const [section, sectionData] of Object.entries(data)) {
@@ -87,4 +89,4 @@ function generateTable(data) {
 
 const intervalId = setInterval(fetchHealth, 1000);
 
-setTimeout(() => clearInterval(intervalId), 30000);
+setTimeout(() => clearInterval(intervalId), 10000);
