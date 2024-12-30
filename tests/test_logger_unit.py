@@ -125,10 +125,10 @@ def test_colour():
 
 def test_trace_log_level():
     """Test trace log level."""
-    from archivepodcast.logger import TRACE_LEVEL_NUM, CustomLogger
+    from archivepodcast.logger import CustomLogger
 
     custom_logger = CustomLogger("TEST_LOGGER")
     custom_logger.trace("Test trace message")
 
-    assert logging.getLevelName(TRACE_LEVEL_NUM) == "TRACE"
-    assert logging._nameToLevel["TRACE"] == TRACE_LEVEL_NUM
+    assert logging.getLevelName(pytest.TRACE_LEVEL_NUM) == "TRACE"
+    assert logging._nameToLevel["TRACE"] == pytest.TRACE_LEVEL_NUM
