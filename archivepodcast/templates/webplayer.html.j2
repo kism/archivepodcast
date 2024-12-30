@@ -38,12 +38,7 @@
 <body>
     <main class="contained-content">
         <h1>{{ app_config['web_page']['title']|e }} Player</h1>
-        <header>
-            <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
-                href="/guide.html">Guide</a> | <a href="/filelist.html">File list </a> | <a href="/webplayer.html">Web
-                player</a>
-            <hr>
-        </header>
+        {{ header | safe }}
         <noscript><p>This does not work without Javascript enabled!</p></noscript>
         <p>Use a podcast app per the guide if you want to track what you have listened to.</p>
         <select id="podcast_select" onchange="loadPodcast(event)">
