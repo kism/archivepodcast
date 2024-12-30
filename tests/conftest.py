@@ -197,7 +197,7 @@ def apa(tmp_path, get_test_config, caplog):
         app_config=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
     )
 
-    while apa.health.core.currently_loading_config:
+    while apa.health.core.currently_loading_config or apa.health.core.currently_rendering:
         time.sleep(0.05)
 
     return apa
@@ -229,7 +229,7 @@ def apa_aws(tmp_path, get_test_config, no_render_files, caplog, s3, mocked_aws):
         root_path=FLASK_ROOT_PATH,
     )
 
-    while apa_aws.health.core.currently_loading_config:
+    while apa_aws.health.core.currently_loading_config or apa_aws.health.core.currently_rendering:
         time.sleep(0.05)
 
     return apa_aws
