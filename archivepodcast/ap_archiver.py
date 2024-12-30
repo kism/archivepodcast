@@ -35,13 +35,13 @@ class PodcastArchiver:
         self.health = PodcastArchiverHealth()
         self.health.update_core_status(currently_loading_config=True)
 
-        # Set the paths, TODO: There are too many
+        # There are so many, but I use them all
         self.root_path = root_path
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
         self.app_directory = os.path.join("archivepodcast")
-        self.static_directory = os.path.join("archivepodcast", "static")
-        self.template_directory = os.path.join("archivepodcast", "templates")
+        self.static_directory = os.path.join(self.app_directory, "static")
+        self.template_directory = os.path.join(self.app_directory, "templates")
 
         # Set the config and podcast list
         self.app_config: dict = {}
