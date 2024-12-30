@@ -153,8 +153,7 @@ footer {
   border-radius: 4px;
   display: list-item;
   list-style-type: none;
-  padding: 0;
-  padding: 10px;
+  padding: 8px;
   background-color: #101010;
   font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
   font-weight: 500;
