@@ -198,7 +198,7 @@ def test_fetch_podcast_rss_value_error(apd, monkeypatch, caplog):
     """Test that the app can load config and the testing attribute is set."""
     rss_url = "https://podcast.internal/rss/not_found"
 
-    def mock_value_error(*args, **kwargs) -> None:
+    def mock_value_error(*args, **kwargs):
         raise ValueError
 
     monkeypatch.setattr("requests.get", mock_value_error)
@@ -213,7 +213,7 @@ def test_download_podcast_no_response(apd, get_test_config, monkeypatch):
     """Test _fetch_podcast_rss failure."""
     podcast = get_test_config("testing_true_valid.toml")["podcast"][0]
 
-    def mock_fetch_podcast_rss(*args, **kwargs) -> None:
+    def mock_fetch_podcast_rss(*args, **kwargs):
         return None
 
     monkeypatch.setattr("archivepodcast.ap_downloader.PodcastDownloader._fetch_podcast_rss", mock_fetch_podcast_rss)

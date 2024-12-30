@@ -2,7 +2,6 @@
 
 import logging
 import os
-from collections.abc import Generator
 
 import pytest
 import pytest_mock
@@ -12,7 +11,7 @@ import archivepodcast.logger
 
 
 @pytest.fixture
-def logger() -> Generator:
+def logger():
     """Logger to use in unit tests, including cleanup."""
     logger = logging.getLogger("TEST_LOGGER")
 
@@ -99,7 +98,7 @@ def test_colour():
     formatter = ColorFormatter()
 
     class TestRecord(logging.LogRecord):
-        def __init__(self, levelno, msg, thread_name="TestThread", name="Test_Logger") -> None:
+        def __init__(self, levelno, msg, thread_name="TestThread", name="Test_Logger"):
             self.levelno = levelno
             self.msg = msg
             self.name = name

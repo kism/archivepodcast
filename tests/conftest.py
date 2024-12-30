@@ -5,15 +5,13 @@ Fixtures defined in a conftest.py can be used by any test in that package withou
 
 import os
 import shutil
+import threading
 import time
-import typing
-from collections.abc import Callable
 
 import boto3
 import pytest
 import tomlkit
 from flask import Flask
-from flask.testing import FlaskClient, FlaskCliRunner
 from moto import mock_aws
 
 from archivepodcast.ap_archiver import PodcastArchiver, PodcastDownloader
@@ -46,7 +44,7 @@ def pytest_configure():
 
 
 @pytest.fixture
-def app(tmp_path, get_test_config) -> Flask:
+def app(tmp_path, get_test_config):
     """This fixture uses the default config within the flask app."""
     from archivepodcast import create_app
 
@@ -65,7 +63,7 @@ def app_live(
     mock_get_podcast_source_rss,
     mock_podcast_source_images,
     mock_podcast_source_mp3,
-) -> Flask:
+):
     """This fixture uses the default config within the flask app."""
     mock_get_podcast_source_rss("test_valid.rss")
 
@@ -83,7 +81,7 @@ def app_live_s3(
     mock_podcast_source_mp3,
     mocked_aws,
     s3,
-) -> Flask:
+):
     """This fixture uses the default config within the flask app."""
     mock_get_podcast_source_rss("test_valid.rss")
 
@@ -97,25 +95,25 @@ def app_live_s3(
 
 
 @pytest.fixture
-def client(app: Flask) -> FlaskClient:
+def client(app: Flask):
     """This returns a test client for the default app()."""
     return app.test_client()
 
 
 @pytest.fixture
-def client_live(app_live: Flask) -> FlaskClient:
+def client_live(app_live: Flask):
     """This returns a test client for the default app()."""
     return app_live.test_client()
 
 
 @pytest.fixture
-def client_live_s3(app_live_s3) -> FlaskClient:
+def client_live_s3(app_live_s3):
     """This returns a test client for the default app()."""
     return app_live_s3.test_client()
 
 
 @pytest.fixture
-def runner(app: Flask) -> FlaskCliRunner:
+def runner(app: Flask):
     """TODO?????"""
     return app.test_cli_runner()
 
@@ -126,10 +124,10 @@ def runner(app: Flask) -> FlaskCliRunner:
 
 
 @pytest.fixture
-def get_test_config() -> Callable:
+def get_test_config():
     """Function returns a function, which is how it needs to be."""
 
-    def _get_test_config(config_name: str) -> dict:
+    def _get_test_config(config_name: str):
         """Load all the .toml configs into a single dict."""
         filepath = os.path.join(TEST_CONFIGS_LOCATION, config_name)
 
@@ -140,13 +138,13 @@ def get_test_config() -> Callable:
 
 
 @pytest.fixture
-def place_test_config() -> Callable:
+def place_test_config():
     """Fixture that places a config in the tmp_path.
 
     Returns: a function to place a config in the tmp_path.
     """
 
-    def _place_test_config(config_name: str, path: str) -> None:
+    def _place_test_config(config_name: str, path: str):
         """Place config in tmp_path by name."""
         filepath = os.path.join(TEST_CONFIGS_LOCATION, config_name)
 
@@ -272,10 +270,10 @@ def apd_aws(apa_aws, get_test_config, mocked_aws, caplog):
 
 
 @pytest.fixture
-def mock_get_podcast_source_rss(requests_mock) -> Callable:
+def mock_get_podcast_source_rss(requests_mock):
     """Return a podcast definition from the config."""
 
-    def _mock_get_podcast_source_rss(rss_name: str) -> typing.Any:
+    def _mock_get_podcast_source_rss(rss_name: str):
         """Return the rss file."""
         filepath = os.path.join(TEST_RSS_LOCATION, rss_name)
 
@@ -316,10 +314,9 @@ def mock_podcast_source_wav(requests_mock, tmp_path):
 
 # endregion
 
-import threading
-from unittest.mock import patch
-@pytest.fixture(autouse=True, scope="function")
-def error_on_raise_in_thread():
+
+@pytest.fixture(autouse=True)
+def error_on_raise_in_thread(monkeypatch):
     """Replaces Thread with a a wrapper to record any exceptions and re-raise them after test execution.
 
     In case multiple threads raise exceptions only one will be raised.
@@ -331,13 +328,14 @@ def error_on_raise_in_thread():
             super().__init__(*args, **kwargs)
 
         def run(self):
+            """Mocked thread.run() method to capture exceptions."""
             try:
                 super().run()
             except BaseException as e:
                 nonlocal last_exception
                 last_exception = e
 
-    with patch("threading.Thread", ThreadWrapper):
-        yield
-        if last_exception:
-            raise last_exception
+    monkeypatch.setattr("threading.Thread", ThreadWrapper)
+    yield
+    if last_exception:
+        raise last_exception

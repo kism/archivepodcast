@@ -420,7 +420,7 @@ class PodcastArchiver:
                 directory = os.path.join(self.web_root, *directories_list[:i])
                 if not os.path.exists(directory):
                     logger.debug("💾 Creating directory: %s", directory)
-                    with contextlib.suppress(FileExistsError): # Due to threading
+                    with contextlib.suppress(FileExistsError):  # Due to threading
                         os.mkdir(directory)
 
             page_path_local = os.path.join(self.web_root, webpage.path)
