@@ -41,6 +41,7 @@ type = [
     { name = "mypy" },
     { name = "types-colorama" },
     { name = "types-lxml" },
+    { name = "types-markdown" },
     { name = "types-psutil" },
     { name = "types-requests" },
 ]
@@ -78,6 +79,7 @@ type = [
     { name = "mypy" },
     { name = "types-colorama" },
     { name = "types-lxml" },
+    { name = "types-markdown" },
     { name = "types-psutil" },
     { name = "types-requests" },
 ]
@@ -1107,6 +1109,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/24/ed/1a5bf2be373e9c4a27c8e97ba8b6dc22c3bccdcf7af9851a058c5234fdd0/types_lxml-2024.12.13.tar.gz", hash = "sha256:e2dadb92c7f730cd369daf1efe93ebc2ebfa8b692d4415cfc91b727419152e37", size = 130209 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1d/dc/eaa78d32ac5520383180ee9f4133969d80f2c3841b05662d913bd3033891/types_lxml-2024.12.13-py3-none-any.whl", hash = "sha256:d4830c99ef6f7b9eae176297a2b8dc840b3a75986bf4449592ca09a9a449b27e", size = 86008 },
+]
+
+[[package]]
+name = "types-markdown"
+version = "3.7.0.20241204"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/3c/874ac6ce93f4e6bd0283a5df2c8065f4e623c6c3bc0b2fb98c098313cb73/types_markdown-3.7.0.20241204.tar.gz", hash = "sha256:ecca2b25cd23163fd28ed5ba34d183d731da03e8a5ed3a20b60daded304c5410", size = 17820 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/26/3c9730e845cfd0d587e0dfa9c1975f02f9f49407afbf30800094bdac0286/types_Markdown-3.7.0.20241204-py3-none-any.whl", hash = "sha256:f96146c367ea9c82bfe9903559d72706555cc2a1a3474c58ebba03b418ab18da", size = 23572 },
 ]
 
 [[package]]

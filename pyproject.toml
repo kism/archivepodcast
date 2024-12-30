@@ -32,6 +32,7 @@ type = [
     "types-lxml",
     "types-requests",
     "types-psutil",
+    "types-Markdown",
     "boto3-stubs[s3]",
 ]
 
