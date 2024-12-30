@@ -50,7 +50,6 @@ DEFAULT_CONFIG: dict[str, dict | list] = {
     ],
     "logging": DEFAULT_LOGGING_CONFIG,
     "flask": {  # This section is for Flask default config entries https://flask.palletsprojects.com/en/3.0.x/config/
-        "DEBUG": False,
         "TESTING": False,
     },
 }

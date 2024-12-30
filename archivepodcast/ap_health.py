@@ -11,7 +11,7 @@ from lxml import etree
 from .logger import get_logger
 
 if TYPE_CHECKING:
-    from .ap_archiver import PodcastArchiver # pragma: no cover
+    from .ap_archiver import PodcastArchiver  # pragma: no cover
 else:
     PodcastArchiver = object
 

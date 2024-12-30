@@ -184,7 +184,7 @@ class PodcastArchiver:
                 if "//" in obj["Key"]:
                     logger.warning("⛅ S3 Path contains a //, this is not expected: %s DELETING", obj["Key"])
                     self.s3.delete_object(Bucket=self.app_config["s3"]["bucket"], Key=obj["Key"])
-            logger.debug("⛅ S3 Bucket Contents >>>\n%s", contents_str.strip())
+            logger.trace("⛅ S3 Bucket Contents >>>\n%s", contents_str.strip())
         else:
             logger.info("⛅ No objects found in the bucket.")
 
@@ -332,7 +332,7 @@ class PodcastArchiver:
         for item in static_items_to_copy:
             item_relative_path = os.path.relpath(item, self.app_directory)
             item_mime = magic.from_file(item, mime=True)
-            logger.debug("💾 Registering static item: %s, mime: %s", item, item_mime)
+            logger.trace("💾 Registering static item: %s, mime: %s", item, item_mime)
 
             if item_mime.startswith("text"):
                 with open(item) as static_item:
