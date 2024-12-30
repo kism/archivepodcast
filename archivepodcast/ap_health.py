@@ -99,7 +99,7 @@ class PodcastArchiverHealth:
         self.podcasts: dict[str, PodcastHealth] = {}
         self.templates: dict[str, WebpageHealth] = {}
         self.version: str = __version__
-        self.assets = []
+        self.assets: dict[str, str] = {}
 
     def get_health(self, ap: PodcastArchiver) -> str:
         """Return the health."""
