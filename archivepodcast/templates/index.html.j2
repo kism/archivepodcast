@@ -23,11 +23,7 @@
 <body>
     <main class="contained-content">
         <h1>{{ app_config['web_page']['title']|e }}</h1>
-        <header>
-            <a href="/index.html">Home</a> | {% if about_page %}<a href="/about.html">About</a> | {% endif %}<a
-                href="/guide.html">Guide</a> | <a href="/filelist.html">File list</a> | <a href="/webplayer.html">Web player</a>
-            <hr>
-        </header>
+        {{ header | safe }}
         <h3>{{ app_config['web_page']['description']|e }}</h3>
         <h3>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
                 guide</a>.</p>

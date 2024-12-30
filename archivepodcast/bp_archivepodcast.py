@@ -37,7 +37,9 @@ def initialise_archivepodcast() -> None:
 
     signal.signal(signal.SIGHUP, reload_config)
 
-    logger.info("🙋 Podcast Archive running! PID: %s", os.getpid())
+    pid = os.getpid()
+    logger.info("🙋 Podcast Archive running! PID: %s", pid)
+    logger.debug(f"Get ram usage in % kb: ps -p {pid} -o %mem,rss")
 
     # Start thread: podcast backup loop
     threading.Thread(target=podcast_loop, daemon=True).start()
@@ -245,6 +247,7 @@ def rss(feed: str) -> Response:
                 error_text="The developer probably messed something up",
                 about_page=get_about_page_exists(),
                 app_config=current_app.config["app"],
+                header=ap.webpages.generate_header("error.html"),
             ),
             status=return_code,
         )
@@ -272,6 +275,7 @@ def rss(feed: str) -> Response:
                     about_page=get_about_page_exists(),
                     app_config=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
+                    header=ap.webpages.generate_header("error.html"),
                 ),
                 status=return_code,
             )
@@ -286,6 +290,7 @@ def rss(feed: str) -> Response:
                     about_page=get_about_page_exists(),
                     app_config=current_app.config["app"],
                     podcasts=current_app.config["podcast"],
+                    header=ap.webpages.generate_header("error.html"),
                 ),
                 status=return_code,
             )
@@ -314,12 +319,14 @@ def send_static(path: str) -> Response:
 def generate_not_initialized_error() -> Response:
     """Generate a not initialized 500 error."""
     logger.error("❌ ArchivePodcast object not initialized")
+    default_header = '<header><a href="index.html">Home</a><hr></header>'
     return Response(
         render_template(
             "error.html.j2",
             error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
             error_text="Archive Podcast not initialized",
             app_config=current_app.config["app"],
+            header=default_header,
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
@@ -335,6 +342,7 @@ def generate_not_generated_error(webpage_name: str) -> Response:
             error_text=f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
             about_page=get_about_page_exists(),
             app_config=current_app.config["app"],
+            header=ap.webpages.generate_header("error.html"),
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
@@ -349,6 +357,7 @@ def generate_404() -> Response:
         error_text="Page not found, how did you even?",
         about_page=get_about_page_exists(),
         app_config=current_app.config["app"],
+        header=ap.webpages.generate_header("error.html"),
     )
     return Response(render, status=returncode)
 
