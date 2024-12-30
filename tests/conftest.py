@@ -253,7 +253,7 @@ def apd(apa, get_test_config, caplog):
 
 
 @pytest.fixture
-def apd_aws(apa_aws, get_test_config, caplog):
+def apd_aws(apa_aws, get_test_config, mocked_aws, caplog):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
@@ -313,3 +313,29 @@ def mock_podcast_source_wav(requests_mock, tmp_path):
 
 
 # endregion
+
+import threading
+from unittest.mock import patch
+@pytest.fixture(autouse=True, scope="function")
+def error_on_raise_in_thread():
+    """Replaces Thread with a a wrapper to record any exceptions and re-raise them after test execution.
+
+    In case multiple threads raise exceptions only one will be raised.
+    """
+    last_exception = None
+
+    class ThreadWrapper(threading.Thread):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+        def run(self):
+            try:
+                super().run()
+            except BaseException as e:
+                nonlocal last_exception
+                last_exception = e
+
+    with patch("threading.Thread", ThreadWrapper):
+        yield
+        if last_exception:
+            raise last_exception
