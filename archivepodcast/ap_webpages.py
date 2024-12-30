@@ -58,7 +58,7 @@ class Webpages:
 
         for webpage in self.WEBPAGE_NICE_NAMES:
             if webpage == "about.html":
-                about_page_exists = self._webpages.get("about.html")
+                about_page_exists = self._webpages.get("about.html") or path == "about.html"
                 if not about_page_exists:
                     continue
 

@@ -62,7 +62,6 @@ class PodcastArchiver:
         self.load_s3()
         self.podcast_downloader = PodcastDownloader(app_config=app_config, s3=self.s3, web_root=self.web_root)
         self.make_folder_structure()
-        self.load_about_page()
         self.render_files()
 
     def get_rss_feed(self, feed: str) -> str:
@@ -87,6 +86,8 @@ class PodcastArchiver:
             template = env.get_template(template_filename)
 
             current_time = int(time.time())
+
+            self.webpages.add(output_filename, mime="text/html", content="generating...")
 
             about_page_str = template.render(
                 app_config=self.app_config,
@@ -307,6 +308,8 @@ class PodcastArchiver:
     def _render_files(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
         self.health.update_core_status(currently_rendering=True)
+
+        self.load_about_page()  # Done first since it affects the header for everything
 
         # robots.txt
         robots_txt_content = "User-Agent: *\nDisallow: /\n"
