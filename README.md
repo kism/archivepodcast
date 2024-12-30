@@ -136,3 +136,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~all pages in health~~
 - header shows current page in different style
 - test dumb time formats
+- nowrap, overflow hidden on now-playing
