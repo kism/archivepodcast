@@ -29,8 +29,17 @@ logger = get_logger(__name__)
 class PodcastArchiver:
     """ArchivePodcast object."""
 
-    def __init__(self, app_config: dict, podcast_list: list, instance_path: str, root_path: str) -> None:
+    def __init__(
+        self,
+        app_config: dict,
+        podcast_list: list,
+        instance_path: str,
+        root_path: str,
+        debug: bool = False,  # noqa: FBT001, FBT002 # I don't care
+    ) -> None:
         """Initialise the ArchivePodcast object."""
+        self.debug = debug
+
         # Health object
         self.health = PodcastArchiverHealth()
         self.health.update_core_status(currently_loading_config=True)
@@ -93,7 +102,7 @@ class PodcastArchiver:
                 app_config=self.app_config,
                 podcasts=self.podcast_list,
                 last_generated_date=current_time,
-                header=self.webpages.generate_header(output_filename),
+                header=self.webpages.generate_header(output_filename, debug=self.debug),
                 about_content=about_page_md_rendered,
             )
 
@@ -350,7 +359,7 @@ class PodcastArchiver:
                 podcasts=self.podcast_list,
                 about_page=self.about_page_exists,
                 last_generated_date=current_time,
-                header=self.webpages.generate_header(output_filename),
+                header=self.webpages.generate_header(output_filename, debug=self.debug),
             )
 
             self.webpages.add(output_filename, "text/html", rendered_output)
@@ -386,7 +395,7 @@ class PodcastArchiver:
             file_list=file_list,
             about_page=self.about_page_exists,
             last_generated_date=current_time,
-            header=self.webpages.generate_header(output_filename),
+            header=self.webpages.generate_header(output_filename, debug=self.debug),
         )
 
         self.webpages.add(path=output_filename, mime="text/html", content=rendered_output)
