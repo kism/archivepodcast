@@ -29,19 +29,28 @@ logger = get_logger(__name__)
 class PodcastArchiver:
     """ArchivePodcast object."""
 
-    def __init__(self, app_config: dict, podcast_list: list, instance_path: str, root_path: str) -> None:
+    def __init__(
+        self,
+        app_config: dict,
+        podcast_list: list,
+        instance_path: str,
+        root_path: str,
+        debug: bool = False,  # noqa: FBT001, FBT002 # I don't care
+    ) -> None:
         """Initialise the ArchivePodcast object."""
+        self.debug = debug
+
         # Health object
         self.health = PodcastArchiverHealth()
         self.health.update_core_status(currently_loading_config=True)
 
-        # Set the paths, TODO: There are too many
+        # There are so many, but I use them all
         self.root_path = root_path
         self.instance_path = instance_path
         self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
         self.app_directory = os.path.join("archivepodcast")
-        self.static_directory = os.path.join("archivepodcast", "static")
-        self.template_directory = os.path.join("archivepodcast", "templates")
+        self.static_directory = os.path.join(self.app_directory, "static")
+        self.template_directory = os.path.join(self.app_directory, "templates")
 
         # Set the config and podcast list
         self.app_config: dict = {}
@@ -62,7 +71,6 @@ class PodcastArchiver:
         self.load_s3()
         self.podcast_downloader = PodcastDownloader(app_config=app_config, s3=self.s3, web_root=self.web_root)
         self.make_folder_structure()
-        self.load_about_page()
         self.render_files()
 
     def get_rss_feed(self, feed: str) -> str:
@@ -88,11 +96,13 @@ class PodcastArchiver:
 
             current_time = int(time.time())
 
+            self.webpages.add(output_filename, mime="text/html", content="generating...")
+
             about_page_str = template.render(
                 app_config=self.app_config,
                 podcasts=self.podcast_list,
                 last_generated_date=current_time,
-                header=self.webpages.generate_header(output_filename),
+                header=self.webpages.generate_header(output_filename, debug=self.debug),
                 about_content=about_page_md_rendered,
             )
 
@@ -174,7 +184,7 @@ class PodcastArchiver:
                 if "//" in obj["Key"]:
                     logger.warning("⛅ S3 Path contains a //, this is not expected: %s DELETING", obj["Key"])
                     self.s3.delete_object(Bucket=self.app_config["s3"]["bucket"], Key=obj["Key"])
-            logger.debug("⛅ S3 Bucket Contents >>>\n%s", contents_str.strip())
+            logger.trace("⛅ S3 Bucket Contents >>>\n%s", contents_str.strip())
         else:
             logger.info("⛅ No objects found in the bucket.")
 
@@ -308,6 +318,8 @@ class PodcastArchiver:
         """Actual function to upload static to s3 and copy index.html."""
         self.health.update_core_status(currently_rendering=True)
 
+        self.load_about_page()  # Done first since it affects the header for everything
+
         # robots.txt
         robots_txt_content = "User-Agent: *\nDisallow: /\n"
         self.webpages.add(path="robots.txt", mime="text/plain", content=robots_txt_content)
@@ -320,7 +332,7 @@ class PodcastArchiver:
         for item in static_items_to_copy:
             item_relative_path = os.path.relpath(item, self.app_directory)
             item_mime = magic.from_file(item, mime=True)
-            logger.debug("💾 Registering static item: %s, mime: %s", item, item_mime)
+            logger.trace("💾 Registering static item: %s, mime: %s", item, item_mime)
 
             if item_mime.startswith("text"):
                 with open(item) as static_item:
@@ -347,7 +359,7 @@ class PodcastArchiver:
                 podcasts=self.podcast_list,
                 about_page=self.about_page_exists,
                 last_generated_date=current_time,
-                header=self.webpages.generate_header(output_filename),
+                header=self.webpages.generate_header(output_filename, debug=self.debug),
             )
 
             self.webpages.add(output_filename, "text/html", rendered_output)
@@ -383,7 +395,7 @@ class PodcastArchiver:
             file_list=file_list,
             about_page=self.about_page_exists,
             last_generated_date=current_time,
-            header=self.webpages.generate_header(output_filename),
+            header=self.webpages.generate_header(output_filename, debug=self.debug),
         )
 
         self.webpages.add(path=output_filename, mime="text/html", content=rendered_output)
@@ -408,7 +420,8 @@ class PodcastArchiver:
                 directory = os.path.join(self.web_root, *directories_list[:i])
                 if not os.path.exists(directory):
                     logger.debug("💾 Creating directory: %s", directory)
-                    os.mkdir(directory)
+                    with contextlib.suppress(FileExistsError):  # Due to threading
+                        os.mkdir(directory)
 
             page_path_local = os.path.join(self.web_root, webpage.path)
             logger.trace("💾 Writing page locally: %s", page_path_local)

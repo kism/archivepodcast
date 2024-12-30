@@ -1,4 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+  fetchHealth();
+});
+
+export function fetchHealth() {
   fetch("/api/health")
     .then((response) => {
       return response.json();
@@ -8,10 +12,18 @@ document.addEventListener("DOMContentLoaded", () => {
       populateHealth(data);
     })
     .catch((error) => console.error("Error fetching health data:", error));
-});
+}
 
 export function populateHealth(data) {
   const healthDiv = document.getElementById("health");
+  healthDiv.innerHTML = "";
+
+  const currentTime = new Date().toLocaleTimeString();
+
+  const description = document.createElement("p");
+  description.textContent = `Health per: /api/health @ ${currentTime}`;
+  healthDiv.appendChild(description);
+
   for (const [section, sectionData] of Object.entries(data)) {
     const sectionContainer = document.createElement("p");
     sectionContainer.classList.add("health-table");
@@ -74,3 +86,7 @@ function generateTable(data) {
   }
   return table;
 }
+
+const intervalId = setInterval(fetchHealth, 1000);
+
+setTimeout(() => clearInterval(intervalId), 10000);

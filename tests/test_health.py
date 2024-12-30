@@ -45,7 +45,7 @@ def test_health_api_error(client, apa, monkeypatch):
     assert not data["core"]["alive"]
 
 
-def test_update_podcast_health() -> None:
+def test_update_podcast_health():
     """Update the podcast episode info."""
     rss_path = os.path.join(pytest.TEST_RSS_LOCATION, "test_valid.rss")
 
@@ -61,7 +61,7 @@ def test_update_podcast_health() -> None:
     ap_health.update_podcast_status("test", healthy=True)
 
 
-def test_podcast_health_errors(caplog) -> None:
+def test_podcast_health_errors(caplog):
     """Test the podcast section of the health API endpoint."""
     rss_str = pytest.DUMMY_RSS_STR.replace("encoding='utf-8'", "")
     assert "encoding" not in rss_str

@@ -40,6 +40,16 @@ class Webpages:
         """Return the length of the webpages."""
         return len(self._webpages)
 
+    def get_list(self) -> dict[str, str]:
+        """Return the items of the webpages."""
+        item_list = self._webpages.items()
+
+        return_value = {}
+        for _, value in item_list:
+            return_value[value.path] = value.mime
+
+        return return_value
+
     def add(self, path: str, mime: str, content: str | bytes) -> None:
         """Add a webpage."""
         self._webpages[path] = Webpage(path=path, mime=mime, content=content)
@@ -52,13 +62,32 @@ class Webpages:
         """Get a webpage."""
         return self._webpages[path]
 
-    def generate_header(self, path: str) -> str:
+    def generate_header(self, path: str, debug: bool = False) -> str:  # noqa: FBT001, FBT002
         """Get the header for a webpage."""
+        reload_a_tag = """
+ | <a href='#' onclick="
+const originalText = document.getElementById('debug_status').innerHTML;
+
+function resetText() {
+    document.getElementById('debug_status').innerHTML = originalText;
+}
+
+fetch('/api/reload')
+.then(response => response.json())
+.then(data => {
+    console.log(data.msg);
+    document.getElementById('debug_status').innerHTML = 'RELOAD SENT';
+    setTimeout(resetText, 3000);
+})
+.catch(error => console.error(error));
+return false;"
+">Reload</a>"""
+
         header = "<header>"
 
         for webpage in self.WEBPAGE_NICE_NAMES:
             if webpage == "about.html":
-                about_page_exists = self._webpages.get("about.html")
+                about_page_exists = self._webpages.get("about.html") or path == "about.html"
                 if not about_page_exists:
                     continue
 
@@ -68,6 +97,12 @@ class Webpages:
                 header += f'<a href="{webpage}">{self.WEBPAGE_NICE_NAMES[webpage]}</a> | '
 
         header = header[:-3]
+
+        if debug:
+            header += " | <a href='/health'>Health</a>"
+            header += reload_a_tag
+            header += " | <a href='/console'>Flask Console</a>"
+            header += " | <a id='debug_status' style='color: #ff0000'>DEBUG ENABLED</a>"
 
         header += "<hr></header>"
         return header

@@ -50,7 +50,11 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
 def test_app_paths_not_generated(apa, client_live, monkeypatch):
     """Test the error for when a page has not been generated."""
     # Ensure that no webpages can be added by the thread.
-    monkeypatch.setattr("archivepodcast.ap_archiver.Webpages.add", lambda _: None)
+
+    def mock_add_webpage(*args, **kwargs):
+        pass
+
+    monkeypatch.setattr("archivepodcast.ap_archiver.Webpages.add", mock_add_webpage)
 
     from archivepodcast import bp_archivepodcast
     from archivepodcast.ap_archiver import Webpages
@@ -82,8 +86,8 @@ def test_app_path_about(apa, client_live, tmp_path):
     bp_archivepodcast.ap = apa
 
     # Since we are looping...
-    if os.path.exists(os.path.join(tmp_path, "web", "about.html")):
-        os.remove(os.path.join(tmp_path, "web", "about.html"))
+    if os.path.exists(os.path.join(tmp_path, "about.md")):
+        os.remove(os.path.join(tmp_path, "about.md"))
 
     apa.load_about_page()
     response = client_live.get("/about.html")
@@ -91,7 +95,7 @@ def test_app_path_about(apa, client_live, tmp_path):
         response.status_code == HTTPStatus.NOT_FOUND
     ), f"About page should not exist, got status code: {response.status_code}"
 
-    with open(os.path.join(tmp_path, "web", "about.html"), "w") as file:
+    with open(os.path.join(tmp_path, "about.md"), "w") as file:
         file.write("Test")
 
     apa.load_about_page()
@@ -114,11 +118,16 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
         bp_archivepodcast.home_filelist,
         bp_archivepodcast.home_web_player,
         bp_archivepodcast.api_health,
+        bp_archivepodcast.api_reload,
+        bp_archivepodcast.generate_404,
     ]
 
     for function_path in required_to_be_initialized_http:
         response = function_path()
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+
+    response = bp_archivepodcast.generate_not_generated_error("test.html")  # This one needs a parameter
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     required_to_be_initialized_str_arg = [
         bp_archivepodcast.send_content,
@@ -198,7 +207,7 @@ def test_rss_feed_type_error(
 
     client_live = app_live.test_client()
 
-    def return_type_error(*args, **kwargs) -> None:
+    def return_type_error(*args, **kwargs):
         raise TypeError
 
     monkeypatch.setattr(ap, "get_rss_feed", return_type_error)
@@ -227,12 +236,12 @@ def test_rss_feed_unhandled_error(
     with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
         file.write(pytest.DUMMY_RSS_STR)
 
-    def return_key_error(*args, **kwargs) -> None:
+    def return_key_error(*args, **kwargs):
         raise KeyError
 
     monkeypatch.setattr(ap, "get_rss_feed", return_key_error)
 
-    def return_unhandled_error(*args, **kwargs) -> None:
+    def return_unhandled_error(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr("lxml.etree.tostring", return_unhandled_error)
@@ -282,7 +291,7 @@ def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, ca
 
     get_test_config("testing_true_valid.toml")
 
-    def load_config_exception(*args, **kwargs) -> None:
+    def load_config_exception(*args, **kwargs):
         raise FakeExceptionError
 
     monkeypatch.setattr(bp_archivepodcast.ap, "load_config", load_config_exception)
@@ -320,7 +329,7 @@ def test_file_list(apa, client_live, tmp_path):
         file.write("test")
 
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
-    ap.render_filelist_html()
+    ap._render_files()
 
     response = client_live.get("/filelist.html")
 
@@ -345,7 +354,7 @@ def test_file_list_s3(apa_aws, client_live_s3):
     assert content_s3_path in file_cache
 
     # Check that the file is in filelist.html
-    apa_aws.render_filelist_html()
+    apa_aws._render_files()
 
     response = client_live_s3.get("/filelist.html")
     assert response.status_code == HTTPStatus.OK
@@ -354,3 +363,25 @@ def test_file_list_s3(apa_aws, client_live_s3):
 
     assert "/index.html" in response_html
     assert content_s3_path in response_html
+
+
+def test_api_reload(apa, client_live, caplog):
+    """Test the reload API endpoint."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
+    apa.debug = True
+
+    response = client_live.get("/api/reload")
+    assert response.status_code == HTTPStatus.OK
+
+
+def test_api_reload_no_debug(apa, client_live, caplog):
+    """Test the reload API endpoint."""
+    from archivepodcast import bp_archivepodcast
+
+    bp_archivepodcast.ap = apa
+    apa.debug = False
+
+    response = client_live.get("/api/reload")
+    assert response.status_code == HTTPStatus.FORBIDDEN

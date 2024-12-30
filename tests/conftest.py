@@ -5,18 +5,16 @@ Fixtures defined in a conftest.py can be used by any test in that package withou
 
 import os
 import shutil
+import threading
 import time
-import typing
-from collections.abc import Callable
 
 import boto3
 import pytest
 import tomlkit
-from flask import Flask
-from flask.testing import FlaskClient, FlaskCliRunner
 from moto import mock_aws
 
 from archivepodcast.ap_archiver import PodcastArchiver, PodcastDownloader
+from archivepodcast.logger import TRACE_LEVEL_NUM
 
 FLASK_ROOT_PATH = os.getcwd()
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
@@ -38,13 +36,14 @@ def pytest_configure():
     pytest.TEST_WAV_FILE = TEST_WAV_FILE
     pytest.DUMMY_RSS_STR = DUMMY_RSS_STR
     pytest.TEST_RSS_LOCATION = TEST_RSS_LOCATION
+    pytest.TRACE_LEVEL_NUM = TRACE_LEVEL_NUM
 
 
 # region: Flask
 
 
 @pytest.fixture
-def app(tmp_path, get_test_config) -> Flask:
+def app(tmp_path, get_test_config):
     """This fixture uses the default config within the flask app."""
     from archivepodcast import create_app
 
@@ -63,7 +62,7 @@ def app_live(
     mock_get_podcast_source_rss,
     mock_podcast_source_images,
     mock_podcast_source_mp3,
-) -> Flask:
+):
     """This fixture uses the default config within the flask app."""
     mock_get_podcast_source_rss("test_valid.rss")
 
@@ -81,7 +80,7 @@ def app_live_s3(
     mock_podcast_source_mp3,
     mocked_aws,
     s3,
-) -> Flask:
+):
     """This fixture uses the default config within the flask app."""
     mock_get_podcast_source_rss("test_valid.rss")
 
@@ -95,25 +94,25 @@ def app_live_s3(
 
 
 @pytest.fixture
-def client(app: Flask) -> FlaskClient:
+def client(app):
     """This returns a test client for the default app()."""
     return app.test_client()
 
 
 @pytest.fixture
-def client_live(app_live: Flask) -> FlaskClient:
+def client_live(app_live):
     """This returns a test client for the default app()."""
     return app_live.test_client()
 
 
 @pytest.fixture
-def client_live_s3(app_live_s3) -> FlaskClient:
+def client_live_s3(app_live_s3):
     """This returns a test client for the default app()."""
     return app_live_s3.test_client()
 
 
 @pytest.fixture
-def runner(app: Flask) -> FlaskCliRunner:
+def runner(app):
     """TODO?????"""
     return app.test_cli_runner()
 
@@ -124,10 +123,10 @@ def runner(app: Flask) -> FlaskCliRunner:
 
 
 @pytest.fixture
-def get_test_config() -> Callable:
+def get_test_config():
     """Function returns a function, which is how it needs to be."""
 
-    def _get_test_config(config_name: str) -> dict:
+    def _get_test_config(config_name):
         """Load all the .toml configs into a single dict."""
         filepath = os.path.join(TEST_CONFIGS_LOCATION, config_name)
 
@@ -138,13 +137,13 @@ def get_test_config() -> Callable:
 
 
 @pytest.fixture
-def place_test_config() -> Callable:
+def place_test_config():
     """Fixture that places a config in the tmp_path.
 
     Returns: a function to place a config in the tmp_path.
     """
 
-    def _place_test_config(config_name: str, path: str) -> None:
+    def _place_test_config(config_name, path):
         """Place config in tmp_path by name."""
         filepath = os.path.join(TEST_CONFIGS_LOCATION, config_name)
 
@@ -198,7 +197,7 @@ def apa(tmp_path, get_test_config, caplog):
         app_config=config["app"], podcast_list=config["podcast"], instance_path=tmp_path, root_path=FLASK_ROOT_PATH
     )
 
-    while apa.health.core.currently_loading_config:
+    while apa.health.core.currently_loading_config or apa.health.core.currently_rendering:
         time.sleep(0.05)
 
     return apa
@@ -230,7 +229,7 @@ def apa_aws(tmp_path, get_test_config, no_render_files, caplog, s3, mocked_aws):
         root_path=FLASK_ROOT_PATH,
     )
 
-    while apa_aws.health.core.currently_loading_config:
+    while apa_aws.health.core.currently_loading_config or apa_aws.health.core.currently_rendering:
         time.sleep(0.05)
 
     return apa_aws
@@ -253,7 +252,7 @@ def apd(apa, get_test_config, caplog):
 
 
 @pytest.fixture
-def apd_aws(apa_aws, get_test_config, caplog):
+def apd_aws(apa_aws, get_test_config, mocked_aws, caplog):
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
@@ -270,10 +269,10 @@ def apd_aws(apa_aws, get_test_config, caplog):
 
 
 @pytest.fixture
-def mock_get_podcast_source_rss(requests_mock) -> Callable:
+def mock_get_podcast_source_rss(requests_mock):
     """Return a podcast definition from the config."""
 
-    def _mock_get_podcast_source_rss(rss_name: str) -> typing.Any:
+    def _mock_get_podcast_source_rss(rss_name):
         """Return the rss file."""
         filepath = os.path.join(TEST_RSS_LOCATION, rss_name)
 
@@ -313,3 +312,29 @@ def mock_podcast_source_wav(requests_mock, tmp_path):
 
 
 # endregion
+
+
+@pytest.fixture(autouse=True)
+def error_on_raise_in_thread(monkeypatch):
+    """Replaces Thread with a a wrapper to record any exceptions and re-raise them after test execution.
+
+    In case multiple threads raise exceptions only one will be raised.
+    """
+    last_exception = None
+
+    class ThreadWrapper(threading.Thread):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+        def run(self):
+            """Mocked thread.run() method to capture exceptions."""
+            try:
+                super().run()
+            except BaseException as e:
+                nonlocal last_exception
+                last_exception = e
+
+    monkeypatch.setattr("threading.Thread", ThreadWrapper)
+    yield
+    if last_exception:
+        raise last_exception

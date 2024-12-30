@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.2.5"
+version = "1.3.0"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -32,6 +32,7 @@ type = [
     "types-lxml",
     "types-requests",
     "types-psutil",
+    "types-Markdown",
     "boto3-stubs[s3]",
 ]
 
@@ -92,10 +93,13 @@ ignore = [
     "ANN001",  # KG Tests don't need type hints.
     "ANN002",  # KG args/kwargs don't need type hints.
     "ANN003",  # KG args/kwargs don't need type hints.
+    "ANN202",  # KG No need to specify return type for tests.
+    "ANN204",  # KG No need to specify return type for tests.
     "S311",    # KG I'll assume no real crypto will be done in PyTest.
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
     "ANN401",  # KG Tests can return typing.Any.
+    "BLE001",  # KG Tests can use BaseException.
 ]
 
 

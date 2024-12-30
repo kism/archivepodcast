@@ -7,7 +7,7 @@ from flask import Flask, Response
 from . import bp_archivepodcast, logger
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 
-__version__ = "1.2.5"  # This is the version of the app, used in pyproject.toml, enforced in a test.
+__version__ = "1.3.0"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
 
 def create_app(test_config: dict | None = None, instance_path: str | None = None) -> Flask:
@@ -36,6 +36,8 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
 
     # Flask config, at the root of the config object.
     app.config.from_mapping(ap_conf["flask"])
+
+    app.logger.warning(app.debug)
 
     # Other sections handled by config.py
     for key, value in ap_conf.items():

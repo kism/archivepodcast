@@ -2,17 +2,14 @@
 
 import logging
 import os
-from collections.abc import Generator
 
 import pytest
-import pytest_mock
-from flask import Flask
 
 import archivepodcast.logger
 
 
 @pytest.fixture
-def logger() -> Generator:
+def logger():
     """Logger to use in unit tests, including cleanup."""
     logger = logging.getLogger("TEST_LOGGER")
 
@@ -26,7 +23,7 @@ def logger() -> Generator:
         handler.close()
 
 
-def test_logging_permissions_error(logger, tmp_path, mocker: pytest_mock.plugin.MockerFixture):
+def test_logging_permissions_error(logger, tmp_path, mocker):
     """Test logging, mock a permission error."""
     from archivepodcast.logger import _add_file_handler
 
@@ -48,7 +45,7 @@ def test_config_logging_to_dir(logger, tmp_path):
         _add_file_handler(logger, tmp_path)
 
 
-def test_handler_console_added(logger, app: Flask):
+def test_handler_console_added(logger, app):
     """Test logging console handler."""
     logging_conf = {"path": "", "level": "INFO"}  # Test only console handler
 
@@ -61,7 +58,7 @@ def test_handler_console_added(logger, app: Flask):
     assert len(logger.handlers) == 1
 
 
-def test_handler_file_added(logger, tmp_path, app: Flask):
+def test_handler_file_added(logger, tmp_path, app):
     """Test logging file handler."""
     logging_conf = {"path": os.path.join(tmp_path, "test.log"), "level": "INFO"}  # Test file handler
 
@@ -83,7 +80,7 @@ def test_handler_file_added(logger, tmp_path, app: Flask):
         ("INVALID", 20),
     ],
 )
-def test_set_log_level(log_level_in: str | int, log_level_expected: int, logger):
+def test_set_log_level(log_level_in, log_level_expected, logger):
     """Test if _set_log_level results in correct log_level."""
     from archivepodcast.logger import _set_log_level
 
@@ -99,7 +96,7 @@ def test_colour():
     formatter = ColorFormatter()
 
     class TestRecord(logging.LogRecord):
-        def __init__(self, levelno, msg, thread_name="TestThread", name="Test_Logger") -> None:
+        def __init__(self, levelno, msg, thread_name="TestThread", name="Test_Logger"):
             self.levelno = levelno
             self.msg = msg
             self.name = name
@@ -125,10 +122,10 @@ def test_colour():
 
 def test_trace_log_level():
     """Test trace log level."""
-    from archivepodcast.logger import TRACE_LEVEL_NUM, CustomLogger
+    from archivepodcast.logger import CustomLogger
 
     custom_logger = CustomLogger("TEST_LOGGER")
     custom_logger.trace("Test trace message")
 
-    assert logging.getLevelName(TRACE_LEVEL_NUM) == "TRACE"
-    assert logging._nameToLevel["TRACE"] == TRACE_LEVEL_NUM
+    assert logging.getLevelName(pytest.TRACE_LEVEL_NUM) == "TRACE"
+    assert logging._nameToLevel["TRACE"] == pytest.TRACE_LEVEL_NUM
