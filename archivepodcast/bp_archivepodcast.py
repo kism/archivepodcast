@@ -182,6 +182,7 @@ def home_guide() -> Response:
     """Podcast app guide."""
     return send_ap_cached_webpage("guide.html")
 
+
 @bp.route("/webplayer.html")
 def home_web_player() -> Response:
     """Podcast app guide."""
