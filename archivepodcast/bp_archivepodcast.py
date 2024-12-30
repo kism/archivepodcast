@@ -139,10 +139,7 @@ def api_reload() -> Response:
     if not ap.debug:
         return Response("Config reload not allowed in production", status=HTTPStatus.FORBIDDEN)
 
-    try:
-        reload_config(signal.SIGHUP)
-    except Exception:
-        logger.exception("❌ Error reloading config")
+    reload_config(signal.SIGHUP)
 
     return Response("Config reloaded", status=HTTPStatus.OK)
 
