@@ -64,6 +64,25 @@ class Webpages:
 
     def generate_header(self, path: str, debug: bool = False) -> str:  # noqa: FBT001, FBT002
         """Get the header for a webpage."""
+        reload_a_tag = """
+ | <a href='#' onclick="
+const originalText = document.getElementById('debug_status').innerHTML;
+
+function resetText() {
+    document.getElementById('debug_status').innerHTML = originalText;
+}
+
+fetch('/api/reload')
+.then(response => response.json())
+.then(data => {
+    console.log(data.msg);
+    document.getElementById('debug_status').innerHTML = 'RELOAD SENT';
+    setTimeout(resetText, 3000);
+})
+.catch(error => console.error(error));
+return false;"
+">Reload</a>"""
+
         header = "<header>"
 
         for webpage in self.WEBPAGE_NICE_NAMES:
@@ -81,16 +100,9 @@ class Webpages:
 
         if debug:
             header += " | <a href='/health'>Health</a>"
-            header += (
-                " | <a href='#' "
-                "onclick=\"fetch('/api/reload')"
-                ".then(response => response.json())"
-                ".then(data => console.log(data.msg)).catch(error => console.error(error));"
-                " return false;"
-                '">Reload</a>'
-            )
+            header += reload_a_tag
             header += " | <a href='/console'>Flask Console</a>"
-            header += " | <a style='color: #ff0000'>DEBUG ENABLED</a>"
+            header += " | <a id='debug_status' style='color: #ff0000'>DEBUG ENABLED</a>"
 
         header += "<hr></header>"
         return header

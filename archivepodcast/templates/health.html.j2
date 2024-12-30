@@ -23,9 +23,8 @@
     <main class="contained-content">
         <h1>{{ app_config['web_page']['title']|e }} Health</h1>
         {{ header | safe }}
-        <div class="file-list" id="health">
-            <p>Health per: /api/health</p>
-        </div>
+        <div id="check_box_container"></div>
+        <div class="file-list" id="health"></div>
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
     </main>
 </body>
