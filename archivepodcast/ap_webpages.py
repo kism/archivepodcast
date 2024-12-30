@@ -40,6 +40,16 @@ class Webpages:
         """Return the length of the webpages."""
         return len(self._webpages)
 
+    def get_list(self) -> list[str]:
+        """Return the items of the webpages."""
+        item_list = self._webpages.items()
+
+        return_value = {}
+        for _, value in item_list:
+            return_value[value.path] = value.mime
+
+        return return_value
+
     def add(self, path: str, mime: str, content: str | bytes) -> None:
         """Add a webpage."""
         self._webpages[path] = Webpage(path=path, mime=mime, content=content)
