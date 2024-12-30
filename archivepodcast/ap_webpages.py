@@ -81,7 +81,14 @@ class Webpages:
 
         if debug:
             header += " | <a href='/health'>Health</a>"
-            header += " | <a href='/api/reload' target='_blank' >Reload</a>"
+            header += (
+                " | <a href='#' "
+                "onclick=\"fetch('/api/reload')"
+                ".then(response => response.json())"
+                ".then(data => console.log(data.msg)).catch(error => console.error(error));"
+                " return false;"
+                '">Reload</a>'
+            )
             header += " | <a href='/console'>Flask Console</a>"
             header += " | <a style='color: #ff0000'>DEBUG ENABLED</a>"
 

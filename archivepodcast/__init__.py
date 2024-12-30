@@ -37,6 +37,8 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     # Flask config, at the root of the config object.
     app.config.from_mapping(ap_conf["flask"])
 
+    app.logger.warning(app.debug)
+
     # Other sections handled by config.py
     for key, value in ap_conf.items():
         if key != "flask":

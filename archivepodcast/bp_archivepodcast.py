@@ -136,12 +136,15 @@ def api_reload() -> Response:
     if not ap:
         return generate_not_initialized_error()
 
+    msg_success = {"msg": "Config reload command sent"}
+    msg_forbidden = {"msg": "Config reload not allowed in production"}
+
     if not ap.debug:
-        return Response("Config reload not allowed in production", status=HTTPStatus.FORBIDDEN)
+        return Response(json.dumps(msg_forbidden), status=HTTPStatus.FORBIDDEN)
 
     reload_config(signal.SIGHUP)
 
-    return Response("Config reloaded", status=HTTPStatus.OK)
+    return Response(json.dumps(msg_success), status=HTTPStatus.OK)
 
 
 @bp.route("/api/health")
