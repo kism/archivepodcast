@@ -375,6 +375,9 @@ def generate_not_generated_error(webpage_name: str) -> Response:
 
 def generate_404() -> Response:
     """We use the 404 template in a couple places."""
+    if not ap:
+        return generate_not_initialized_error()
+
     returncode = HTTPStatus.NOT_FOUND
     render = render_template(
         "error.html.j2",
