@@ -92,16 +92,19 @@ return false;
                     continue
 
             if webpage == path:
-                header += f'<a href="{webpage}" class="active">{self.WEBPAGE_NICE_NAMES[webpage]}</a> | '
+                header += f'<div class="active">{self.WEBPAGE_NICE_NAMES[webpage]}</div> | '
             else:
                 header += f'<a href="{webpage}">{self.WEBPAGE_NICE_NAMES[webpage]}</a> | '
 
         header = header[:-3]
 
         if debug:
-            header += ' | <a href="/health">Health</a>'
-            header += reload_a_tag.replace("\n","")
-            header += ' | <a href="/console">Flask Console</a>'
+            if path != "health.html":
+                header += ' | <a href="/health">Health</a>'
+            else:
+                header += ' | <div class="active">Health</div>'
+            header += reload_a_tag.replace("\n", "")
+            header += ' | <a href="/console" target=”_blank”>Flask Console</a>'
             header += ' | <a id="debug_status" style="color: #ff0000">DEBUG ENABLED</a>'
 
         header += "<hr></header>"

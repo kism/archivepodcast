@@ -20,7 +20,7 @@
 
 <body>
     <main class="contained-content">
-        <h1>About the {{ app_config['web_page']['title']|e }}</h1>
+        <h1>{{ app_config['web_page']['title']|e }}</h1>
         {{ header | safe }}
         {{ about_content | safe }}
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
