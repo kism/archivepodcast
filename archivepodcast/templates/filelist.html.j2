@@ -36,7 +36,7 @@
 
 <body>
     <main class="contained-content">
-        <h1>{{ app_config['web_page']['title']|e }} File List</h1>
+        <h1>{{ app_config['web_page']['title']|e }}</h1>
         {{ header | safe }}
         <p>List of everything in the archive, if an episode is deleted it will still exist here. {% if
             app_config['storage_backend']

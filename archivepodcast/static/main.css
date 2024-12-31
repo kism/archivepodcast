@@ -122,6 +122,12 @@ a:visited {
   background: #008080;
 }
 
+.active {
+  /* background-color: #008080; */
+  color: #ffffff;
+  display: inline;
+}
+
 header {
   font-size: smaller;
   margin: 10px 0 20px;
