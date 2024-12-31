@@ -138,3 +138,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~nowrap, overflow hidden on now-playing~~
 - test dumb time formats
 - test api reload fails in production
+- header as a table, or divs
