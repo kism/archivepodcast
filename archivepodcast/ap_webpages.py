@@ -26,10 +26,10 @@ class Webpages:
 
     WEBPAGE_NICE_NAMES: ClassVar[dict[str, str]] = {
         "index.html": "Home",
-        "about.html": "About",
         "guide.html": "Guide",
         "filelist.html": "File List",
         "webplayer.html": "Web Player",
+        "about.html": "About",
     }
 
     def __init__(self) -> None:
