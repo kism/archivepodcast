@@ -109,7 +109,7 @@ This will run a webapp on <http://localhost:5000> (configurable) that will:
 
 Development: `flask --app archivepodcast run --port 5000`
 
-Production: `waitress-serve --listen 0.0.0.0:5000 --call archivepodcast:create_app`
+Production: `waitress-serve --threads=4 --listen 0.0.0.0:5000 --call archivepodcast:create_app`
 
 An example guide on setting it up start to finish, with all features and saving episodes do disk can be found here [here](README_local.md). There are others for if you want to use s3 to host assets, or even host the whole thing on s3.
 
@@ -134,6 +134,7 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~render about page from markdown~~
 - ~~live reload in debug mode~~
 - ~~all pages in health~~
-- header shows current page in different style
+- ~~header shows current page in different style~~
+- ~~nowrap, overflow hidden on now-playing~~
 - test dumb time formats
-- nowrap, overflow hidden on now-playing
+- test api reload fails in production
