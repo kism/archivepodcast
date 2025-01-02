@@ -139,5 +139,5 @@ An example guide on setting it up start to finish, with all features and saving 
 - test dumb time formats
 - test api reload fails in production
 - header as a table, or divs
-- redirect / to index.html
-- put "about" at the end
+- ~~redirect / to index.html~~
+- ~~put "about" at the end~~

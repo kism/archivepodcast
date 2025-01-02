@@ -23,7 +23,6 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
         assert client
 
         valid_path_list = [
-            "/",
             "/index.html",
             "/guide.html",
             "/health",
@@ -64,7 +63,6 @@ def test_app_paths_not_generated(apa, client_live, monkeypatch):
     apa.webpages = Webpages()
 
     webpage_list = [
-        "/",
         "/index.html",
         "/guide.html",
         "/robots.txt",
@@ -112,7 +110,6 @@ def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplo
     bp_archivepodcast.ap = None
 
     required_to_be_initialized_http = [
-        bp_archivepodcast.home,
         bp_archivepodcast.home_index,
         bp_archivepodcast.home_guide,
         bp_archivepodcast.home_filelist,
