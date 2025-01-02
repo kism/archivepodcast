@@ -18,6 +18,7 @@ def test_home(client, apa):
 
     assert response.headers["Location"] == "/index.html"
 
+
 def test_home_index(client, apa):
     """Test the hello API endpoint. This one uses the fixture in conftest.py."""
     from archivepodcast import bp_archivepodcast
@@ -34,6 +35,7 @@ def test_home_index(client, apa):
     assert response.content_type == "text/html; charset=utf-8"
     # TEST: It is a webpage that we get back
     assert b"<!doctype html>" in response.data
+
 
 def test_static_js_exists(client, apa):
     """TEST: /static/archivepodcast.js loads."""
