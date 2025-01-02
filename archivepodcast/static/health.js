@@ -89,4 +89,4 @@ function generateTable(data) {
 
 const intervalId = setInterval(fetchHealth, 1000);
 
-setTimeout(() => clearInterval(intervalId), 10000);
+setTimeout(() => clearInterval(intervalId), 30000);

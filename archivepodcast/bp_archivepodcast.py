@@ -192,7 +192,9 @@ def home() -> Response:
 
     If you are serving static files with s3 or nginx, ensure that / redirects to /index.html,
     """
-    return send_ap_cached_webpage("index.html")
+    return Response(
+        "Redirecting to /index.html", status=HTTPStatus.TEMPORARY_REDIRECT, headers={"Location": "/index.html"}
+    )
 
 
 @bp.route("/index.html")
