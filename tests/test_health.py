@@ -82,3 +82,33 @@ def test_podcast_health_errors(caplog):
         ap_health.update_podcast_episode_info("test", tree)
 
     assert "Unable to parse pubDate: INVALID" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "date",
+    [
+        "Mon, 16 Sep 2024 18:44:16 +0000",
+        "Mon, 16 Sep 2024 18:44:16 GMT",
+    ],
+)
+def test_podcast_health_date_formats(caplog, date):
+    """Test the podcast section of the health API endpoint."""
+    rss_str = pytest.DUMMY_RSS_STR.replace("encoding='utf-8'", "")
+    assert "encoding" not in rss_str
+    tree = etree.fromstring(rss_str)
+
+    ap_health = PodcastArchiverHealth()
+
+    with caplog.at_level(logging.ERROR):
+        ap_health.update_podcast_episode_info("test", tree)
+
+    assert "Error parsing podcast episode info" in caplog.text
+
+    tree = etree.fromstring(
+        f"<?xml version='1.0'?><rss><channel><item><pubDate>{date}</pubDate></item></channel></rss>"
+    )
+
+    with caplog.at_level(logging.ERROR):
+        ap_health.update_podcast_episode_info("test", tree)
+
+    assert "Unable to parse pubDate: INVALID" not in caplog.text

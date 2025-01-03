@@ -116,28 +116,5 @@ An example guide on setting it up start to finish, with all features and saving 
 ## Todo
 
 - Container Registry
-- ~~make mypy more sensitive~~
-- ~~fix css~~
-- ~~use noscript~~
-- ~~Better css~~
-- ~~Prefetching~~
-- ~~put rss into the page cache maybe~~ naa
-- ~~mime type in file list?~~
-  - ~~implement audio player~~
-- ~~implement api~~
-  - ~~health page~~
-    - ~~podcast list~~
-    - ~~flask health~~
-- ~~check last generated~~
-- ~~prevent arbitrary object fields being created~~
-- ~~better header generation~~
-- ~~render about page from markdown~~
-- ~~live reload in debug mode~~
-- ~~all pages in health~~
-- ~~header shows current page in different style~~
-- ~~nowrap, overflow hidden on now-playing~~
-- test dumb time formats
-- test api reload fails in production
 - header as a table, or divs
-- ~~redirect / to index.html~~
-- ~~put "about" at the end~~
+
