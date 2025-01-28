@@ -162,14 +162,14 @@ def test_grab_podcasts_live(
 
     assert "Processing podcast to archive: PyTest Podcast [Archive S3]" in caplog.text
     assert "Wrote rss to disk:" in caplog.text
-    assert "Hosted: http://localhost:5000/rss/test" in caplog.text
+    assert "Hosted: http://localhost:5100/rss/test" in caplog.text
 
     rss = str(apa_aws.get_rss_feed("test"))
 
     assert "PyTest Podcast [Archive S3]" in rss
-    assert "http://localhost:5000/content/test/20200101-Test-Episode.mp3" in rss
-    assert "http://localhost:5000/content/test/PyTest-Podcast-Archive-S3.jpg" in rss
-    assert "<link>http://localhost:5000/</link>" in rss
+    assert "http://localhost:5100/content/test/20200101-Test-Episode.mp3" in rss
+    assert "http://localhost:5100/content/test/PyTest-Podcast-Archive-S3.jpg" in rss
+    assert "<link>http://localhost:5100/</link>" in rss
     assert "<title>Test Episode</title>" in rss
 
     assert "https://pytest.internal/images/test.jpg" not in rss

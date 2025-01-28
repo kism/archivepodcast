@@ -22,7 +22,7 @@ Run the program once manually to create the default config.toml and then fill it
 
 ```bash
 cd /opt/archivepodcast
-sudo -u apuser .venv/bin/waitress-serve --port=5000 --call 'archivepodcast:create_app'
+sudo -u apuser .venv/bin/waitress-serve --port=5100 --call 'archivepodcast:create_app'
 ```
 
 Edit: `/opt/archivepodcast/instance/config.toml` to your liking.
@@ -62,7 +62,7 @@ After=network.target
 [Service]
 User=apuser
 WorkingDirectory=/opt/archivepodcast
-ExecStart=/opt/archivepodcast/.venv/bin/waitress-serve --port=5000 --call 'archivepodcast:create_app'
+ExecStart=/opt/archivepodcast/.venv/bin/waitress-serve --port=5100 --call 'archivepodcast:create_app'
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 
@@ -80,7 +80,7 @@ I wont go into detail on nginx reverse proxies, I add this as a server with my d
 server {
     server_name mycooldomain.org;
     location / {
-        proxy_pass http://localhost:5000/;
+        proxy_pass http://localhost:5100/;
     }
 }
 ```

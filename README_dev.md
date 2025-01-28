@@ -8,7 +8,7 @@
 uv venv
 source .venv/bin/activate
 uv sync
-flask --app archivepodcast run --port 5000
+flask --app archivepodcast run --port 5100
 ```
 
 If you wish to upgrade packages

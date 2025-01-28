@@ -44,7 +44,7 @@ The default config will not be enough to start the program as you need to define
 
 ```toml
 [app]
-inet_path = "http://localhost:5000/"  # URL of the webapp, must match what users connect to
+inet_path = "http://localhost:5100/"  # URL of the webapp, must match what users connect to
 storage_backend = "local"             # Choices are "local" or "s3"
 ```
 
@@ -100,16 +100,16 @@ path = ""      # Path to the log file, empty string will log to stdout
 
 ## Running archivepodcast webapp
 
-This will run a webapp on <http://localhost:5000> (configurable) that will:
+This will run a webapp on <http://localhost:5100> (configurable) that will:
 
 - Run persistently
 - Host RSS feeds of the podcasts
 - If `"live" : true` in config json is set it will look for and download new episodes every hour
 - If you send it a SIGHUP command it will reload the configuration, be sure to check the logs to see if it was successful.
 
-Development: `flask --app archivepodcast run --port 5000`
+Development: `flask --app archivepodcast run --port 5100`
 
-Production: `waitress-serve --threads=4 --listen 0.0.0.0:5000 --call archivepodcast:create_app`
+Production: `waitress-serve --threads=4 --listen 0.0.0.0:5100 --call archivepodcast:create_app`
 
 An example guide on setting it up start to finish, with all features and saving episodes do disk can be found here [here](README_local.md). There are others for if you want to use s3 to host assets, or even host the whole thing on s3.
 
