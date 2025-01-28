@@ -237,7 +237,7 @@ class PodcastArchiver:
             }
         )
         logger.info(
-            f"📄 Hosted: {self.app_config['inet_path']}rss/{ podcast['name_one_word'] }",
+            f"📄 Hosted: {self.app_config['inet_path']}rss/{podcast['name_one_word']}",
         )
 
         # Upload to s3 if we are in s3 mode

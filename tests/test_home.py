@@ -92,6 +92,6 @@ def test_fonts_exist(client, apa):
     for font in font_list:
         response = client.get(font)
         assert response.status_code == HTTPStatus.OK, f"Failed to get {font}"
-        assert (
-            "font/woff2" in response.content_type
-        ), f"Content type is not woff2 for {font}, got {response.content_type}, size {len(response.data)}"
+        assert "font/woff2" in response.content_type, (
+            f"Content type is not woff2 for {font}, got {response.content_type}, size {len(response.data)}"
+        )

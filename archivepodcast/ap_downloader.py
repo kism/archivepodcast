@@ -434,7 +434,7 @@ class PodcastDownloader:
             ff = ffmpeg.output(
                 input_wav,
                 filename=mp3_file_path,
-                format="mp3",
+                codec="mp3",
                 ab="4",
             )  # VBR v4 might be overkill for voice
 
@@ -456,14 +456,14 @@ class PodcastDownloader:
             if s3_file_path[0] == "/":
                 s3_file_path = s3_file_path[1:]
 
-            msg = f"Checking length of s3 object: { s3_file_path }"
+            msg = f"Checking length of s3 object: {s3_file_path}"
             logger.trace(msg)
             response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path)
             new_length = response["ContentLength"]
-            msg = f"Length of converted wav file { s3_file_path }: { new_length }"
+            msg = f"Length of converted wav file {s3_file_path}: {new_length}"
         else:
             new_length = os.stat(mp3_file_path).st_size
-            msg = f"Length of converted wav file { mp3_file_path }: { new_length }"
+            msg = f"Length of converted wav file {mp3_file_path}: {new_length}"
 
         logger.trace(msg)
 

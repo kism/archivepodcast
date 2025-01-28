@@ -13,9 +13,9 @@ def test_version_pyproject():
     """Test version variable."""
     with open("pyproject.toml", "rb") as f:
         pyproject_toml = tomlkit.load(f)
-    assert (
-        pyproject_toml["project"]["version"] == archivepodcast.__version__
-    ), "Ensure pyproject.toml version matches __init__.py"
+    assert pyproject_toml["project"]["version"] == archivepodcast.__version__, (
+        "Ensure pyproject.toml version matches __init__.py"
+    )
 
 
 def test_version_lock():
@@ -27,9 +27,9 @@ def test_version_lock():
 
     for package in uv_lock["package"]:
         if package["name"] == "archivepodcast":
-            assert (
-                package["version"] == archivepodcast.__version__
-            ), "uv.lock package version not in-sync, run: uv sync --upgrade"
+            assert package["version"] == archivepodcast.__version__, (
+                "uv.lock package version not in-sync, run: uv sync --upgrade"
+            )
             found_uv_lock_version = True
 
     assert found_uv_lock_version, "Ensure archivepodcast is in uv.lock"

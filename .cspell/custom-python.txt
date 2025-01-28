@@ -9,3 +9,5 @@ monkeypatch
 addopts
 htmlcov
 autouse
+lavfi
+anullsrc

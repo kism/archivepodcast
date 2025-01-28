@@ -72,9 +72,9 @@ def test_app_paths_not_generated(apa, client_live, monkeypatch):
 
     for webpage in webpage_list:
         response = client_live.get(webpage)
-        assert (
-            response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-        ), f"Expected internal server error on {webpage}, got {response.status_code}"
+        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, (
+            f"Expected internal server error on {webpage}, got {response.status_code}"
+        )
 
 
 def test_app_path_about(apa, client_live, tmp_path):
@@ -89,9 +89,9 @@ def test_app_path_about(apa, client_live, tmp_path):
 
     apa.load_about_page()
     response = client_live.get("/about.html")
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"About page should not exist, got status code: {response.status_code}"
+    assert response.status_code == HTTPStatus.NOT_FOUND, (
+        f"About page should not exist, got status code: {response.status_code}"
+    )
 
     with open(os.path.join(tmp_path, "about.md"), "w") as file:
         file.write("Test")
