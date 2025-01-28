@@ -1,6 +1,8 @@
 const placeholder_image =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAC4jAAAuIwF4pT92AAAADUlEQVQI12M4ceLEfwAIDANY5PrZiQAAAABJRU5ErkJggg==";
 
+let current_podcast_cover_image = placeholder_image;
+
 export function playerSetCurrentEpisode(url, type, episodeName) {
   console.log("Setting player src to:", url);
   const player = document.getElementById("podcast_player");
@@ -8,6 +10,12 @@ export function playerSetCurrentEpisode(url, type, episodeName) {
   episodeTitle.textContent = `Player: ${episodeName}`;
   player.src = url;
   player.type = type;
+
+  try {
+    const cover_image_element = document.getElementById("podcast_player_cover");
+    cover_image_element.src = current_podcast_cover_image;
+    cover_image_element.style.display = "block";
+  } catch (error) {}
 }
 
 async function fetchAndParseXML(url) {
@@ -25,8 +33,6 @@ async function fetchAndParseXML(url) {
 
 export function populateEpisodeList(url) {
   const episodeList = document.getElementById("podcast_episode_list");
-  const cover_image_element = document.getElementById("podcast_player_cover");
-  cover_image_element.src = placeholder_image;
 
   if (!url || url === "") {
     console.log("No podcast selected");
@@ -41,8 +47,9 @@ export function populateEpisodeList(url) {
   fetchAndParseXML(url)
     .then((xmlDoc) => {
       try {
-        const cover_image = xmlDoc.getElementsByTagName("image")[0].getElementsByTagName("url")[0].textContent;
-        cover_image_element.src = cover_image;
+        current_podcast_cover_image = xmlDoc
+          .getElementsByTagName("image")[0]
+          .getElementsByTagName("url")[0].textContent;
       } catch (error) {
         console.error("Error loading cover image:", error);
       }
