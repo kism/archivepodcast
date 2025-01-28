@@ -29,6 +29,7 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
             <select id="podcast_select">
                 <option value="http://example.com/rss.xml">Test Podcast</option>
             </select><ul id="podcast_episode_list"></ul>
+            <img id="podcast_player_cover" />
             <p id="podcast_player_episode_name"></p>
             <audio id="podcast_player"></audio>
         `;
@@ -38,6 +39,9 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
     text: () => `
             <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
                 <channel>
+                <image>
+                    <url>http://example.com/cover.jpg</url>
+                </image>
                 <item>
                     <title>Test Episode 1</title>
                     <enclosure url="http://example.com/test1.mp3" type="audio/mpeg" />
@@ -68,10 +72,12 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
 
   const player = document.getElementById("podcast_player");
   const episodeTitle = document.getElementById("podcast_player_episode_name");
+  const coverImage = document.getElementById("podcast_player_cover");
 
   expect(player.src).toBe("http://example.com/test2.mp3");
   expect(player.type).toBe("audio/mpeg");
   expect(episodeTitle.textContent).toBe("Player: Test Episode 2");
+  expect(coverImage.src).toBe("http://example.com/cover.jpg");
 });
 
 test("Fail to fetch podcast, 404", async () => {
