@@ -430,7 +430,30 @@ thead th {
   max-width: 700px;
 }
 
+#podcast_player_cover_container {
+  display: inline-block;
+  max-height: 50px;
+  max-width: 50px;
+  height: 100%;
+  width: 100%;
+}
+
+#podcast_player_cover {
+  margin-left: 5px;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+#episode_name_and_player_container {
+  display: inline-block;
+  margin-left: 10px;
+  width: calc(100% - 70px);
+}
+
 #podcast_player_episode_name {
+  margin-top: 0;
+  margin-bottom: 5px;
   white-space: nowrap;
   overflow: hidden;
 }

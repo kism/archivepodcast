@@ -29,6 +29,11 @@ export function populateEpisodeList(url) {
     .then((xmlDoc) => {
       episodeList.innerHTML = "";
 
+      const cover_image = xmlDoc.getElementsByTagName("image")[0].getElementsByTagName("url")[0].textContent;
+      const cover_image_element = document.getElementById("podcast_player_cover");
+      cover_image_element.src = cover_image;
+
+
       const items = xmlDoc.getElementsByTagName("item");
 
       for (let i = 0; i < items.length; i++) {
@@ -47,6 +52,7 @@ export function populateEpisodeList(url) {
       episodeList.innerHTML = `<li>${error}</li>`;
     });
 }
+
 
 export function loadPodcast(event) {
   const selectedPodcast = event.target.value;

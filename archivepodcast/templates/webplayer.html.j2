@@ -23,7 +23,6 @@
         .file-list {
             display: none;
         }
-
     </style>
     <noscript>
         <style>
@@ -39,7 +38,9 @@
     <main class="contained-content">
         <h1>{{ app_config['web_page']['title']|e }}</h1>
         {{ header | safe }}
-        <noscript><p>This does not work without Javascript enabled!</p></noscript>
+        <noscript>
+            <p>This does not work without Javascript enabled!</p>
+        </noscript>
         <p>Use a podcast app per the guide if you want to track what you have listened to.</p>
         <select id="podcast_select" onchange="loadPodcast(event)">
             <option value="">Select a podcast</option>
@@ -55,8 +56,15 @@
     <div class="podcast-player-footer">
         <div class="podcast-player">
             <hr>
-            <p id="podcast_player_episode_name">Player: No episode loaded</p>
-            <audio id="podcast_player" class="contained-content" controls preload="metadata" style="width: 100%;" />
+            <div id="podcast_player_cover_container">
+            <img id="podcast_player_cover"
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAC4jAAAuIwF4pT92AAAADUlEQVQI12M4ceLEfwAIDANY5PrZiQAAAABJRU5ErkJggg=="
+                alt="Podcast cover" />
+            </div>
+            <div id="episode_name_and_player_container">
+                <p id="podcast_player_episode_name">Player: No episode loaded</p>
+                <audio id="podcast_player" class="contained-content" controls preload="metadata" style="width: 100%;" />
+            </div>
         </div>
     </div>
 </body>
