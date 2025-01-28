@@ -79,9 +79,12 @@ export function loadPodcast(event) {
 }
 
 export function showJSDivs() {
-  const cover_image_element = document.getElementById("podcast_player_cover");
-  cover_image_element.src = placeholder_image;
-  cover_image_element.style.display = "block";
+  try {
+    const cover_image_element = document.getElementById("podcast_player_cover");
+    cover_image_element.src = placeholder_image;
+    cover_image_element.style.display = "block";
+  } catch (error) {}
+
   const breadcrumbJSDiv = document.getElementById("podcast_select");
   if (breadcrumbJSDiv) {
     breadcrumbJSDiv.style.display = "block";

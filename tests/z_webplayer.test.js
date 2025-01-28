@@ -85,6 +85,7 @@ test("Fail to fetch podcast, 404", async () => {
             <select id="podcast_select">
                 <option value="http://example.com/rss.xml">Test Podcast</option>
             </select><ul id="podcast_episode_list"></ul>
+            <img id="podcast_player_cover" />
         `;
 
   global.fetch = vi.fn().mockResolvedValue({
@@ -106,11 +107,14 @@ test("Fail to fetch podcast, 404", async () => {
 test("showJSDivs shows the podcast_select div", () => {
   document.body.innerHTML = `
         <div id="podcast_select"></div>
+        <img id="podcast_player_cover" />
     `;
 
   showJSDivs();
 
   const breadcrumbJSDiv = document.getElementById("podcast_select");
+  const coverImage = document.getElementById("podcast_player_cover");
 
   expect(breadcrumbJSDiv.style.display).toBe("block");
+  expect(coverImage.style.display).toBe("block");
 });
