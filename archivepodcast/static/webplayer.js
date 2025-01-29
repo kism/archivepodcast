@@ -14,7 +14,6 @@ export function playerSetCurrentEpisode(url, type, episodeName) {
   try {
     const cover_image_element = document.getElementById("podcast_player_cover");
     cover_image_element.src = current_podcast_cover_image;
-    cover_image_element.style.display = "block";
   } catch (error) {}
 }
 
