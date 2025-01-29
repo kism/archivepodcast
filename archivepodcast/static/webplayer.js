@@ -3,11 +3,14 @@ const placeholder_image =
 
 let current_podcast_cover_image = placeholder_image;
 
-export function playerSetCurrentEpisode(url, type, episodeName) {
+export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
   console.log("Setting player src to:", url);
   const player = document.getElementById("podcast_player");
+  const podcastTitle = document.getElementById("podcast_player_podcast_name");
   const episodeTitle = document.getElementById("podcast_player_episode_name");
-  episodeTitle.textContent = `Player: ${episodeName}`;
+  podcastTitle.textContent = `${podcastName}`;
+  episodeTitle.textContent = `${episodeName}`;
+
   player.src = url;
   player.type = type;
 
@@ -43,6 +46,8 @@ export function populateEpisodeList(url) {
   episodeList.innerHTML = "Loading...";
   episodeList.style.display = "block";
 
+
+
   fetchAndParseXML(url)
     .then((xmlDoc) => {
       try {
@@ -52,6 +57,7 @@ export function populateEpisodeList(url) {
       } catch (error) {
         console.error("Error loading cover image:", error);
       }
+      const podcastName = xmlDoc.getElementsByTagName("title")[0].textContent;
 
       episodeList.innerHTML = "";
 
@@ -68,7 +74,7 @@ export function populateEpisodeList(url) {
         const url = item.getElementsByTagName("enclosure")[0].getAttribute("url");
         const type = item.getElementsByTagName("enclosure")[0].getAttribute("type");
         const li = document.createElement("li");
-        li.onclick = () => playerSetCurrentEpisode(url, type, title);
+        li.onclick = () => playerSetCurrentEpisode(url, type, title, podcastName);
         li.textContent = `${title}`;
         episodeList.appendChild(li);
       }
