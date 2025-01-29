@@ -3,18 +3,20 @@ const placeholder_image =
 
 let current_podcast_cover_image = placeholder_image;
 
-export function playerSetCurrentEpisode(url, type, episodeName) {
+export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
   console.log("Setting player src to:", url);
   const player = document.getElementById("podcast_player");
+  const podcastTitle = document.getElementById("podcast_player_podcast_name");
   const episodeTitle = document.getElementById("podcast_player_episode_name");
-  episodeTitle.textContent = `Player: ${episodeName}`;
+  podcastTitle.textContent = `${podcastName}`;
+  episodeTitle.textContent = `${episodeName}`;
+
   player.src = url;
   player.type = type;
 
   try {
     const cover_image_element = document.getElementById("podcast_player_cover");
     cover_image_element.src = current_podcast_cover_image;
-    cover_image_element.style.display = "block";
   } catch (error) {}
 }
 
@@ -54,6 +56,13 @@ export function populateEpisodeList(url) {
         console.error("Error loading cover image:", error);
       }
 
+      let podcastName = "-";
+      try {
+        podcastName = xmlDoc.getElementsByTagName("title")[0].textContent;
+      } catch (error) {
+        console.error("Error loading podcast name:", error);
+      }
+
       episodeList.innerHTML = "";
 
       const items = xmlDoc.getElementsByTagName("item");
@@ -69,7 +78,7 @@ export function populateEpisodeList(url) {
         const url = item.getElementsByTagName("enclosure")[0].getAttribute("url");
         const type = item.getElementsByTagName("enclosure")[0].getAttribute("type");
         const li = document.createElement("li");
-        li.onclick = () => playerSetCurrentEpisode(url, type, title);
+        li.onclick = () => playerSetCurrentEpisode(url, type, title, podcastName);
         li.textContent = `${title}`;
         episodeList.appendChild(li);
       }

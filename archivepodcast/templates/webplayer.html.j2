@@ -42,13 +42,15 @@
             <p>This does not work without Javascript enabled!</p>
         </noscript>
         <p>Use a podcast app per the guide if you want to track what you have listened to.</p>
-        <select id="podcast_select" onchange="loadPodcast(event)">
-            <option value="">Select a podcast</option>
-            {% for podcast in podcasts %}
-            <option value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}">{{ podcast['new_name'] }}
-            </option>
-            {% endfor %}
-        </select>
+        <div class="custom-select">
+            <select id="podcast_select" onchange="loadPodcast(event)">
+                <option value="">Select a podcast</option>
+                {% for podcast in podcasts %}
+                <option value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}">{{ podcast['new_name'] }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
         <ul id="podcast_episode_list" class="file-list"></ul>
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
     </main>
@@ -60,7 +62,8 @@
                 <img id="podcast_player_cover" src="" alt="Podcast cover" />
             </div>
             <div id="episode_name_and_player_container">
-                <p id="podcast_player_episode_name">Player: No episode loaded</p>
+                <p class="podcast-player-text" id="podcast_player_podcast_name">-</p>
+                <p class="podcast-player-text" id="podcast_player_episode_name">No episode loaded</p>
                 <audio id="podcast_player" class="contained-content" controls preload="metadata" style="width: 100%;" />
             </div>
         </div>
