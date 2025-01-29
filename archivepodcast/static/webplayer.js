@@ -46,8 +46,6 @@ export function populateEpisodeList(url) {
   episodeList.innerHTML = "Loading...";
   episodeList.style.display = "block";
 
-
-
   fetchAndParseXML(url)
     .then((xmlDoc) => {
       try {
@@ -57,7 +55,13 @@ export function populateEpisodeList(url) {
       } catch (error) {
         console.error("Error loading cover image:", error);
       }
-      const podcastName = xmlDoc.getElementsByTagName("title")[0].textContent;
+
+      let podcastName = "-";
+      try {
+        podcastName = xmlDoc.getElementsByTagName("title")[0].textContent;
+      } catch (error) {
+        console.error("Error loading podcast name:", error);
+      }
 
       episodeList.innerHTML = "";
 
