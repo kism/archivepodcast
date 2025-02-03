@@ -18,6 +18,21 @@ export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
     const cover_image_element = document.getElementById("podcast_player_cover");
     cover_image_element.src = current_podcast_cover_image;
   } catch (error) {}
+
+  if ("mediaSession" in navigator && "MediaMetadata" in window) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: episodeName,
+      artist: podcastName,
+      artwork: [
+        { src: current_podcast_cover_image, sizes: "96x96", type: "image/png" },
+        { src: current_podcast_cover_image, sizes: "128x128", type: "image/png" },
+        { src: current_podcast_cover_image, sizes: "192x192", type: "image/png" },
+        { src: current_podcast_cover_image, sizes: "256x256", type: "image/png" },
+        { src: current_podcast_cover_image, sizes: "384x384", type: "image/png" },
+        { src: current_podcast_cover_image, sizes: "512x512", type: "image/png" },
+      ],
+    });
+  }
 }
 
 async function fetchAndParseXML(url) {
