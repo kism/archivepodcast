@@ -23,7 +23,9 @@ jobs:
         with:
           packages: ffmpeg
           version: 1.0
-          execute_install_scripts: true
+
+      - name: Install ffmpeg, will be cached
+        run: sudo apt-get install ffmpeg
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
