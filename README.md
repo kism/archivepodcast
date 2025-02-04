@@ -1,10 +1,11 @@
 # archivepodcast
 
-![Check](https://github.com/kism/archivepodcast/actions/workflows/check.yml/badge.svg)
-![CheckType](https://github.com/kism/archivepodcast/actions/workflows/check_types.yml/badge.svg)
-![Test](https://github.com/kism/archivepodcast/actions/workflows/test.yml/badge.svg)
-![Docker](https://github.com/kism/archivepodcast/actions/workflows/docker.yml/badge.svg)
+[![Check](https://github.com/kism/archivepodcast/actions/workflows/check.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/check.yml)
+[![CheckType](https://github.com/kism/archivepodcast/actions/workflows/check_types.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/check_types.yml)
+[![Test](https://github.com/kism/archivepodcast/actions/workflows/test.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/kism/archivepodcast/graph/badge.svg?token=FPGDA0ODT7)](https://codecov.io/gh/kism/archivepodcast)
+[![Docker](https://github.com/kism/archivepodcast/actions/workflows/docker.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/docker.yml)
+[![SpellCheck](https://github.com/kism/archivepodcast/actions/workflows/spell_check.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/spell_check.yml)
 
 Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them.
 

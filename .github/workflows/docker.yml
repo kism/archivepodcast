@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - test
+    paths-ignore:
+      - "**/README*"
 
 env:
   TEST_TAG: kism/archivepodcast:test
