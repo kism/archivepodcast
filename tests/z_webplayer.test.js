@@ -8,6 +8,33 @@ import {
   showJSDivs,
 } from "../archivepodcast/static/webplayer";
 
+// region: media mock
+class MockMediaMetadata {
+  constructor(init) {
+    this.title = init.title || "";
+    this.artist = init.artist || "";
+    this.album = init.album || "";
+    this.artwork = init.artwork || [];
+  }
+}
+
+class MockMediaSession {
+  constructor() {
+    this.metadata = null;
+    this.playbackState = "none";
+    this.actions = {};
+  }
+
+  setActionHandler(action, handler) {
+    this.actions[action] = handler;
+  }
+}
+
+navigator.mediaSession = new MockMediaSession();
+window.MediaMetadata = MockMediaMetadata;
+
+// endregion
+
 test("playerSetCurrentEpisode sets player src and episode title", () => {
   document.body.innerHTML = `
     <audio id="podcast_player"></audio>
@@ -81,6 +108,10 @@ test("loadPodcast calls populateEpisodeList with selected podcast", async () => 
   expect(player.type).toBe("audio/mpeg");
   expect(episodeTitle.textContent).toBe("Test Episode 2");
   expect(coverImage.src).toBe("http://example.com/cover.jpg");
+
+  expect(navigator.mediaSession.metadata.title).toBe("Test Episode 2");
+  expect(navigator.mediaSession.metadata.artist).toBe("Test Podcast");
+  expect(navigator.mediaSession.metadata.album).toBe("");
 });
 
 test("no podcast episodes", async () => {
