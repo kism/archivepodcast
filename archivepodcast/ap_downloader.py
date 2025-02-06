@@ -135,7 +135,7 @@ class PodcastDownloader:
         """Fetch the podcast rss from the given URL."""
         logger.debug(f"📜 Fetching podcast rss: {url}")
         try:
-            response = requests.get(url, timeout=5)
+            response = requests.get(url, timeout=10) # Some feeds are proper slow
             if response.status_code != HTTPStatus.OK:
                 msg = f"❌ Not a great web response getting RSS: {response.status_code}\n{response.content.decode()}"
                 logger.error(msg)
@@ -469,7 +469,7 @@ class PodcastDownloader:
 
         return new_length
 
-    def _upload_asset_s3(self, file_path: str, extension: str) -> None:
+    def _upload_asset_s3(self, file_path: str, extension: str, *, remove_original: bool = True) -> None:
         """Upload asset to s3."""
         if not self.s3:
             logger.error("⛅❌ s3 client not found, cannot upload")
@@ -489,8 +489,15 @@ class PodcastDownloader:
             )
             self.s3_paths_cache.append(s3_path)
 
-            logger.info("💾⛅ s3 upload successful, removing local file")
-            os.remove(file_path)
+
+            if remove_original:
+                logger.info("💾 Removing local file: %s", file_path)
+                try:
+                    os.remove(file_path)
+                except FileNotFoundError:
+                    msg = f"⛅❌ Could not remove local file, the source file was not found: {file_path}"
+                    logger.exception(msg)
+
         except FileNotFoundError:
             logger.exception("⛅❌ Could not upload to s3, the source file was not found: %s", file_path)
         except Exception:
@@ -509,7 +516,7 @@ class PodcastDownloader:
 
         if self.s3:
             logger.info("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
-            self._upload_asset_s3(cover_art_destination, extension)
+            self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
 
     def _download_asset(
         self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = ""
@@ -528,7 +535,7 @@ class PodcastDownloader:
 
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
-            if extension != ".wav" and self.app_config["storage_backend"] == "s3":
+            if extension != ".wav" and self.s3:
                 self._upload_asset_s3(file_path, extension)
 
         else:
@@ -539,7 +546,7 @@ class PodcastDownloader:
         logger.debug("💾 Downloading: %s", url)
         logger.info("💾 Downloading asset to: %s", file_path)
         headers = {"user-agent": "Mozilla/5.0"}
-        req = requests.get(url, headers=headers, timeout=5)
+        req = requests.get(url, headers=headers, timeout=10)
 
         if req.status_code == HTTPStatus.OK:
             with open(file_path, "wb") as asset_file:
