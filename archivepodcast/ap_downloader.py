@@ -135,7 +135,7 @@ class PodcastDownloader:
         """Fetch the podcast rss from the given URL."""
         logger.debug(f"📜 Fetching podcast rss: {url}")
         try:
-            response = requests.get(url, timeout=10) # Some feeds are proper slow
+            response = requests.get(url, timeout=10)  # Some feeds are proper slow
             if response.status_code != HTTPStatus.OK:
                 msg = f"❌ Not a great web response getting RSS: {response.status_code}\n{response.content.decode()}"
                 logger.error(msg)
@@ -489,7 +489,6 @@ class PodcastDownloader:
             )
             self.s3_paths_cache.append(s3_path)
 
-
             if remove_original:
                 logger.info("💾 Removing local file: %s", file_path)
                 try:
@@ -501,7 +500,7 @@ class PodcastDownloader:
         except FileNotFoundError:
             logger.exception("⛅❌ Could not upload to s3, the source file was not found: %s", file_path)
         except Exception:
-            logger.exception("⛅❌ Unhandled s3 Error: %s")
+            logger.exception("⛅❌ Unhandled s3 error: %s")
 
     def _download_cover_art(self, url: str, title: str, podcast: dict, extension: str = "") -> None:
         """Download cover art from url with appropriate file name."""
