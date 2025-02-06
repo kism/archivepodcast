@@ -119,3 +119,5 @@ An example guide on setting it up start to finish, with all features and saving 
 - Container Registry
 - header as a table, or divs
 - Don't fail the whole feed if one episode fails
+- Real docs
+- Fix wild font size on /health safari mobile
