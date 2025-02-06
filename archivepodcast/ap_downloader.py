@@ -508,19 +508,8 @@ class PodcastDownloader:
             self._download_to_local(url, cover_art_destination)
 
         if self.s3:
-            content_type = CONTENT_TYPES[extension]
-            s3_path = cover_art_destination.replace(self.web_root, "").replace(os.sep, "/")
-            if s3_path[0] == "/":
-                s3_path = s3_path[1:]
-            logger.info(
-                "💾⛅ Uploading podcast cover art to s3: %s, not deleting local file to allow overriding", s3_path
-            )
-            self.s3.upload_file(
-                cover_art_destination,
-                self.app_config["s3"]["bucket"],
-                s3_path,
-                ExtraArgs={"ContentType": content_type},
-            )
+            logger.info("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
+            self._upload_asset_s3(cover_art_destination, extension)
 
     def _download_asset(
         self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = ""
