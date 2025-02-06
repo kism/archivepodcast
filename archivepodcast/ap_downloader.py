@@ -545,14 +545,19 @@ class PodcastDownloader:
         logger.debug("💾 Downloading: %s", url)
         logger.info("💾 Downloading asset to: %s", file_path)
         headers = {"user-agent": "Mozilla/5.0"}
-        req = requests.get(url, headers=headers, timeout=10)
+        try:
+            req = requests.get(url, headers=headers, timeout=10)
+        except (TimeoutError, requests.exceptions.ReadTimeout):
+            logger.exception("💾❌ Timeout Error: %s", url)
+            return
 
         if req.status_code == HTTPStatus.OK:
             with open(file_path, "wb") as asset_file:
                 asset_file.write(req.content)
-                logger.info("💾 Success!")
+                logger.debug("💾 Success!")
         else:
             logger.error("💾❌ HTTP ERROR: %s", str(req.content))
+            return
 
         if not self.s3:
             self._append_to_local_paths_cache(file_path)
