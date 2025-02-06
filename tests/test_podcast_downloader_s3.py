@@ -51,9 +51,12 @@ def test_download_podcast(
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
     assert "Downloading asset to:" in caplog.text
     assert "Uploading to s3:" in caplog.text
-    assert "s3 upload successful, removing local file" in caplog.text
+    assert "Removing local file" in caplog.text
+    assert "Uploading podcast cover art to s3" in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
+    assert "Unhandled s3 error" not in caplog.text
+    assert "Could not upload to s3" not in caplog.text
 
     s3_object_list = apd_aws.s3.list_objects_v2(Bucket=apd_aws.app_config["s3"]["bucket"])
     s3_object_list = [path["Key"] for path in s3_object_list.get("Contents", [])]
@@ -123,7 +126,7 @@ def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
         apd_aws._upload_asset_s3("test_file_not_exist.jpg", ".jpg")
 
-    assert "Unhandled s3 Error" in caplog.text
+    assert "Unhandled s3 error" in caplog.text
 
 
 def test_check_path_exists_s3(apd_aws, caplog):
