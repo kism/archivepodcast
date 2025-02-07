@@ -1,9 +1,12 @@
+# Local Storage Deployment Guide
 
-# Example install using local (disk) storage
+This guide details the process of deploying the application using local storage with systemd service management and nginx reverse proxy.
+
+## Initial Setup
 
 Example install in /opt, with systemd, logging, log rotation, nginx reverse proxy
 
-## Clone, install requirements, create service account
+### Clone, install requirements, create service account
 
 ```bash
 cd /opt
@@ -16,7 +19,7 @@ chown apuser:apuser /var/log/archivepodcast
 chown -R apuser:apuser /opt/archivepodcast
 ```
 
-## Create Config
+## Configuration
 
 Run the program once manually to create the default config.toml and then fill it in. You can ignore the cdn address and s3 config items.
 
@@ -50,7 +53,7 @@ level = "INFO"
 path = ""
 ```
 
-## Systemd service
+## Service Configuration
 
 Edit: `/etc/systemd/system/archivepodcast.service`
 
@@ -72,7 +75,7 @@ WantedBy=multi-user.target
 
 You can use `systemctl reload archivepodcast` to reload the config, check the log to make sure it worked.
 
-## Nginx Reverse Proxy
+## Web Server Configuration
 
 I wont go into detail on nginx reverse proxies, I add this as a server with my domain name. Then use certbot & certbot nginx plugin to setup https.
 

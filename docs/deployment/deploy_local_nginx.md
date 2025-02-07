@@ -1,4 +1,8 @@
-# Hosting with nginx statically (not recommended really)
+# Static Nginx Deployment Guide
+
+This configuration describes how to serve the application statically through nginx. Note: This method has limitations and is not recommended for production deployments.
+
+## Configuration Requirements
 
 So since this webapp isn't very dynamic you can just host the web root folder with nginx if you set it up right.
 
@@ -8,7 +12,7 @@ Same as README_local.md but:
 * Set the nginx web root to `<instance path>/web`
 * Set the media type for the rss feeds
 
-```plaintext
+```text
 location = /rss/<your feed name> {
     ### override content-type ##
     types { } default_type "application/rss+xml; charset=utf-8";
