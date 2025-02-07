@@ -20,6 +20,8 @@ check_return() {
 
 # Prerequisites
 uv sync
+
+echo "Npm version: $(npm --version), Expected: 11"
 npm install
 
 echo_magenta "Pytest"
