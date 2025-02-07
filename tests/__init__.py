@@ -1,5 +1,5 @@
-"""Tests for the project."""
+"""Test package for archivepodcast."""
 
 
 class FakeExceptionError(Exception):
-    """This is an exception that is used when handling an unhandled exception."""
+    pass

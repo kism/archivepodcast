@@ -1,28 +1,24 @@
-"""Tests the app home page."""
+"""Test the application home page and static content endpoints."""
 
 from http import HTTPStatus
 
+from archivepodcast import bp_archivepodcast
+
 
 def test_home(client, apa):
-    """Test the hello API endpoint. This one uses the fixture in conftest.py."""
-    from archivepodcast import bp_archivepodcast
-
+    """Verify root path redirects to index.html."""
     bp_archivepodcast.ap = apa
     apa._render_files()
 
     assert apa.webpages.get_webpage("index.html")
 
     response = client.get("/")
-    # TEST: HTTP OK
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
-
     assert response.headers["Location"] == "/index.html"
 
 
 def test_home_index(client, apa):
     """Test the hello API endpoint. This one uses the fixture in conftest.py."""
-    from archivepodcast import bp_archivepodcast
-
     bp_archivepodcast.ap = apa
     apa._render_files()
 
@@ -39,8 +35,6 @@ def test_home_index(client, apa):
 
 def test_static_js_exists(client, apa):
     """TEST: /static/archivepodcast.js loads."""
-    from archivepodcast import bp_archivepodcast
-
     bp_archivepodcast.ap = apa
     apa._render_files()
 
@@ -55,8 +49,6 @@ def test_static_js_exists(client, apa):
 
 def test_favicon_exists(client, apa):
     """TEST: /static/archivepodcast.js loads."""
-    from archivepodcast import bp_archivepodcast
-
     bp_archivepodcast.ap = apa
     apa._render_files()
 
@@ -66,8 +58,6 @@ def test_favicon_exists(client, apa):
 
 def test_guide_exists(client, apa):
     """TEST: /static/archivepodcast.js loads."""
-    from archivepodcast import bp_archivepodcast
-
     bp_archivepodcast.ap = apa
     apa._render_files()
 
@@ -77,8 +67,6 @@ def test_guide_exists(client, apa):
 
 def test_fonts_exist(client, apa):
     """TEST: /static/fonts/... loads."""
-    from archivepodcast import bp_archivepodcast
-
     bp_archivepodcast.ap = apa
     apa._render_files()
 

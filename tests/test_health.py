@@ -1,4 +1,4 @@
-"""Test the health API endpoint."""
+"""Test the application health monitoring endpoints."""
 
 import logging
 import os
@@ -13,7 +13,7 @@ from . import FakeExceptionError
 
 
 def test_health_api(client, apa):
-    """Test the hello API endpoint. This one uses the fixture in conftest.py."""
+    """Verify health API returns OK status when system is healthy."""
     from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
@@ -24,9 +24,7 @@ def test_health_api(client, apa):
     # TEST: Content type
     assert response.content_type == "application/json; charset=utf-8"
 
-    data = response.get_json()
-
-    assert data["core"]["alive"]
+    assert response.get_json()["core"]["alive"]
 
 
 def test_health_api_error(client, apa, monkeypatch):

@@ -315,6 +315,8 @@ def mock_podcast_source_wav(requests_mock, tmp_path):
 
 # endregion
 
+# region: Threading
+
 
 @pytest.fixture(autouse=True)
 def error_on_raise_in_thread(monkeypatch):
@@ -340,3 +342,6 @@ def error_on_raise_in_thread(monkeypatch):
     yield
     if last_exception:
         raise last_exception
+
+
+# endregion

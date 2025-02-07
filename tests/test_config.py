@@ -1,4 +1,4 @@
-"""App testing different config behaviours."""
+"""Test application configuration loading and validation."""
 
 import logging
 import os
@@ -10,7 +10,7 @@ from archivepodcast.config import ConfigValidationError
 
 
 def test_config_valid(tmp_path, get_test_config):
-    """Test that the app can load config and the testing attribute is set."""
+    """Verify app loads valid config and sets testing attribute correctly."""
     # TEST: Testing attribute set
     app = create_app(get_test_config("testing_true_valid.toml"), instance_path=tmp_path)
     assert app.testing, "Flask testing config item not being set correctly."

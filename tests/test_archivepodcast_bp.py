@@ -1,4 +1,4 @@
-"""Tests the blueprint's HTTP endpoint."""
+"""Test the application blueprint endpoints."""
 
 import datetime
 import logging
@@ -12,7 +12,7 @@ from . import FakeExceptionError
 
 
 def test_app_paths(apa, client_live, client_live_s3, tmp_path):
-    """Test that the app launches."""
+    """Verify all expected application paths return correct responses."""
     from archivepodcast import bp_archivepodcast
 
     assert len(apa.webpages) > 0
