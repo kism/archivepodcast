@@ -48,10 +48,10 @@ test = [
     "requests-mock",
 ]
 
-doc = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
+docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
 
 [tool.uv]
-default-groups = ["dev", "test", "type", "lint", "doc"]
+default-groups = ["dev", "test", "type", "lint", "docs"]
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"

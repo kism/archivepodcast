@@ -11,6 +11,8 @@ Flask webapp that will archive a podcast from a RSS feed. It will download the e
 
 In theory this works in windows however I haven't tested it, it ~should be able to handle windows file paths fine.
 
+Docs are at <https://archivepodcast.readthedocs.io/en/latest/>
+
 ## Setup
 
 ### Install dependencies
