@@ -30,7 +30,7 @@ class PodcastHealth:
         self.rss_available: bool = False
         self.rss_fetching_live: bool = False
         self.last_fetched: int = 0
-        self.healthy_download: bool = False
+        self.healthy_download: bool | None = None
         self.healthy_feed: bool = False
         self.update_episode_info()
 
