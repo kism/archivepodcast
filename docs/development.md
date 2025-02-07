@@ -94,7 +94,7 @@ npx cspell .
 Run
 
 ```bash
-npx markdownlint-cli --fix *.md
+npx markdownlint-cli --fix *.md docs/
 ```
 
 ##### Biome (JS Lint, Format)

@@ -12,3 +12,4 @@ autouse
 lavfi
 anullsrc
 docstrings
+toctree
