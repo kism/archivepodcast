@@ -1,4 +1,4 @@
-# Deployment: S3 Static
+# S3 Storage, S3 Static Hosting
 
 This configuration enables a fully static deployment where all application assets are served directly from S3 storage.
 

@@ -1,4 +1,4 @@
-# Deployment: Docker
+# Docker
 
 Instructions for building and running the application using Docker containers.
 

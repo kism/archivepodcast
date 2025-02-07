@@ -2,17 +2,33 @@
 
 Welcome to the Archive Podcast documentation.
 
-## Table of Contents
+```{toctree}
+:maxdepth: 1
+:caption: Repository readme
+readme
+```
+
 
 ```{toctree}
 :maxdepth: 2
-:caption: Contents:
+:caption: Configuration
+configuration
+```
 
-deployment/options
+
+```{toctree}
+:maxdepth: 1
+:caption: Deploy
 deployment/local
 deployment/local_nginx
 deployment/s3_hybrid
 deployment/s3_only
 deployment/docker
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: Develop
+
 development
 ```

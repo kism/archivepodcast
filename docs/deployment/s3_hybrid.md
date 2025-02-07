@@ -1,4 +1,4 @@
-# Deployment: Hybrid S3
+# S3 Storage, Webapp
 
 This configuration uses S3 for asset storage while maintaining a standard web application deployment.
 

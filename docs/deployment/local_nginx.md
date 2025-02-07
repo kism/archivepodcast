@@ -1,4 +1,4 @@
-# Deployment: Static Nginx
+# Local Storage, Nginx static hosting
 
 This configuration describes how to serve the application statically through nginx. Note: This method has limitations and is not recommended for production deployments.
 

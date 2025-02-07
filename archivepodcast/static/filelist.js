@@ -173,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
+  showJSDivs();
   showCurrentDirectory();
 });
 
