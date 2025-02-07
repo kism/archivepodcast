@@ -20,7 +20,6 @@ check_return() {
 
 # Prerequisites
 uv sync
-nvm use 22
 npm install
 
 echo_magenta "Pytest"
