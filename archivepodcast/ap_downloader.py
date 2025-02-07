@@ -81,7 +81,7 @@ class PodcastDownloader:
         self.s3 = s3
         self.s3_paths_cache: list = []
         self.local_paths_cache: list = []
-        self.feed_download_healthy: bool = True # Need to change this if you do one podcast download per thread
+        self.feed_download_healthy: bool = True  # Need to change this if you do one podcast download per thread
         self.app_config = app_config
         self.web_root = web_root
         self.update_file_cache()
@@ -118,7 +118,7 @@ class PodcastDownloader:
 
     def download_podcast(self, podcast: dict) -> tuple[etree._ElementTree | None, bool]:
         """Parse the rss, Download all the assets, this is main."""
-        self.feed_download_healthy = True # Until proven otherwise
+        self.feed_download_healthy = True  # Until proven otherwise
         response = self._fetch_podcast_rss(podcast["url"])
         if response is None:
             return None, False
@@ -495,7 +495,7 @@ class PodcastDownloader:
                 logger.info("💾 Removing local file: %s", file_path)
                 try:
                     os.remove(file_path)
-                except FileNotFoundError: # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
+                except FileNotFoundError:  # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
                     msg = f"⛅❌ Could not remove the local file, the source file was not found: {file_path}"
                     logger.exception(msg)
 
