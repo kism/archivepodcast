@@ -1,8 +1,21 @@
+/**
+ * Web player module for handling podcast playback and metadata
+ */
+
+// Base64 encoded 1x1 transparent PNG for placeholder images
 const placeholder_image =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAC4jAAAuIwF4pT92AAAADUlEQVQI12M4ceLEfwAIDANY5PrZiQAAAABJRU5ErkJggg==";
 
+// Current podcast cover image URL, defaults to placeholder
 let current_podcast_cover_image = placeholder_image;
 
+/**
+ * Updates the audio player with new episode details and metadata
+ * @param {string} url - Audio file URL
+ * @param {string} type - Audio MIME type
+ * @param {string} episodeName - Episode title
+ * @param {string} podcastName - Podcast name
+ */
 export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
   console.log("Setting player src to:", url);
   const player = document.getElementById("podcast_player");
@@ -35,6 +48,11 @@ export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
   }
 }
 
+/**
+ * Fetches and parses an XML podcast feed
+ * @param {string} url - Feed URL
+ * @returns {Promise<Document>} Parsed XML document
+ */
 async function fetchAndParseXML(url) {
   console.log("Fetching and parsing XML from:", url);
 
@@ -48,6 +66,10 @@ async function fetchAndParseXML(url) {
   return xmlDoc;
 }
 
+/**
+ * Populates the episode list from a podcast feed
+ * @param {string} url - Feed URL
+ */
 export function populateEpisodeList(url) {
   const episodeList = document.getElementById("podcast_episode_list");
 
@@ -104,11 +126,15 @@ export function populateEpisodeList(url) {
     });
 }
 
+// Event handler for podcast selection
 export function loadPodcast(event) {
   const selectedPodcast = event.target.value;
   populateEpisodeList(selectedPodcast);
 }
 
+/**
+ * Initializes player UI elements
+ */
 export function showJSDivs() {
   try {
     const cover_image_element = document.getElementById("podcast_player_cover");
