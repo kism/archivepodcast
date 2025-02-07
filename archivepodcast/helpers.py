@@ -1,4 +1,4 @@
-"""Helper functions for the archivepodcast module."""
+"""Helper utilities for archivepodcast."""
 
 from typing import TYPE_CHECKING
 
@@ -13,7 +13,15 @@ else:
 
 
 def list_all_s3_objects(s3_client: S3Client, bucket: str) -> list:
-    """Function to list all objects in the s3 bucket."""
+    """List all objects in an S3 bucket using pagination.
+
+    Args:
+        s3_client: Boto3 S3 client instance
+        bucket: Name of the S3 bucket
+
+    Returns:
+        List of all objects in the bucket
+    """
     paginator = s3_client.get_paginator("list_objects_v2")
     page_iterator = paginator.paginate(Bucket=bucket)
 

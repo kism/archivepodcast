@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 
 
 class PodcastArchiver:
-    """ArchivePodcast object."""
+    """Main podcast archiving system that coordinates downloading, storage and serving of podcasts."""
 
     def __init__(
         self,
@@ -189,7 +189,10 @@ class PodcastArchiver:
             logger.info("⛅ No objects found in the bucket.")
 
     def grab_podcasts(self) -> None:
-        """Loop through defined podcasts, download and store the rss."""
+        """Download and process all configured podcasts.
+
+        Updates health metrics and regenerates file listings after processing.
+        """
         current_datetime = int(time.time())
         self.health.update_core_status(last_run=current_datetime)
 

@@ -1,10 +1,10 @@
-"""Webpage cache module."""
+"""Webpage caching and management."""
 
 from typing import ClassVar
 
 
 class Webpage:
-    """Webpage object."""
+    """Represents a cached webpage with its metadata."""
 
     def __init__(self, path: str, mime: str, content: str | bytes) -> None:
         """Initialise the Webpages object."""
@@ -22,7 +22,7 @@ class Webpage:
 
 
 class Webpages:
-    """Webpage object."""
+    """Manages a collection of cached webpages."""
 
     WEBPAGE_NICE_NAMES: ClassVar[dict[str, str]] = {
         "index.html": "Home",

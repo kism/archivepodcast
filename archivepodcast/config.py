@@ -1,4 +1,4 @@
-"""Config loading, setup, validating, writing."""
+"""Configuration management for archivepodcast."""
 
 import contextlib
 import os
@@ -232,7 +232,7 @@ class ArchivePodcastConfig:
 
 
 def print_config(app: Flask) -> None:
-    """Print app config to log."""
+    """Print application config to log for debugging purposes."""
 
     def convert_timedelta_to_str(config: dict) -> dict:
         """Convert timedelta to str for printing."""

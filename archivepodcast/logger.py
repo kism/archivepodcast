@@ -1,4 +1,4 @@
-"""Setup the logger functionality for archivepodcast."""
+"""Logging configuration for archivepodcast."""
 
 import logging
 import typing
@@ -28,6 +28,7 @@ class ColorFormatter(logging.Formatter):
     """Custom formatter to add colour to the log messages."""
 
     def _format_value(self, value: typing.Any) -> str:  # noqa: ANN401
+        """Format a log message value into a string representation."""
         if isinstance(value, tuple):
             return "  ".join(map(str, value))
         if isinstance(value, list):
@@ -99,12 +100,12 @@ logger = cast(CustomLogger, logging.getLogger(__name__))
 
 # Pass in the whole app object to make it obvious we are configuring the logger object within the app object.
 def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | None = None) -> None:
-    """Setup the logger, set configuration per logging_conf.
+    """Configure logging for the application.
 
     Args:
-        app: The Flask app, needed to get the app's logger object.
-        logging_conf: The logging configuration {"level": "", "path": ""}
-        in_logger: Logger to configure, useful for testing.
+        app: The Flask application instance
+        logging_conf: Logging configuration dict with "level" and "path" keys
+        in_logger: Optional logger instance to configure (mainly for testing)
     """
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger

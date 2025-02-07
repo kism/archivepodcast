@@ -1,4 +1,4 @@
-"""Archivepodcast health module."""
+"""Health monitoring for archivepodcast components."""
 
 import contextlib
 import datetime
@@ -23,7 +23,7 @@ PROCESS = psutil.Process()
 
 
 class PodcastHealth:
-    """Podcast Health object."""
+    """Health status for an individual podcast."""
 
     def __init__(self) -> None:
         """Initialise the Podcast Health object."""
@@ -67,7 +67,7 @@ class PodcastHealth:
 
 
 class WebpageHealth:
-    """Webpage Health object."""
+    """Health status for an individual webpage."""
 
     def __init__(self) -> None:
         """Initialise the Webpage Health object."""
@@ -75,7 +75,7 @@ class WebpageHealth:
 
 
 class CoreHealth:
-    """Core Health object."""
+    """Core application health status."""
 
     def __init__(self) -> None:
         """Initialise the Core Health object."""
@@ -90,7 +90,7 @@ class CoreHealth:
 
 
 class PodcastArchiverHealth:
-    """Podcast Archiver Health object."""
+    """Overall health monitoring for PodcastArchiver."""
 
     def __init__(self) -> None:
         """Initialise the Podcast Archiver Health object."""
