@@ -1,4 +1,4 @@
-# Static Nginx Deployment Guide
+# Deployment: Static Nginx
 
 This configuration describes how to serve the application statically through nginx. Note: This method has limitations and is not recommended for production deployments.
 

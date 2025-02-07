@@ -1,16 +1,12 @@
-# S3 Static Deployment Configuration
+# Deployment: Hybrid S3
 
-This configuration enables a fully static deployment where all application assets are served directly from S3 storage.
+This configuration uses S3 for asset storage while maintaining a standard web application deployment.
 
 ## Configuration Requirements
 
-Essentially the webapp just pushes static files to s3, the webapp never has to listen on the public internet.
-
-Same as s3 hybrid but:
-
-* Do not setup the nginx reverse proxy
-* Set the inet_path to the domain of your s3 bucket.
-* Ensure that the domain / redirects to /index.html in your s3 providers settings. In cloudflare this is in website/rules/redirect rules
+* In config.toml set storage_backend to 's3'
+* Fill in the s3 config with what's appropriate for your bucket, make sure your api credential has read + write on the bucket
+* Ensure you s3 bucket has a domain. In config.toml set the cdn_domain to that domain
 
 ```toml
 [app]
@@ -23,7 +19,7 @@ description = "My Cool  Podcast Archive"
 contact = "email@example.com"
 
 [app.s3]
-cdn_domain = "https://mycooldomain.org/"
+cdn_domain = "https://cdn.mycooldomain.org/"
 api_url = "<api url>"
 bucket = "<bucket name>"
 access_key_id = "<access_key_id>"

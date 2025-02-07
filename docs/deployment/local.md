@@ -1,4 +1,4 @@
-# Local Storage Deployment Guide
+# Deployment: Local Storage
 
 This guide details the process of deploying the application using local storage with systemd service management and nginx reverse proxy.
 
