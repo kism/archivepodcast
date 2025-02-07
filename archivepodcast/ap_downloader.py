@@ -495,8 +495,8 @@ class PodcastDownloader:
                 logger.info("💾 Removing local file: %s", file_path)
                 try:
                     os.remove(file_path)
-                except FileNotFoundError:
-                    msg = f"⛅❌ Could not remove local file, the source file was not found: {file_path}"
+                except FileNotFoundError: # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
+                    msg = f"⛅❌ Could not remove the local file, the source file was not found: {file_path}"
                     logger.exception(msg)
 
         except FileNotFoundError:

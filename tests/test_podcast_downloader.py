@@ -254,3 +254,16 @@ def test_download_to_local_failure(apd, requests_mock, caplog):
 def test_filename_cleanup(apd, file_name, expected_slug):
     """Test filename cleanup."""
     assert apd._cleanup_file_name(file_name) == expected_slug
+
+def test_download_timeout_error(apd, requests_mock, caplog):
+    """Test local file download failure."""
+    from requests.exceptions import ReadTimeout
+    url = "https://pytest.internal/audio/test.mp3"
+
+    requests_mock.get(url, exc=ReadTimeout)
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+        apd._download_to_local(url, "test.mp3")
+
+    assert "Timeout Error:" in caplog.text
+    assert not apd.feed_download_healthy
