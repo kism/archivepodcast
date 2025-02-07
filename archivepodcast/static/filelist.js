@@ -1,5 +1,13 @@
+/**
+ * File list module for managing directory structure and navigation
+ */
+
+// Root object for file system structure
 export const file_structure = new Object();
 
+/**
+ * Shows file navigation UI elements
+ */
 export function showJSDivs() {
   const breadcrumbJSDiv = document.getElementById("breadcrumb_js");
   if (breadcrumbJSDiv) {
@@ -11,6 +19,11 @@ export function showJSDivs() {
   }
 }
 
+/**
+ * Adds a file to the virtual file system structure
+ * @param {string} url - File URL
+ * @param {string} file_path - File path in structure
+ */
 export function addFileToStructure(url, file_path) {
   const path_parts = file_path.split("/");
   let current = file_structure;
@@ -23,6 +36,11 @@ export function addFileToStructure(url, file_path) {
   current.url = url;
 }
 
+/**
+ * Generates breadcrumb navigation HTML
+ * @param {string} in_current_path - Current directory path
+ * @returns {string} HTML string
+ */
 export function generateBreadcrumbHtml(in_current_path) {
   let html = "";
   let path = [""];
@@ -143,6 +161,7 @@ export function showCurrentDirectory() {
   }
 }
 
+// Initialize file list
 document.addEventListener("DOMContentLoaded", () => {
   const fileListDiv = document.getElementById("file_list");
   if (fileListDiv) {
@@ -154,9 +173,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
+  showJSDivs();
   showCurrentDirectory();
 });
 
-showJSDivs();
+// Handle navigation
 window.addEventListener("hashchange", showCurrentDirectory);
 showCurrentDirectory();

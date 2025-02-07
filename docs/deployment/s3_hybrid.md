@@ -1,6 +1,8 @@
-# Example install but use s3 as storage for assets
+# S3 Storage, Webapp
 
-Same as README_local but:
+This configuration uses S3 for asset storage while maintaining a standard web application deployment.
+
+## Configuration Requirements
 
 * In config.toml set storage_backend to 's3'
 * Fill in the s3 config with what's appropriate for your bucket, make sure your api credential has read + write on the bucket

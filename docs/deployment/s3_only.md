@@ -1,4 +1,8 @@
-# Example install but host everything on s3
+# S3 Storage, S3 Static Hosting
+
+This configuration enables a fully static deployment where all application assets are served directly from S3 storage.
+
+## Configuration Requirements
 
 Essentially the webapp just pushes static files to s3, the webapp never has to listen on the public internet.
 

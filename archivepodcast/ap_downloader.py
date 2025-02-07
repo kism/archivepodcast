@@ -1,4 +1,4 @@
-"""Set of functions to download podcasts to a directory."""
+"""Download and process podcast feeds and media files."""
 # and return xml that can be served to download them
 
 import contextlib
@@ -575,7 +575,11 @@ class PodcastDownloader:
             self.local_paths_cache.append(file_path)
 
     def _cleanup_file_name(self, file_name: str | bytes) -> str:
-        """Standardise naming, generate a slug."""
+        """Convert a file name into a URL-safe slug format.
+
+        Standardizes names by removing common podcast prefixes/suffixes and
+        converting to hyphenated lowercase alphanumeric format.
+        """
         if isinstance(file_name, bytes):
             file_name = file_name.decode()
 

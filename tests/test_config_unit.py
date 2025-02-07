@@ -1,4 +1,4 @@
-"""Unit testing for the config module."""
+"""Unit tests for configuration module."""
 
 import pytest
 
@@ -8,7 +8,7 @@ DEFAULT_CONFIG = archivepodcast.config.DEFAULT_CONFIG
 
 
 def test_config_permissions_error_read(place_test_config, tmp_path, mocker):
-    """Mock a Permissions error with mock_open."""
+    """Verify permissions error is raised when config file cannot be read."""
     place_test_config("testing_true_valid.toml", tmp_path)
 
     mock_open_func = mocker.mock_open(read_data="")

@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.6"
+version = "1.4.7"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -48,8 +48,10 @@ test = [
     "requests-mock",
 ]
 
+doc = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
+
 [tool.uv]
-default-groups = ["dev", "test", "type", "lint"]
+default-groups = ["dev", "test", "type", "lint", "doc"]
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
@@ -96,6 +98,13 @@ ignore = [
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
     "BLE001",  # KG Tests can use BaseException.
+]
+
+"docs/*.py" = [
+    # Modules
+    "INP",
+    "D",
+    "A",
 ]
 
 

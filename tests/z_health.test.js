@@ -58,30 +58,32 @@ const healthData = {
   version: "1.2.2",
 };
 
-test("DOMContentLoaded event", () => {
-  global.fetch.mockResolvedValueOnce({
-    ok: true,
-    json: async () => ({ ...healthData }),
+describe("Health API", () => {
+  test("fetches health data on page load", () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ...healthData }),
+    });
+
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith("/api/health");
   });
 
-  document.dispatchEvent(new Event("DOMContentLoaded"));
-  expect(global.fetch).toHaveBeenCalledTimes(1);
-  expect(global.fetch).toHaveBeenCalledWith("/api/health");
-});
+  test("populates health information from API response", () => {
+    populateHealth(healthData);
+    const healthDiv = document.getElementById("health");
+    expect(healthDiv.children.length).greaterThan(0);
+  });
 
-test("populateHealth generates", () => {
-  populateHealth(healthData);
-  const healthDiv = document.getElementById("health");
-  expect(healthDiv.children.length).greaterThan(0);
-});
+  test("correctly formats all date fields in health display", () => {
+    populateHealth(healthData);
+    const healthDiv = document.getElementById("health");
+    const dateFields = healthDiv.querySelectorAll("[id*='date'], [id*='last']");
 
-test("check date fields in health div", () => {
-  populateHealth(healthData);
-  const healthDiv = document.getElementById("health");
-  const dateFields = healthDiv.querySelectorAll("[id*='date'], [id*='last']");
-
-  for (const field of dateFields) {
-    const dateValue = new Date(field.textContent);
-    expect(dateValue.toString()).not.toBe("Invalid Date");
-  }
+    for (const field of dateFields) {
+      const dateValue = new Date(field.textContent);
+      expect(dateValue.toString()).not.toBe("Invalid Date");
+    }
+  });
 });

@@ -1,4 +1,4 @@
-"""Logger unit tests."""
+"""Unit tests for the logger module."""
 
 import logging
 import os
@@ -10,7 +10,7 @@ import archivepodcast.logger
 
 @pytest.fixture
 def logger():
-    """Logger to use in unit tests, including cleanup."""
+    """Return a clean logger for testing, with cleanup after each test."""
     logger = logging.getLogger("TEST_LOGGER")
 
     assert len(logger.handlers) == 0  # Check the logger has no handlers

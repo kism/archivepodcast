@@ -1,4 +1,4 @@
-"""Flask webapp archivepodcast."""
+"""Flask web application for archiving and serving podcasts."""
 
 import time
 
@@ -7,11 +7,19 @@ from flask import Flask, Response
 from . import bp_archivepodcast, logger
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 
-__version__ = "1.4.6"  # This is the version of the app, used in pyproject.toml, enforced in a test.
+__version__ = "1.4.7"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
 
 def create_app(test_config: dict | None = None, instance_path: str | None = None) -> Flask:
-    """Create and configure an instance of the Flask application."""
+    """Create and configure the Flask application instance.
+
+    Args:
+        test_config: Optional config dict for testing
+        instance_path: Optional custom instance path
+
+    Returns:
+        Configured Flask application instance
+    """
     start_time = time.time()
     app = Flask(
         __name__,

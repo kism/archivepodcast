@@ -1,4 +1,4 @@
-"""App testing different config behaviours."""
+"""Tests for PodcastArchiver functionality."""
 
 import logging
 import os
@@ -9,7 +9,7 @@ from . import FakeExceptionError
 
 
 def test_no_about_page(apa, caplog):
-    """Test no about page."""
+    """Verify behavior when about page is missing."""
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
         apa.load_about_page()
 
