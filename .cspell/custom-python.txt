@@ -11,3 +11,4 @@ htmlcov
 autouse
 lavfi
 anullsrc
+docstrings

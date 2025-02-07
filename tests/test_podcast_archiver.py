@@ -199,7 +199,7 @@ def test_grab_podcasts_unhandled_exception_rss(
 
     apa.podcast_list[0]["live"] = True
 
-    monkeypatch.setattr(apa.podcast_downloader, "download_podcast", lambda _: None)
+    monkeypatch.setattr(apa.podcast_downloader, "download_podcast", lambda _: (None, False))
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
         apa.grab_podcasts()

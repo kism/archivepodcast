@@ -196,11 +196,11 @@ class PodcastArchiver:
         for podcast in self.podcast_list:
             try:
                 self._grab_podcast(podcast)
-                self.health.update_podcast_status(podcast["name_one_word"], healthy=True)
+                self.health.update_podcast_status(podcast["name_one_word"], healthy_feed=True)
                 logger.debug("💾 Updating filelist.html")
             except Exception:
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
-                self.health.update_podcast_status(podcast["name_one_word"], healthy=False)
+                self.health.update_podcast_status(podcast["name_one_word"], healthy_feed=False)
 
         try:
             self.render_filelist_html()
@@ -262,7 +262,7 @@ class PodcastArchiver:
         self.health.update_podcast_status(podcast["name_one_word"], rss_available=True)
 
     def _download_podcast(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
-        tree = self.podcast_downloader.download_podcast(podcast)
+        tree, download_healthy = self.podcast_downloader.download_podcast(podcast)
         if tree:
             # Write rss to disk
             tree.write(
@@ -274,6 +274,11 @@ class PodcastArchiver:
 
         else:
             logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
+
+        if download_healthy:
+            self.health.update_podcast_status(podcast["name_one_word"], healthy_download=True)
+        else:
+            self.health.update_podcast_status(podcast["name_one_word"], healthy_download=False)
 
         return tree
 

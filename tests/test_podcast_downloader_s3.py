@@ -100,7 +100,6 @@ def test_download_podcast_wav(
 
 
 def test_upload_asset_s3_no_client(apd, caplog):
-    """Test upload failure when no s3 client."""
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
         apd._upload_asset_s3("test.jpg", ".jpg")
 
@@ -108,7 +107,6 @@ def test_upload_asset_s3_no_client(apd, caplog):
 
 
 def test_upload_asset_s3_file_not_found(apd_aws, caplog):
-    """Test upload failure when no s3 client."""
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
         apd_aws._upload_asset_s3("test_file_not_exist.jpg", ".jpg")
 
@@ -116,7 +114,6 @@ def test_upload_asset_s3_file_not_found(apd_aws, caplog):
 
 
 def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
-    """Test upload failure when no s3 client."""
 
     def unhandled_exception(*args, **kwargs):
         raise FakeExceptionError
@@ -128,9 +125,23 @@ def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
 
     assert "Unhandled s3 error" in caplog.text
 
+def test_upload_asset_s3_os_remove_error(apd_aws, monkeypatch, caplog):
+    """Test os.remove error handling."""
+
+    def os_remove_error(*args, **kwargs):
+        raise FileNotFoundError
+
+    monkeypatch.setattr(os, "remove", os_remove_error)
+
+    monkeypatch.setattr(apd_aws.s3, "upload_file", lambda *args, **kwargs: None)
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+        apd_aws._upload_asset_s3("test_file_mocked.jpg", ".jpg")
+
+    assert "Could not remove the local file, the source file was not found" in caplog.text
+
 
 def test_check_path_exists_s3(apd_aws, caplog):
-    """Test check path exists."""
     apd_aws.s3.put_object(  # Bucket is empty before this
         Bucket=apd_aws.app_config["s3"]["bucket"],
         Key="content/test",
