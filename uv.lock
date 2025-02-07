@@ -33,7 +33,7 @@ dependencies = [
 dev = [
     { name = "pyright" },
 ]
-doc = [
+docs = [
     { name = "myst-parser" },
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
@@ -78,7 +78,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [{ name = "pyright" }]
-doc = [
+docs = [
     { name = "myst-parser" },
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
