@@ -7,6 +7,7 @@ on:
       - test
     paths-ignore:
       - "**/README*"
+      - "docs/**"
 
 env:
   TEST_TAG: kism/archivepodcast:test
