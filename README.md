@@ -34,7 +34,7 @@ uv sync
 ```bash
 uv venv
 source .venv/bin/activate
-uv sync --no-group dev --no-group test --no-group type --no-group lint
+uv sync --no-default-groups
 ```
 
 ## Running archivepodcast webapp
