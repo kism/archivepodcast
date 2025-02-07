@@ -218,7 +218,10 @@ def test_download_podcast_no_response(apd, get_test_config, monkeypatch):
 
     monkeypatch.setattr("archivepodcast.ap_downloader.PodcastDownloader._fetch_podcast_rss", mock_fetch_podcast_rss)
 
-    assert apd.download_podcast(podcast) is None
+    tree, healthy_download = apd.download_podcast(podcast)
+
+    assert tree is None
+    assert not healthy_download
 
 
 def test_download_to_local_failure(apd, requests_mock, caplog):

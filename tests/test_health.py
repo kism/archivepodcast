@@ -58,7 +58,7 @@ def test_update_podcast_health():
     ap_health.update_podcast_status("test", rss_fetching_live=True)
     ap_health.update_podcast_status("test", rss_available=True)
     ap_health.update_podcast_status("test", last_fetched=0)
-    ap_health.update_podcast_status("test", healthy=True)
+    ap_health.update_podcast_status("test", healthy_feed=True)
 
 
 def test_podcast_health_errors(caplog):

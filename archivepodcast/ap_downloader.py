@@ -81,6 +81,7 @@ class PodcastDownloader:
         self.s3 = s3
         self.s3_paths_cache: list = []
         self.local_paths_cache: list = []
+        self.feed_download_healthy: bool = True # Need to change this if you do one podcast download per thread
         self.app_config = app_config
         self.web_root = web_root
         self.update_file_cache()
@@ -115,11 +116,12 @@ class PodcastDownloader:
             self.s3_paths_cache if self.s3 else self.local_paths_cache,
         )
 
-    def download_podcast(self, podcast: dict) -> etree._ElementTree | None:
+    def download_podcast(self, podcast: dict) -> tuple[etree._ElementTree | None, bool]:
         """Parse the rss, Download all the assets, this is main."""
+        self.feed_download_healthy = True # Until proven otherwise
         response = self._fetch_podcast_rss(podcast["url"])
         if response is None:
-            return None
+            return None, False
 
         podcast_rss = etree.fromstring(response.content)
         logger.info("📄 Downloaded rss feed, processing")
@@ -129,7 +131,7 @@ class PodcastDownloader:
         self._process_podcast_rss(xml_first_child, podcast)
         podcast_rss[0] = xml_first_child
 
-        return etree.ElementTree(podcast_rss)
+        return etree.ElementTree(podcast_rss), self.feed_download_healthy
 
     def _fetch_podcast_rss(self, url: str) -> requests.Response | None:
         """Fetch the podcast rss from the given URL."""
@@ -498,8 +500,10 @@ class PodcastDownloader:
                     logger.exception(msg)
 
         except FileNotFoundError:
+            self.feed_download_healthy = False
             logger.exception("⛅❌ Could not upload to s3, the source file was not found: %s", file_path)
         except Exception:
+            self.feed_download_healthy = False
             logger.exception("⛅❌ Unhandled s3 error: %s")
 
     def _download_cover_art(self, url: str, title: str, podcast: dict, extension: str = "") -> None:
@@ -548,6 +552,7 @@ class PodcastDownloader:
         try:
             req = requests.get(url, headers=headers, timeout=10)
         except (TimeoutError, requests.exceptions.ReadTimeout):
+            self.feed_download_healthy = False
             logger.exception("💾❌ Timeout Error: %s", url)
             return
 
@@ -556,6 +561,7 @@ class PodcastDownloader:
                 asset_file.write(req.content)
                 logger.debug("💾 Success!")
         else:
+            self.feed_download_healthy = False
             logger.error("💾❌ HTTP ERROR: %s", str(req.content))
             return
 
