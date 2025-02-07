@@ -9,8 +9,6 @@ import pytest
 
 from archivepodcast.ap_downloader import PodcastDownloader
 
-FLASK_ROOT_PATH = os.getcwd()
-
 
 def test_init(get_test_config, tmp_path, caplog):
     """Test that the app can load config and the testing attribute is set."""

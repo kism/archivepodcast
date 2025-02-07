@@ -1,4 +1,4 @@
-"""App testing different config behaviours."""
+"""Tests for S3-specific PodcastDownloader functionality."""
 
 import logging
 import os
@@ -13,7 +13,7 @@ FLASK_ROOT_PATH = os.getcwd()
 
 
 def test_init(s3, get_test_config, tmp_path, caplog):
-    """Test that the app can load config and the testing attribute is set."""
+    """Test PodcastDownloader initialization with S3 configuration."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
 
@@ -37,7 +37,7 @@ def test_download_podcast(
     mock_podcast_source_mp3,
     caplog,
 ):
-    """Test Fetching RSS and assets."""
+    """Test downloading podcast RSS and assets."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
@@ -74,7 +74,7 @@ def test_download_podcast_wav(
     mock_podcast_source_wav,
     caplog,
 ):
-    """Test Fetching RSS and assets."""
+    """Test downloading podcast RSS and assets with WAV format."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
@@ -100,6 +100,7 @@ def test_download_podcast_wav(
 
 
 def test_upload_asset_s3_no_client(apd, caplog):
+    """Test handling missing S3 client during upload."""
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
         apd._upload_asset_s3("test.jpg", ".jpg")
 
@@ -107,6 +108,7 @@ def test_upload_asset_s3_no_client(apd, caplog):
 
 
 def test_upload_asset_s3_file_not_found(apd_aws, caplog):
+    """Test handling file not found error during S3 upload."""
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
         apd_aws._upload_asset_s3("test_file_not_exist.jpg", ".jpg")
 
@@ -114,6 +116,8 @@ def test_upload_asset_s3_file_not_found(apd_aws, caplog):
 
 
 def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
+    """Test handling unhandled exception during S3 upload."""
+
     def unhandled_exception(*args, **kwargs):
         raise FakeExceptionError
 
@@ -126,7 +130,7 @@ def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
 
 
 def test_upload_asset_s3_os_remove_error(apd_aws, monkeypatch, caplog):
-    """Test os.remove error handling."""
+    """Test handling os.remove error during S3 upload."""
 
     def os_remove_error(*args, **kwargs):
         raise FileNotFoundError
@@ -142,6 +146,7 @@ def test_upload_asset_s3_os_remove_error(apd_aws, monkeypatch, caplog):
 
 
 def test_check_path_exists_s3(apd_aws, caplog):
+    """Test checking if a path exists in S3."""
     apd_aws.s3.put_object(  # Bucket is empty before this
         Bucket=apd_aws.app_config["s3"]["bucket"],
         Key="content/test",
@@ -159,7 +164,7 @@ def test_check_path_exists_s3(apd_aws, caplog):
 
 
 def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
-    """Test non-404 s3 client error handling."""
+    """Test handling non-404 S3 client error during path check."""
     from botocore.exceptions import ClientError
 
     def client_error_not_404(*args, **kwargs):
@@ -174,7 +179,7 @@ def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
 
 
 def test_check_path_exists_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
-    """Test unhandled exception handling."""
+    """Test handling unhandled exception during S3 path check."""
 
     def unhandled_exception(*args, **kwargs):
         raise FakeExceptionError

@@ -1,4 +1,4 @@
-"""App testing different config behaviours."""
+"""Tests for PodcastArchiver S3 functionality."""
 
 import logging
 import os
@@ -7,11 +7,21 @@ import pytest
 
 from . import FakeExceptionError
 
+CONTENT_TYPE_PARAMS = [
+    ("index.html", "text/html"),
+    ("filelist.html", "text/html"),
+    ("static/clipboard.js", "text/javascript"),
+    ("static/filelist.js", "text/javascript"),
+    ("robots.txt", "text/plain"),
+    ("static/favicon.ico", "image/vnd.microsoft.icon"),
+    ("static/fonts/fira-code-v12-latin-500.woff2", "font/woff2"),
+]
+
 FLASK_ROOT_PATH = os.getcwd()
 
 
 def test_config_valid(tmp_path, get_test_config, caplog, s3):
-    """Test that the app can load config and the testing attribute is set."""
+    """Verify S3 configuration loading and bucket setup."""
     config_file = "testing_true_valid_s3.toml"
     config = get_test_config(config_file)
 
@@ -70,18 +80,7 @@ def test_check_s3_files(apa_aws, caplog):
     assert "Unhandled s3 error" not in caplog.text
 
 
-@pytest.mark.parametrize(
-    ("path", "content_type"),
-    [
-        ("index.html", "text/html"),
-        ("filelist.html", "text/html"),
-        ("static/clipboard.js", "text/javascript"),
-        ("static/filelist.js", "text/javascript"),
-        ("robots.txt", "text/plain"),
-        ("static/favicon.ico", "image/vnd.microsoft.icon"),
-        ("static/fonts/fira-code-v12-latin-500.woff2", "font/woff2"),
-    ],
-)
+@pytest.mark.parametrize(("path", "content_type"), CONTENT_TYPE_PARAMS)
 def test_s3_object_content_type(
     apa_aws,
     caplog,
@@ -93,7 +92,7 @@ def test_s3_object_content_type(
     path,
     content_type,
 ):
-    """Ensure correct content types."""
+    """Verify correct content types are set for S3 objects."""
     apa_aws._render_files()
     bucket = apa_aws.app_config["s3"]["bucket"]
 
