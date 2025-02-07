@@ -114,7 +114,6 @@ def test_upload_asset_s3_file_not_found(apd_aws, caplog):
 
 
 def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
-
     def unhandled_exception(*args, **kwargs):
         raise FakeExceptionError
 
@@ -124,6 +123,7 @@ def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
         apd_aws._upload_asset_s3("test_file_not_exist.jpg", ".jpg")
 
     assert "Unhandled s3 error" in caplog.text
+
 
 def test_upload_asset_s3_os_remove_error(apd_aws, monkeypatch, caplog):
     """Test os.remove error handling."""

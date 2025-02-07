@@ -18,6 +18,12 @@ check_return() {
     echo -e "${GREEN}Passed${NC}"
 }
 
+# Prerequisites
+uv sync
+
+echo "Npm version: $(npm --version), Expected: 11"
+npm install
+
 echo_magenta "Pytest"
 pytest -q --show-capture=no >/dev/null
 check_return $?
