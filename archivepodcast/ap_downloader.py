@@ -361,9 +361,11 @@ class PodcastDownloader:
 
         if self.s3 is not None:
             if Path(file_path).is_absolute() and Path(file_path).is_relative_to(self.web_root):
-                s3_file_path = str(Path(file_path).relative_to(self.web_root)).replace(os.sep, "/")
+                s3_file_path = str(Path(file_path).relative_to(self.web_root))
             else:
-                s3_file_path = str(Path(file_path)).replace(os.sep, "/")
+                s3_file_path = str(Path(file_path))
+
+            s3_file_path = s3_file_path.replace(os.sep, "/")
             s3_file_path = s3_file_path.removeprefix("/")
 
             if s3_file_path not in self.s3_paths_cache:
