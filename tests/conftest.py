@@ -4,16 +4,9 @@ Fixtures defined in a conftest.py can be used by any test in that package withou
 """
 
 import os
-import shutil
-import threading
-import time
 
-import boto3
 import pytest
-import tomlkit
-from moto import mock_aws
 
-from archivepodcast.ap_archiver import PodcastArchiver, PodcastDownloader
 from archivepodcast.logger import TRACE_LEVEL_NUM
 
 FLASK_ROOT_PATH = os.getcwd()

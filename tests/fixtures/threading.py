@@ -1,14 +1,6 @@
-import os
-import shutil
 import threading
-import time
 
-import boto3
 import pytest
-import tomlkit
-from moto import mock_aws
-
-from archivepodcast.ap_archiver import PodcastArchiver, PodcastDownloader
 
 
 @pytest.fixture(autouse=True)
