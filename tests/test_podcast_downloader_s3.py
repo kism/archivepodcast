@@ -9,8 +9,6 @@ from archivepodcast.ap_downloader import PodcastDownloader
 
 from . import FakeExceptionError
 
-FLASK_ROOT_PATH = os.getcwd()
-
 
 def test_init(s3, get_test_config, tmp_path, caplog):
     """Test PodcastDownloader initialization with S3 configuration."""
