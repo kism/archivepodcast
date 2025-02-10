@@ -67,7 +67,6 @@ select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
     "DJ",  # KG Django not required
-    "PTH", # KG builtin 'open' is fine, not going to use pathlib
     "DTZ", # KG no need to specify timezone for time objects
 
     # Specific rules
@@ -90,9 +89,7 @@ ignore = [
 
     # Specific rules
     "S101",    # KG asserts allowed in tests.
-    "ANN201",  # KG Not really needed for pytest.
     "SLF001",  # KG Accessing private members is needed for testing.
-    "INP001",  # KG __init__.py not needed for PyTest.
     "PT004",   # KG monkeypatch doesn't return.
     "S311",    # KG I'll assume no real crypto will be done in PyTest.
     "S105",    # KG Hardcoded fake passwords are fine in tests.

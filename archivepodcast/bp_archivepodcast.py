@@ -8,6 +8,7 @@ import threading
 import time
 from http import HTTPStatus
 from types import FrameType
+from pathlib import Path
 
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
 from lxml import etree
@@ -245,13 +246,17 @@ def send_content(path: str) -> Response:
         return generate_not_initialized_error()
 
     if current_app.config["app"]["storage_backend"] == "s3":
-        new_path = current_app.config["app"]["s3"]["cdn_domain"] + "content/" + path.replace(ap.web_root, "")
+        path_obj = Path(path)
+        web_root = Path(ap.web_root)
+        relative_path = str(path_obj).replace(str(web_root), "")
+        new_path = current_app.config["app"]["s3"]["cdn_domain"] + "content/" + relative_path
         response = current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
         response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
-        response = send_from_directory(os.path.join(current_app.instance_path, "web", "content"), path)
+        web_dir = Path(current_app.instance_path) / "web" / "content"
+        response = send_from_directory(str(web_dir), path)
 
-    return response  # type: ignore[return-value] # The conflicting types here are secretly the same
+    return response  # type: ignore[return-value]
 
 
 @bp.route("/filelist.html")
@@ -286,7 +291,7 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = etree.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
+            tree = etree.parse(Path(current_app.instance_path) / "web" / "rss" / feed)
             rss = etree.tostring(
                 tree.getroot(),
                 encoding="utf-8",

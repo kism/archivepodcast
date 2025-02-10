@@ -8,6 +8,7 @@ import shutil
 import sys
 from datetime import datetime
 from http import HTTPStatus
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import ffmpeg
@@ -98,8 +99,9 @@ class PodcastDownloader:
 
             self.s3_paths_cache.sort()
         else:
+            web_root = Path(self.web_root)
             self.local_paths_cache = [
-                os.path.relpath(os.path.join(root, file), self.web_root)
+                str(Path(root).joinpath(file).relative_to(web_root))
                 for root, _, files in os.walk(self.web_root)
                 for file in files
             ]
@@ -340,10 +342,11 @@ class PodcastDownloader:
 
     def _check_local_path_exists(self, file_path: str) -> bool:
         """Check if the file exists locally."""
-        file_exists = os.path.isfile(file_path)
+        path = Path(file_path)
+        file_exists = path.is_file()
 
         if file_exists:
-            self._append_to_local_paths_cache(file_path)
+            self._append_to_local_paths_cache(str(file_path))
 
         if file_exists:
             logger.debug("📁 File: %s exists locally", file_path)
@@ -357,9 +360,8 @@ class PodcastDownloader:
         file_exists = False
 
         if self.s3 is not None:
-            s3_file_path = file_path.replace(self.web_root, "").replace(os.sep, "/")
-            if s3_file_path[0] == "/":
-                s3_file_path = s3_file_path[1:]
+            s3_file_path = str(Path(file_path).relative_to(self.web_root)).replace(os.sep, "/")
+            s3_file_path = s3_file_path.removeprefix("/")
 
             if s3_file_path not in self.s3_paths_cache:
                 try:
@@ -398,19 +400,10 @@ class PodcastDownloader:
         spacer = ""  # This logic can be removed since WAVs will always have a date
         if file_date_string != "":
             spacer = "-"
-        wav_file_path = os.path.join(
-            self.web_root,
-            "content",
-            podcast["name_one_word"],
-            f"{file_date_string}{spacer}{title}.wav",
-        )
 
-        mp3_file_path = os.path.join(
-            self.web_root,
-            "content",
-            podcast["name_one_word"],
-            f"{file_date_string}{spacer}{title}.mp3",
-        )
+        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        wav_file_path = content_dir / f"{file_date_string}{spacer}{title}.wav"
+        mp3_file_path = content_dir / f"{file_date_string}{spacer}{title}.mp3"
 
         # If we need do download and convert a wav there is a small chance
         # the user has had ffmpeg issues, remove existing files to play it safe
@@ -454,7 +447,7 @@ class PodcastDownloader:
                 self._upload_asset_s3(mp3_file_path, extension)
 
         if self.s3:
-            s3_file_path = mp3_file_path.replace(self.web_root, "").replace(os.sep, "/")
+            s3_file_path = str(Path(mp3_file_path).relative_to(self.web_root)).replace(os.sep, "/")
             if s3_file_path[0] == "/":
                 s3_file_path = s3_file_path[1:]
 
@@ -477,8 +470,8 @@ class PodcastDownloader:
             logger.error("⛅❌ s3 client not found, cannot upload")
             return
         content_type = CONTENT_TYPES[extension]
-        s3_path = file_path.replace(self.web_root, "").replace(os.sep, "/")
-        if s3_path[0] == "/":
+        s3_path = str(Path(file_path).relative_to(self.web_root)).replace(os.sep, "/")
+        if s3_path.startswith("/"):
             s3_path = s3_path[1:]
         try:
             # Upload the file
@@ -508,18 +501,17 @@ class PodcastDownloader:
 
     def _download_cover_art(self, url: str, title: str, podcast: dict, extension: str = "") -> None:
         """Download cover art from url with appropriate file name."""
-        cover_art_destination = os.path.join(self.web_root, "content", podcast["name_one_word"], f"{title}{extension}")
+        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        cover_art_destination = content_dir / f"{title}{extension}"
 
-        local_file_found = self._check_local_path_exists(
-            os.path.join(self.web_root, "content", podcast["name_one_word"], f"{title}{extension}")
-        )
+        local_file_found = self._check_local_path_exists(str(cover_art_destination))
 
         if not local_file_found:
-            self._download_to_local(url, cover_art_destination)
+            self._download_to_local(url, str(cover_art_destination))
 
         if self.s3:
             logger.info("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
-            self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
+            self._upload_asset_s3(str(cover_art_destination), extension, remove_original=False)
 
     def _download_asset(
         self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = ""
@@ -529,17 +521,16 @@ class PodcastDownloader:
         if file_date_string != "":
             spacer = "-"
 
-        file_path = os.path.join(
-            self.web_root, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}{extension}"
-        )
+        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        file_path = content_dir / f"{file_date_string}{spacer}{title}{extension}"
 
-        if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
-            self._download_to_local(url, file_path)
+        if not self._check_path_exists(str(file_path)):  # if the asset hasn't already been downloaded
+            self._download_to_local(url, str(file_path))
 
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
             if extension != ".wav" and self.s3:
-                self._upload_asset_s3(file_path, extension)
+                self._upload_asset_s3(str(file_path), extension)
 
         else:
             logger.trace(f"Already downloaded: {title}{extension}")
@@ -569,7 +560,7 @@ class PodcastDownloader:
             self._append_to_local_paths_cache(file_path)
 
     def _append_to_local_paths_cache(self, file_path: str) -> None:
-        file_path = os.path.relpath(file_path, self.web_root)
+        file_path = str(Path(file_path).relative_to(self.web_root))
 
         if file_path not in self.local_paths_cache:
             self.local_paths_cache.append(file_path)

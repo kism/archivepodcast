@@ -2,6 +2,7 @@
 
 import logging
 import os
+from pathlib import Path
 
 import pytest
 
@@ -18,10 +19,10 @@ def test_init(s3, get_test_config, tmp_path, caplog):
     bucket_name = config["app"]["s3"]["bucket"]
     s3.create_bucket(Bucket=bucket_name)
 
-    web_root = os.path.join(tmp_path, "web")
+    web_root = Path(tmp_path) / "web"
 
     with caplog.at_level(pytest.TRACE_LEVEL_NUM):
-        pd = PodcastDownloader(app_config=config["app"], s3=s3, web_root=web_root)
+        pd = PodcastDownloader(app_config=config["app"], s3=s3, web_root=str(web_root))
 
     assert "PodcastDownloader config (re)loaded" in caplog.text
     assert pd.s3_paths_cache == []

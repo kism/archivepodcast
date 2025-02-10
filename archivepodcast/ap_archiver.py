@@ -4,6 +4,7 @@ import contextlib
 import os
 import threading
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import boto3
@@ -45,12 +46,12 @@ class PodcastArchiver:
         self.health.update_core_status(currently_loading_config=True)
 
         # There are so many, but I use them all
-        self.root_path = root_path
-        self.instance_path = instance_path
-        self.web_root = os.path.join(instance_path, "web")  # This gets used so often, it's worth the variable
-        self.app_directory = os.path.join("archivepodcast")
-        self.static_directory = os.path.join(self.app_directory, "static")
-        self.template_directory = os.path.join(self.app_directory, "templates")
+        self.root_path = Path(root_path)
+        self.instance_path = Path(instance_path)
+        self.web_root = self.instance_path / "web"  # This gets used so often, it's worth the variable
+        self.app_directory = Path("archivepodcast")
+        self.static_directory = self.app_directory / "static"
+        self.template_directory = self.app_directory / "templates"
 
         # Set the config and podcast list
         self.app_config: dict = {}
@@ -80,10 +81,10 @@ class PodcastArchiver:
     def load_about_page(self) -> None:
         """Create about page if needed."""
         about_page_md_filename = "about.md"
-        about_page_md_expected_path = os.path.join(self.instance_path, about_page_md_filename)
+        about_page_md_expected_path = self.instance_path / about_page_md_filename
         about_page_filename = "about.html"
 
-        if os.path.exists(about_page_md_expected_path):  # Check if about.html exists, affects index.html so it's first.
+        if about_page_md_expected_path.exists():  # Check if about.html exists, affects index.html so it's first.
             with open(about_page_md_expected_path, encoding="utf-8") as about_page:
                 about_page_md_rendered = markdown.markdown(about_page.read(), extensions=["tables"])
 
@@ -119,20 +120,18 @@ class PodcastArchiver:
         """Ensure that web_root folder structure exists."""
         logger.debug("Checking folder structure")
 
-        folders = []
+        folders = [
+            self.instance_path,
+            self.web_root,
+            self.web_root / "rss",
+            self.web_root / "content"
+        ]
 
-        folders.append(self.instance_path)
-        folders.append(self.web_root)
-        folders.append(os.path.join(self.web_root, "rss"))
-        folders.append(os.path.join(self.web_root, "content"))
-
-        folders.extend(os.path.join(self.web_root, "content", entry["name_one_word"]) for entry in self.podcast_list)
+        folders.extend(self.web_root / "content" / entry["name_one_word"] for entry in self.podcast_list)
 
         for folder in folders:
             try:
-                os.mkdir(folder)
-            except FileExistsError:
-                pass
+                folder.mkdir(exist_ok=True, parents=True)
             except PermissionError as exc:
                 err = (
                     f"❌ You do not have permission to create folder: {folder}"
@@ -210,16 +209,16 @@ class PodcastArchiver:
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
 
-    def _load_rss_from_file(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
+    def _load_rss_from_file(self, podcast: dict, rss_file_path: Path) -> etree._ElementTree | None:
         """Load the rss from file."""
         tree = None
         if podcast["live"] is False:
             logger.info("📄 Loading rss from file: %s", rss_file_path)
         else:
             logger.warning("📄 Loading rss from file: %s", rss_file_path)
-        if os.path.exists(rss_file_path):
+        if rss_file_path.exists():
             try:
-                tree = etree.parse(rss_file_path)
+                tree = etree.parse(str(rss_file_path))
             except etree.XMLSyntaxError:
                 logger.exception("❌ Error parsing rss file: %s", rss_file_path)
         else:
@@ -264,12 +263,12 @@ class PodcastArchiver:
                 logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
         self.health.update_podcast_status(podcast["name_one_word"], rss_available=True)
 
-    def _download_podcast(self, podcast: dict, rss_file_path: str) -> etree._ElementTree | None:
+    def _download_podcast(self, podcast: dict, rss_file_path: Path) -> etree._ElementTree | None:
         tree, download_healthy = self.podcast_downloader.download_podcast(podcast)
         if tree:
             # Write rss to disk
             tree.write(
-                rss_file_path,
+                str(rss_file_path),
                 encoding="utf-8",
                 xml_declaration=True,
             )
@@ -294,7 +293,7 @@ class PodcastArchiver:
         with contextlib.suppress(KeyError):  # Set the previous feed var if it exists
             previous_feed = self.podcast_rss[podcast["name_one_word"]]
 
-        rss_file_path = os.path.join(self.web_root, "rss", podcast["name_one_word"])
+        rss_file_path = self.web_root / "rss" / podcast["name_one_word"]
 
         if podcast["live"] is True:  # download all the podcasts
             tree = self._download_podcast(podcast, rss_file_path)
@@ -334,12 +333,14 @@ class PodcastArchiver:
 
         # Static items
         static_items_to_copy = [
-            os.path.join(root, file) for root, __, files in os.walk(self.static_directory) for file in files
+            Path(root) / file
+            for root, _, files in os.walk(self.static_directory)
+            for file in files
         ]
 
         for item in static_items_to_copy:
-            item_relative_path = os.path.relpath(item, self.app_directory)
-            item_mime = magic.from_file(item, mime=True)
+            item_relative_path = str(item.relative_to(self.app_directory))
+            item_mime = magic.from_file(str(item), mime=True)
             logger.trace("💾 Registering static item: %s, mime: %s", item, item_mime)
 
             if item_mime.startswith("text"):
@@ -350,14 +351,14 @@ class PodcastArchiver:
                     self.webpages.add(path=item_relative_path, mime=item_mime, content=static_item.read())
 
         # Templates
-        env = Environment(loader=FileSystemLoader(self.template_directory), autoescape=True)
+        env = Environment(loader=FileSystemLoader(str(self.template_directory)), autoescape=True)
         templates_to_render = ["guide.html.j2", "index.html.j2", "health.html.j2", "webplayer.html.j2"]
 
         logger.debug("💾 Templates to render: %s", templates_to_render)
 
         for template_path in templates_to_render:
             output_filename = os.path.basename(template_path).replace(".j2", "")
-            output_path = os.path.join(self.web_root, output_filename)
+            output_path = self.web_root / output_filename
             logger.debug("💾 Rendering template: %s to %s", template_path, output_path)
 
             template = env.get_template(template_path)
@@ -421,31 +422,28 @@ class PodcastArchiver:
         else:
             logger.info(f"💾 Writing {str_webpages} locally")
         for webpage in webpages:
-            dirs_in_path = os.path.dirname(webpage.path)
-            directories_list = dirs_in_path.split(os.sep)
+            webpage_path = Path(webpage.path)
+            directory_path = self.web_root / webpage_path.parent
 
-            for i in range(1, len(directories_list) + 1):
-                directory = os.path.join(self.web_root, *directories_list[:i])
-                if not os.path.exists(directory):
-                    logger.debug("💾 Creating directory: %s", directory)
-                    with contextlib.suppress(FileExistsError):  # Due to threading
-                        os.mkdir(directory)
+            directory_path.mkdir(parents=True, exist_ok=True)
 
-            page_path_local = os.path.join(self.web_root, webpage.path)
+            page_path_local = self.web_root / webpage.path
             logger.trace("💾 Writing page locally: %s", page_path_local)
             page_content_bytes = (
                 webpage.content.encode("utf-8") if isinstance(webpage.content, str) else webpage.content
             )
+
             with open(page_path_local, "wb") as page:
                 page.write(page_content_bytes)
 
             if self.s3:
-                logger.trace("⛅💾 Writing page s3: %s", webpage.path)
+                s3_key = str(webpage_path).replace(os.sep, "/")
+                logger.trace("⛅💾 Writing page s3: %s", s3_key)
 
                 self.s3.put_object(
                     Body=page_content_bytes,
                     Bucket=self.app_config["s3"]["bucket"],
-                    Key=webpage.path,
+                    Key=s3_key,
                     ContentType=webpage.mime,
                 )
 
