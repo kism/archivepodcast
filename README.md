@@ -9,6 +9,18 @@
 
 Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them.
 
+Features:
+
+- Webapp
+  - List of feeds hosted
+  - File listing for unlisted episodes
+  - Web player
+  - Health check page
+- Looks for new episodes to fetch every hour
+- Rename feeds to indicate that they are an archive
+- Local or S3 storage backend
+
+
 In theory this works in windows however I haven't tested it, it ~should be able to handle windows file paths fine.
 
 Docs are at <https://archivepodcast.readthedocs.io/en/latest/>
@@ -34,7 +46,7 @@ uv sync
 ```bash
 uv venv
 source .venv/bin/activate
-uv sync --no-group dev --no-group test --no-group type --no-group lint
+uv sync --no-default-groups
 ```
 
 ## Running archivepodcast webapp

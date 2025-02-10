@@ -1,6 +1,6 @@
 # Archive Podcast Documentation
 
-This the documentation for the Archive Podcast project. The project is a Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them.
+Flask Webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them.
 
 <https://github.com/kism/archivepodcast>
 
