@@ -26,7 +26,7 @@ DUMMY_RSS_STR = "<?xml version='1.0' encoding='utf-8'?>\n<rss><item>Dummy RSS</i
 
 
 def pytest_configure():
-    """This is a magic function for adding things to pytest?"""
+    """Magic function to set module level variables."""
     pytest.TEST_CONFIGS_LOCATION = TEST_CONFIGS_LOCATION
     pytest.TEST_WAV_FILE = TEST_WAV_FILE
     pytest.DUMMY_RSS_STR = DUMMY_RSS_STR
@@ -35,7 +35,7 @@ def pytest_configure():
     pytest.FLASK_ROOT_PATH = FLASK_ROOT_PATH
 
 
-pytest_plugins = [
+pytest_plugins = [ # Magic list of fixtures to load
     "tests.fixtures.archivepodcast_app",
     "tests.fixtures.archivepodcast_obj",
     "tests.fixtures.aws",
