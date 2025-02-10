@@ -48,7 +48,7 @@ class PodcastArchiver:
         # There are so many, but I use them all
         self.root_path = Path(root_path)
         self.instance_path = Path(instance_path)
-        self.web_root = self.instance_path / "web"  # This gets used so often, it's worth the variable
+        self.web_root: Path = self.instance_path / "web"  # This gets used so often, it's worth the variable
         self.app_directory = Path("archivepodcast")
         self.static_directory = self.app_directory / "static"
         self.template_directory = self.app_directory / "templates"
@@ -81,11 +81,11 @@ class PodcastArchiver:
     def load_about_page(self) -> None:
         """Create about page if needed."""
         about_page_md_filename = "about.md"
-        about_page_md_expected_path = self.instance_path / about_page_md_filename
+        about_page_md_expected_path: Path = self.instance_path / about_page_md_filename
         about_page_filename = "about.html"
 
         if about_page_md_expected_path.exists():  # Check if about.html exists, affects index.html so it's first.
-            with open(about_page_md_expected_path, encoding="utf-8") as about_page:
+            with about_page_md_expected_path.open(encoding="utf-8") as about_page:
                 about_page_md_rendered = markdown.markdown(about_page.read(), extensions=["tables"])
 
             env = Environment(loader=FileSystemLoader(self.template_directory), autoescape=True)
@@ -344,10 +344,10 @@ class PodcastArchiver:
             logger.trace("💾 Registering static item: %s, mime: %s", item, item_mime)
 
             if item_mime.startswith("text"):
-                with open(item) as static_item:
+                with item.open() as static_item:
                     self.webpages.add(path=item_relative_path, mime=item_mime, content=static_item.read())
             else:
-                with open(item, "rb") as static_item:
+                with item.open("rb") as static_item:
                     self.webpages.add(path=item_relative_path, mime=item_mime, content=static_item.read())
 
         # Templates
@@ -357,7 +357,7 @@ class PodcastArchiver:
         logger.debug("💾 Templates to render: %s", templates_to_render)
 
         for template_path in templates_to_render:
-            output_filename = os.path.basename(template_path).replace(".j2", "")
+            output_filename = Path(template_path).name.replace(".j2", "")
             output_path = self.web_root / output_filename
             logger.debug("💾 Rendering template: %s to %s", template_path, output_path)
 
@@ -433,7 +433,7 @@ class PodcastArchiver:
                 webpage.content.encode("utf-8") if isinstance(webpage.content, str) else webpage.content
             )
 
-            with open(page_path_local, "wb") as page:
+            with page_path_local.open("wb") as page:
                 page.write(page_content_bytes)
 
             if self.s3:

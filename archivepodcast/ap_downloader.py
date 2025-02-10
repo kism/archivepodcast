@@ -340,13 +340,13 @@ class PodcastDownloader:
                     + filetype
                 )
 
-    def _check_local_path_exists(self, file_path: str) -> bool:
+    def _check_local_path_exists(self, file_path: Path) -> bool:
         """Check if the file exists locally."""
         path = Path(file_path)
         file_exists = path.is_file()
 
         if file_exists:
-            self._append_to_local_paths_cache(str(file_path))
+            self._append_to_local_paths_cache(file_path)
 
         if file_exists:
             logger.debug("📁 File: %s exists locally", file_path)
@@ -355,7 +355,7 @@ class PodcastDownloader:
 
         return file_exists
 
-    def _check_path_exists(self, file_path: str) -> bool:
+    def _check_path_exists(self, file_path: Path) -> bool:
         """Check the path, s3 or local."""
         file_exists = False
 
@@ -407,18 +407,18 @@ class PodcastDownloader:
             spacer = "-"
 
         content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
-        wav_file_path = content_dir / f"{file_date_string}{spacer}{title}.wav"
-        mp3_file_path = content_dir / f"{file_date_string}{spacer}{title}.mp3"
+        wav_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.wav"
+        mp3_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.mp3"
 
         # If we need do download and convert a wav there is a small chance
         # the user has had ffmpeg issues, remove existing files to play it safe
-        if os.path.exists(wav_file_path):
+        if wav_file_path.exists():
             with contextlib.suppress(Exception):
-                os.remove(wav_file_path)
-                os.remove(mp3_file_path)
+                wav_file_path.unlink()
+                mp3_file_path.unlink()
 
         # If the asset hasn't already been downloaded and converted
-        if not self._check_path_exists(mp3_file_path):
+        if not mp3_file_path.exists():
             self._download_asset(
                 url,
                 title,
@@ -444,8 +444,8 @@ class PodcastDownloader:
 
             # Remove wav since we are done with it
             logger.info("♻ Removing wav version of %s", title)
-            if os.path.exists(wav_file_path):
-                os.remove(wav_file_path)
+            if wav_file_path.exists():
+                wav_file_path.unlink()
             logger.info("♻ Done")
 
             if self.s3:
@@ -462,7 +462,7 @@ class PodcastDownloader:
             new_length = response["ContentLength"]
             msg = f"Length of converted wav file {s3_file_path}: {new_length}"
         else:
-            new_length = os.stat(mp3_file_path).st_size
+            new_length = mp3_file_path.stat().st_size
             msg = f"Length of converted wav file {mp3_file_path}: {new_length}"
 
         logger.trace(msg)
@@ -518,7 +518,7 @@ class PodcastDownloader:
 
         if self.s3:
             logger.info("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
-            self._upload_asset_s3(str(cover_art_destination), extension, remove_original=False)
+            self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
 
     def _download_asset(
         self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = ""
@@ -537,12 +537,12 @@ class PodcastDownloader:
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
             if extension != ".wav" and self.s3:
-                self._upload_asset_s3(str(file_path), extension)
+                self._upload_asset_s3(file_path, extension)
 
         else:
             logger.trace(f"Already downloaded: {title}{extension}")
 
-    def _download_to_local(self, url: str, file_path: str) -> None:
+    def _download_to_local(self, url: str, file_path: Path) -> None:
         """Download the asset from the url."""
         logger.debug("💾 Downloading: %s", url)
         logger.info("💾 Downloading asset to: %s", file_path)
@@ -555,7 +555,7 @@ class PodcastDownloader:
             return
 
         if req.status_code == HTTPStatus.OK:
-            with open(file_path, "wb") as asset_file:
+            with Path(file_path).open("wb") as asset_file:
                 asset_file.write(req.content)
                 logger.debug("💾 Success!")
         else:
@@ -566,7 +566,7 @@ class PodcastDownloader:
         if not self.s3:
             self._append_to_local_paths_cache(file_path)
 
-    def _append_to_local_paths_cache(self, file_path: str) -> None:
+    def _append_to_local_paths_cache(self, file_path: Path) -> None:
         file_path = str(Path(file_path).relative_to(self.web_root))
 
         if file_path not in self.local_paths_cache:
