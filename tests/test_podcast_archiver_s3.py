@@ -17,8 +17,6 @@ CONTENT_TYPE_PARAMS = [
     ("static/fonts/fira-code-v12-latin-500.woff2", "font/woff2"),
 ]
 
-FLASK_ROOT_PATH = os.getcwd()
-
 
 def test_config_valid(tmp_path, get_test_config, caplog, s3):
     """Verify S3 configuration loading and bucket setup."""
@@ -35,7 +33,7 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3):
             app_config=config["app"],
             podcast_list=config["podcast"],
             instance_path=tmp_path,
-            root_path=FLASK_ROOT_PATH,
+            root_path=pytest.FLASK_ROOT_PATH,
         )
 
     assert "Not using s3" not in caplog.text
