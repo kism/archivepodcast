@@ -360,7 +360,10 @@ class PodcastDownloader:
         file_exists = False
 
         if self.s3 is not None:
-            s3_file_path = str(Path(file_path).relative_to(self.web_root)).replace(os.sep, "/")
+            if Path(file_path).is_absolute() and Path(file_path).is_relative_to(self.web_root):
+                s3_file_path = str(Path(file_path).relative_to(self.web_root)).replace(os.sep, "/")
+            else:
+                s3_file_path = str(Path(file_path)).replace(os.sep, "/")
             s3_file_path = s3_file_path.removeprefix("/")
 
             if s3_file_path not in self.s3_paths_cache:
@@ -464,20 +467,22 @@ class PodcastDownloader:
 
         return new_length
 
-    def _upload_asset_s3(self, file_path: str, extension: str, *, remove_original: bool = True) -> None:
+    def _upload_asset_s3(self, file_path: Path, extension: str, *, remove_original: bool = True) -> None:
         """Upload asset to s3."""
         if not self.s3:
             logger.error("⛅❌ s3 client not found, cannot upload")
             return
         content_type = CONTENT_TYPES[extension]
-        s3_path = str(Path(file_path).relative_to(self.web_root)).replace(os.sep, "/")
-        if s3_path.startswith("/"):
-            s3_path = s3_path[1:]
+        file_path = Path(file_path)
+        if not file_path.is_absolute():
+            file_path = Path(self.web_root) / file_path
+        s3_path = str(file_path.relative_to(self.web_root)).replace(os.sep, "/")
+        s3_path = s3_path.removeprefix("/")
         try:
             # Upload the file
             logger.info("💾⛅ Uploading to s3: %s", s3_path)
             self.s3.upload_file(
-                file_path,
+                str(file_path),
                 self.app_config["s3"]["bucket"],
                 s3_path,
                 ExtraArgs={"ContentType": content_type},
@@ -487,7 +492,7 @@ class PodcastDownloader:
             if remove_original:
                 logger.info("💾 Removing local file: %s", file_path)
                 try:
-                    os.remove(file_path)
+                    Path(file_path).unlink()
                 except FileNotFoundError:  # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
                     msg = f"⛅❌ Could not remove the local file, the source file was not found: {file_path}"
                     logger.exception(msg)
