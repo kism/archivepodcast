@@ -365,22 +365,22 @@ class PodcastDownloader:
             s3_file_path_str = s3_file_path_str.replace(os.sep, "/")
             s3_file_path_str = s3_file_path_str.removeprefix("/")
 
-            if s3_file_path not in self.s3_paths_cache:
+            if s3_file_path_str not in self.s3_paths_cache:
                 try:
                     # Head object to check if file exists
                     self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path_str)
                     logger.debug(
                         "⛅ File: %s exists in s3 bucket",
-                        s3_file_path,
+                        s3_file_path_str,
                     )
-                    self.s3_paths_cache.append(s3_file_path)
+                    self.s3_paths_cache.append(s3_file_path_str)
                     file_exists = True
 
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
                         logger.debug(
                             "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
-                            s3_file_path,
+                            s3_file_path_str,
                         )
                     else:
                         logger.exception("⛅❌ s3 check file exists errored out?")
@@ -388,7 +388,7 @@ class PodcastDownloader:
                     logger.exception("⛅❌ Unhandled s3 Error:")
 
             else:
-                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_file_path)
+                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_file_path_str)
                 file_exists = True
 
         else:
