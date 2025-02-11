@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from . import FakeExceptionError
+from archivepodcast.bp_archivepodcast import TZINFO_UTC
 
-# from bp_archivepodcast import TZINFO_LOCAL
+from . import FakeExceptionError
 
 
 def test_app_paths(apa, client_live, client_live_s3, tmp_path):
@@ -302,8 +302,8 @@ def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, ca
 @pytest.mark.parametrize(
     ("time", "expected_seconds"),
     [
-        (datetime.datetime(2020, 1, 1, 0, 0, 0), 1200),  # 1200 seconds = 20 minutes
-        (datetime.datetime(2020, 1, 1, 0, 30, 0), 3000),  # 3000 seconds = 50 minutes
+        (datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=TZINFO_UTC), 1200),  # 1200 seconds = 20 minutes
+        (datetime.datetime(2020, 1, 1, 0, 30, 0, tzinfo=TZINFO_UTC), 3000),  # 3000 seconds = 50 minutes
     ],
 )
 def test_time_until_next_run(time, expected_seconds):

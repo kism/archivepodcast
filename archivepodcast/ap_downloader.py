@@ -2,11 +2,10 @@
 # and return xml that can be served to download them
 
 import contextlib
+import datetime
 import re
 import shutil
 import sys
-import zoneinfo
-from datetime import datetime
 from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -48,7 +47,7 @@ CONTENT_TYPES = {
     ".flac": "audio/flac",
 }
 
-TZINFO_UTC = zoneinfo.ZoneInfo("UTC")
+TZINFO_UTC = datetime.datetime.now(datetime.UTC).astimezone().tzinfo
 
 
 # These make the name spaces appear nicer in the generated XML
@@ -287,11 +286,11 @@ class PodcastDownloader:
         for child in channel:
             if child.tag == "pubDate":
                 original_date = str(child.text)
-                file_date = datetime(1970, 1, 1, tzinfo=TZINFO_UTC)
+                file_date = datetime.datetime(1970, 1, 1, tzinfo=TZINFO_UTC)
                 with contextlib.suppress(ValueError):
-                    file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
+                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
                 with contextlib.suppress(ValueError):
-                    file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
+                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
                 file_date_string = file_date.strftime("%Y%m%d")
         return file_date_string
 

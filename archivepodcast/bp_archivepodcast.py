@@ -6,7 +6,6 @@ import os
 import signal
 import threading
 import time
-import zoneinfo
 from http import HTTPStatus
 from pathlib import Path
 from types import FrameType
@@ -28,7 +27,7 @@ logger = get_logger(__name__)
 
 ap: PodcastArchiver | None = None
 
-TZINFO_LOCAL = datetime.datetime.now(datetime.UTC).astimezone().tzinfo
+TZINFO_UTC = datetime.datetime.now(datetime.UTC).astimezone().tzinfo
 
 def initialise_archivepodcast() -> None:
     """Initialize the archivepodcast app."""
@@ -107,7 +106,7 @@ def podcast_loop() -> None:
     while True:
         ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
-        current_datetime = datetime.datetime.now(tz=TZINFO_LOCAL)
+        current_datetime = datetime.datetime.now(tz=TZINFO_UTC)
 
         # Calculate time until next run
         seconds_until_next_run = _get_time_until_next_run(current_datetime)
