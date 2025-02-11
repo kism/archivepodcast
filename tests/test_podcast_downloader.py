@@ -1,8 +1,8 @@
 """App testing different config behaviours."""
 
 import logging
-import os
 from http import HTTPStatus
+from pathlib import Path
 
 import magic
 import pytest
@@ -15,7 +15,7 @@ def test_init(get_test_config, tmp_path, caplog):
     config_file = "testing_true_valid.toml"
     config = get_test_config(config_file)
 
-    web_root = os.path.join(tmp_path, "web")
+    web_root = Path(tmp_path) / "web"
 
     with caplog.at_level(pytest.TRACE_LEVEL_NUM):
         apd = PodcastDownloader(app_config=config["app"], s3=None, web_root=web_root)
@@ -99,16 +99,15 @@ def test_download_podcast_wav_wav_exists(
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
 
-    test_podcast_content_dir = os.path.join(tmp_path, "web", "content", "test")
+    test_podcast_content_dir = Path(tmp_path) / "web" / "content" / "test"
 
-    os.makedirs(test_podcast_content_dir, exist_ok=True)
+    Path(test_podcast_content_dir).mkdir(parents=True, exist_ok=True)
 
     episode_file_name = "20200101-Test-Episode"
-    tmp_wav_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.wav")
-    tmp_mp3_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.mp3")
+    tmp_wav_path = Path(test_podcast_content_dir) / f"{episode_file_name}.wav"
+    tmp_mp3_path = Path(test_podcast_content_dir) / f"{episode_file_name}.mp3"
 
-    with open(tmp_wav_path, "wb") as f:
-        f.write(pytest.TEST_WAV_FILE)
+    tmp_wav_path.write_bytes(pytest.TEST_WAV_FILE)
 
     mock_get_podcast_source_rss("test_valid_wav.rss")
 
@@ -123,8 +122,8 @@ def test_download_podcast_wav_wav_exists(
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
 
-    assert not os.path.exists(tmp_wav_path)
-    assert os.path.exists(tmp_mp3_path)
+    assert not tmp_wav_path.exists()
+    assert tmp_mp3_path.exists()
     assert magic.from_file(tmp_mp3_path, mime=True) == "audio/mpeg"  # Check that the file is actually an mp3
 
 
@@ -142,16 +141,15 @@ def test_download_podcast_wav_mp3_exists(
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
 
-    test_podcast_content_dir = os.path.join(tmp_path, "web", "content", "test")
+    test_podcast_content_dir = Path(tmp_path) / "web" / "content" / "test"
 
-    os.makedirs(test_podcast_content_dir, exist_ok=True)
+    test_podcast_content_dir.mkdir(parents=True, exist_ok=True)
 
     episode_file_name = "20200101-Test-Episode"
-    tmp_wav_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.wav")
-    tmp_mp3_path = os.path.join(test_podcast_content_dir, f"{episode_file_name}.mp3")
+    tmp_wav_path = test_podcast_content_dir / f"{episode_file_name}.wav"
+    tmp_mp3_path = test_podcast_content_dir / f"{episode_file_name}.mp3"
 
-    with open(tmp_mp3_path, "w") as f:
-        f.write("Test MP3")
+    tmp_mp3_path.write_text("Test MP3")
 
     mock_get_podcast_source_rss("test_valid_wav.rss")
 
@@ -166,7 +164,7 @@ def test_download_podcast_wav_mp3_exists(
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
 
-    assert not os.path.exists(tmp_wav_path)
+    assert not tmp_wav_path.exists()
 
 
 def test_no_ffmpeg(tmp_path, caplog, monkeypatch):

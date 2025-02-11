@@ -1,7 +1,7 @@
 """Unit tests for the logger module."""
 
 import logging
-import os
+from pathlib import Path
 
 import pytest
 
@@ -60,7 +60,7 @@ def test_handler_console_added(logger, app):
 
 def test_handler_file_added(logger, tmp_path, app):
     """Test logging file handler."""
-    logging_conf = {"path": os.path.join(tmp_path, "test.log"), "level": "INFO"}  # Test file handler
+    logging_conf = {"path": str(Path(tmp_path) / "test.log"), "level": "INFO"}  # Test file handler
 
     # TEST: Two handlers when logging to file expected
     archivepodcast.logger.setup_logger(app, logging_conf, logger)

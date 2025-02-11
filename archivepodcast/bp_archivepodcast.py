@@ -7,8 +7,8 @@ import signal
 import threading
 import time
 from http import HTTPStatus
-from types import FrameType
 from pathlib import Path
+from types import FrameType
 
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
 from lxml import etree
@@ -33,11 +33,11 @@ def initialise_archivepodcast() -> None:
     global ap  # noqa: PLW0603
 
     ap = PodcastArchiver(
-        current_app.config["app"],
-        current_app.config["podcast"],
-        current_app.instance_path,
-        current_app.root_path,
-        current_app.debug,
+        app_config=current_app.config["app"],
+        podcast_list=current_app.config["podcast"],
+        instance_path=Path(current_app.instance_path),
+        root_path=Path(current_app.root_path),
+        debug=current_app.debug,
     )
 
     signal.signal(signal.SIGHUP, reload_config)
@@ -68,7 +68,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     logger.info("🙋 Got SIGHUP, Reloading Config")
 
     try:
-        ap_conf = ArchivePodcastConfig(instance_path=current_app.instance_path)  # Loads app config from disk
+        ap_conf = ArchivePodcastConfig(instance_path=Path(current_app.instance_path))  # Loads app config from disk
 
         # Other sections handled by config.py
         for key, value in ap_conf.items():

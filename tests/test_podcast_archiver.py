@@ -1,7 +1,7 @@
 """Tests for PodcastArchiver functionality."""
 
 import logging
-import os
+from pathlib import Path
 
 import pytest
 
@@ -18,7 +18,8 @@ def test_no_about_page(apa, caplog):
 
 def test_about_page(apa, caplog, tmp_path):
     """Test about page."""
-    with open(os.path.join(tmp_path, "about.md"), "w") as f:
+    about_path = tmp_path / "about.md"
+    with about_path.open("w") as f:
         f.write("About page exists!")
 
     with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):
@@ -48,9 +49,9 @@ def test_grab_podcasts_not_live(
 
     apa.podcast_list[0]["live"] = False
 
-    os.makedirs(os.path.join(apa.instance_path, "web", "rss"), exist_ok=True)
-    with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
-        f.write(pytest.DUMMY_RSS_STR)
+    rss_path = Path(apa.instance_path) / "web" / "rss" / "test"
+    rss_path.parent.mkdir(parents=True, exist_ok=True)
+    rss_path.write_text(pytest.DUMMY_RSS_STR)
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
         apa.grab_podcasts()
@@ -81,9 +82,9 @@ def test_grab_podcasts_unhandled_exception(
 
     apa.podcast_list[0]["live"] = False
 
-    os.makedirs(os.path.join(apa.instance_path, "web", "rss"), exist_ok=True)
-    with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
-        f.write(pytest.DUMMY_RSS_STR)
+    rss_path = Path(apa.instance_path) / "web" / "rss" / "test"
+    rss_path.parent.mkdir(parents=True, exist_ok=True)
+    rss_path.write_text(pytest.DUMMY_RSS_STR)
 
     def mock_get_rss_feed_exception(*args, **kwargs):
         raise FakeExceptionError
@@ -109,9 +110,9 @@ def test_grab_podcasts_invalid_rss(
 
     rss = "INVALID"
 
-    os.makedirs(os.path.join(apa.instance_path, "web", "rss"), exist_ok=True)
-    with open(os.path.join(apa.instance_path, "web", "rss", "test"), "w") as f:
-        f.write(rss)
+    rss_path = Path(apa.instance_path) / "web" / "rss" / "test"
+    rss_path.parent.mkdir(parents=True, exist_ok=True)
+    rss_path.write_text(rss)
 
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_archiver"):
         apa.grab_podcasts()
@@ -180,7 +181,7 @@ def test_create_folder_structure_no_perms(apa, monkeypatch):
     def mock_os_makedirs_permission_error():
         raise PermissionError
 
-    monkeypatch.setattr("os.mkdir", lambda _: mock_os_makedirs_permission_error())
+    monkeypatch.setattr(Path, "mkdir", mock_os_makedirs_permission_error)
 
     with pytest.raises(PermissionError):
         apa.make_folder_structure()

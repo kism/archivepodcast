@@ -1,7 +1,7 @@
 """Tests for PodcastArchiver S3 functionality."""
 
 import logging
-import os
+from pathlib import Path
 
 import pytest
 
@@ -186,7 +186,9 @@ def test_upload_to_s3_exception(
     mock_get_podcast_source_rss("test_valid.rss")
     apa_aws.podcast_list[0]["live"] = False
 
-    with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
+    rss_path = Path(tmp_path) / "web" / "rss" / "test"
+    rss_path.parent.mkdir(parents=True, exist_ok=True)
+    with rss_path.open("w") as file:
         file.write(pytest.DUMMY_RSS_STR)
 
     def mock_unhandled_exception(*args, **kwargs):

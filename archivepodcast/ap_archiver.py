@@ -34,9 +34,10 @@ class PodcastArchiver:
         self,
         app_config: dict,
         podcast_list: list,
-        instance_path: str,
-        root_path: str,
-        debug: bool = False,  # noqa: FBT001, FBT002 # I don't care
+        instance_path: Path,
+        root_path: Path,
+        *,
+        debug: bool = False,
     ) -> None:
         """Initialise the ArchivePodcast object."""
         self.debug = debug
@@ -120,12 +121,7 @@ class PodcastArchiver:
         """Ensure that web_root folder structure exists."""
         logger.debug("Checking folder structure")
 
-        folders = [
-            self.instance_path,
-            self.web_root,
-            self.web_root / "rss",
-            self.web_root / "content"
-        ]
+        folders = [self.instance_path, self.web_root, self.web_root / "rss", self.web_root / "content"]
 
         folders.extend(self.web_root / "content" / entry["name_one_word"] for entry in self.podcast_list)
 
@@ -332,11 +328,7 @@ class PodcastArchiver:
         self.webpages.add(path="robots.txt", mime="text/plain", content=robots_txt_content)
 
         # Static items
-        static_items_to_copy = [
-            Path(root) / file
-            for root, _, files in os.walk(self.static_directory)
-            for file in files
-        ]
+        static_items_to_copy = [file for file in self.static_directory.rglob("*") if file.is_file()]
 
         for item in static_items_to_copy:
             item_relative_path = str(item.relative_to(self.app_directory))

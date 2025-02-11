@@ -1,7 +1,6 @@
 """Tests for S3-specific PodcastDownloader functionality."""
 
 import logging
-import os
 from pathlib import Path
 
 import pytest
@@ -129,12 +128,12 @@ def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
 
 
 def test_upload_asset_s3_os_remove_error(apd_aws, monkeypatch, caplog):
-    """Test handling os.remove error during S3 upload."""
+    """Test handling Path.unlink error during S3 upload."""
 
-    def os_remove_error(*args, **kwargs):
+    def path_unlink_error(*args, **kwargs):
         raise FileNotFoundError
 
-    monkeypatch.setattr(os, "remove", os_remove_error)
+    monkeypatch.setattr(Path, "unlink", path_unlink_error)
 
     monkeypatch.setattr(apd_aws.s3, "upload_file", lambda *args, **kwargs: None)
 

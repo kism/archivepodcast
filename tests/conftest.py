@@ -3,15 +3,15 @@
 Fixtures defined in a conftest.py can be used by any test in that package without needing to import them.
 """
 
-import os
+from pathlib import Path
 
 import pytest
 
 from archivepodcast.logger import TRACE_LEVEL_NUM
 
-FLASK_ROOT_PATH = os.getcwd()
-TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
-TEST_RSS_LOCATION = os.path.join(os.getcwd(), "tests", "rss")
+FLASK_ROOT_PATH = Path.cwd()
+TEST_CONFIGS_LOCATION = FLASK_ROOT_PATH / "tests" / "configs"
+TEST_RSS_LOCATION = FLASK_ROOT_PATH / "tests" / "rss"
 
 # Test WAV File
 # This is easier than: ffmpeg.input("anullsrc", f="lavfi", t=10).output(filename=tmp_wav_path, codec="pcm_s16le").run()
@@ -41,5 +41,5 @@ pytest_plugins = [ # Magic list of fixtures to load
     "tests.fixtures.aws",
     "tests.fixtures.configs",
     "tests.fixtures.requests",
-    "tests.fixtures.threading",
+    "tests.fixtures.threads",
 ]

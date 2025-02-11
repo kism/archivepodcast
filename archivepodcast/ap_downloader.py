@@ -77,7 +77,7 @@ check_ffmpeg()
 class PodcastDownloader:
     """PodcastDownloader object."""
 
-    def __init__(self, app_config: dict, s3: S3Client | None, web_root: str) -> None:
+    def __init__(self, app_config: dict, s3: S3Client | None, web_root: Path) -> None:
         """Initialise the PodcastDownloader object."""
         self.s3 = s3
         self.s3_paths_cache: list = []
@@ -101,9 +101,7 @@ class PodcastDownloader:
         else:
             web_root = Path(self.web_root)
             self.local_paths_cache = [
-                str(Path(root).joinpath(file).relative_to(web_root))
-                for root, _, files in os.walk(self.web_root)
-                for file in files
+                str(path.relative_to(web_root)) for path in Path(self.web_root).rglob("*") if path.is_file()
             ]
             self.local_paths_cache.sort()
 
@@ -511,10 +509,10 @@ class PodcastDownloader:
         content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
         cover_art_destination = content_dir / f"{title}{extension}"
 
-        local_file_found = self._check_local_path_exists(str(cover_art_destination))
+        local_file_found = self._check_local_path_exists(cover_art_destination)
 
         if not local_file_found:
-            self._download_to_local(url, str(cover_art_destination))
+            self._download_to_local(url, cover_art_destination)
 
         if self.s3:
             logger.info("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
@@ -531,8 +529,8 @@ class PodcastDownloader:
         content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
         file_path = content_dir / f"{file_date_string}{spacer}{title}{extension}"
 
-        if not self._check_path_exists(str(file_path)):  # if the asset hasn't already been downloaded
-            self._download_to_local(url, str(file_path))
+        if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
+            self._download_to_local(url, file_path)
 
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
@@ -567,7 +565,7 @@ class PodcastDownloader:
             self._append_to_local_paths_cache(file_path)
 
     def _append_to_local_paths_cache(self, file_path: Path) -> None:
-        file_path = str(Path(file_path).relative_to(self.web_root))
+        file_path = Path(file_path).relative_to(self.web_root)
 
         if file_path not in self.local_paths_cache:
             self.local_paths_cache.append(file_path)
