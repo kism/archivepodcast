@@ -69,11 +69,13 @@ def create_app(test_config: dict | None = None, instance_path: Path | None = Non
     @app.errorhandler(404)
     def invalid_route(e: str) -> Response:
         """404 Handler."""
-        app.logger.debug(f"Error handler: invalid_route: {e}")
+        app.logger.debug("Error handler: invalid_route: %s", e)
         return bp_archivepodcast.generate_404()
 
     app.logger.info(
-        f"🙋 ArchivePodcast Version: {__version__} webapp initialised in {time.time() - start_time:.2f} seconds."
+        "🙋 ArchivePodcast Version: %s webapp initialised in %.2f seconds.",
+        __version__,
+        time.time() - start_time
     )
     app.logger.info("🙋 Starting Web Server")
     return app

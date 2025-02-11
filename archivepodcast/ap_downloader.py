@@ -5,6 +5,7 @@ import contextlib
 import re
 import shutil
 import sys
+import zoneinfo
 from datetime import datetime
 from http import HTTPStatus
 from pathlib import Path
@@ -26,7 +27,7 @@ else:
 logger = get_logger(__name__)
 
 # Test FFMPEG
-ffmpeg_info = """ffmpeg not found, please install it and ensure it's in PATH.
+FFMPEG_INFO = """ffmpeg not found, please install it and ensure it's in PATH.
 https://www.ffmpeg.org/download.html
  apt install ffmpeg
  brew install ffmpeg
@@ -47,6 +48,9 @@ CONTENT_TYPES = {
     ".flac": "audio/flac",
 }
 
+TZINFO_UTC = zoneinfo.ZoneInfo("UTC")
+
+
 # These make the name spaces appear nicer in the generated XML
 etree.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
 etree.register_namespace("atom", "http://www.w3.org/2005/Atom")
@@ -66,7 +70,7 @@ etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1
 def check_ffmpeg() -> None:
     """Check if ffmpeg is installed."""
     if not shutil.which("ffmpeg"):
-        logger.error(ffmpeg_info)
+        logger.error(FFMPEG_INFO)
         sys.exit(1)
 
 
@@ -283,9 +287,9 @@ class PodcastDownloader:
         for child in channel:
             if child.tag == "pubDate":
                 original_date = str(child.text)
-                file_date = datetime(1970, 1, 1)
+                file_date = datetime(1970, 1, 1, tzinfo=TZINFO_UTC)
                 with contextlib.suppress(ValueError):
-                    file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")
+                    file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
                 with contextlib.suppress(ValueError):
                     file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
                 file_date_string = file_date.strftime("%Y%m%d")

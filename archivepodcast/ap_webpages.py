@@ -62,7 +62,7 @@ class Webpages:
         """Get a webpage."""
         return self._webpages[path]
 
-    def generate_header(self, path: str, debug: bool = False) -> str:  # noqa: FBT001, FBT002
+    def generate_header(self, path: str, *, debug: bool = False) -> str:
         """Get the header for a webpage."""
         reload_a_tag = """
  | <a href="#" onclick="
