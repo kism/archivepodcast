@@ -41,7 +41,6 @@ def create_app(test_config: dict | None = None, instance_path: Path | None = Non
         ap_conf = ArchivePodcastConfig(config=test_config, instance_path=instance_path)
     else:
         ap_conf = ArchivePodcastConfig(instance_path=Path(app.instance_path))  # Loads app config from disk
-        ap_conf = ArchivePodcastConfig(instance_path=Path(app.instance_path))  # Loads app config from disk
 
     app.logger.debug("Instance path is: %s", app.instance_path)
 

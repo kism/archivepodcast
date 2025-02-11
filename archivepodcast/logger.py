@@ -3,9 +3,7 @@
 import logging
 import typing
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 from typing import cast
-from pathlib import Path
 
 from colorama import Fore, init
 from flask import Flask
