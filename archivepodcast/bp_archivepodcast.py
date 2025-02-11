@@ -248,7 +248,7 @@ def send_content(path: str) -> Response:
     if current_app.config["app"]["storage_backend"] == "s3":
         path_obj = Path(path)
         web_root = Path(ap.web_root)
-        relative_path = str(path_obj).replace(str(web_root), "")
+        relative_path = str(path_obj).replace(str(web_root), "") # The easiest way to get the "relative" path
         new_path = current_app.config["app"]["s3"]["cdn_domain"] + "content/" + relative_path
         response = current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
         response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours

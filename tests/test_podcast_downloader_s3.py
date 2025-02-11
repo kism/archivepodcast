@@ -157,7 +157,9 @@ def test_check_path_exists_s3(apd_aws, caplog):
     # Test path handling and if the cache gets hit
     with caplog.at_level(level=pytest.TRACE_LEVEL_NUM, logger="archivepodcast.ap_downloader"):
         assert apd_aws._check_path_exists("content/test") is True
-        # assert "s3 path " in caplog.text, "s3 path cache did not get hit"
+        assert "s3 path content/test exists in s3_paths_cache, skipping" in caplog.text
+
+    assert len(apd_aws.s3_paths_cache) == 1
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
         assert apd_aws._check_path_exists("content/test/not_exist") is False
