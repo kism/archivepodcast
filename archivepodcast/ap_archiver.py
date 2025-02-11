@@ -127,7 +127,7 @@ class PodcastArchiver:
 
         for folder in folders:
             try:
-                folder.mkdir(exist_ok=True, parents=True)
+                folder.mkdir(parents=True, exist_ok=True)
             except PermissionError as exc:
                 err = (
                     f"❌ You do not have permission to create folder: {folder}"

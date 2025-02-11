@@ -137,6 +137,7 @@ def test_download_podcast_wav_mp3_exists(
     caplog,
 ):
     """Test Fetching RSS and assets."""
+    apd.s3 = None
     config_file = "testing_true_valid.toml"
     config = get_test_config(config_file)
     mock_podcast_definition = config["podcast"][0]
@@ -153,7 +154,7 @@ def test_download_podcast_wav_mp3_exists(
 
     mock_get_podcast_source_rss("test_valid_wav.rss")
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=5, logger="archivepodcast.ap_downloader"):
         apd.download_podcast(mock_podcast_definition)
 
     assert "Downloaded rss feed, processing" in caplog.text

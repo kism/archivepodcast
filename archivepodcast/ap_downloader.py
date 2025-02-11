@@ -294,6 +294,7 @@ class PodcastDownloader:
 
     def _handle_enclosure_tag(self, child: etree._Element, title: str, podcast: dict, file_date_string: str) -> None:
         """Handle the enclosure tag in the podcast rss."""
+        logger.trace("Enclosure, URL: %s", child.attrib.get("url", ""))
         title = self._cleanup_file_name(title)
         url = child.attrib.get("url", "")
         child.attrib["url"] = ""
@@ -340,13 +341,10 @@ class PodcastDownloader:
 
     def _check_local_path_exists(self, file_path: Path) -> bool:
         """Check if the file exists locally."""
-        path = Path(file_path)
-        file_exists = path.is_file()
+        file_exists = file_path.is_file()
 
         if file_exists:
             self._append_to_local_paths_cache(file_path)
-
-        if file_exists:
             logger.debug("📁 File: %s exists locally", file_path)
         else:
             logger.debug("📁 File: %s does not exist locally", file_path)
@@ -400,6 +398,7 @@ class PodcastDownloader:
 
     def _handle_wav(self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = "") -> int:
         """Convert podcasts that have wav episodes 😔. Returns new file length."""
+        logger.trace("🎵 Handling wav file: %s", title)
         new_length = None
         spacer = ""  # This logic can be removed since WAVs will always have a date
         if file_date_string != "":
@@ -417,7 +416,7 @@ class PodcastDownloader:
                 mp3_file_path.unlink()
 
         # If the asset hasn't already been downloaded and converted
-        if not mp3_file_path.exists():
+        if not self._check_path_exists(mp3_file_path):
             self._download_asset(
                 url,
                 title,
@@ -449,6 +448,8 @@ class PodcastDownloader:
 
             if self.s3:
                 self._upload_asset_s3(mp3_file_path, extension)
+        else:
+            logger.debug(f"Episode has already been converted: {mp3_file_path}")
 
         if self.s3:
             s3_file_path = Path(mp3_file_path).relative_to(self.web_root)
@@ -460,10 +461,10 @@ class PodcastDownloader:
             logger.trace(msg)
             response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path_str)
             new_length = response["ContentLength"]
-            msg = f"Length of converted wav file {s3_file_path}: {new_length}"
+            msg = f"Length of converted wav file {s3_file_path}: {new_length} bytes, stored in s3"
         else:
             new_length = mp3_file_path.stat().st_size
-            msg = f"Length of converted wav file {mp3_file_path}: {new_length}"
+            msg = f"Length of converted wav file: {mp3_file_path} {new_length} bytes, stored locally"
 
         logger.trace(msg)
 

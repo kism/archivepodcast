@@ -178,7 +178,7 @@ def test_grab_podcasts_live(
 def test_create_folder_structure_no_perms(apa, monkeypatch):
     """Test creating folder structure with permissions error."""
 
-    def mock_os_makedirs_permission_error():
+    def mock_os_makedirs_permission_error(*args, **kwargs):
         raise PermissionError
 
     monkeypatch.setattr(Path, "mkdir", mock_os_makedirs_permission_error)
