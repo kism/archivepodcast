@@ -22,7 +22,6 @@ PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
 PROCESS = psutil.Process()
 
 
-
 class PodcastHealth:
     """Health status for an individual podcast."""
 

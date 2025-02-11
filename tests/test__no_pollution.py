@@ -19,7 +19,6 @@ def test_instance_path_check(get_test_config):
         create_app(get_test_config("testing_false_valid.toml"))
 
 
-
 def test_config_validate_test_instance_path(get_test_config):
     """Verify that tmp_path is required in testing mode."""
     repo_instance_path = Path.cwd() / "instance"

@@ -29,6 +29,7 @@ ap: PodcastArchiver | None = None
 
 TZINFO_UTC = datetime.datetime.now(datetime.UTC).astimezone().tzinfo
 
+
 def initialise_archivepodcast() -> None:
     """Initialize the archivepodcast app."""
     global ap  # noqa: PLW0603

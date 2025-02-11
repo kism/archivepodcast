@@ -35,7 +35,7 @@ def pytest_configure():
     pytest.FLASK_ROOT_PATH = FLASK_ROOT_PATH
 
 
-pytest_plugins = [ # Magic list of fixtures to load
+pytest_plugins = [  # Magic list of fixtures to load
     "tests.fixtures.archivepodcast_app",
     "tests.fixtures.archivepodcast_obj",
     "tests.fixtures.aws",
