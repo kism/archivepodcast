@@ -2,7 +2,6 @@
 # and return xml that can be served to download them
 
 import contextlib
-import os
 import re
 import shutil
 import sys
@@ -356,31 +355,32 @@ class PodcastDownloader:
         file_exists = False
 
         if self.s3 is not None:
-            if Path(file_path).is_absolute() and Path(file_path).is_relative_to(self.web_root):
-                s3_file_path = Path(file_path).relative_to(self.web_root)
-            else:
-                s3_file_path = Path(file_path)
+            # Convert file_path to a Path object if it isn't already
+            file_path = Path(file_path)
 
-            s3_file_path_str = str(s3_file_path)
-            s3_file_path_str = s3_file_path_str.replace(os.sep, "/")
-            s3_file_path_str = s3_file_path_str.removeprefix("/")
+            # If it's an absolute path and under web_root, make it relative to web_root
+            if file_path.is_absolute() and file_path.is_relative_to(self.web_root):
+                file_path = file_path.relative_to(self.web_root)
 
-            if s3_file_path_str not in self.s3_paths_cache:
+            # Convert to a posix path (forward slashes) and ensure no leading slash
+            s3_key = file_path.as_posix().lstrip("/")
+
+            if s3_key not in self.s3_paths_cache:
                 try:
                     # Head object to check if file exists
-                    self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path_str)
+                    self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_key)
                     logger.debug(
                         "⛅ File: %s exists in s3 bucket",
-                        s3_file_path_str,
+                        s3_key,
                     )
-                    self.s3_paths_cache.append(s3_file_path_str)
+                    self.s3_paths_cache.append(s3_key)
                     file_exists = True
 
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
                         logger.debug(
                             "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
-                            s3_file_path_str,
+                            s3_key,
                         )
                     else:
                         logger.exception("⛅❌ s3 check file exists errored out?")
@@ -388,7 +388,7 @@ class PodcastDownloader:
                     logger.exception("⛅❌ Unhandled s3 Error:")
 
             else:
-                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_file_path_str)
+                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_key)
                 file_exists = True
 
         else:
@@ -452,16 +452,17 @@ class PodcastDownloader:
             logger.debug(f"Episode has already been converted: {mp3_file_path}")
 
         if self.s3:
+            # Convert mp3_file_path to a Path object and make relative to web_root
             s3_file_path = Path(mp3_file_path).relative_to(self.web_root)
-            s3_file_path_str = str(s3_file_path).replace(os.sep, "/")
-            if s3_file_path_str[0] == "/":
-                s3_file_path_str = s3_file_path_str[1:]
 
-            msg = f"Checking length of s3 object: {s3_file_path}"
+            # Convert to posix path (forward slashes) for S3
+            s3_key = s3_file_path.as_posix()
+
+            msg = f"Checking length of s3 object: {s3_key}"
             logger.trace(msg)
-            response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path_str)
+            response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_key)
             new_length = response["ContentLength"]
-            msg = f"Length of converted wav file {s3_file_path}: {new_length} bytes, stored in s3"
+            msg = f"Length of converted wav file {s3_key}: {new_length} bytes, stored in s3"
         else:
             new_length = mp3_file_path.stat().st_size
             msg = f"Length of converted wav file: {mp3_file_path} {new_length} bytes, stored locally"
@@ -479,7 +480,7 @@ class PodcastDownloader:
         file_path = Path(file_path)
         if not file_path.is_absolute():
             file_path = Path(self.web_root) / file_path
-        s3_path = str(file_path.relative_to(self.web_root)).replace(os.sep, "/")
+        s3_path = file_path.relative_to(self.web_root).as_posix()
         s3_path = s3_path.removeprefix("/")
         try:
             # Upload the file

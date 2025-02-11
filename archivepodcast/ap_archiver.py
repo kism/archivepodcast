@@ -1,7 +1,6 @@
 """Module to handle the ArchivePodcast object."""
 
 import contextlib
-import os
 import threading
 import time
 from pathlib import Path
@@ -429,7 +428,7 @@ class PodcastArchiver:
                 page.write(page_content_bytes)
 
             if self.s3:
-                s3_key = str(webpage_path).replace(os.sep, "/")
+                s3_key = webpage_path.as_posix()
                 logger.trace("⛅💾 Writing page s3: %s", s3_key)
 
                 self.s3.put_object(
