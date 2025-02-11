@@ -14,8 +14,10 @@ from archivepodcast.config import ConfigValidationError
 
 def test_instance_path_check(get_test_config):
     """Ensure instance path is specified when using dictionary config."""
+
     with pytest.raises(AttributeError):
         create_app(get_test_config("testing_false_valid.toml"))
+
 
 
 def test_config_validate_test_instance_path(get_test_config):

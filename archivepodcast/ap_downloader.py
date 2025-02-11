@@ -359,17 +359,18 @@ class PodcastDownloader:
 
         if self.s3 is not None:
             if Path(file_path).is_absolute() and Path(file_path).is_relative_to(self.web_root):
-                s3_file_path = str(Path(file_path).relative_to(self.web_root))
+                s3_file_path = Path(file_path).relative_to(self.web_root)
             else:
-                s3_file_path = str(Path(file_path))
+                s3_file_path = Path(file_path)
 
-            s3_file_path = s3_file_path.replace(os.sep, "/")
-            s3_file_path = s3_file_path.removeprefix("/")
+            s3_file_path_str = str(s3_file_path)
+            s3_file_path_str = s3_file_path_str.replace(os.sep, "/")
+            s3_file_path_str = s3_file_path_str.removeprefix("/")
 
             if s3_file_path not in self.s3_paths_cache:
                 try:
                     # Head object to check if file exists
-                    self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path)
+                    self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path_str)
                     logger.debug(
                         "⛅ File: %s exists in s3 bucket",
                         s3_file_path,
@@ -450,13 +451,14 @@ class PodcastDownloader:
                 self._upload_asset_s3(mp3_file_path, extension)
 
         if self.s3:
-            s3_file_path = str(Path(mp3_file_path).relative_to(self.web_root)).replace(os.sep, "/")
-            if s3_file_path[0] == "/":
-                s3_file_path = s3_file_path[1:]
+            s3_file_path = Path(mp3_file_path).relative_to(self.web_root)
+            s3_file_path_str = str(s3_file_path).replace(os.sep, "/")
+            if s3_file_path_str[0] == "/":
+                s3_file_path_str = s3_file_path_str[1:]
 
             msg = f"Checking length of s3 object: {s3_file_path}"
             logger.trace(msg)
-            response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path)
+            response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path_str)
             new_length = response["ContentLength"]
             msg = f"Length of converted wav file {s3_file_path}: {new_length}"
         else:

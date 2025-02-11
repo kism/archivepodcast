@@ -22,10 +22,13 @@ def create_app(test_config: dict | None = None, instance_path: Path | None = Non
         Configured Flask application instance
     """
     start_time = time.time()
+
+    absolute_instance_path_str = str(instance_path) if instance_path else None
+
     app = Flask(
         __name__,
         instance_relative_config=True,
-        instance_path=str(instance_path),
+        instance_path=absolute_instance_path_str,
         static_folder=None,
     )  # Create Flask app object
 
@@ -35,8 +38,9 @@ def create_app(test_config: dict | None = None, instance_path: Path | None = Non
         if not instance_path:
             app.logger.critical("When testing supply both test_config and instance_path!")
             raise AttributeError(instance_path)
-        ap_conf = ArchivePodcastConfig(config=test_config, instance_path=Path(app.instance_path))
+        ap_conf = ArchivePodcastConfig(config=test_config, instance_path=instance_path)
     else:
+        ap_conf = ArchivePodcastConfig(instance_path=Path(app.instance_path))  # Loads app config from disk
         ap_conf = ArchivePodcastConfig(instance_path=Path(app.instance_path))  # Loads app config from disk
 
     app.logger.debug("Instance path is: %s", app.instance_path)
