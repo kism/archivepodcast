@@ -149,7 +149,7 @@ class PodcastArchiver:
                 aws_access_key_id=self.app_config["s3"]["access_key_id"],
                 aws_secret_access_key=self.app_config["s3"]["secret_access_key"],
             )
-            logger.info(f"⛅ Authenticated s3, using bucket: {self.app_config['s3']['bucket']}")
+            logger.info("⛅ Authenticated s3, using bucket: %s", self.app_config["s3"]["bucket"])
             self.health.update_core_status(s3_enabled=True)
             self.check_s3_files()
         else:
@@ -234,7 +234,9 @@ class PodcastArchiver:
             }
         )
         logger.info(
-            f"📄 Hosted: {self.app_config['inet_path']}rss/{podcast['name_one_word']}",
+            "📄 Hosted: %srss/%s",
+            self.app_config["inet_path"],
+            podcast["name_one_word"],
         )
 
         # Upload to s3 if we are in s3 mode
@@ -308,7 +310,7 @@ class PodcastArchiver:
             self.health.update_podcast_episode_info(podcast["name_one_word"], tree)
 
         else:
-            logger.error(f"❌ Unable to host podcast: {podcast['name_one_word']}, something is wrong")
+            logger.error("❌ Unable to host podcast: %s, something is wrong", podcast["name_one_word"])
             self.health.update_podcast_status(podcast["name_one_word"], rss_available=False)
 
     def render_files(self) -> None:
@@ -409,9 +411,9 @@ class PodcastArchiver:
             str_webpages = f"{webpages[0].path} to file"
 
         if self.s3:
-            logger.info(f"⛅💾 Writing {str_webpages} locally and to s3")
+            logger.info("⛅💾 Writing %s locally and to s3", str_webpages)
         else:
-            logger.info(f"💾 Writing {str_webpages} locally")
+            logger.info("💾 Writing %s locally", str_webpages)
         for webpage in webpages:
             webpage_path = Path(webpage.path)
             directory_path = self.web_root / webpage_path.parent
@@ -438,4 +440,4 @@ class PodcastArchiver:
                     ContentType=webpage.mime,
                 )
 
-        logger.info(f"💾 Done writing {str_webpages}")
+        logger.info("💾 Done writing %s", str_webpages)

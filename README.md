@@ -73,4 +73,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - Fix wild font size on /health safari mobile
 - ~~See if the str(Path()) is the way to go~~
   - ~~Fix str path, use the path object as much as possible~~
-- mypy require more datatypes specified
+- mypy require more data types specified

@@ -134,14 +134,14 @@ class PodcastDownloader:
 
     def _fetch_podcast_rss(self, url: str) -> requests.Response | None:
         """Fetch the podcast rss from the given URL."""
-        logger.debug(f"📜 Fetching podcast rss: {url}")
+        logger.debug("📜 Fetching podcast rss: %s", url)
         try:
             response = requests.get(url, timeout=10)  # Some feeds are proper slow
             if response.status_code != HTTPStatus.OK:
                 msg = f"❌ Not a great web response getting RSS: {response.status_code}\n{response.content.decode()}"
                 logger.error(msg)
                 return None
-            logger.debug(f"📄 Success fetching podcast RSS: {response.status_code}")
+            logger.debug("📄 Success fetching podcast RSS: %s", response.status_code)
         except ValueError:
             logger.exception("❌ Real early failure on grabbing the podcast rss, weird")
             response = None
@@ -449,7 +449,7 @@ class PodcastDownloader:
             if self.s3:
                 self._upload_asset_s3(mp3_file_path, extension)
         else:
-            logger.debug(f"Episode has already been converted: {mp3_file_path}")
+            logger.debug("Episode has already been converted: %s", mp3_file_path)
 
         if self.s3:
             # Convert mp3_file_path to a Path object and make relative to web_root

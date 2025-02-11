@@ -44,7 +44,7 @@ def initialise_archivepodcast() -> None:
 
     pid = os.getpid()
     logger.info("🙋 Podcast Archive running! PID: %s", pid)
-    logger.debug(f"Get ram usage in % kb: ps -p {pid} -o %mem,rss")
+    logger.debug("Get ram usage in %% kb: ps -p %s -o %%mem,rss", pid)
     logger.debug("Reload with: kill -HUP %s", pid)
 
     # Start thread: podcast backup loop
@@ -374,7 +374,7 @@ def generate_not_generated_error(webpage_name: str) -> Response:
     if not ap:
         return generate_not_initialized_error()
 
-    logger.error(f"❌ Requested page: {webpage_name} not generated")
+    logger.error("❌ Requested page: %s not generated", webpage_name)
     return Response(
         render_template(
             "error.html.j2",
