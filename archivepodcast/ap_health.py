@@ -5,9 +5,9 @@ import datetime
 import json
 from typing import TYPE_CHECKING
 
-import psutil
 from lxml import etree
 
+from .ap_constants import PODCAST_DATE_FORMATS, PROCESS
 from .logger import get_logger
 
 if TYPE_CHECKING:
@@ -16,10 +16,6 @@ else:
     PodcastArchiver = object
 
 logger = get_logger(__name__)
-
-PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
-
-PROCESS = psutil.Process()
 
 
 class PodcastHealth:

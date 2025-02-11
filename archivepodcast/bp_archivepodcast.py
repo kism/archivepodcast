@@ -14,6 +14,7 @@ from flask import Blueprint, Response, current_app, render_template, send_from_d
 from lxml import etree
 
 from .ap_archiver import PodcastArchiver
+from .ap_constants import TZINFO_UTC
 from .config import ArchivePodcastConfig
 from .logger import get_logger
 
@@ -26,8 +27,6 @@ bp = Blueprint("archivepodcast", __name__)
 logger = get_logger(__name__)
 
 ap: PodcastArchiver | None = None
-
-TZINFO_UTC = datetime.datetime.now(datetime.UTC).astimezone().tzinfo
 
 
 def initialise_archivepodcast() -> None:

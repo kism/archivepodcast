@@ -15,6 +15,7 @@ import requests
 from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
 from lxml import etree
 
+from .ap_constants import AUDIO_FORMATS, CONTENT_TYPES, FFMPEG_INFO, IMAGE_FORMATS, TZINFO_UTC
 from .helpers import list_all_s3_objects
 from .logger import get_logger
 
@@ -24,30 +25,6 @@ else:
     S3Client = object
 
 logger = get_logger(__name__)
-
-# Test FFMPEG
-FFMPEG_INFO = """ffmpeg not found, please install it and ensure it's in PATH.
-https://www.ffmpeg.org/download.html
- apt install ffmpeg
- brew install ffmpeg
- scoop install ffmpeg
-exiting..."""
-
-IMAGE_FORMATS = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
-AUDIO_FORMATS = [".mp3", ".wav", ".m4a", ".flac"]
-CONTENT_TYPES = {
-    ".webp": "image/webp",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".gif": "image/gif",
-    ".mp3": "audio/mpeg",
-    ".wav": "audio/wav",
-    ".m4a": "audio/mpeg",
-    ".flac": "audio/flac",
-}
-
-TZINFO_UTC = datetime.datetime.now(datetime.UTC).astimezone().tzinfo
 
 
 # These make the name spaces appear nicer in the generated XML
