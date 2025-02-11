@@ -3,6 +3,7 @@
 import logging
 import typing
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import cast
 
 from colorama import Fore, init

@@ -320,8 +320,8 @@ def test_file_list(apa, client_live, tmp_path):
 
     content_path = Path("content") / "test" / "20200101-Test-Episode.mp3"
     file_path = tmp_path / "web" / content_path
-    with file_path.open() as file:
-        file.write("test")
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text("test")
 
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
     ap._render_files()
@@ -330,7 +330,7 @@ def test_file_list(apa, client_live, tmp_path):
 
     assert response.status_code == HTTPStatus.OK
     assert "/index.html" in response.data.decode("utf-8")
-    assert content_path in response.data.decode("utf-8")
+    assert str(content_path) in response.data.decode("utf-8")
 
 
 def test_file_list_s3(apa_aws, client_live_s3):
