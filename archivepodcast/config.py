@@ -8,8 +8,9 @@ from pathlib import Path
 
 import tomlkit
 from flask import Flask
+from pydantic import BaseModel, HttpUrl
 
-from .config_types import RootConfig
+from .config_types import AppConfig, LoggingConfig, PodcastConfig, S3Config, WebPageConfig
 from .logger import get_logger
 
 # Logging should be all done at INFO level or higher as the log level hasn't been set yet
@@ -69,10 +70,15 @@ class ConfigValidationError(Exception):
         super().__init__(failure_list)
 
 
-class ArchivePodcastConfig:
+class ArchivePodcastConfig(BaseModel):
     """Config Object."""
 
-    def __init__(self, instance_path: Path, config: dict | None = None) -> None:
+    app: AppConfig = AppConfig()
+    podcast: list[PodcastConfig] = [PodcastConfig()]
+    logging: LoggingConfig = LoggingConfig()
+    flask: dict[str, typing.Any] = {"TESTING": False}
+
+    def __init__(self, instance_path: Path | None = None, *, load_file: bool = False) -> None:
         """Initiate config object.
 
         Args:
@@ -80,19 +86,17 @@ class ArchivePodcastConfig:
             config: If provided config won't be loaded from a file.
         """
         self._config_path: Path | None = None
-        self._config: RootConfig = RootConfig()
-        self.instance_path: Path = instance_path
+        self.instance_path: Path | None = instance_path
 
         self._get_config_file_path()
 
-        if not config:  # If no config is passed in (for testing), we load from a file.
-            config = self._load_file()
-
-        # Convert the loaded dict to a Pydantic model
-        self._config = RootConfig.model_validate(config)
+        if load_file:
+            self._load_file()
 
         self._validate_config()
-        self._write_config()
+
+        if self._config_path:
+            self._write_config()
 
         logger.info("Configuration loaded successfully!")
 
@@ -100,22 +104,6 @@ class ArchivePodcastConfig:
     __setitem__, __len__,__delitem__
     https://gist.github.com/turicas/1510860
     """
-
-    def __getitem__(self, key: str) -> typing.Any:  # noqa: ANN401 # Yes this will return Any, but it's a dict.
-        """Get item from config like a dictionary."""
-        return self._config.model_dump()[key]
-
-    def __contains__(self, key: str) -> bool:
-        """Check if key is 'in' the configuration."""
-        return key in self._config.model_dump()
-
-    def __repr__(self) -> str:
-        """Return string representation of the config."""
-        return repr(self._config.model_dump())
-
-    def items(self) -> typing.ItemsView[typing.Any, typing.Any]:
-        """Return dictionary items of configuration."""
-        return self._config.model_dump().items()
 
     def _write_config(self) -> None:
         """Write configuration to a file."""
@@ -165,11 +153,14 @@ class ArchivePodcastConfig:
 
         If a config file doesn't exist it will be created and written with current (default) configuration.
         """
-        paths = [
-            Path(self.instance_path) / "config.toml",
-            Path.home() / ".config" / "archivepodcast" / "config.toml",
-            Path("/etc/archivepodcast/config.toml"),
-        ]
+
+        paths = []
+
+        if self.instance_path:
+            paths.append(self.instance_path / "config.toml")
+
+        paths.append(Path.home() / ".config" / "archivepodcast" / "config.toml")
+        paths.append(Path("/etc/archivepodcast/config.toml"))
 
         for path in paths:
             if path.is_file():

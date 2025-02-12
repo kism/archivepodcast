@@ -11,7 +11,7 @@ from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 __version__ = "1.4.8"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
 
-def create_app(test_config: dict | None = None, instance_path: Path | None = None) -> Flask:
+def create_app(test_config: ArchivePodcastConfig | None = None, instance_path: Path | None = None) -> Flask:
     """Create and configure the Flask application instance.
 
     Args:
@@ -38,24 +38,24 @@ def create_app(test_config: dict | None = None, instance_path: Path | None = Non
         if not instance_path:
             app.logger.critical("When testing supply both test_config and instance_path!")
             raise AttributeError(instance_path)
-        ap_conf = ArchivePodcastConfig(config=test_config, instance_path=instance_path)
+        ap_conf = test_config
     else:
         ap_conf = ArchivePodcastConfig(instance_path=Path(app.instance_path))  # Loads app config from disk
 
     app.logger.debug("Instance path is: %s", app.instance_path)
 
-    logger.setup_logger(app, ap_conf["logging"])  # Setup logger with config
+    logger.setup_logger(app, ap_conf.logging)  # Setup logger with config
 
     # Flask config, at the root of the config object.
-    app.config.from_mapping(ap_conf["flask"])
+    app.config.from_mapping(ap_conf.flask.model_dump())
 
     # Other sections handled by config.py
-    for key, value in ap_conf.items():
-        if key != "flask":
-            app.config[key] = value
+    app.config["app"] = ap_conf.app
+    app.config["podcast"] = ap_conf.podcast
+    app.config["logging"] = ap_conf.logging
 
     # Do some debug logging of config
-    print_config(app)
+    # print_config(app)
 
     app.register_blueprint(bp_archivepodcast.bp)  # Register blueprint
 

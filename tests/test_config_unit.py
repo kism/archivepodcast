@@ -58,52 +58,8 @@ def test_dictionary_functions_of_config(place_test_config, tmp_path):
     assert isinstance(conf.items(), ItemsView), ".items() method of config object doesn't work"
 
 
-def test_config_dictionary_merge(place_test_config, tmp_path, get_test_config):
-    """Unit test the dictionary merge in _merge_with_defaults."""
-    place_test_config("testing_true_valid.toml", tmp_path)
-
-    conf = archivepodcast.config.ArchivePodcastConfig(instance_path=tmp_path)
-
-    test_dictionaries = [
-        {},
-        get_test_config("logging_invalid.toml"),
-        get_test_config("testing_true_valid.toml"),
-    ]
-
-    for test_dictionary in test_dictionaries:
-        result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, test_dictionary)
-
-        # TEST: Check that the resulting config after ensuring default is valid
-        assert isinstance(result_dict["app"], dict)
-        assert isinstance(result_dict["logging"], dict)
-        assert isinstance(result_dict["logging"]["path"], str)
-        assert isinstance(result_dict["logging"]["level"], str)
-        assert isinstance(result_dict["flask"], dict)
-
-    # TEST: If an item isn't in the schema, it still ends up around, not that this is a good idea...
-    result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, {"TEST_CONFIG_ENTRY_NOT_IN_SCHEMA": "test_not_in_schema"})
-    assert result_dict["TEST_CONFIG_ENTRY_NOT_IN_SCHEMA"]
-
-
-def test_config_dictionary_not_in_schema(place_test_config, tmp_path, caplog):
-    """Unit test _warn_unexpected_keys."""
-    place_test_config("testing_true_valid.toml", tmp_path)
-
-    conf = archivepodcast.config.ArchivePodcastConfig(instance_path=tmp_path)
-
-    test_config = {
-        "TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA": "",
-        "app": {"TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA": ""},
-    }
-
-    # TEST: Warning when config loaded has a key that is not in the schema
-    conf._warn_unexpected_keys(DEFAULT_CONFIG, test_config, "<root>")
-    assert "Found config entry key <root>[TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA] that's not in schema" in caplog.text
-    assert "Found config entry key [app][TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA] that's not in schema" in caplog.text
-
-
 def test_load_write_no_config_path(place_test_config, tmp_path):
-    """Unit test the dictionary merge in _merge_with_defaults."""
+    """Unit test  writing the config."""
     place_test_config("testing_true_valid.toml", tmp_path)
 
     conf = archivepodcast.config.ArchivePodcastConfig(instance_path=tmp_path)

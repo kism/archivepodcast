@@ -138,5 +138,5 @@ namespace_packages = true
 explicit_package_bases = true
 show_error_codes = true
 strict = true
-disable_error_code = ["type-arg"]
+disable_error_code = []
 exclude = ["tests/*"]
