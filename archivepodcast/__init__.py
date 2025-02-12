@@ -11,11 +11,10 @@ from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 __version__ = "1.4.8"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
 
-def create_app(test_config: ArchivePodcastConfig | None = None, instance_path: Path | None = None) -> Flask:
+def create_app(ap_conf: ArchivePodcastConfig | None = None, instance_path: Path | None = None) -> Flask:
     """Create and configure the Flask application instance.
 
     Args:
-        test_config: Optional config dict for testing
         instance_path: Optional custom instance path
 
     Returns:
@@ -32,13 +31,12 @@ def create_app(test_config: ArchivePodcastConfig | None = None, instance_path: P
         static_folder=None,
     )  # Create Flask app object
 
-    logger.setup_logger(app, DEFAULT_LOGGING_CONFIG)  # Setup logger with defaults defined in config module
+    logger.setup_logger(app)  # Setup logger with defaults defined in config module
 
-    if test_config:  # For Python testing we will often pass in a config
+    if ap_conf:  # For Python testing we will often pass in a config
         if not instance_path:
             app.logger.critical("When testing supply both test_config and instance_path!")
             raise AttributeError(instance_path)
-        ap_conf = test_config
     else:
         ap_conf = ArchivePodcastConfig(instance_path=Path(app.instance_path))  # Loads app config from disk
 

@@ -9,6 +9,8 @@ from typing import cast
 from colorama import Fore, init
 from flask import Flask
 
+from .config_types import LoggingConfig
+
 init(autoreset=True)
 
 COLOURS = {
@@ -100,7 +102,7 @@ logger = cast(CustomLogger, logging.getLogger(__name__))
 
 
 # Pass in the whole app object to make it obvious we are configuring the logger object within the app object.
-def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | None = None) -> None:
+def setup_logger(app: Flask, logging_conf: LoggingConfig | None = None, in_logger: logging.Logger | None = None) -> None:
     """Configure logging for the application.
 
     Args:
@@ -108,6 +110,8 @@ def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | Non
         logging_conf: Logging configuration dict with "level" and "path" keys
         in_logger: Optional logger instance to configure (mainly for testing)
     """
+    if not logging_conf:
+        logging_conf = LoggingConfig()
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
 
@@ -118,11 +122,11 @@ def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | Non
     if not _has_console_handler(in_logger):
         _add_console_handler(in_logger)
 
-    _set_log_level(in_logger, logging_conf["level"])
+    _set_log_level(in_logger, logging_conf.level)
 
     # If we are logging to a file
-    if not _has_file_handler(in_logger) and logging_conf["path"] != "":
-        _add_file_handler(in_logger, logging_conf["path"])
+    if not _has_file_handler(in_logger) and logging_conf.path != "":
+        _add_file_handler(in_logger, Path(logging_conf.path))
 
     # Configure modules that are external and have their own loggers
     logging.getLogger("waitress").setLevel(logging.INFO)  # Prod web server, info has useful info.

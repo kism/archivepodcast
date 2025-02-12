@@ -77,3 +77,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - mypy require more data types specified
   - config as object, otherwise typing is hell
 - investigate pydantic
+-  Path(logging_conf.path)

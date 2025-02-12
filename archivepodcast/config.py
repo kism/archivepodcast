@@ -73,10 +73,11 @@ class ConfigValidationError(Exception):
 class ArchivePodcastConfig(BaseModel):
     """Config Object."""
 
-    app: AppConfig = AppConfig()
-    podcast: list[PodcastConfig] = [PodcastConfig()]
-    logging: LoggingConfig = LoggingConfig()
-    flask: dict[str, typing.Any] = {"TESTING": False}
+    app: AppConfig
+    podcast: list[PodcastConfig]
+    logging: LoggingConfig
+    flask: dict[str, typing.Any]
+
 
     def __init__(self, instance_path: Path | None = None, *, load_file: bool = False) -> None:
         """Initiate config object.
@@ -85,8 +86,21 @@ class ArchivePodcastConfig(BaseModel):
             instance_path: The flask instance path, should be always from app.instance_path
             config: If provided config won't be loaded from a file.
         """
+
+
+        self.app: AppConfig = AppConfig()
+        self.podcast: list[PodcastConfig] = [PodcastConfig()]
+        self.logging: LoggingConfig = LoggingConfig()
+        self.flask: dict[str, typing.Any] = {"TESTING": False}
+
         self._config_path: Path | None = None
-        self.instance_path: Path | None = instance_path
+        self.instance_path: Path | None = None
+        print(f"instance_path: {instance_path}")
+
+        if instance_path:
+            self.instance_path = instance_path
+
+        print(f"instance_path: {instance_path}")
 
         self._get_config_file_path()
 
