@@ -1,5 +1,5 @@
-import os
 import shutil
+from pathlib import Path
 
 import pytest
 import tomlkit
@@ -11,9 +11,9 @@ def get_test_config():
 
     def _get_test_config(config_name):
         """Load all the .toml configs into a single dict."""
-        filepath = os.path.join(pytest.TEST_CONFIGS_LOCATION, config_name)
+        filepath: Path = Path(pytest.TEST_CONFIGS_LOCATION) / config_name
 
-        with open(filepath) as file:
+        with filepath.open() as file:
             return tomlkit.load(file)
 
     return _get_test_config
@@ -28,8 +28,8 @@ def place_test_config():
 
     def _place_test_config(config_name, path):
         """Place config in tmp_path by name."""
-        filepath = os.path.join(pytest.TEST_CONFIGS_LOCATION, config_name)
+        filepath = Path(pytest.TEST_CONFIGS_LOCATION) / config_name
 
-        shutil.copyfile(filepath, os.path.join(path, "config.toml"))
+        shutil.copyfile(filepath, Path(path) / "config.toml")
 
     return _place_test_config

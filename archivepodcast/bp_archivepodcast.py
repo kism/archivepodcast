@@ -7,12 +7,14 @@ import signal
 import threading
 import time
 from http import HTTPStatus
+from pathlib import Path
 from types import FrameType
 
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
 from lxml import etree
 
 from .ap_archiver import PodcastArchiver
+from .ap_constants import TZINFO_UTC
 from .config import ArchivePodcastConfig
 from .logger import get_logger
 
@@ -32,18 +34,18 @@ def initialise_archivepodcast() -> None:
     global ap  # noqa: PLW0603
 
     ap = PodcastArchiver(
-        current_app.config["app"],
-        current_app.config["podcast"],
-        current_app.instance_path,
-        current_app.root_path,
-        current_app.debug,
+        app_config=current_app.config["app"],
+        podcast_list=current_app.config["podcast"],
+        instance_path=Path(current_app.instance_path),
+        root_path=Path(current_app.root_path),
+        debug=current_app.debug,
     )
 
     signal.signal(signal.SIGHUP, reload_config)
 
     pid = os.getpid()
     logger.info("🙋 Podcast Archive running! PID: %s", pid)
-    logger.debug(f"Get ram usage in % kb: ps -p {pid} -o %mem,rss")
+    logger.debug("Get ram usage in %% kb: ps -p %s -o %%mem,rss", pid)
     logger.debug("Reload with: kill -HUP %s", pid)
 
     # Start thread: podcast backup loop
@@ -67,7 +69,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     logger.info("🙋 Got SIGHUP, Reloading Config")
 
     try:
-        ap_conf = ArchivePodcastConfig(instance_path=current_app.instance_path)  # Loads app config from disk
+        ap_conf = ArchivePodcastConfig(instance_path=Path(current_app.instance_path))  # Loads app config from disk
 
         # Other sections handled by config.py
         for key, value in ap_conf.items():
@@ -104,7 +106,7 @@ def podcast_loop() -> None:
     while True:
         ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
-        current_datetime = datetime.datetime.now()
+        current_datetime = datetime.datetime.now(tz=TZINFO_UTC)
 
         # Calculate time until next run
         seconds_until_next_run = _get_time_until_next_run(current_datetime)
@@ -245,13 +247,17 @@ def send_content(path: str) -> Response:
         return generate_not_initialized_error()
 
     if current_app.config["app"]["storage_backend"] == "s3":
-        new_path = current_app.config["app"]["s3"]["cdn_domain"] + "content/" + path.replace(ap.web_root, "")
+        path_obj = Path(path)
+        web_root = Path(ap.web_root)
+        relative_path = str(path_obj).replace(str(web_root), "")  # The easiest way to get the "relative" path
+        new_path = current_app.config["app"]["s3"]["cdn_domain"] + "content/" + relative_path
         response = current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
         response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
     else:
-        response = send_from_directory(os.path.join(current_app.instance_path, "web", "content"), path)
+        web_dir = Path(current_app.instance_path) / "web" / "content"
+        response = send_from_directory(str(web_dir), path)
 
-    return response  # type: ignore[return-value] # The conflicting types here are secretly the same
+    return response  # type: ignore[return-value]
 
 
 @bp.route("/filelist.html")
@@ -286,7 +292,7 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = etree.parse(os.path.join(current_app.instance_path, "web", "rss", feed))
+            tree = etree.parse(Path(current_app.instance_path) / "web" / "rss" / feed)
             rss = etree.tostring(
                 tree.getroot(),
                 encoding="utf-8",
@@ -369,7 +375,7 @@ def generate_not_generated_error(webpage_name: str) -> Response:
     if not ap:
         return generate_not_initialized_error()
 
-    logger.error(f"❌ Requested page: {webpage_name} not generated")
+    logger.error("❌ Requested page: %s not generated", webpage_name)
     return Response(
         render_template(
             "error.html.j2",

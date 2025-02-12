@@ -5,9 +5,9 @@ import datetime
 import json
 from typing import TYPE_CHECKING
 
-import psutil
 from lxml import etree
 
+from .ap_constants import PODCAST_DATE_FORMATS, PROCESS
 from .logger import get_logger
 
 if TYPE_CHECKING:
@@ -16,10 +16,6 @@ else:
     PodcastArchiver = object
 
 logger = get_logger(__name__)
-
-PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
-
-PROCESS = psutil.Process()
 
 
 class PodcastHealth:
@@ -54,7 +50,9 @@ class PodcastHealth:
                 for podcast_date_format in PODCAST_DATE_FORMATS:
                     try:
                         self.latest_episode["pubdate"] = int(
-                            datetime.datetime.strptime(pod_pubdate, podcast_date_format).timestamp()
+                            datetime.datetime.strptime(pod_pubdate, podcast_date_format)
+                            .replace(tzinfo=datetime.UTC)
+                            .timestamp()
                         )
                         found_pubdate = True
                         break
@@ -82,7 +80,7 @@ class CoreHealth:
         self.alive: bool = True
         self.last_run: int = 0
         self.about_page_exists: bool = False
-        self.last_startup: int = int(datetime.datetime.now().timestamp())
+        self.last_startup: int = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
         self.currently_rendering: bool = False
         self.currently_loading_config: bool = False
         self.memory_mb: float = -0.0

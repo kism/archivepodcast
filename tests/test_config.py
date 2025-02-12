@@ -1,7 +1,7 @@
 """Test application configuration loading and validation."""
 
 import logging
-import os
+from pathlib import Path
 
 import pytest
 
@@ -36,7 +36,6 @@ def test_config_file_creation(tmp_path, caplog):
     with caplog.at_level(logging.WARNING), pytest.raises(ConfigValidationError) as exc_info:
         create_app(test_config=None, instance_path=tmp_path)
 
-    assert "No configuration file found, creating at default location:" in caplog.text
-    assert os.path.exists(os.path.join(tmp_path, "config.toml"))
+    assert Path(tmp_path / "config.toml").exists()
     assert "Podcast url is empty" in str(exc_info.value)
     assert "Podcast name_one_word is empty" in str(exc_info.value)

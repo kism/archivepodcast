@@ -1,8 +1,8 @@
 """Test the application health monitoring endpoints."""
 
 import logging
-import os
 from http import HTTPStatus
+from pathlib import Path
 
 import pytest
 from lxml import etree
@@ -45,9 +45,9 @@ def test_health_api_error(client, apa, monkeypatch):
 
 def test_update_podcast_health():
     """Update the podcast episode info."""
-    rss_path = os.path.join(pytest.TEST_RSS_LOCATION, "test_valid.rss")
+    rss_path = Path(pytest.TEST_RSS_LOCATION) / "test_valid.rss"
 
-    with open(rss_path) as file:
+    with rss_path.open() as file:
         tree = etree.parse(file)
 
     ap_health = PodcastArchiverHealth()

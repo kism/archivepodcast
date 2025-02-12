@@ -71,3 +71,9 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~Don't fail the whole feed if one episode fails~~
 - ~~Real docs (sphinx?)~~
 - Fix wild font size on /health safari mobile
+- ~~See if the str(Path()) is the way to go~~
+  - ~~Fix str path, use the path object as much as possible~~
+- ~~constants file~~
+- mypy require more data types specified
+  - config as object, otherwise typing is hell
+- investigate pydantic

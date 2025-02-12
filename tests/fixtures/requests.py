@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import pytest
 
@@ -9,9 +9,9 @@ def mock_get_podcast_source_rss(requests_mock):
 
     def _mock_get_podcast_source_rss(rss_name):
         """Return the rss file."""
-        filepath = os.path.join(pytest.TEST_RSS_LOCATION, rss_name)
+        filepath = Path(pytest.TEST_RSS_LOCATION) / rss_name
 
-        with open(filepath) as file:
+        with filepath.open() as file:
             rss = file.read()
 
         return requests_mock.get("https://pytest.internal/rss/test_source", text=rss)

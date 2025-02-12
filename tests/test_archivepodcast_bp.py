@@ -2,11 +2,13 @@
 
 import datetime
 import logging
-import os
 import signal
 from http import HTTPStatus
+from pathlib import Path
 
 import pytest
+
+from archivepodcast.bp_archivepodcast import TZINFO_UTC
 
 from . import FakeExceptionError
 
@@ -83,18 +85,15 @@ def test_app_path_about(apa, client_live, tmp_path):
 
     bp_archivepodcast.ap = apa
 
-    # Since we are looping...
-    if os.path.exists(os.path.join(tmp_path, "about.md")):
-        os.remove(os.path.join(tmp_path, "about.md"))
+    about_path = Path(tmp_path) / "about.md"
+    if about_path.exists():
+        about_path.unlink()
 
     apa.load_about_page()
     response = client_live.get("/about.html")
-    assert response.status_code == HTTPStatus.NOT_FOUND, (
-        f"About page should not exist, got status code: {response.status_code}"
-    )
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
-    with open(os.path.join(tmp_path, "about.md"), "w") as file:
-        file.write("Test")
+    about_path.write_text("Test")
 
     apa.load_about_page()
     response = client_live.get("/about.html")
@@ -172,10 +171,11 @@ def test_rss_feed(
     response = client_live.get("/rss/non_existent_feed")
     assert response.status_code == HTTPStatus.NOT_FOUND
 
-    with open(os.path.join(tmp_path, "web", "rss", "test_from_file"), "w") as file:
-        file.write(pytest.DUMMY_RSS_STR)
+    rss_file = Path(tmp_path) / "web" / "rss" / "test_from_file"
+    rss_file.parent.mkdir(parents=True, exist_ok=True)
+    rss_file.write_text(pytest.DUMMY_RSS_STR)
 
-    assert os.path.exists(os.path.join(ap.instance_path, "web", "rss", "test_from_file"))
+    assert Path(ap.instance_path).joinpath("web", "rss", "test_from_file").exists()
 
     with caplog.at_level(logging.WARNING):
         response = client_live.get("/rss/test_from_file")
@@ -230,7 +230,7 @@ def test_rss_feed_unhandled_error(
 
     client_live = app_live.test_client()
 
-    with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
+    with Path(tmp_path / "web" / "rss" / "test").open("w") as file:
         file.write(pytest.DUMMY_RSS_STR)
 
     def return_key_error(*args, **kwargs):
@@ -302,8 +302,8 @@ def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, ca
 @pytest.mark.parametrize(
     ("time", "expected_seconds"),
     [
-        (datetime.datetime(2020, 1, 1, 0, 0, 0), 1200),  # 1200 seconds = 20 minutes
-        (datetime.datetime(2020, 1, 1, 0, 30, 0), 3000),  # 3000 seconds = 50 minutes
+        (datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=TZINFO_UTC), 1200),  # 1200 seconds = 20 minutes
+        (datetime.datetime(2020, 1, 1, 0, 30, 0, tzinfo=TZINFO_UTC), 3000),  # 3000 seconds = 50 minutes
     ],
 )
 def test_time_until_next_run(time, expected_seconds):
@@ -320,10 +320,10 @@ def test_file_list(apa, client_live, tmp_path):
     bp_archivepodcast.ap = apa
     ap = apa
 
-    content_path = os.path.join("content", "test", "20200101-Test-Episode.mp3")
-    file_path = os.path.join(tmp_path, "web", content_path)
-    with open(os.path.join(tmp_path, file_path), "w") as file:
-        file.write("test")
+    content_path = Path("content") / "test" / "20200101-Test-Episode.mp3"
+    file_path = tmp_path / "web" / content_path
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text("test")
 
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
     ap._render_files()
@@ -332,7 +332,7 @@ def test_file_list(apa, client_live, tmp_path):
 
     assert response.status_code == HTTPStatus.OK
     assert "/index.html" in response.data.decode("utf-8")
-    assert content_path in response.data.decode("utf-8")
+    assert str(content_path) in response.data.decode("utf-8")
 
 
 def test_file_list_s3(apa_aws, client_live_s3):

@@ -14,7 +14,7 @@ def test_config_permissions_error_read(place_test_config, tmp_path, mocker):
     mock_open_func = mocker.mock_open(read_data="")
     mock_open_func.side_effect = PermissionError("Permission denied")
 
-    mocker.patch("builtins.open", mock_open_func)
+    mocker.patch("pathlib.Path.open", mock_open_func)
 
     # TEST: PermissionsError is raised.
     with pytest.raises(PermissionError):
@@ -30,7 +30,7 @@ def test_config_permissions_error_write(place_test_config, tmp_path, mocker):
     mock_open_func = mocker.mock_open(read_data="")
     mock_open_func.side_effect = PermissionError("Permission denied")
 
-    mocker.patch("builtins.open", mock_open_func)
+    mocker.patch("pathlib.Path.open", mock_open_func)
 
     # TEST: PermissionsError is raised.
     with pytest.raises(PermissionError):

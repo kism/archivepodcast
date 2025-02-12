@@ -3,11 +3,11 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.7"
+version = "1.4.8"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "boto3>=1.36,<2",
     "colorama>=0.4.6",
@@ -67,16 +67,12 @@ select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
     "DJ",  # KG Django not required
-    "PTH", # KG builtin 'open' is fine, not going to use pathlib
-    "DTZ", # KG no need to specify timezone for time objects
 
     # Specific rules
-    # "ANN101", # KG Why define self type for object functions...
     "TD002",  # KG Verbose TODO, only I work on this project
     "TD003",  # KG Verbose TODO, only I work on this project
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
-    "G004",   # KG I log with f-strings
     "S320",   # KG Word on the street says that lxml is safe
 ]
 
@@ -90,9 +86,7 @@ ignore = [
 
     # Specific rules
     "S101",    # KG asserts allowed in tests.
-    "ANN201",  # KG Not really needed for pytest.
     "SLF001",  # KG Accessing private members is needed for testing.
-    "INP001",  # KG __init__.py not needed for PyTest.
     "PT004",   # KG monkeypatch doesn't return.
     "S311",    # KG I'll assume no real crypto will be done in PyTest.
     "S105",    # KG Hardcoded fake passwords are fine in tests.

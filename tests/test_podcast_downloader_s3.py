@@ -1,15 +1,13 @@
 """Tests for S3-specific PodcastDownloader functionality."""
 
 import logging
-import os
+from pathlib import Path
 
 import pytest
 
 from archivepodcast.ap_downloader import PodcastDownloader
 
 from . import FakeExceptionError
-
-FLASK_ROOT_PATH = os.getcwd()
 
 
 def test_init(s3, get_test_config, tmp_path, caplog):
@@ -20,10 +18,10 @@ def test_init(s3, get_test_config, tmp_path, caplog):
     bucket_name = config["app"]["s3"]["bucket"]
     s3.create_bucket(Bucket=bucket_name)
 
-    web_root = os.path.join(tmp_path, "web")
+    web_root = Path(tmp_path) / "web"
 
     with caplog.at_level(pytest.TRACE_LEVEL_NUM):
-        pd = PodcastDownloader(app_config=config["app"], s3=s3, web_root=web_root)
+        pd = PodcastDownloader(app_config=config["app"], s3=s3, web_root=str(web_root))
 
     assert "PodcastDownloader config (re)loaded" in caplog.text
     assert pd.s3_paths_cache == []
@@ -130,12 +128,12 @@ def test_upload_asset_s3_unhandled_exception(apd_aws, monkeypatch, caplog):
 
 
 def test_upload_asset_s3_os_remove_error(apd_aws, monkeypatch, caplog):
-    """Test handling os.remove error during S3 upload."""
+    """Test handling Path.unlink error during S3 upload."""
 
-    def os_remove_error(*args, **kwargs):
+    def path_unlink_error(*args, **kwargs):
         raise FileNotFoundError
 
-    monkeypatch.setattr(os, "remove", os_remove_error)
+    monkeypatch.setattr(Path, "unlink", path_unlink_error)
 
     monkeypatch.setattr(apd_aws.s3, "upload_file", lambda *args, **kwargs: None)
 
@@ -154,8 +152,14 @@ def test_check_path_exists_s3(apd_aws, caplog):
         ContentType="text/html",
     )
 
-    assert apd_aws._check_path_exists("content/test") is True
     assert apd_aws._check_path_exists("/content/test") is True
+
+    # Test path handling and if the cache gets hit
+    with caplog.at_level(level=pytest.TRACE_LEVEL_NUM, logger="archivepodcast.ap_downloader"):
+        assert apd_aws._check_path_exists("content/test") is True
+        assert "s3 path content/test exists in s3_paths_cache, skipping" in caplog.text
+
+    assert len(apd_aws.s3_paths_cache) == 1
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
         assert apd_aws._check_path_exists("content/test/not_exist") is False

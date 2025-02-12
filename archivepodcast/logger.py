@@ -3,6 +3,7 @@
 import logging
 import typing
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import cast
 
 from colorama import Fore, init
@@ -177,7 +178,7 @@ def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
         in_logger.setLevel(log_level)
 
 
-def _add_file_handler(in_logger: logging.Logger, log_path: str) -> None:
+def _add_file_handler(in_logger: logging.Logger, log_path: Path) -> None:
     """Add a file handler to the logger."""
     try:
         file_handler = RotatingFileHandler(log_path, maxBytes=1000000, backupCount=5)
@@ -185,7 +186,7 @@ def _add_file_handler(in_logger: logging.Logger, log_path: str) -> None:
         err = "You are trying to log to a directory, try a file"
         raise IsADirectoryError(err) from exc
     except PermissionError as exc:
-        err = "The user running this does not have access to the file: " + log_path
+        err = f"The user running this does not have access to the file: {log_path}"
         raise PermissionError(err) from exc
 
     formatter = logging.Formatter(LOG_FORMAT)

@@ -1,16 +1,17 @@
 """Flask web application for archiving and serving podcasts."""
 
 import time
+from pathlib import Path
 
 from flask import Flask, Response
 
 from . import bp_archivepodcast, logger
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 
-__version__ = "1.4.7"  # This is the version of the app, used in pyproject.toml, enforced in a test.
+__version__ = "1.4.8"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
 
-def create_app(test_config: dict | None = None, instance_path: str | None = None) -> Flask:
+def create_app(test_config: dict | None = None, instance_path: Path | None = None) -> Flask:
     """Create and configure the Flask application instance.
 
     Args:
@@ -21,10 +22,13 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
         Configured Flask application instance
     """
     start_time = time.time()
+
+    absolute_instance_path_str = str(instance_path) if instance_path else None
+
     app = Flask(
         __name__,
         instance_relative_config=True,
-        instance_path=instance_path,
+        instance_path=absolute_instance_path_str,
         static_folder=None,
     )  # Create Flask app object
 
@@ -34,9 +38,9 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
         if not instance_path:
             app.logger.critical("When testing supply both test_config and instance_path!")
             raise AttributeError(instance_path)
-        ap_conf = ArchivePodcastConfig(config=test_config, instance_path=app.instance_path)
+        ap_conf = ArchivePodcastConfig(config=test_config, instance_path=instance_path)
     else:
-        ap_conf = ArchivePodcastConfig(instance_path=app.instance_path)  # Loads app config from disk
+        ap_conf = ArchivePodcastConfig(instance_path=Path(app.instance_path))  # Loads app config from disk
 
     app.logger.debug("Instance path is: %s", app.instance_path)
 
@@ -65,11 +69,11 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     @app.errorhandler(404)
     def invalid_route(e: str) -> Response:
         """404 Handler."""
-        app.logger.debug(f"Error handler: invalid_route: {e}")
+        app.logger.debug("Error handler: invalid_route: %s", e)
         return bp_archivepodcast.generate_404()
 
     app.logger.info(
-        f"🙋 ArchivePodcast Version: {__version__} webapp initialised in {time.time() - start_time:.2f} seconds."
+        "🙋 ArchivePodcast Version: %s webapp initialised in %.2f seconds.", __version__, time.time() - start_time
     )
     app.logger.info("🙋 Starting Web Server")
     return app

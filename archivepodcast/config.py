@@ -1,10 +1,10 @@
 """Configuration management for archivepodcast."""
 
-import contextlib
 import os
 import pwd
 import typing
 from datetime import timedelta
+from pathlib import Path
 
 import tomlkit
 from flask import Flask
@@ -71,16 +71,16 @@ class ConfigValidationError(Exception):
 class ArchivePodcastConfig:
     """Config Object."""
 
-    def __init__(self, instance_path: str, config: dict | None = None) -> None:
+    def __init__(self, instance_path: Path, config: dict | None = None) -> None:
         """Initiate config object.
 
         Args:
             instance_path: The flask instance path, should be always from app.instance_path
             config: If provided config won't be loaded from a file.
         """
-        self._config_path: str | None = None
+        self._config_path: Path | None = None
         self._config: dict = DEFAULT_CONFIG
-        self.instance_path: str = instance_path
+        self.instance_path: Path = instance_path
 
         self._get_config_file_path()
 
@@ -123,8 +123,7 @@ class ArchivePodcastConfig:
             raise ValueError(msg, self._config_path)
 
         try:
-            with open(self._config_path, "w", encoding="utf8") as toml_file:
-                tomlkit.dump(self._config, toml_file)
+            self._config_path.write_text(tomlkit.dumps(self._config), encoding="utf8")
         except PermissionError as exc:
             user_account = pwd.getpwuid(os.getuid())[0]
             err = f"Fix permissions: chown {user_account} {self._config_path}"
@@ -200,13 +199,13 @@ class ArchivePodcastConfig:
         If a config file doesn't exist it will be created and written with current (default) configuration.
         """
         paths = [
-            os.path.join(self.instance_path, "config.toml"),
-            os.path.expanduser("~/.config/archivepodcast/config.toml"),
-            "/etc/archivepodcast/config.toml",
+            Path(self.instance_path) / "config.toml",
+            Path.home() / ".config" / "archivepodcast" / "config.toml",
+            Path("/etc/archivepodcast/config.toml"),
         ]
 
         for path in paths:
-            if os.path.isfile(path):
+            if path.is_file():
                 logger.info("Found config at path: %s", path)
                 if not self._config_path:
                     logger.info("Using this path as it's the first one that was found")
@@ -217,8 +216,7 @@ class ArchivePodcastConfig:
         if not self._config_path:
             self._config_path = paths[0]
             logger.warning("No configuration file found, creating at default location: %s", self._config_path)
-            with contextlib.suppress(FileExistsError):
-                os.makedirs(self.instance_path)  # Create instance path if it doesn't exist
+            Path(self.instance_path).mkdir(parents=True, exist_ok=True)  # Create instance path if it doesn't exist
             self._write_config()
 
     def _load_file(self) -> dict:
@@ -227,8 +225,7 @@ class ArchivePodcastConfig:
             msg = "Config path not set, cannot load config"
             raise ValueError(msg, self._config_path)
 
-        with open(self._config_path, encoding="utf8") as toml_file:
-            return tomlkit.load(toml_file)
+        return tomlkit.loads(self._config_path.read_text(encoding="utf8"))
 
 
 def print_config(app: Flask) -> None:

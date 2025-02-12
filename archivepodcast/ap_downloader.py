@@ -2,12 +2,12 @@
 # and return xml that can be served to download them
 
 import contextlib
-import os
+import datetime
 import re
 import shutil
 import sys
-from datetime import datetime
 from http import HTTPStatus
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import ffmpeg
@@ -15,6 +15,7 @@ import requests
 from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
 from lxml import etree
 
+from .ap_constants import AUDIO_FORMATS, CONTENT_TYPES, FFMPEG_INFO, IMAGE_FORMATS, TZINFO_UTC
 from .helpers import list_all_s3_objects
 from .logger import get_logger
 
@@ -25,27 +26,6 @@ else:
 
 logger = get_logger(__name__)
 
-# Test FFMPEG
-ffmpeg_info = """ffmpeg not found, please install it and ensure it's in PATH.
-https://www.ffmpeg.org/download.html
- apt install ffmpeg
- brew install ffmpeg
- scoop install ffmpeg
-exiting..."""
-
-IMAGE_FORMATS = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
-AUDIO_FORMATS = [".mp3", ".wav", ".m4a", ".flac"]
-CONTENT_TYPES = {
-    ".webp": "image/webp",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".gif": "image/gif",
-    ".mp3": "audio/mpeg",
-    ".wav": "audio/wav",
-    ".m4a": "audio/mpeg",
-    ".flac": "audio/flac",
-}
 
 # These make the name spaces appear nicer in the generated XML
 etree.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
@@ -66,7 +46,7 @@ etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1
 def check_ffmpeg() -> None:
     """Check if ffmpeg is installed."""
     if not shutil.which("ffmpeg"):
-        logger.error(ffmpeg_info)
+        logger.error(FFMPEG_INFO)
         sys.exit(1)
 
 
@@ -76,7 +56,7 @@ check_ffmpeg()
 class PodcastDownloader:
     """PodcastDownloader object."""
 
-    def __init__(self, app_config: dict, s3: S3Client | None, web_root: str) -> None:
+    def __init__(self, app_config: dict, s3: S3Client | None, web_root: Path) -> None:
         """Initialise the PodcastDownloader object."""
         self.s3 = s3
         self.s3_paths_cache: list = []
@@ -98,10 +78,9 @@ class PodcastDownloader:
 
             self.s3_paths_cache.sort()
         else:
+            web_root = Path(self.web_root)
             self.local_paths_cache = [
-                os.path.relpath(os.path.join(root, file), self.web_root)
-                for root, _, files in os.walk(self.web_root)
-                for file in files
+                str(path.relative_to(web_root)) for path in Path(self.web_root).rglob("*") if path.is_file()
             ]
             self.local_paths_cache.sort()
 
@@ -135,14 +114,14 @@ class PodcastDownloader:
 
     def _fetch_podcast_rss(self, url: str) -> requests.Response | None:
         """Fetch the podcast rss from the given URL."""
-        logger.debug(f"📜 Fetching podcast rss: {url}")
+        logger.debug("📜 Fetching podcast rss: %s", url)
         try:
             response = requests.get(url, timeout=10)  # Some feeds are proper slow
             if response.status_code != HTTPStatus.OK:
                 msg = f"❌ Not a great web response getting RSS: {response.status_code}\n{response.content.decode()}"
                 logger.error(msg)
                 return None
-            logger.debug(f"📄 Success fetching podcast RSS: {response.status_code}")
+            logger.debug("📄 Success fetching podcast RSS: %s", response.status_code)
         except ValueError:
             logger.exception("❌ Real early failure on grabbing the podcast rss, weird")
             response = None
@@ -284,16 +263,17 @@ class PodcastDownloader:
         for child in channel:
             if child.tag == "pubDate":
                 original_date = str(child.text)
-                file_date = datetime(1970, 1, 1)
+                file_date = datetime.datetime(1970, 1, 1, tzinfo=TZINFO_UTC)
                 with contextlib.suppress(ValueError):
-                    file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")
+                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
                 with contextlib.suppress(ValueError):
-                    file_date = datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
+                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
                 file_date_string = file_date.strftime("%Y%m%d")
         return file_date_string
 
     def _handle_enclosure_tag(self, child: etree._Element, title: str, podcast: dict, file_date_string: str) -> None:
         """Handle the enclosure tag in the podcast rss."""
+        logger.trace("Enclosure, URL: %s", child.attrib.get("url", ""))
         title = self._cleanup_file_name(title)
         url = child.attrib.get("url", "")
         child.attrib["url"] = ""
@@ -338,45 +318,49 @@ class PodcastDownloader:
                     + filetype
                 )
 
-    def _check_local_path_exists(self, file_path: str) -> bool:
+    def _check_local_path_exists(self, file_path: Path) -> bool:
         """Check if the file exists locally."""
-        file_exists = os.path.isfile(file_path)
+        file_exists = file_path.is_file()
 
         if file_exists:
             self._append_to_local_paths_cache(file_path)
-
-        if file_exists:
             logger.debug("📁 File: %s exists locally", file_path)
         else:
             logger.debug("📁 File: %s does not exist locally", file_path)
 
         return file_exists
 
-    def _check_path_exists(self, file_path: str) -> bool:
+    def _check_path_exists(self, file_path: Path) -> bool:
         """Check the path, s3 or local."""
         file_exists = False
 
         if self.s3 is not None:
-            s3_file_path = file_path.replace(self.web_root, "").replace(os.sep, "/")
-            if s3_file_path[0] == "/":
-                s3_file_path = s3_file_path[1:]
+            # Convert file_path to a Path object if it isn't already
+            file_path = Path(file_path)
 
-            if s3_file_path not in self.s3_paths_cache:
+            # If it's an absolute path and under web_root, make it relative to web_root
+            if file_path.is_absolute() and file_path.is_relative_to(self.web_root):
+                file_path = file_path.relative_to(self.web_root)
+
+            # Convert to a posix path (forward slashes) and ensure no leading slash
+            s3_key = file_path.as_posix().lstrip("/")
+
+            if s3_key not in self.s3_paths_cache:
                 try:
                     # Head object to check if file exists
-                    self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path)
+                    self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_key)
                     logger.debug(
                         "⛅ File: %s exists in s3 bucket",
-                        s3_file_path,
+                        s3_key,
                     )
-                    self.s3_paths_cache.append(s3_file_path)
+                    self.s3_paths_cache.append(s3_key)
                     file_exists = True
 
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "404":
                         logger.debug(
                             "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
-                            s3_file_path,
+                            s3_key,
                         )
                     else:
                         logger.exception("⛅❌ s3 check file exists errored out?")
@@ -384,7 +368,7 @@ class PodcastDownloader:
                     logger.exception("⛅❌ Unhandled s3 Error:")
 
             else:
-                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_file_path)
+                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_key)
                 file_exists = True
 
         else:
@@ -394,30 +378,22 @@ class PodcastDownloader:
 
     def _handle_wav(self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = "") -> int:
         """Convert podcasts that have wav episodes 😔. Returns new file length."""
+        logger.trace("🎵 Handling wav file: %s", title)
         new_length = None
         spacer = ""  # This logic can be removed since WAVs will always have a date
         if file_date_string != "":
             spacer = "-"
-        wav_file_path = os.path.join(
-            self.web_root,
-            "content",
-            podcast["name_one_word"],
-            f"{file_date_string}{spacer}{title}.wav",
-        )
 
-        mp3_file_path = os.path.join(
-            self.web_root,
-            "content",
-            podcast["name_one_word"],
-            f"{file_date_string}{spacer}{title}.mp3",
-        )
+        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        wav_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.wav"
+        mp3_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.mp3"
 
         # If we need do download and convert a wav there is a small chance
         # the user has had ffmpeg issues, remove existing files to play it safe
-        if os.path.exists(wav_file_path):
+        if wav_file_path.exists():
             with contextlib.suppress(Exception):
-                os.remove(wav_file_path)
-                os.remove(mp3_file_path)
+                wav_file_path.unlink()
+                mp3_file_path.unlink()
 
         # If the asset hasn't already been downloaded and converted
         if not self._check_path_exists(mp3_file_path):
@@ -446,45 +422,51 @@ class PodcastDownloader:
 
             # Remove wav since we are done with it
             logger.info("♻ Removing wav version of %s", title)
-            if os.path.exists(wav_file_path):
-                os.remove(wav_file_path)
+            if wav_file_path.exists():
+                wav_file_path.unlink()
             logger.info("♻ Done")
 
             if self.s3:
                 self._upload_asset_s3(mp3_file_path, extension)
+        else:
+            logger.debug("Episode has already been converted: %s", mp3_file_path)
 
         if self.s3:
-            s3_file_path = mp3_file_path.replace(self.web_root, "").replace(os.sep, "/")
-            if s3_file_path[0] == "/":
-                s3_file_path = s3_file_path[1:]
+            # Convert mp3_file_path to a Path object and make relative to web_root
+            s3_file_path = Path(mp3_file_path).relative_to(self.web_root)
 
-            msg = f"Checking length of s3 object: {s3_file_path}"
+            # Convert to posix path (forward slashes) for S3
+            s3_key = s3_file_path.as_posix()
+
+            msg = f"Checking length of s3 object: {s3_key}"
             logger.trace(msg)
-            response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_file_path)
+            response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_key)
             new_length = response["ContentLength"]
-            msg = f"Length of converted wav file {s3_file_path}: {new_length}"
+            msg = f"Length of converted wav file {s3_key}: {new_length} bytes, stored in s3"
         else:
-            new_length = os.stat(mp3_file_path).st_size
-            msg = f"Length of converted wav file {mp3_file_path}: {new_length}"
+            new_length = mp3_file_path.stat().st_size
+            msg = f"Length of converted wav file: {mp3_file_path} {new_length} bytes, stored locally"
 
         logger.trace(msg)
 
         return new_length
 
-    def _upload_asset_s3(self, file_path: str, extension: str, *, remove_original: bool = True) -> None:
+    def _upload_asset_s3(self, file_path: Path, extension: str, *, remove_original: bool = True) -> None:
         """Upload asset to s3."""
         if not self.s3:
             logger.error("⛅❌ s3 client not found, cannot upload")
             return
         content_type = CONTENT_TYPES[extension]
-        s3_path = file_path.replace(self.web_root, "").replace(os.sep, "/")
-        if s3_path[0] == "/":
-            s3_path = s3_path[1:]
+        file_path = Path(file_path)
+        if not file_path.is_absolute():
+            file_path = Path(self.web_root) / file_path
+        s3_path = file_path.relative_to(self.web_root).as_posix()
+        s3_path = s3_path.removeprefix("/")
         try:
             # Upload the file
             logger.info("💾⛅ Uploading to s3: %s", s3_path)
             self.s3.upload_file(
-                file_path,
+                str(file_path),
                 self.app_config["s3"]["bucket"],
                 s3_path,
                 ExtraArgs={"ContentType": content_type},
@@ -494,7 +476,7 @@ class PodcastDownloader:
             if remove_original:
                 logger.info("💾 Removing local file: %s", file_path)
                 try:
-                    os.remove(file_path)
+                    Path(file_path).unlink()
                 except FileNotFoundError:  # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
                     msg = f"⛅❌ Could not remove the local file, the source file was not found: {file_path}"
                     logger.exception(msg)
@@ -508,11 +490,10 @@ class PodcastDownloader:
 
     def _download_cover_art(self, url: str, title: str, podcast: dict, extension: str = "") -> None:
         """Download cover art from url with appropriate file name."""
-        cover_art_destination = os.path.join(self.web_root, "content", podcast["name_one_word"], f"{title}{extension}")
+        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        cover_art_destination = content_dir / f"{title}{extension}"
 
-        local_file_found = self._check_local_path_exists(
-            os.path.join(self.web_root, "content", podcast["name_one_word"], f"{title}{extension}")
-        )
+        local_file_found = self._check_local_path_exists(cover_art_destination)
 
         if not local_file_found:
             self._download_to_local(url, cover_art_destination)
@@ -529,9 +510,8 @@ class PodcastDownloader:
         if file_date_string != "":
             spacer = "-"
 
-        file_path = os.path.join(
-            self.web_root, "content", podcast["name_one_word"], f"{file_date_string}{spacer}{title}{extension}"
-        )
+        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        file_path = content_dir / f"{file_date_string}{spacer}{title}{extension}"
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
             self._download_to_local(url, file_path)
@@ -544,7 +524,7 @@ class PodcastDownloader:
         else:
             logger.trace(f"Already downloaded: {title}{extension}")
 
-    def _download_to_local(self, url: str, file_path: str) -> None:
+    def _download_to_local(self, url: str, file_path: Path) -> None:
         """Download the asset from the url."""
         logger.debug("💾 Downloading: %s", url)
         logger.info("💾 Downloading asset to: %s", file_path)
@@ -557,7 +537,7 @@ class PodcastDownloader:
             return
 
         if req.status_code == HTTPStatus.OK:
-            with open(file_path, "wb") as asset_file:
+            with Path(file_path).open("wb") as asset_file:
                 asset_file.write(req.content)
                 logger.debug("💾 Success!")
         else:
@@ -568,8 +548,8 @@ class PodcastDownloader:
         if not self.s3:
             self._append_to_local_paths_cache(file_path)
 
-    def _append_to_local_paths_cache(self, file_path: str) -> None:
-        file_path = os.path.relpath(file_path, self.web_root)
+    def _append_to_local_paths_cache(self, file_path: Path) -> None:
+        file_path = Path(file_path).relative_to(self.web_root)
 
         if file_path not in self.local_paths_cache:
             self.local_paths_cache.append(file_path)

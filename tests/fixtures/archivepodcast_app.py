@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 
@@ -9,8 +7,8 @@ def app(tmp_path, get_test_config):
     from archivepodcast import create_app
 
     # Create a dummy RSS file since this app instance is not live and requires an existing rss feed.
-    os.makedirs(os.path.join(tmp_path, "web", "rss"))
-    with open(os.path.join(tmp_path, "web", "rss", "test"), "w") as file:
+    (tmp_path / "web" / "rss").mkdir(parents=True)
+    with (tmp_path / "web" / "rss" / "test").open("w") as file:
         file.write(pytest.DUMMY_RSS_STR)
 
     return create_app(test_config=get_test_config("testing_true_valid.toml"), instance_path=tmp_path)
