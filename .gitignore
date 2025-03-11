@@ -3,6 +3,9 @@
 poetry.lock
 temp.py
 
+# We don't need package-lock.json since its all just dev dependencies
+package-lock.json
+
 # Don't know what created this
 core
 
