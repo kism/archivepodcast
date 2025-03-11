@@ -8,7 +8,7 @@ from flask import Flask, Response
 from . import bp_archivepodcast, logger
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig, print_config
 
-__version__ = "1.4.8"  # This is the version of the app, used in pyproject.toml, enforced in a test.
+__version__ = "1.4.9"  # This is the version of the app, used in pyproject.toml, enforced in a test.
 
 
 def create_app(test_config: dict | None = None, instance_path: Path | None = None) -> Flask:
