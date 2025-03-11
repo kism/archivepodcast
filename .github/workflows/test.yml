@@ -58,6 +58,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+          cache-dependency-path: "**/package.json"
       - run: npm install vitest @vitest/coverage-v8
       - run: npm test
 

@@ -10,6 +10,11 @@ echo_magenta() {
     echo -e "--- ${MAGENTA}$1${NC} ---"
 }
 
+if [ "$(dirname "$0")" == "." ]; then
+    echo "Changing directory to the project directory"
+    cd ..
+fi
+
 check_return() {
     if [ "$1" -ne 0 ]; then
         echo -e "${RED}Failed${NC}"
@@ -17,6 +22,8 @@ check_return() {
     fi
     echo -e "${GREEN}Passed${NC}"
 }
+
+echo "Running code checks locally"
 
 # Prerequisites
 uv sync

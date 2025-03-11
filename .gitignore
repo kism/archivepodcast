@@ -3,6 +3,9 @@
 poetry.lock
 temp.py
 
+# Node is just for development tools
+package-lock.json
+
 # Don't know what created this
 core
 
