@@ -8,9 +8,7 @@ from pathlib import Path
 
 import tomlkit
 from flask import Flask
-from pydantic import BaseModel, HttpUrl
 
-from .config_types import AppConfig, LoggingConfig, PodcastConfig, S3Config, WebPageConfig
 from .logger import get_logger
 
 # Logging should be all done at INFO level or higher as the log level hasn't been set yet
@@ -70,47 +68,30 @@ class ConfigValidationError(Exception):
         super().__init__(failure_list)
 
 
-class ArchivePodcastConfig(BaseModel):
+class ArchivePodcastConfig:
     """Config Object."""
 
-    app: AppConfig
-    podcast: list[PodcastConfig]
-    logging: LoggingConfig
-    flask: dict[str, typing.Any]
-
-
-    def __init__(self, instance_path: Path | None = None, *, load_file: bool = False) -> None:
+    def __init__(self, instance_path: Path, config: dict | None = None) -> None:
         """Initiate config object.
 
         Args:
             instance_path: The flask instance path, should be always from app.instance_path
             config: If provided config won't be loaded from a file.
         """
-
-
-        self.app: AppConfig = AppConfig()
-        self.podcast: list[PodcastConfig] = [PodcastConfig()]
-        self.logging: LoggingConfig = LoggingConfig()
-        self.flask: dict[str, typing.Any] = {"TESTING": False}
-
         self._config_path: Path | None = None
-        self.instance_path: Path | None = None
-        print(f"instance_path: {instance_path}")
-
-        if instance_path:
-            self.instance_path = instance_path
-
-        print(f"instance_path: {instance_path}")
+        self._config: dict = DEFAULT_CONFIG
+        self.instance_path: Path = instance_path
 
         self._get_config_file_path()
 
-        if load_file:
-            self._load_file()
+        if not config:  # If no config is passed in (for testing), we load from a file.
+            config = self._load_file()
+
+        self._config = self._merge_with_defaults(DEFAULT_CONFIG, config)
 
         self._validate_config()
 
-        if self._config_path:
-            self._write_config()
+        self._write_config()
 
         logger.info("Configuration loaded successfully!")
 
@@ -119,6 +100,22 @@ class ArchivePodcastConfig(BaseModel):
     https://gist.github.com/turicas/1510860
     """
 
+    def __getitem__(self, key: str) -> typing.Any:  # noqa: ANN401 # Yes this will return Any, but it's a dict.
+        """Get item from config like a dictionary."""
+        return self._config[key]
+
+    def __contains__(self, key: str) -> bool:
+        """Check if key is 'in' the configuration."""
+        return key in self._config
+
+    def __repr__(self) -> str:
+        """Return string representation of the config."""
+        return repr(self._config)
+
+    def items(self) -> typing.ItemsView[typing.Any, typing.Any]:
+        """Return dictionary items of configuration."""
+        return self._config.items()
+
     def _write_config(self) -> None:
         """Write configuration to a file."""
         if not self._config_path:  # Appease mypy
@@ -126,7 +123,7 @@ class ArchivePodcastConfig(BaseModel):
             raise ValueError(msg, self._config_path)
 
         try:
-            self._config_path.write_text(tomlkit.dumps(self._config.model_dump()), encoding="utf8")
+            self._config_path.write_text(tomlkit.dumps(self._config), encoding="utf8")
         except PermissionError as exc:
             user_account = pwd.getpwuid(os.getuid())[0]
             err = f"Fix permissions: chown {user_account} {self._config_path}"
@@ -136,21 +133,24 @@ class ArchivePodcastConfig(BaseModel):
         """Validate the current config. Raise an exception if it don't validate."""
         failed_items = []
 
-        for podcast in self._config.podcast:
-            if not podcast.url:
+        self._warn_unexpected_keys(DEFAULT_CONFIG, self._config, "<root>")
+
+        for podcast in self._config["podcast"]:
+            if not podcast["url"]:
                 failed_items.append("Podcast url is empty")
-            if not podcast.name_one_word:
+
+            if not podcast["name_one_word"]:
                 failed_items.append("Podcast name_one_word is empty")
 
         # Ensure internet path has a trailing slash
-        if not self._config.app.s3.cdn_domain.endswith("/"):
-            self._config.app.s3.cdn_domain += "/"
+        if self._config["app"]["s3"]["cdn_domain"][-1] != "/":
+            self._config["app"]["s3"]["cdn_domain"] += "/"
 
-        if not self._config.app.inet_path.endswith("/"):
-            self._config.app.inet_path += "/"
+        if self._config["app"]["inet_path"][-1] != "/":
+            self._config["app"]["inet_path"] += "/"
 
         # This is to assure that you don't accidentally test without the tmp_path fixture.
-        if self._config.flask.TESTING and not any(
+        if self._config["flask"]["TESTING"] and not any(
             substring in str(self.instance_path)
             for substring in ["tmp", "temp", "TMP", "TEMP", "/private/var/folders/"]
         ):
@@ -162,19 +162,47 @@ class ArchivePodcastConfig(BaseModel):
         if len(failed_items) != 0:
             raise ConfigValidationError(failed_items)
 
+    def _warn_unexpected_keys(self, target_dict: dict, base_dict: dict, parent_key: str) -> dict:
+        """If the loaded config has a key that isn't in the schema (default config), we log a warning.
+
+        This is recursive, be careful.
+        """
+        if parent_key != "flask":
+            for key, value in base_dict.items():
+                if isinstance(value, dict) and key in target_dict:
+                    self._warn_unexpected_keys(target_dict[key], value, key)
+                elif key not in target_dict:
+                    if parent_key != "<root>":
+                        parent_key = f"[{parent_key}]"
+
+                    msg = f"Found config entry key {parent_key}[{key}] that's not in schema"
+                    logger.warning(msg)
+
+        return target_dict
+
+    def _merge_with_defaults(self, base_dict: dict, target_dict: dict) -> dict:
+        """Merge a config with another (DEFAULT_CONFIG) to ensure every default key exists.
+
+        This is recursive, be careful.
+        """
+        for key, value in base_dict.items():
+            if isinstance(value, dict) and key in target_dict:
+                self._merge_with_defaults(value, target_dict[key])
+            elif key not in target_dict:
+                target_dict[key] = target_dict.get(key, value)
+
+        return target_dict
+
     def _get_config_file_path(self) -> None:
         """Figure out the config path to load config from.
 
         If a config file doesn't exist it will be created and written with current (default) configuration.
         """
-
-        paths = []
-
-        if self.instance_path:
-            paths.append(self.instance_path / "config.toml")
-
-        paths.append(Path.home() / ".config" / "archivepodcast" / "config.toml")
-        paths.append(Path("/etc/archivepodcast/config.toml"))
+        paths = [
+            Path(self.instance_path) / "config.toml",
+            Path.home() / ".config" / "archivepodcast" / "config.toml",
+            Path("/etc/archivepodcast/config.toml"),
+        ]
 
         for path in paths:
             if path.is_file():
