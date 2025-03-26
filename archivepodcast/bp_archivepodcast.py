@@ -318,7 +318,7 @@ def rss(feed: str) -> Response:
                 status=return_code,
             )
 
-        except:  # noqa: E722: Broad catch to prevent crash
+        except:  # noqa: E722 Bare except since this is a catch all to prevent app crash
             return_code = HTTPStatus.INTERNAL_SERVER_ERROR
             return Response(
                 render_template(
