@@ -12,7 +12,7 @@ wheels = [
 
 [[package]]
 name = "archivepodcast"
-version = "1.4.9"
+version = "1.4.10"
 source = { virtual = "." }
 dependencies = [
     { name = "boto3" },
