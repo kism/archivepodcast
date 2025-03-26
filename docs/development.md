@@ -33,7 +33,7 @@ npm install
 If you wish to upgrade packages
 
 ```bash
-npm upgrade
+npm update --save
 ```
 
 Extra setup dictionaries for spellcheck
