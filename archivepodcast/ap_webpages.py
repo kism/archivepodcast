@@ -104,7 +104,7 @@ return false;
             else:
                 header += ' | <div class="active">Health</div>'
             header += reload_a_tag.replace("\n", "")
-            header += ' | <a href="/console" target=”_blank”>Flask Console</a>'
+            header += ' | <a href="/console" target="_blank">Flask Console</a>'
             header += ' | <a id="debug_status" style="color: #ff0000">DEBUG ENABLED</a>'
 
         header += "<hr></header>"
