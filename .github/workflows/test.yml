@@ -33,7 +33,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
       - name: Install the project
         run: uv sync --no-default-groups --group test
       - name: Test with pytest
