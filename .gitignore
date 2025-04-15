@@ -29,7 +29,7 @@ htmlcov_js
 .DS_Store
 
 # Exclude static path
-!archivepodcast/static/** */
+!archivepodcast/static/**
 
 # Python
 # https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Python.gitignore
