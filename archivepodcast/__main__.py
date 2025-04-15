@@ -1,7 +1,6 @@
 """Main function, for running adhoc."""
 
 import argparse
-import logging
 import time
 from pathlib import Path
 
@@ -13,27 +12,29 @@ from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig
 INSTANCE_PATH = Path.cwd() / "instance"  # Default instance path for the app
 
 
-def main(config_dict: dict | ArchivePodcastConfig | None = None, instance_path: Path | None = None) -> None:
+def run_ap_adhoc(
+    config_path: Path | None = None,
+    instance_path: Path | None = None,
+) -> None:
     """Main for adhoc running."""
-    if not instance_path:
-        instance_path = INSTANCE_PATH
-
-    ap_conf = config_dict if config_dict else ArchivePodcastConfig(instance_path=instance_path)
-
-    ap_logger.setup_logger(app=None, logging_conf=ap_conf["logging"])  # Setup logger with config
-
     logger = ap_logger.get_logger(__name__)
+    if not instance_path:
+        msg = f"Instance path not provided, using default: {INSTANCE_PATH}"
+        logger.warning(msg)
+        instance_path = INSTANCE_PATH  # pragma: no cover # This avoids issues in PyTest
+        if not instance_path.exists():
+            msg = f"Instance path ({instance_path}) does not exist, not creating it for safety."
+            raise FileNotFoundError(msg)
 
-    debug = False
-    if logger.getEffectiveLevel() <= logging.DEBUG:
-        debug = True
+    ap_conf = ArchivePodcastConfig(instance_path=instance_path, config=None, config_file_path=config_path)
+    ap_logger.setup_logger(app=None, logging_conf=ap_conf["logging"])  # Setup logger with config
 
     ap = PodcastArchiver(
         app_config=ap_conf["app"],
         podcast_list=ap_conf["podcast"],
         instance_path=INSTANCE_PATH,
         root_path=Path.cwd(),
-        debug=debug,
+        debug=False,  # The debug of the ap object is only for the Flask web server
     )
 
     ap.grab_podcasts()
@@ -46,15 +47,19 @@ def main(config_dict: dict | ArchivePodcastConfig | None = None, instance_path: 
     logger.info("Done!")
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Main function for CLI."""
     start_time = time.time()
     ap_logger.setup_logger(
         app=None, logging_conf=DEFAULT_LOGGING_CONFIG
     )  # Setup logger with defaults defined in config module
 
+    logger = ap_logger.get_logger(__name__)
+    logger.info("🙋 ArchivePodcast Version: %s running adhoc", __version__)
+
     parser = argparse.ArgumentParser(description="Archivepodcast.")
     parser.add_argument(
-        "--instance_path",
+        "--instance-path",
         type=str,
         default="",
         help="Path to the instance directory.",
@@ -67,11 +72,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    instance_path = Path(args.instance_path) if args.instance_path else INSTANCE_PATH
+    instance_path = Path(args.instance_path) if args.instance_path else None
+    config_path = Path(args.config) if args.config else None
 
-    if args.config:
-        config_dict = ArchivePodcastConfig(instance_path=instance_path, config=None, config_file_path=Path(args.config))
+    run_ap_adhoc(config_path=config_path, instance_path=instance_path)
 
-    main(config_dict=config_dict, instance_path=instance_path)
-    logger = ap_logger.get_logger(__name__)
-    logger.info("🙋 ArchivePodcast Version: %s adhoc ran in %.2f seconds.", __version__, time.time() - start_time)
+    logger.info("🙋 ArchivePodcast ran adhoc in %.2f seconds", time.time() - start_time)
+
+
+if __name__ == "__main__":
+    main()  # pragma: no cover
