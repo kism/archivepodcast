@@ -27,14 +27,14 @@ def test_config_file_loading(place_test_config, tmp_path, caplog):
 
     # TEST: Config file is created when no test_config is provided.
     caplog.set_level(logging.INFO)
-    create_app(test_config=None, instance_path=tmp_path)
+    create_app(config_dict=None, instance_path=tmp_path)
     assert "Using this path as it's the first one that was found" in caplog.text
 
 
 def test_config_file_creation(tmp_path, caplog):
     """TEST: that file is created when no config is provided.."""
     with caplog.at_level(logging.WARNING), pytest.raises(ConfigValidationError) as exc_info:
-        create_app(test_config=None, instance_path=tmp_path)
+        create_app(config_dict=None, instance_path=tmp_path)
 
     assert Path(tmp_path / "config.toml").exists()
     assert "Podcast url is empty" in str(exc_info.value)

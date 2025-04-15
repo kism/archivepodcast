@@ -11,7 +11,7 @@ def app(tmp_path, get_test_config):
     with (tmp_path / "web" / "rss" / "test").open("w") as file:
         file.write(pytest.DUMMY_RSS_STR)
 
-    return create_app(test_config=get_test_config("testing_true_valid.toml"), instance_path=tmp_path)
+    return create_app(config_dict=get_test_config("testing_true_valid.toml"), instance_path=tmp_path)
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def app_live(
 
     from archivepodcast import create_app
 
-    return create_app(test_config=get_test_config("testing_true_valid_live.toml"), instance_path=tmp_path)
+    return create_app(config_dict=get_test_config("testing_true_valid_live.toml"), instance_path=tmp_path)
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ def app_live_s3(
     bucket_name = config["app"]["s3"]["bucket"]
     s3.create_bucket(Bucket=bucket_name)
 
-    return create_app(test_config=config, instance_path=tmp_path)
+    return create_app(config_dict=config, instance_path=tmp_path)
 
 
 @pytest.fixture

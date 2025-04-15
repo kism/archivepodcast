@@ -100,7 +100,7 @@ logger = cast("CustomLogger", logging.getLogger(__name__))
 
 
 # Pass in the whole app object to make it obvious we are configuring the logger object within the app object.
-def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | None = None) -> None:
+def setup_logger(app: Flask | None, logging_conf: dict, in_logger: logging.Logger | None = None) -> None:
     """Configure logging for the application.
 
     Args:
@@ -112,7 +112,8 @@ def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | Non
         in_logger = logging.getLogger()  # Get the root logger
 
     # The root logger has no handlers initially in flask, app.logger does though.
-    app.logger.handlers.clear()  # Remove the Flask default handlers
+    if app:
+        app.logger.handlers.clear()  # Remove the Flask default handlers
 
     # If the logger doesn't have a console handler (root logger doesn't by default)
     if not _has_console_handler(in_logger):
