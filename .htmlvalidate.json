@@ -2,6 +2,7 @@
   "extends": ["html-validate:recommended"],
 
   "rules": {
-    "close-order": "error"
+    "close-order": "error",
+    "no-self-closing": "warn"
   }
 }
