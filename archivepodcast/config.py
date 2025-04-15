@@ -77,6 +77,7 @@ class ArchivePodcastConfig:
         Args:
             instance_path: The flask instance path, should be always from app.instance_path
             config: If provided config won't be loaded from a file.
+            config_file_path: If provided, this will be used as the config file path.
         """
         self._config_path: Path | None = None
         self._config: dict = DEFAULT_CONFIG

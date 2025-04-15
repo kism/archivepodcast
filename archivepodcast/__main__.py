@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import time
 from pathlib import Path
 
 from . import logger as ap_logger
@@ -35,6 +36,13 @@ def main(config_dict: dict | ArchivePodcastConfig | None = None, instance_path: 
     )
 
     ap.grab_podcasts()
+
+    logger.info("Waiting for html rendering to finish...")
+
+    while ap.health.core.currently_rendering:
+        time.sleep(0.1)
+
+    logger.info("Done!")
 
 
 if __name__ == "__main__":
