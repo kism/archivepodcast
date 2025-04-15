@@ -38,14 +38,14 @@ window.MediaMetadata = MockMediaMetadata;
 describe("playerSetCurrentEpisode", () => {
   test("sets audio source and updates episode information", () => {
     document.body.innerHTML = `
-      <audio id="podcast_player"></audio>
+      <audio id="podcast_audio_player"></audio>
       <div id="podcast_player_podcast_name"></div>
       <div id="podcast_player_episode_name"></div>
     `;
 
     playerSetCurrentEpisode("http://example.com/test.mp3", "audio/mpeg", "Test Episode", "Test Podcast");
 
-    const player = document.getElementById("podcast_player");
+    const player = document.getElementById("podcast_audio_player");
     const episodeTitle = document.getElementById("podcast_player_episode_name");
 
     expect(player.src).toBe("http://example.com/test.mp3");
@@ -63,7 +63,7 @@ describe("loadPodcast", () => {
               <img id="podcast_player_cover" />
               <p id="podcast_player_podcast_name"></p>
               <p id="podcast_player_episode_name"></p>
-              <audio id="podcast_player"></audio>
+              <audio id="podcast_audio_player"></audio>
           `;
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -103,7 +103,7 @@ describe("loadPodcast", () => {
     // Now we try play an episode
     element.click();
 
-    const player = document.getElementById("podcast_player");
+    const player = document.getElementById("podcast_audio_player");
     const episodeTitle = document.getElementById("podcast_player_episode_name");
     const coverImage = document.getElementById("podcast_player_cover");
 
@@ -125,7 +125,7 @@ describe("loadPodcast", () => {
               <img id="podcast_player_cover" />
               <p id="podcast_player_podcast_name"></p>
               <p id="podcast_player_episode_name"></p>
-              <audio id="podcast_player"></audio>
+              <audio id="podcast_audio_player"></audio>
           `;
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -162,7 +162,7 @@ describe("loadPodcast", () => {
               </select><ul id="podcast_episode_list"></ul>
               <img id="podcast_player_cover" />
               <p id="podcast_player_episode_name"></p>
-              <audio id="podcast_player"></audio>
+              <audio id="podcast_audio_player"></audio>
           `;
 
     global.fetch = vi.fn().mockResolvedValue({
