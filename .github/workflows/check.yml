@@ -1,5 +1,5 @@
 ---
-name: Lint (Ruff, Biome)
+name: Lint (Ruff, Biome, HTML-validate)
 
 on:
   push:
@@ -35,6 +35,9 @@ jobs:
     timeout-minutes: 2
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "latest"
       - name: Install html-Validate
         run: npm install -g html-validate
       - name: Install uv
@@ -42,9 +45,8 @@ jobs:
       - name: Install the project
         run: uv sync --no-default-groups
       - name: Prepare to generate the HTML
-        run: |
-          mkdir -p instance/web/rss/
-          cp -f scripts/config/rss-ci.rss instance/web/rss/test
-          .venv/bin/python -m archivepodcast --config scripts/config/config-ci.toml >/dev/null 2>&1
+        run: mkdir -p instance/web/rss/ && cp -f scripts/config/rss-ci.rss instance/web/rss/test
+      - name: Generate the HTML
+        run: uv run python -m archivepodcast --config scripts/config/config-ci.toml >/dev/null 2>&1
       - name: Validate HTML
         run: html-validate instance/web/*.html
