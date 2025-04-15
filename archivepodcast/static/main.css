@@ -466,6 +466,10 @@ thead th {
   max-width: 700px;
 }
 
+#podcast_audio_player {
+  width: 100%;
+}
+
 #podcast_player_cover_container {
   display: inline-block;
   max-height: 80px;

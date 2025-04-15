@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,7 +7,7 @@
         {{ app_config['web_page']['title']|e }}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
+    <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett">
     <link rel="preload" href="/static/fonts/noto-sans-display-latin-500.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/fira-code-v12-latin-500.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/fira-code-v12-latin-600.woff2" as="font" type="font/woff2" crossorigin>
@@ -15,7 +15,7 @@
     <link rel="preload" href="/static/fonts/noto-sans-display-latin-500italic.woff2" as="font" type="font/woff2"
         crossorigin>
     <script type="module" src="/static/webplayer.js"></script>
-    <link rel="stylesheet" href="/static/main.css" />
+    <link rel="stylesheet" href="/static/main.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
         #podcast_select,
@@ -45,10 +45,9 @@
         <div class="custom-select">
             <select id="podcast_select" onchange="loadPodcast(event)">
                 <option value="">Select a podcast</option>
-                {% for podcast in podcasts %}
-                <option value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}">{{ podcast['new_name'] }}
-                </option>
-                {% endfor %}
+                {% for podcast in podcasts %}<option
+                    value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}">{{ podcast['new_name'] }}
+                </option>{% endfor %}
             </select>
         </div>
         <ul id="podcast_episode_list" class="file-list"></ul>
@@ -59,12 +58,12 @@
         <div class="podcast-player">
             <hr>
             <div id="podcast_player_cover_container">
-                <img id="podcast_player_cover" src="" alt="Podcast cover" />
+                <img id="podcast_player_cover" src="/static/transparent.png" alt="Podcast cover">
             </div>
             <div id="episode_name_and_player_container">
                 <p class="podcast-player-text" id="podcast_player_podcast_name">-</p>
                 <p class="podcast-player-text" id="podcast_player_episode_name">No episode loaded</p>
-                <audio id="podcast_player" class="contained-content" controls preload="metadata" style="width: 100%;" />
+                <audio id="podcast_audio_player" class="contained-content" controls preload="metadata" />
             </div>
         </div>
     </div>

@@ -33,7 +33,7 @@ def test_config_validate_test_instance_path(get_test_config):
         incorrect_instance_path.mkdir()
 
     with pytest.raises(ConfigValidationError) as exc_info:
-        create_app(test_config=get_test_config("testing_true_valid.toml"), instance_path=incorrect_instance_path)
+        create_app(config_dict=get_test_config("testing_true_valid.toml"), instance_path=incorrect_instance_path)
 
     assert isinstance(exc_info.type, type(ConfigValidationError))
     assert "['flask']['TESTING'] is True but instance_path is not a tmp_path" in str(exc_info.getrepr())

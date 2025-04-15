@@ -71,18 +71,19 @@ class ConfigValidationError(Exception):
 class ArchivePodcastConfig:
     """Config Object."""
 
-    def __init__(self, instance_path: Path, config: dict | None = None) -> None:
+    def __init__(self, instance_path: Path, config: dict | None = None, config_file_path: Path | None = None) -> None:
         """Initiate config object.
 
         Args:
             instance_path: The flask instance path, should be always from app.instance_path
             config: If provided config won't be loaded from a file.
+            config_file_path: If provided, this will be used as the config file path.
         """
         self._config_path: Path | None = None
         self._config: dict = DEFAULT_CONFIG
         self.instance_path: Path = instance_path
 
-        self._get_config_file_path()
+        self._get_config_file_path(config_file_path)
 
         if not config:  # If no config is passed in (for testing), we load from a file.
             config = self._load_file()
@@ -193,22 +194,27 @@ class ArchivePodcastConfig:
 
         return target_dict
 
-    def _get_config_file_path(self) -> None:
+    def _get_config_file_path(self, config_file_path: Path | None = None) -> None:
         """Figure out the config path to load config from.
 
         If a config file doesn't exist it will be created and written with current (default) configuration.
         """
-        paths = [
-            Path(self.instance_path) / "config.toml",
-            Path.home() / ".config" / "archivepodcast" / "config.toml",
-            Path("/etc/archivepodcast/config.toml"),
-        ]
+        if config_file_path:
+            paths = [config_file_path]
+            logger.info("Using config file path provided: %s", config_file_path)
+        else:
+            paths = [
+                Path(self.instance_path) / "config.toml",
+                Path.home() / ".config" / "archivepodcast" / "config.toml",
+                Path("/etc/archivepodcast/config.toml"),
+            ]
 
         for path in paths:
             if path.is_file():
                 logger.info("Found config at path: %s", path)
                 if not self._config_path:
-                    logger.info("Using this path as it's the first one that was found")
+                    if not config_file_path:
+                        logger.info("Using this path as it's the first one that was found")
                     self._config_path = path
             else:
                 logger.info("No config file found at: %s", path)

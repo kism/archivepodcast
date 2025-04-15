@@ -30,7 +30,7 @@ def test_home_index(client, apa):
     # TEST: Content type
     assert response.content_type == "text/html; charset=utf-8"
     # TEST: It is a webpage that we get back
-    assert b"<!doctype html>" in response.data
+    assert b"<!DOCTYPE html>" in response.data
 
 
 def test_static_js_exists(client, apa):

@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,7 +7,7 @@
         {{ app_config['web_page']['title']|e }}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
+    <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="preload" href="/static/fonts/noto-sans-display-latin-500.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/fira-code-v12-latin-500.woff2" as="font" type="font/woff2" crossorigin>
@@ -15,7 +15,7 @@
     <link rel="preload" href="/static/fonts/fira-code-v12-latin-700.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/noto-sans-display-latin-500italic.woff2" as="font" type="font/woff2"
         crossorigin>
-    <link rel="stylesheet" href="/static/main.css" />
+    <link rel="stylesheet" href="/static/main.css">
     <script type="module" src="/static/clipboard.js"></script>
 </head>
 
@@ -25,16 +25,16 @@
         {{ header | safe }}
         <h3>{{ app_config['web_page']['description']|e }}</h3>
         <h3>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
-                guide</a>.</p>
-            {% for podcast in podcasts -%}
-            <h2>{{ podcast['new_name']|e }}
+                guide</a>.
         </h3>
+        {% for podcast in podcasts -%}
+        <h2>{{ podcast['new_name']|e }}</h2>
+
         <h3>{{ podcast['description']|e }}</h3>
-        <input type="text" readonly="readonly" value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
+        <input type="text" readonly value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
             id="{{ podcast['name_one_word']}}">
-        <button class="button" onclick="window.grabToClipboard('{{ podcast['name_one_word']}}')"
-            id="{{ podcast['name_one_word']}}_button">Copy url</button>
-        {% endfor %}
+        <button type="button" class="button" onclick="window.grabToClipboard('{{ podcast['name_one_word']}}')"
+            id="{{ podcast['name_one_word']}}_button">Copy url</button>{% endfor %}
         <footer>
             <hr>
             Contact: <a href="mailto:{{ app_config['web_page']['contact']|e }}">{{

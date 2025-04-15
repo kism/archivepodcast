@@ -91,13 +91,13 @@ def test_config_dictionary_not_in_schema(place_test_config, tmp_path, caplog):
 
     conf = archivepodcast.config.ArchivePodcastConfig(instance_path=tmp_path)
 
-    test_config = {
+    config_dict = {
         "TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA": "",
         "app": {"TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA": ""},
     }
 
     # TEST: Warning when config loaded has a key that is not in the schema
-    conf._warn_unexpected_keys(DEFAULT_CONFIG, test_config, "<root>")
+    conf._warn_unexpected_keys(DEFAULT_CONFIG, config_dict, "<root>")
     assert "Found config entry key <root>[TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA] that's not in schema" in caplog.text
     assert "Found config entry key [app][TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA] that's not in schema" in caplog.text
 

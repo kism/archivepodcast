@@ -1,3 +1,5 @@
+
+
 # This app
 # Stop poetry coming back
 poetry.lock
@@ -25,6 +27,9 @@ htmlcov_js
 
 # MacOS
 .DS_Store
+
+# Do not ignore anything in the static path
+!archivepodcast/static/**
 
 # Python
 # https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Python.gitignore

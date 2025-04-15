@@ -19,27 +19,24 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: ffmpeg
           version: 1.0
-
       - name: Install ffmpeg, will be cached
         run: sudo apt-get install ffmpeg --no-install-recommends
-
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
-
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
-
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Install the project
         run: uv sync --no-default-groups --group test
-
       - name: Test with pytest
         run: uv run pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
-
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
