@@ -18,7 +18,7 @@ let current_podcast_cover_image = placeholder_image;
  */
 export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
   console.log("Setting player src to:", url);
-  const player = document.getElementById("podcast_player");
+  const player = document.getElementById("podcast_audio_player");
   const podcastTitle = document.getElementById("podcast_player_podcast_name");
   const episodeTitle = document.getElementById("podcast_player_episode_name");
   podcastTitle.textContent = `${podcastName}`;
