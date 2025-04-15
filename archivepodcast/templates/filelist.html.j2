@@ -48,9 +48,8 @@
         </noscript>
         <div id="breadcrumb_js" class="breadcrumb"></div>
         <ul id="file_list_js" class="file-list"></ul>
-        <ul id="file_list" class="file-list">
-            {% for file in file_list %}<li><a href="{{ base_url }}{{ file }}">/{{ file }}</a></li>
-            {% endfor %}
+        <ul id="file_list" class="file-list">{% for file in file_list %}
+            <li><a href="{{ base_url }}{{ file }}">/{{ file }}</a></li>{% endfor %}
         </ul>
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
     </main>

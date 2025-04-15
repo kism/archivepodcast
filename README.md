@@ -20,7 +20,6 @@ Features:
 - Rename feeds to indicate that they are an archive
 - Local or S3 storage backend
 
-
 In theory this works in windows however I haven't tested it, it ~should be able to handle windows file paths fine.
 
 Docs are at <https://archivepodcast.readthedocs.io/en/latest/>
@@ -77,3 +76,6 @@ An example guide on setting it up start to finish, with all features and saving 
 - mypy require more data types specified
   - config as object, otherwise typing is hell
 - investigate pydantic
+- HTML Validate
+  - Have a script for this too
+- Mode to run without a webserver
