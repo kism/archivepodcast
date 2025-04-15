@@ -38,6 +38,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "latest"
+          cache: "npm"
+          cache-dependency-path: "package.json"
       - name: Install html-Validate
         run: npm install -g html-validate
       - name: Install uv
