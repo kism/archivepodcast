@@ -42,11 +42,15 @@ jobs:
         run: npm install -g html-validate
       - name: Install uv
         uses: astral-sh/setup-uv@v3
-      - name: Install the project
+      - name: Get dependencies
         run: uv sync --no-default-groups
       - name: Prepare to generate the HTML
         run: mkdir -p instance/web/rss/ && cp -f scripts/config/rss-ci.rss instance/web/rss/test
+      - name: Create fake ffmpeg
+        run: |
+          echo '#!/bin/bash' > /usr/local/bin/ffmpeg
+          chmod +x /usr/local/bin/ffmpeg
       - name: Generate the HTML
-        run: uv run python -m archivepodcast --config scripts/config/config-ci.toml
+        run: ./venv/bin/python -m archivepodcast --config scripts/config/config-ci.toml
       - name: Validate HTML
         run: html-validate instance/web/*.html
