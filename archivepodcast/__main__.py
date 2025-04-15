@@ -5,6 +5,7 @@ import logging
 import time
 from pathlib import Path
 
+from . import __version__
 from . import logger as ap_logger
 from .ap_archiver import PodcastArchiver
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig
@@ -46,6 +47,7 @@ def main(config_dict: dict | ArchivePodcastConfig | None = None, instance_path: 
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     ap_logger.setup_logger(
         app=None, logging_conf=DEFAULT_LOGGING_CONFIG
     )  # Setup logger with defaults defined in config module
@@ -71,3 +73,5 @@ if __name__ == "__main__":
         config_dict = ArchivePodcastConfig(instance_path=instance_path, config=None, config_file_path=Path(args.config))
 
     main(config_dict=config_dict, instance_path=instance_path)
+    logger = ap_logger.get_logger(__name__)
+    logger.info("🙋 ArchivePodcast Version: %s adhoc ran in %.2f seconds.", __version__, time.time() - start_time)
