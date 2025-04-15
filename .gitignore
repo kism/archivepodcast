@@ -28,7 +28,7 @@ htmlcov_js
 # MacOS
 .DS_Store
 
-# Exclude static path
+# Do not ignore anything in the static path
 !archivepodcast/static/**
 
 # Python
