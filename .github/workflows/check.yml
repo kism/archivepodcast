@@ -47,6 +47,6 @@ jobs:
       - name: Prepare to generate the HTML
         run: mkdir -p instance/web/rss/ && cp -f scripts/config/rss-ci.rss instance/web/rss/test
       - name: Generate the HTML
-        run: uv run python -m archivepodcast --config scripts/config/config-ci.toml >/dev/null 2>&1
+        run: uv run python -m archivepodcast --config scripts/config/config-ci.toml
       - name: Validate HTML
         run: html-validate instance/web/*.html
