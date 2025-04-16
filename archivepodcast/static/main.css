@@ -1,4 +1,4 @@
-/*#region: Fonts*/
+/* #region: Fonts */
 
 /* noto-sans-display-500 - latin */
 @font-face {
@@ -7,6 +7,7 @@
   font-weight: 500;
   src: local(""), url("/static/fonts/noto-sans-display-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
+
 /* noto-sans-display-500 - latin italic */
 @font-face {
   font-family: "Noto Sans Display";
@@ -14,6 +15,7 @@
   font-weight: 500;
   src: local(""), url("/static/fonts/noto-sans-display-latin-500italic.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
+
 /* fira-code-600 - latin */
 @font-face {
   font-family: "Fira Code";
@@ -21,12 +23,14 @@
   font-weight: 500;
   src: local(""), url("/static/fonts/fira-code-v12-latin-500.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
+
 @font-face {
   font-family: "Fira Code";
   font-style: normal;
   font-weight: 600;
   src: local(""), url("/static/fonts/fira-code-v12-latin-600.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
+
 /* fira-code-700 - latin */
 @font-face {
   font-family: "Fira Code";
@@ -35,31 +39,31 @@
   src: local(""), url("/static/fonts/fira-code-v12-latin-700.woff2") format("woff2"); /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 
-/*#endregion*/
+/* #endregion */
 
-/*#region: Media Queries*/
+/* #region: Media Queries */
 
-@media screen and (max-width: 430px) {
+@media screen and (width <= 430px) {
   body {
     margin-left: 10px !important;
     margin-right: 10px !important;
   }
+
   .podcast-player {
     margin-left: 10px !important;
     margin-right: 10px !important;
   }
 }
 
-/*#endregion*/
+/* #endregion */
 
-/*#region: General*/
+/* #region: General */
 
 body {
   font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 14px;
   font-weight: 500;
-
   background-color: #1a1a1a;
   color: #c8c8c8;
   line-height: 1.5;
@@ -74,20 +78,23 @@ body {
 
 h1,
 h2 {
-  font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
+  font-family: "Fira Code", Consolas, "Lucida Console", monospace;
   line-height: 1.2;
   color: #f0f0f0;
 }
+
 h1 {
   font-size: 40px;
   font-weight: 700;
   margin: 8px 0 4px;
 }
+
 h2 {
   font-size: 24px;
   font-weight: 600;
   margin: 20px 0 2px;
 }
+
 h3,
 h4 {
   font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif,
@@ -98,6 +105,7 @@ h4 {
   margin-bottom: 6px;
   font-size: 18px;
 }
+
 h4 {
   font-style: italic;
 }
@@ -106,6 +114,7 @@ p {
   margin-top: 6px;
   margin-bottom: 10px;
 }
+
 ol {
   margin: 0;
 }
@@ -113,6 +122,7 @@ ol {
 a:link {
   color: #008080;
 }
+
 a:visited {
   color: #885560;
 }
@@ -123,7 +133,7 @@ a:visited {
 }
 
 .active {
-  color: #ffffff;
+  color: #fff;
   display: inline;
 }
 
@@ -145,9 +155,9 @@ footer {
   margin: 0;
 }
 
-/*#endregion*/
+/* #endregion */
 
-/*#region: File List, breadcrumbs*/
+/* #region: File List, breadcrumbs */
 
 .file-list {
   margin-top: 10px;
@@ -160,7 +170,7 @@ footer {
   list-style-type: none;
   padding: 8px;
   background-color: #101010;
-  font-family: "Fira Code", "Consolas", "Lucida Console", monospace;
+  font-family: "Fira Code", Consolas, "Lucida Console", monospace;
   font-weight: 500;
   width: auto;
   white-space: nowrap; /* Prevent line breaks */
@@ -170,20 +180,23 @@ footer {
 .file-list::-webkit-scrollbar {
   height: 8px; /* Customize scrollbar height */
 }
+
 .file-list::-webkit-scrollbar-thumb {
   background-color: #888; /* Color of the scrollbar */
   border-radius: 4px; /* Rounded edges */
 }
+
 .file-list::-webkit-scrollbar-thumb:hover {
   background-color: #555; /* Darker color on hover */
 }
 
-/*#endregion*/
+/* #endregion */
 
-/*#region: Podcast Episode List*/
+/* #region: Podcast Episode List */
 
 #podcast_episode_list li {
   /* background: #c8c8c8; */
+
   /* color: #c8c8c8; */
   border-bottom: 1px solid #ababab;
   cursor: pointer;
@@ -194,6 +207,7 @@ footer {
 #podcast_episode_list li:hover {
   background: #008080;
 }
+
 /*
 #podcast_episode_list li:nth-child(odd) {
   background: #bbbbbb;
@@ -212,9 +226,9 @@ footer {
   text-decoration: unset;
 }
 
-/*#endregion*/
+/* #endregion */
 
-/*#region: Button, selectors*/
+/* #region: Button, selectors */
 .button,
 button,
 input[type="submit"],
@@ -286,6 +300,7 @@ input[type="tel"],
 input[type="url"],
 input[type="password"],
 textarea {
+  appearance: none; /* Remove default styling */
   height: 24px;
   padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
 }
@@ -295,24 +310,12 @@ select {
   padding: 2px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
 }
 
-/* Removes awkward default styles on some inputs for iOS */
-input[type="email"],
-input[type="number"],
-input[type="search"],
-input[type="text"],
-input[type="tel"],
-input[type="url"],
-input[type="password"],
-textarea {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
 textarea {
   min-height: 10px;
   padding-top: 1px;
   padding-bottom: 1px;
 }
+
 input[type="email"]:focus,
 input[type="number"]:focus,
 input[type="search"]:focus,
@@ -325,20 +328,24 @@ select:focus {
   border: 1px solid #008080;
   outline: 0;
 }
+
 label,
 legend {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
 }
+
 fieldset {
   padding: 0;
   border-width: 0;
 }
+
 input[type="checkbox"],
 input[type="radio"] {
   display: inline;
 }
+
 label > .label-body {
   display: inline-block;
   margin-left: 0.5rem;
@@ -352,8 +359,6 @@ label > .label-body {
 
 .custom-select select {
   appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
   width: 100%;
   padding-left: 5px;
   border: 1px solid #bbb;
@@ -380,9 +385,10 @@ label > .label-body {
 .custom-select select:focus {
   border-color: #008080;
 }
-/*#endregion*/
 
-/*#region: Table*/
+/* #endregion */
+
+/* #region: Table */
 
 table {
   margin-top: 6px;
@@ -398,23 +404,20 @@ tr {
 
 th,
 td {
-  padding-left: 10px;
-  padding-bottom: 2px;
-  padding-top: 2px;
-  padding-right: 10px;
+  padding: 2px 10px;
   text-align: left;
   width: fit-content;
 }
 
 thead th {
   background-color: #008080;
-  color: #ffffff;
+  color: #fff;
   text-align: center;
 }
 
-/*#endregion*/
+/* #endregion */
 
-/*#region: Health Table*/
+/* #region: Health Table */
 
 .health-table table {
   width: 100%;
@@ -432,10 +435,7 @@ thead th {
 
 .health-table th,
 .health-table td {
-  padding-left: 4px;
-  padding-bottom: 2px;
-  padding-top: 2px;
-  padding-right: 4px;
+  padding: 2px 4px;
   text-align: left;
 }
 
@@ -443,9 +443,9 @@ thead th {
   width: 1px;
 }
 
-/*#endregion*/
+/* #endregion */
 
-/*#region: Podcast Player*/
+/* #region: Podcast Player */
 
 .podcast-player-offset,
 .podcast-player-footer {
@@ -499,9 +499,9 @@ thead th {
   overflow: hidden;
 }
 
-/*#endregion*/
+/* #endregion */
 
-/*#region: Webkit Audio*/
+/* #region: Webkit Audio */
 
 audio {
   height: 25px;
@@ -531,11 +531,12 @@ video::-webkit-media-controls-panel {
   display: flex;
   flex-direction: row;
   align-items: center;
+
   /* We use flex-start here to ensure that the play button is visible even
    * if we are too small to show all controls.
    */
   justify-content: flex-start;
-  -webkit-user-select: none;
+  user-select: none;
   position: relative;
   width: 100%;
   z-index: 0;
@@ -543,22 +544,25 @@ video::-webkit-media-controls-panel {
   text-align: right;
   bottom: auto;
   height: 25px;
+
   /* background-color: rgba(20, 20, 20, 0.8); */
   border-radius: 5px;
+
   /* The duration is also specified in MediaControlElements.cpp and LayoutTests/media/media-controls.js */
   transition: opacity 0.3s;
 }
 
 audio::-webkit-media-controls-panel {
   /* background-color: #101010; */
+
   /* padding: 0px; */
   border: none;
-  margin: none;
+  margin: 0;
 }
 
 audio::-webkit-media-controls-play-button {
   background-color: #008080;
-  color: #ffffff;
+  color: #fff;
   height: 18px;
   width: 10px;
 }
@@ -569,4 +573,4 @@ audio::-webkit-time-display {
   text-shadow: none;
 }
 
-/*#endregion*/
+/* #endregion */
