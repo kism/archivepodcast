@@ -69,7 +69,7 @@ jobs:
           node-version: "latest"
           cache: "npm"
           cache-dependency-path: "package.json"
-      - name: Install html-Validate
+      - name: Install stylelint
         run: npm install -g stylelint stylelint-config-standard
       - name: Run stylelint
         run: stylelint archivepodcast/static/*.css
