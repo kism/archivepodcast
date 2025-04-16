@@ -18,7 +18,7 @@ let current_podcast_cover_image = placeholder_image;
  */
 export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
   console.log("Setting player src to:", url);
-  const player = document.getElementById("podcast_audio_player");
+  const player = document.getElementById("podcast-audio-player");
   const podcastTitle = document.getElementById("podcast_player_podcast_name");
   const episodeTitle = document.getElementById("podcast_player_episode_name");
   podcastTitle.textContent = `${podcastName}`;
@@ -28,7 +28,7 @@ export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
   player.type = type;
 
   try {
-    const cover_image_element = document.getElementById("podcast_player_cover");
+    const cover_image_element = document.getElementById("podcast-player-cover");
     cover_image_element.src = current_podcast_cover_image;
   } catch (error) {}
 
@@ -71,7 +71,7 @@ async function fetchAndParseXML(url) {
  * @param {string} url - Feed URL
  */
 export function populateEpisodeList(url) {
-  const episodeList = document.getElementById("podcast_episode_list");
+  const episodeList = document.getElementById("podcast-episode-list");
 
   if (!url || url === "") {
     console.log("No podcast selected");
@@ -137,7 +137,7 @@ export function loadPodcast(event) {
  */
 export function showJSDivs() {
   try {
-    const cover_image_element = document.getElementById("podcast_player_cover");
+    const cover_image_element = document.getElementById("podcast-player-cover");
     cover_image_element.src = placeholder_image;
     cover_image_element.style.display = "block";
   } catch (error) {}

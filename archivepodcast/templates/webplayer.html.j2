@@ -19,7 +19,7 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
         #podcast_select,
-        #podcast_player_cover,
+        #podcast-player-cover,
         .file-list {
             display: none;
         }
@@ -50,20 +50,20 @@
                 </option>{% endfor %}
             </select>
         </div>
-        <ul id="podcast_episode_list" class="file-list"></ul>
+        <ul id="podcast-episode-list" class="file-list"></ul>
         <p class="last-generated">Last generated: {{ last_generated_date }}</p>
     </main>
     <div class="podcast-player-offset"></div>
     <div class="podcast-player-footer">
         <div class="podcast-player">
             <hr>
-            <div id="podcast_player_cover_container">
-                <img id="podcast_player_cover" src="/static/transparent.png" alt="Podcast cover">
+            <div id="podcast-player-cover-container">
+                <img id="podcast-player-cover" src="/static/transparent.png" alt="Podcast cover">
             </div>
-            <div id="episode_name_and_player_container">
+            <div id="episode-name-and-player-container">
                 <p class="podcast-player-text" id="podcast_player_podcast_name">-</p>
                 <p class="podcast-player-text" id="podcast_player_episode_name">No episode loaded</p>
-                <audio id="podcast_audio_player" class="contained-content" controls preload="metadata" />
+                <audio id="podcast-audio-player" class="contained-content" controls preload="metadata" />
             </div>
         </div>
     </div>

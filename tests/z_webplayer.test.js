@@ -38,14 +38,14 @@ window.MediaMetadata = MockMediaMetadata;
 describe("playerSetCurrentEpisode", () => {
   test("sets audio source and updates episode information", () => {
     document.body.innerHTML = `
-      <audio id="podcast_audio_player"></audio>
+      <audio id="podcast-audio-player"></audio>
       <div id="podcast_player_podcast_name"></div>
       <div id="podcast_player_episode_name"></div>
     `;
 
     playerSetCurrentEpisode("http://example.com/test.mp3", "audio/mpeg", "Test Episode", "Test Podcast");
 
-    const player = document.getElementById("podcast_audio_player");
+    const player = document.getElementById("podcast-audio-player");
     const episodeTitle = document.getElementById("podcast_player_episode_name");
 
     expect(player.src).toBe("http://example.com/test.mp3");
@@ -59,11 +59,11 @@ describe("loadPodcast", () => {
     document.body.innerHTML = `
               <select id="podcast_select">
                   <option value="http://example.com/rss.xml">Test Podcast</option>
-              </select><ul id="podcast_episode_list"></ul>
-              <img id="podcast_player_cover" />
+              </select><ul id="podcast-episode-list"></ul>
+              <img id="podcast-player-cover" />
               <p id="podcast_player_podcast_name"></p>
               <p id="podcast_player_episode_name"></p>
-              <audio id="podcast_audio_player"></audio>
+              <audio id="podcast-audio-player"></audio>
           `;
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -96,16 +96,16 @@ describe("loadPodcast", () => {
 
     expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml");
 
-    const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li:nth-child(2)"));
+    const element = await vi.waitUntil(() => document.querySelector("#podcast-episode-list li:nth-child(2)"));
 
     expect(element.innerHTML).toContain("Test Episode 2");
 
     // Now we try play an episode
     element.click();
 
-    const player = document.getElementById("podcast_audio_player");
+    const player = document.getElementById("podcast-audio-player");
     const episodeTitle = document.getElementById("podcast_player_episode_name");
-    const coverImage = document.getElementById("podcast_player_cover");
+    const coverImage = document.getElementById("podcast-player-cover");
 
     expect(player.src).toBe("http://example.com/test2.mp3");
     expect(player.type).toBe("audio/mpeg");
@@ -121,11 +121,11 @@ describe("loadPodcast", () => {
     document.body.innerHTML = `
               <select id="podcast_select">
                   <option value="http://example.com/rss.xml">Test Podcast</option>
-              </select><ul id="podcast_episode_list"></ul>
-              <img id="podcast_player_cover" />
+              </select><ul id="podcast-episode-list"></ul>
+              <img id="podcast-player-cover" />
               <p id="podcast_player_podcast_name"></p>
               <p id="podcast_player_episode_name"></p>
-              <audio id="podcast_audio_player"></audio>
+              <audio id="podcast-audio-player"></audio>
           `;
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -150,7 +150,7 @@ describe("loadPodcast", () => {
 
     expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml");
 
-    const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li:nth-child(1)"));
+    const element = await vi.waitUntil(() => document.querySelector("#podcast-episode-list li:nth-child(1)"));
 
     expect(element.innerHTML).toContain("Error: No episodes found in feed");
   });
@@ -159,10 +159,10 @@ describe("loadPodcast", () => {
     document.body.innerHTML = `
               <select id="podcast_select">
                   <option value="http://example.com/rss.xml">Test Podcast</option>
-              </select><ul id="podcast_episode_list"></ul>
-              <img id="podcast_player_cover" />
+              </select><ul id="podcast-episode-list"></ul>
+              <img id="podcast-player-cover" />
               <p id="podcast_player_episode_name"></p>
-              <audio id="podcast_audio_player"></audio>
+              <audio id="podcast-audio-player"></audio>
           `;
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -183,7 +183,7 @@ describe("loadPodcast", () => {
 
     expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml");
 
-    const element = await vi.waitUntil(() => document.querySelector("#podcast_player_cover"));
+    const element = await vi.waitUntil(() => document.querySelector("#podcast-player-cover"));
 
     expect(element.src).toBe("");
   });
@@ -192,8 +192,8 @@ describe("loadPodcast", () => {
     document.body.innerHTML = `
               <select id="podcast_select">
                   <option value="http://example.com/rss.xml">Test Podcast</option>
-              </select><ul id="podcast_episode_list"></ul>
-              <img id="podcast_player_cover" />
+              </select><ul id="podcast-episode-list"></ul>
+              <img id="podcast-player-cover" />
           `;
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -207,7 +207,7 @@ describe("loadPodcast", () => {
 
     select.dispatchEvent(new Event("change"));
 
-    const element = await vi.waitUntil(() => document.querySelector("#podcast_episode_list li"));
+    const element = await vi.waitUntil(() => document.querySelector("#podcast-episode-list li"));
 
     expect(element.innerHTML).toContain("Error: HTTP error! status: 404");
   });
@@ -216,8 +216,8 @@ describe("loadPodcast", () => {
     document.body.innerHTML = `
               <select id="podcast_select">
                   <option value="">Test Podcast</option>
-              </select><ul id="podcast_episode_list"></ul>
-              <img id="podcast_player_cover" />
+              </select><ul id="podcast-episode-list"></ul>
+              <img id="podcast-player-cover" />
           `;
 
     const select = document.getElementById("podcast_select");
@@ -226,7 +226,7 @@ describe("loadPodcast", () => {
 
     select.dispatchEvent(new Event("change"));
 
-    const episodeList = document.getElementById("podcast_episode_list");
+    const episodeList = document.getElementById("podcast-episode-list");
 
     expect(episodeList.innerHTML).toBe("");
     expect(episodeList.style.display).toBe("none");
@@ -237,13 +237,13 @@ describe("showJSDivs", () => {
   test("shows podcast select and cover image elements", () => {
     document.body.innerHTML = `
           <div id="podcast_select"></div>
-          <img id="podcast_player_cover" />
+          <img id="podcast-player-cover" />
       `;
 
     showJSDivs();
 
     const breadcrumbJSDiv = document.getElementById("podcast_select");
-    const coverImage = document.getElementById("podcast_player_cover");
+    const coverImage = document.getElementById("podcast-player-cover");
 
     expect(breadcrumbJSDiv.style.display).toBe("block");
     expect(coverImage.style.display).toBe("block");
