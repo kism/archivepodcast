@@ -76,3 +76,8 @@ mkdir -p instance/web/rss/
 cp -f scripts/config/rss-ci.rss instance/web/rss/test
 .venv/bin/python -m archivepodcast --config scripts/config/config-ci.toml >/dev/null 2>&1
 npx html-validate instance/web/*.html
+check_return $?
+
+echo_magenta "Stylelint"
+npx stylelint --fix archivepodcast/static/*.css
+check_return $?
