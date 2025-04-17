@@ -76,6 +76,7 @@ An example guide on setting it up start to finish, with all features and saving 
 - mypy require more data types specified
   - config as object, otherwise typing is hell
 - investigate pydantic
-- HTML Validate
-  - Have a script for this too
-- Mode to run without a webserver
+- ~~HTML Validate~~
+  - ~~Have a script for this too~~
+- ~~Mode to run without a webserver~~
+  - ~~Document this~~
