@@ -56,7 +56,7 @@ npx cspell .
 check_return $?
 
 echo_magenta "Markdownlint"
-npx markdownlint-cli --fix *.md
+npx markdownlint-cli --ignore node_modules --fix ./**/*.md
 check_return $?
 
 echo_magenta "Biome format"

@@ -73,3 +73,13 @@ jobs:
         run: npm install -g stylelint stylelint-config-standard
       - name: Run stylelint
         run: stylelint archivepodcast/static/*.css
+
+  check_md:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
+      - name: Run markdownlint
+        run: markdownlint-cli --ignore node_modules --fix ./**/*.md
