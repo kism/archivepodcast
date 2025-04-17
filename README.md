@@ -32,6 +32,14 @@ You will need to install ffmpeg for your platform. Should be on your package man
 
 You will need to install git-lfs for your platform to fetch the .woff font files.
 
+If you cloned the repo without git-lfs installed, run the following commands to fetch the files:
+
+```bash
+git lfs install
+git lfs fetch --all
+git lfs pull
+```
+
 ### Setup Python Environment
 
 #### Development
