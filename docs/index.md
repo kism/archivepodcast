@@ -10,13 +10,11 @@ Flask Webapp that will archive a podcast from a RSS feed. It will download the e
 readme
 ```
 
-
 ```{toctree}
 :maxdepth: 2
 :caption: Configuration
 configuration
 ```
-
 
 ```{toctree}
 :maxdepth: 1
@@ -26,6 +24,7 @@ deployment/local_nginx
 deployment/s3_hybrid
 deployment/s3_only
 deployment/docker
+deployment/run_adhoc
 ```
 
 ```{toctree}

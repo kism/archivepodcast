@@ -90,3 +90,4 @@ An example guide on setting it up start to finish, with all features and saving 
   - ~~Have a script for this too~~
 - ~~Mode to run without a webserver~~
   - ~~Document this~~
+  - Cache the state of AP with pickle
