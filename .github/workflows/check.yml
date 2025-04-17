@@ -1,5 +1,5 @@
 ---
-name: Lint (Ruff, Biome, HTML-validate, stylelint)
+name: Lint (Ruff, Biome, etc.)
 
 on:
   push:
