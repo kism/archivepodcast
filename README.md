@@ -79,4 +79,4 @@ An example guide on setting it up start to finish, with all features and saving 
 - ~~HTML Validate~~
   - ~~Have a script for this too~~
 - ~~Mode to run without a webserver~~
-  - Document this
+  - ~~Document this~~
