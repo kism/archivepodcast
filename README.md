@@ -28,7 +28,9 @@ Docs are at <https://archivepodcast.readthedocs.io/en/latest/>
 
 ### Install dependencies
 
-If you want to convert WAV episodes to mp3, ensure that you have ffmpeg installed and the program will handle it automatically.
+You will need to install ffmpeg for your platform. Should be on your package manager or download the binary to /usr/local/bin.
+
+You will need to install git-lfs for your platform to fetch the .woff font files.
 
 ### Setup Python Environment
 
