@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pyright"]
+dev = ["jedi>=0.19.2"]
 
 type = [
     "mypy",
@@ -66,7 +66,7 @@ extend-unsafe-fixes = [
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
-    "DJ",  # KG Django not required
+    "DJ", # KG Django not required
 
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
