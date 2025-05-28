@@ -15,7 +15,7 @@ from lxml import etree
 from .ap_downloader import PodcastDownloader
 from .ap_health import PodcastArchiverHealth
 from .ap_webpages import Webpages
-from .helpers import list_all_s3_objects
+from .helpers import list_all_s3_objects, tree_no_episodes
 from .logger import get_logger
 
 if TYPE_CHECKING:
@@ -29,6 +29,7 @@ logger = get_logger(__name__)
 class PodcastArchiver:
     """Main podcast archiving system that coordinates downloading, storage and serving of podcasts."""
 
+    # region: Init
     def __init__(
         self,
         app_config: dict,
@@ -74,67 +75,13 @@ class PodcastArchiver:
         self.make_folder_structure()
         self.render_files()
 
+    # endregion
+
     def get_rss_feed(self, feed: str) -> str:
         """Return the rss file for a given feed."""
         return self.podcast_rss[feed]
 
-    def load_about_page(self) -> None:
-        """Create about page if needed."""
-        about_page_md_filename = "about.md"
-        about_page_md_expected_path: Path = self.instance_path / about_page_md_filename
-        about_page_filename = "about.html"
-
-        if about_page_md_expected_path.exists():  # Check if about.html exists, affects index.html so it's first.
-            with about_page_md_expected_path.open(encoding="utf-8") as about_page:
-                about_page_md_rendered = markdown.markdown(about_page.read(), extensions=["tables"])
-
-            env = Environment(loader=FileSystemLoader(self.template_directory), autoescape=True)
-
-            template_filename = "about.html.j2"
-            output_filename = template_filename.replace(".j2", "")
-
-            template = env.get_template(template_filename)
-
-            current_time = int(time.time())
-
-            self.webpages.add(output_filename, mime="text/html", content="generating...")
-
-            about_page_str = template.render(
-                app_config=self.app_config,
-                podcasts=self.podcast_list,
-                last_generated_date=current_time,
-                header=self.webpages.generate_header(output_filename, debug=self.debug),
-                about_content=about_page_md_rendered,
-            )
-
-            self.webpages.add(output_filename, mime="text/html", content=about_page_str)
-            self.about_page_exists = True
-            self.health.update_core_status(about_page_exists=True)
-            logger.info("💾 About page exists!")
-            self.write_webpages([self.webpages.get_webpage(about_page_filename)])
-        else:
-            self.health.update_core_status(about_page_exists=False)
-            logger.debug("About page doesn't exist")
-
-    def make_folder_structure(self) -> None:
-        """Ensure that web_root folder structure exists."""
-        logger.debug("Checking folder structure")
-
-        folders = [self.instance_path, self.web_root, self.web_root / "rss", self.web_root / "content"]
-
-        folders.extend(self.web_root / "content" / entry["name_one_word"] for entry in self.podcast_list)
-
-        for folder in folders:
-            try:
-                folder.mkdir(parents=True, exist_ok=True)
-            except PermissionError as exc:
-                err = (
-                    f"❌ You do not have permission to create folder: {folder}"
-                    "Run this this script as a different user probably, or check permissions of the web_root."
-                )
-                logger.exception(err)
-                raise PermissionError(err) from exc
-
+    # region: S3
     def load_s3(self) -> None:
         """Function to get a s3 credential if one is needed."""
         if self.app_config["storage_backend"] == "s3":
@@ -182,6 +129,10 @@ class PodcastArchiver:
         else:
             logger.info("⛅ No objects found in the bucket.")
 
+    # endregion
+
+    # region: Archive
+
     def grab_podcasts(self) -> None:
         """Download and process all configured podcasts.
 
@@ -194,12 +145,12 @@ class PodcastArchiver:
             try:
                 self._grab_podcast(podcast)
                 self.health.update_podcast_status(podcast["name_one_word"], healthy_feed=True)
-                logger.debug("💾 Updating filelist.html")
             except Exception:
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
                 self.health.update_podcast_status(podcast["name_one_word"], healthy_feed=False)
 
         try:
+            logger.debug("💾 Updating filelist.html")
             self.render_filelist_html()
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
@@ -263,13 +214,17 @@ class PodcastArchiver:
     def _download_podcast(self, podcast: dict, rss_file_path: Path) -> etree._ElementTree | None:
         tree, download_healthy = self.podcast_downloader.download_podcast(podcast)
         if tree:
-            # Write rss to disk
-            tree.write(
-                str(rss_file_path),
-                encoding="utf-8",
-                xml_declaration=True,
-            )
-            logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
+            if tree_no_episodes(tree):
+                logger.error("❌ Downloaded podcast %s has no episodes, not writing to disk", podcast["name_one_word"])
+                self.health.update_podcast_status(podcast["name_one_word"], healthy_feed=False)
+            else:
+                # Write rss to disk
+                tree.write(
+                    str(rss_file_path),
+                    encoding="utf-8",
+                    xml_declaration=True,
+                )
+                logger.debug("💾 Wrote rss to disk: %s", rss_file_path)
 
         else:
             logger.error("❌ Unable to download podcast, something is wrong, will try to load from file")
@@ -294,16 +249,23 @@ class PodcastArchiver:
 
         if podcast["live"] is True:  # download all the podcasts
             tree = self._download_podcast(podcast, rss_file_path)
-            last_fetched = int(time.time())
-            self.health.update_podcast_status(
-                podcast["name_one_word"], rss_fetching_live=True, last_fetched=last_fetched
-            )
+            if tree:
+                last_fetched = int(time.time())
+                self.health.update_podcast_status(
+                    podcast["name_one_word"], rss_fetching_live=True, last_fetched=last_fetched
+                )
+            else:
+                # There should be a previous error message too
+                logger.error("❌ Unable to download podcast: %s", podcast["name_one_word"])
+
         else:
             logger.info('📄 "live": false, in config so not fetching new episodes')
             self.health.update_podcast_status(podcast["name_one_word"], rss_fetching_live=False)
 
         if tree is None:  # Serving a podcast that we can't currently download?, load it from file
             tree = self._load_rss_from_file(podcast, rss_file_path)
+            if tree_no_episodes(tree):
+                tree = None
 
         if tree is not None:
             self._update_rss_feed(podcast, tree, previous_feed)
@@ -374,6 +336,33 @@ class PodcastArchiver:
         self.render_filelist_html()  # Separate, we need to adhoc call this one
         self.health.update_core_status(currently_rendering=False)
 
+    # endregion
+
+    # region: Housekeeping
+
+    def make_folder_structure(self) -> None:
+        """Ensure that web_root folder structure exists."""
+        logger.debug("Checking folder structure")
+
+        folders = [self.instance_path, self.web_root, self.web_root / "rss", self.web_root / "content"]
+
+        folders.extend(self.web_root / "content" / entry["name_one_word"] for entry in self.podcast_list)
+
+        for folder in folders:
+            try:
+                folder.mkdir(parents=True, exist_ok=True)
+            except PermissionError as exc:
+                err = (
+                    f"❌ You do not have permission to create folder: {folder}"
+                    "Run this this script as a different user probably, or check permissions of the web_root."
+                )
+                logger.exception(err)
+                raise PermissionError(err) from exc
+
+    # endregion
+
+    # region: Other webpages
+
     def render_filelist_html(self) -> None:
         """Function to render filelist.html.
 
@@ -441,3 +430,43 @@ class PodcastArchiver:
                 )
 
         logger.info("💾 Done writing %s", str_webpages)
+
+    def load_about_page(self) -> None:
+        """Create about page if needed."""
+        about_page_md_filename = "about.md"
+        about_page_md_expected_path: Path = self.instance_path / about_page_md_filename
+        about_page_filename = "about.html"
+
+        if about_page_md_expected_path.exists():  # Check if about.html exists, affects index.html so it's first.
+            with about_page_md_expected_path.open(encoding="utf-8") as about_page:
+                about_page_md_rendered = markdown.markdown(about_page.read(), extensions=["tables"])
+
+            env = Environment(loader=FileSystemLoader(self.template_directory), autoescape=True)
+
+            template_filename = "about.html.j2"
+            output_filename = template_filename.replace(".j2", "")
+
+            template = env.get_template(template_filename)
+
+            current_time = int(time.time())
+
+            self.webpages.add(output_filename, mime="text/html", content="generating...")
+
+            about_page_str = template.render(
+                app_config=self.app_config,
+                podcasts=self.podcast_list,
+                last_generated_date=current_time,
+                header=self.webpages.generate_header(output_filename, debug=self.debug),
+                about_content=about_page_md_rendered,
+            )
+
+            self.webpages.add(output_filename, mime="text/html", content=about_page_str)
+            self.about_page_exists = True
+            self.health.update_core_status(about_page_exists=True)
+            logger.info("💾 About page exists!")
+            self.write_webpages([self.webpages.get_webpage(about_page_filename)])
+        else:
+            self.health.update_core_status(about_page_exists=False)
+            logger.debug("About page doesn't exist")
+
+    # endregion

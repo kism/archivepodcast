@@ -7,7 +7,7 @@ version = "1.4.13"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.36,<2",
     "colorama>=0.4.6",
@@ -55,7 +55,7 @@ default-groups = ["dev", "test", "type", "lint", "docs"]
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
-target-version = "py311"
+target-version = "py312"
 line-length = 120
 
 [tool.ruff.lint]
