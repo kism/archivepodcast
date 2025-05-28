@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import cast
 
-from colorama import Fore, init
+from colorama import Fore, init, Style
 from flask import Flask
 
 init(autoreset=True)
@@ -52,9 +52,9 @@ class ColorFormatter(logging.Formatter):
             record.threadName = ""
 
         if colour := COLOURS.get(record.levelname):
-            record.name = f"{colour}{record.name}"
-            record.levelname = f"{colour}{record.levelname}"
-            record.msg = f"{colour}{record.msg}"
+            record.name = f"{colour}{record.name}{Style.RESET_ALL}"
+            record.levelname = f"{colour}{record.levelname}{Style.RESET_ALL}"
+            record.msg = f"{colour}{record.msg}{Style.RESET_ALL}"
 
         return super().format(record)
 
