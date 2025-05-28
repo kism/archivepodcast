@@ -262,16 +262,18 @@ class PodcastArchiver:
             logger.info('📄 "live": false, in config so not fetching new episodes')
             self.health.update_podcast_status(podcast["name_one_word"], rss_fetching_live=False)
 
+        if tree_no_episodes(tree): # If there are no episodes, we can't host it
+            tree = None
+
         if tree is None:  # Serving a podcast that we can't currently download?, load it from file
             tree = self._load_rss_from_file(podcast, rss_file_path)
 
-        if tree_no_episodes(tree):
+        if tree_no_episodes(tree): # If there are still not episodes, we still can't host it
             tree = None
 
         if tree is not None:
             self._update_rss_feed(podcast, tree, previous_feed)
             self.health.update_podcast_episode_info(podcast["name_one_word"], tree)
-
         else:
             logger.error("❌ Unable to host podcast: %s, something is wrong", podcast["name_one_word"])
             self.health.update_podcast_status(podcast["name_one_word"], rss_available=False)

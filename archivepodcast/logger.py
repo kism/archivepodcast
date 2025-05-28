@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import cast
 
-from colorama import Fore, init, Style
+from colorama import Fore, Style, init
 from flask import Flask
 
 init(autoreset=True)
