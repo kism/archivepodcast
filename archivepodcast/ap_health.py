@@ -31,13 +31,13 @@ class PodcastHealth:
         self.healthy_download: bool | None = None
         self.healthy_feed: bool = False
 
-        self.latest_episode: dict = {"title": "Unknown", "pubdate": "Unknown"}
+        self.latest_episode: dict = self._LATEST_EPISODE_DEFAULT.copy()
         self.episode_count: int = 0
         self.update_episode_info()
 
     def update_episode_info(self, tree: etree._ElementTree | None = None) -> None:
         """Update the latest episode info."""
-        new_latest_episode: dict = self._LATEST_EPISODE_DEFAULT
+        new_latest_episode: dict = self._LATEST_EPISODE_DEFAULT.copy()
         new_episode_count: int = 0
 
         try:
