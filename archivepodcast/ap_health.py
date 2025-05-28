@@ -43,7 +43,6 @@ class PodcastHealth:
         try:
             if tree is not None:
                 latest_episode = tree.xpath("//item")[0]
-                logger.exception("HELLO")
 
                 # If we have the title, use it
                 with contextlib.suppress(IndexError):
@@ -70,8 +69,8 @@ class PodcastHealth:
                             pass
                     if not found_pubdate:
                         logger.error("Unable to parse pubDate: %s", pod_pubdate)
-        except Exception:
-            logger.exception("Error parsing podcast episode info")
+        except Exception:  # pragma: no cover # Just to be safe
+            logger.exception("Error parsing podcast episode info")  # pragma: no cover # Just to be safe
 
         self.latest_episode = new_latest_episode
         self.episode_count = new_episode_count
