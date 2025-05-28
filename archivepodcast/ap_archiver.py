@@ -264,8 +264,9 @@ class PodcastArchiver:
 
         if tree is None:  # Serving a podcast that we can't currently download?, load it from file
             tree = self._load_rss_from_file(podcast, rss_file_path)
-            if tree_no_episodes(tree):
-                tree = None
+
+        if tree_no_episodes(tree):
+            tree = None
 
         if tree is not None:
             self._update_rss_feed(podcast, tree, previous_feed)

@@ -39,4 +39,4 @@ def tree_no_episodes(tree: etree._ElementTree | None) -> bool:
     """Check if the XML tree has no episodes."""
     if tree is None:
         return True
-    return not tree.xpath("//item") and not tree.xpath("//channel/item")
+    return len(tree.xpath("//item")) == 0
