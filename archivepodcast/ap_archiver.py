@@ -215,7 +215,9 @@ class PodcastArchiver:
         tree, download_healthy = self.podcast_downloader.download_podcast(podcast)
         if tree:
             if tree_no_episodes(tree):
-                logger.error("❌ Downloaded podcast %s has no episodes, not writing to disk", podcast["name_one_word"])
+                logger.error(
+                    "❌ Downloaded podcast rss %s has no episodes, not writing to disk", podcast["name_one_word"]
+                )
                 self.health.update_podcast_status(podcast["name_one_word"], healthy_feed=False)
             else:
                 # Write rss to disk
@@ -262,13 +264,13 @@ class PodcastArchiver:
             logger.info('📄 "live": false, in config so not fetching new episodes')
             self.health.update_podcast_status(podcast["name_one_word"], rss_fetching_live=False)
 
-        if tree_no_episodes(tree): # If there are no episodes, we can't host it
+        if tree_no_episodes(tree):  # If there are no episodes, we can't host it
             tree = None
 
         if tree is None:  # Serving a podcast that we can't currently download?, load it from file
             tree = self._load_rss_from_file(podcast, rss_file_path)
 
-        if tree_no_episodes(tree): # If there are still not episodes, we still can't host it
+        if tree_no_episodes(tree):  # If there are still not episodes, we still can't host it
             tree = None
 
         if tree is not None:
