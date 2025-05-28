@@ -207,6 +207,7 @@ def test_grab_podcasts_unhandled_exception_rss(
 
     assert "Unable to download podcast, something is wrong" in caplog.text
 
+
 def test_grab_podcasts_no_episodes(
     apa,
     caplog,
@@ -226,12 +227,11 @@ def test_grab_podcasts_no_episodes(
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
         apa.grab_podcasts()
 
-    assert "Processing podcast to archive: PyTest Podcast [Archive]" not in caplog.text
+    assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text  # The case due to config.toml
     assert "Cannot find rss feed file" not in caplog.text
     assert "Unable to host podcast, something is wrong" not in caplog.text
-
     assert "No response, loading rss from file" not in caplog.text  # This shouldn't happen
+    assert "has no episodes, not writing to disk" in caplog.text  # This shouldn't happen
 
-    get_rss = str(apa.get_rss_feed("test"), "utf-8")
-
-    assert get_rss == pytest.DUMMY_RSS_STR
+    with pytest.raises(KeyError):
+        apa.get_rss_feed("test")
