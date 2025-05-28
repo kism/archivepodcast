@@ -43,28 +43,33 @@ class PodcastHealth:
         try:
             if tree is not None:
                 latest_episode = tree.xpath("//item")[0]
+                logger.exception("HELLO")
 
+                # If we have the title, use it
                 with contextlib.suppress(IndexError):
                     new_latest_episode["title"] = latest_episode.xpath("title")[0].text
 
+                # If we have the description, use it
                 with contextlib.suppress(IndexError):
                     new_episode_count = len(tree.xpath("//item"))
 
-                pod_pubdate = latest_episode.xpath("pubDate")[0].text
-                found_pubdate = False
-                for podcast_date_format in PODCAST_DATE_FORMATS:
-                    try:
-                        new_latest_episode["pubdate"] = int(
-                            datetime.datetime.strptime(pod_pubdate, podcast_date_format)
-                            .replace(tzinfo=datetime.UTC)
-                            .timestamp()
-                        )
-                        found_pubdate = True
-                        break
-                    except ValueError:
-                        pass
-                if not found_pubdate:
-                    logger.error("Unable to parse pubDate: %s", pod_pubdate)
+                # If we have the pubDate, try to parse it
+                if len(latest_episode.xpath("pubDate")) > 0 and latest_episode.xpath("pubDate")[0].text:
+                    pod_pubdate = latest_episode.xpath("pubDate")[0].text
+                    found_pubdate = False
+                    for podcast_date_format in PODCAST_DATE_FORMATS:
+                        try:
+                            new_latest_episode["pubdate"] = int(
+                                datetime.datetime.strptime(pod_pubdate, podcast_date_format)
+                                .replace(tzinfo=datetime.UTC)
+                                .timestamp()
+                            )
+                            found_pubdate = True
+                            break
+                        except ValueError:
+                            pass
+                    if not found_pubdate:
+                        logger.error("Unable to parse pubDate: %s", pod_pubdate)
         except Exception:
             logger.exception("Error parsing podcast episode info")
 

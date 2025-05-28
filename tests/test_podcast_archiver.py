@@ -233,5 +233,5 @@ def test_grab_podcasts_no_episodes(
     assert "No response, loading rss from file" not in caplog.text  # This shouldn't happen
     assert "has no episodes, not writing to disk" in caplog.text  # This shouldn't happen
 
-    with pytest.raises(KeyError):
-        apa.get_rss_feed("test")
+    # Since it loads the old version from the disk
+    assert (apa.get_rss_feed("test")).decode("utf-8") == pytest.DUMMY_RSS_STR

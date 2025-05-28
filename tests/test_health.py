@@ -70,7 +70,8 @@ def test_podcast_health_errors(caplog):
     with caplog.at_level(logging.ERROR):
         ap_health.update_podcast_episode_info("test", tree)
 
-    assert "Error parsing podcast episode info" in caplog.text
+    assert "Error parsing podcast episode info" not in caplog.text  # The dummy rss doesn't have pubDate
+    assert ap_health.podcasts["test"].episode_count == 1
 
     tree = etree.fromstring(
         "<?xml version='1.0'?><rss><channel><item><pubDate>INVALID</pubDate></item></channel></rss>"
@@ -96,11 +97,6 @@ def test_podcast_health_date_formats(caplog, date):
     tree = etree.fromstring(rss_str)
 
     ap_health = PodcastArchiverHealth()
-
-    with caplog.at_level(logging.ERROR):
-        ap_health.update_podcast_episode_info("test", tree)
-
-    assert "Error parsing podcast episode info" in caplog.text
 
     tree = etree.fromstring(
         f"<?xml version='1.0'?><rss><channel><item><pubDate>{date}</pubDate></item></channel></rss>"
