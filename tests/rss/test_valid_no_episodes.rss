@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+    xmlns:content="http://purl.org/rss/1.0/modules/content/"
+    xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:atom="http://www.w3.org/2005/Atom"
+    xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0" version="2.0">
+    <channel>
+        <title>Pytest [No Episodes]</title>
+        <link>https://pytest.internal/</link>
+        <description>TEST</description>
+        <atom:link href="https://pytest.internal/rss/pytest" rel="self" type="application/rss+xml"> </atom:link>
+        <itunes:owner>
+            <itunes:name>Pytest [No Episodes]</itunes:name>
+            <itunes:email>hello@pytest.internal</itunes:email>
+        </itunes:owner>
+        <itunes:type>episodic</itunes:type>
+        <itunes:author>Pytest [No Episodes]</itunes:author>
+        <itunes:explicit>true</itunes:explicit>
+        <itunes:image href="https://pytest.internal/images/test.jpg"> </itunes:image>
+        <itunes:category text="Technology" />
+        <googleplay:block>yes</googleplay:block>
+        <itunes:block>Yes</itunes:block>
+        <language>en</language>
+        <pubDate>Mon, 01 Jan 2020 00:00:01 +0000</pubDate>
+        <lastBuildDate>Wed, 01 Jan 2020 00:00:01 +0000</lastBuildDate>
+        <generator>Patreon</generator>
+        <image>
+            <url>https://pytest.internal/images/test.jpg</url>
+            <title>Pytest [No Episodes]</title>
+            <link>https://pytest.internal/</link>
+        </image>
+    </channel>
+</rss>

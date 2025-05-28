@@ -20,7 +20,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   // Language config
-  "python.languageServer": "Pylance",
+  "python.languageServer": "Jedi",
   "python.terminal.activateEnvInCurrentTerminal": true,
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,

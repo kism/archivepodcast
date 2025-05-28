@@ -3,7 +3,7 @@
 import contextlib
 import datetime
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from lxml import etree
 
@@ -21,6 +21,8 @@ logger = get_logger(__name__)
 class PodcastHealth:
     """Health status for an individual podcast."""
 
+    _LATEST_EPISODE_DEFAULT: ClassVar[dict[str, str]] = {"title": "Unknown", "pubdate": "Unknown"}
+
     def __init__(self) -> None:
         """Initialise the Podcast Health object."""
         self.rss_available: bool = False
@@ -28,28 +30,31 @@ class PodcastHealth:
         self.last_fetched: int = 0
         self.healthy_download: bool | None = None
         self.healthy_feed: bool = False
+
+        self.latest_episode: dict = {"title": "Unknown", "pubdate": "Unknown"}
+        self.episode_count: int = 0
         self.update_episode_info()
 
     def update_episode_info(self, tree: etree._ElementTree | None = None) -> None:
         """Update the latest episode info."""
-        self.latest_episode: dict = {"title": "Unknown", "pubdate": "Unknown"}
-        self.episode_count: int = 0
+        new_latest_episode: dict = self._LATEST_EPISODE_DEFAULT
+        new_episode_count: int = 0
 
         try:
             if tree is not None:
                 latest_episode = tree.xpath("//item")[0]
 
                 with contextlib.suppress(IndexError):
-                    self.latest_episode["title"] = latest_episode.xpath("title")[0].text
+                    new_latest_episode["title"] = latest_episode.xpath("title")[0].text
 
                 with contextlib.suppress(IndexError):
-                    self.episode_count = len(tree.xpath("//item"))
+                    new_episode_count = len(tree.xpath("//item"))
 
                 pod_pubdate = latest_episode.xpath("pubDate")[0].text
                 found_pubdate = False
                 for podcast_date_format in PODCAST_DATE_FORMATS:
                     try:
-                        self.latest_episode["pubdate"] = int(
+                        new_latest_episode["pubdate"] = int(
                             datetime.datetime.strptime(pod_pubdate, podcast_date_format)
                             .replace(tzinfo=datetime.UTC)
                             .timestamp()
@@ -62,6 +67,9 @@ class PodcastHealth:
                     logger.error("Unable to parse pubDate: %s", pod_pubdate)
         except Exception:
             logger.exception("Error parsing podcast episode info")
+
+        self.latest_episode = new_latest_episode
+        self.episode_count = new_episode_count
 
 
 class WebpageHealth:

@@ -2,6 +2,8 @@
 
 from typing import TYPE_CHECKING
 
+from lxml import etree  # pragma: no cover
+
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -31,3 +33,10 @@ def list_all_s3_objects(s3_client: S3Client, bucket: str) -> list:
             all_objects.extend(page["Contents"])
 
     return all_objects
+
+
+def tree_no_episodes(tree: etree._ElementTree | None) -> bool:
+    """Check if the XML tree has no episodes."""
+    if tree is None:
+        return True
+    return len(tree.xpath("//item")) == 0

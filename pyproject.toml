@@ -3,11 +3,11 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.13"
+version = "1.4.14"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.36,<2",
     "colorama>=0.4.6",
@@ -24,7 +24,6 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pyright"]
 
 type = [
     "mypy",
@@ -51,11 +50,11 @@ test = [
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
 
 [tool.uv]
-default-groups = ["dev", "test", "type", "lint", "docs"]
+default-groups = ["test", "type", "lint", "docs"]
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
-target-version = "py311"
+target-version = "py312"
 line-length = 120
 
 [tool.ruff.lint]
@@ -66,7 +65,7 @@ extend-unsafe-fixes = [
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
-    "DJ",  # KG Django not required
+    "DJ", # KG Django not required
 
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
