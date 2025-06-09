@@ -134,6 +134,7 @@ export function getNicePathStr() {
 export function showCurrentDirectory() {
   let current_path = getNicePathStr();
 
+  // Handle invalid paths
   if (!checkValidPath(current_path)) {
     const breadcrumbJSDiv = document.getElementById("breadcrumb_js");
     breadcrumbJSDiv.innerHTML = generateBreadcrumbHtml("/");
@@ -142,6 +143,7 @@ export function showCurrentDirectory() {
     return;
   }
 
+  // Normalize the current path
   current_path = current_path.replace(/\/\//g, "/");
   if (current_path[current_path.length - 1] === "/") {
     current_path = current_path.slice(0, -1);
@@ -150,10 +152,13 @@ export function showCurrentDirectory() {
     current_path = "/";
   }
 
+  // Update breadcrumb
   const breadcrumbJSDiv = document.getElementById("breadcrumb_js");
   if (breadcrumbJSDiv) {
     breadcrumbJSDiv.innerHTML = generateBreadcrumbHtml(current_path);
   }
+
+  //File List
   const items = getValue(file_structure, current_path);
   const fileListJSDiv = document.getElementById("file_list_js");
   if (fileListJSDiv) {
