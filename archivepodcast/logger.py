@@ -1,10 +1,9 @@
 """Logging configuration for archivepodcast."""
 
 import logging
-import typing
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import cast
+from typing import cast, Any
 
 from colorama import Fore, Style, init
 from flask import Flask
@@ -28,7 +27,7 @@ DESIRED_THREAD_NAME_LEN = 13
 class ColorFormatter(logging.Formatter):
     """Custom formatter to add colour to the log messages."""
 
-    def _format_value(self, value: typing.Any) -> str:  # noqa: ANN401
+    def _format_value(self, value: Any) -> str:  # noqa: ANN401
         """Format a log message value into a string representation."""
         if isinstance(value, tuple):
             return "  ".join(map(str, value))
@@ -77,7 +76,7 @@ TRACE_LEVEL_NUM = 5
 class CustomLogger(logging.Logger):
     """Custom logger to appease mypy."""
 
-    def trace(self, message: object, *args: typing.Any, **kws: typing.Any) -> None:  # noqa: ANN401
+    def trace(self, message: object, *args: Any, **kws: Any) -> None:  # noqa: ANN401
         """Create logger level for trace."""
         if self.isEnabledFor(TRACE_LEVEL_NUM):
             # Yes, logger takes its '*args' as 'args'.

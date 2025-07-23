@@ -58,10 +58,6 @@ target-version = "py312"
 line-length = 120
 
 [tool.ruff.lint]
-extend-fixable = ["B", "I001"] # KG I think this means something...
-extend-unsafe-fixes = [
-    "F401",
-] # KG I don't like that this is fixed automatically (this doesn't work?)
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
@@ -132,9 +128,18 @@ show_contexts = true
 
 [tool.mypy]
 files = ["archivepodcast"]
-namespace_packages = true
-explicit_package_bases = true
+namespace_packages = false # God knows why this makes mypy take forever
+explicit_package_bases = false # God knows why this makes mypy take forever
 show_error_codes = true
 strict = true
-disable_error_code = ["type-arg"]
-exclude = ["tests/*"]
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+    "type-arg",
+    "unused-awaitable",
+    "possibly-undefined",
+    "redundant-self",
+]
+warn_unreachable = true
+warn_redundant_casts = true
