@@ -45,7 +45,10 @@ etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1
 
 def check_ffmpeg() -> None:
     """Check if ffmpeg is installed."""
-    if not shutil.which("ffmpeg"):
+    ffmpeg_paths = [Path("/usr/bin/ffmpeg"), Path("/usr/local/bin/ffmpeg")]
+    found_manually = any(ffmpeg_path.exists() for ffmpeg_path in ffmpeg_paths)
+
+    if not shutil.which("ffmpeg") or not found_manually:
         logger.error(FFMPEG_INFO)
         sys.exit(1)
 
