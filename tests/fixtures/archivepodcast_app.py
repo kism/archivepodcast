@@ -1,10 +1,10 @@
 import pytest
+from archivepodcast import create_app
 
 
 @pytest.fixture
 def app(tmp_path, get_test_config):
     """This fixture uses the default config within the flask app."""
-    from archivepodcast import create_app
 
     # Create a dummy RSS file since this app instance is not live and requires an existing rss feed.
     (tmp_path / "web" / "rss").mkdir(parents=True)
@@ -25,8 +25,6 @@ def app_live(
     """This fixture uses the default config within the flask app."""
     mock_get_podcast_source_rss("test_valid.rss")
 
-    from archivepodcast import create_app
-
     return create_app(config_dict=get_test_config("testing_true_valid_live.toml"), instance_path=tmp_path)
 
 
@@ -42,8 +40,6 @@ def app_live_s3(
 ):
     """This fixture uses the default config within the flask app."""
     mock_get_podcast_source_rss("test_valid.rss")
-
-    from archivepodcast import create_app
 
     config = get_test_config("testing_true_valid_live_s3.toml")
     bucket_name = config["app"]["s3"]["bucket"]

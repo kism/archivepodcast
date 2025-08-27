@@ -69,7 +69,6 @@ ignore = [
     "TD003",  # KG Verbose TODO, only I work on this project
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
-    "S320",   # KG Word on the street says that lxml is safe
 ]
 
 [tool.ruff.lint.per-file-ignores]

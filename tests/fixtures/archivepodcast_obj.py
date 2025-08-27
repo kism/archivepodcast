@@ -41,8 +41,6 @@ def apa_aws(tmp_path, get_test_config, no_render_files, caplog, s3, mocked_aws):
 
     # Prevent weird threading issues
 
-    from archivepodcast.ap_archiver import PodcastArchiver
-
     apa_aws = PodcastArchiver(
         app_config=config["app"],
         podcast_list=config["podcast"],

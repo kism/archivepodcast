@@ -3,7 +3,7 @@
 import contextlib
 import datetime
 import json
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from lxml import etree
 

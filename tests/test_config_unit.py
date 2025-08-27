@@ -1,5 +1,7 @@
 """Unit tests for configuration module."""
 
+from collections.abc import ItemsView
+
 import pytest
 
 import archivepodcast
@@ -51,8 +53,6 @@ def test_dictionary_functions_of_config(place_test_config, tmp_path):
 
     # TEST: __getitem__ method.
     assert isinstance(conf["app"], dict), "__getitem__ method of config object doesn't work"
-
-    from collections.abc import ItemsView
 
     # TEST: .items() method.
     assert isinstance(conf.items(), ItemsView), ".items() method of config object doesn't work"

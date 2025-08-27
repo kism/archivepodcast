@@ -6,7 +6,9 @@ from pathlib import Path
 
 import magic
 import pytest
+from requests.exceptions import ReadTimeout
 
+from archivepodcast import ap_downloader
 from archivepodcast.ap_downloader import PodcastDownloader
 
 
@@ -170,7 +172,6 @@ def test_download_podcast_wav_mp3_exists(
 
 def test_no_ffmpeg(tmp_path, caplog, monkeypatch):
     """Test that the app exists when there is no ffmpeg."""
-    from archivepodcast import ap_downloader
 
     monkeypatch.setattr("shutil.which", lambda x: None)
 
@@ -257,7 +258,6 @@ def test_filename_cleanup(apd, file_name, expected_slug):
 
 def test_download_timeout_error(apd, requests_mock, caplog):
     """Test local file download failure."""
-    from requests.exceptions import ReadTimeout
 
     url = "https://pytest.internal/audio/test.mp3"
 
