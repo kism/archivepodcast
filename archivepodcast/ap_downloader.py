@@ -534,16 +534,18 @@ class PodcastDownloader:
         logger.info("💾 Downloading asset to: %s", file_path)
         headers = {"user-agent": "Mozilla/5.0"}
         try:
-            req = requests.get(url, headers=headers, timeout=10)
+            # stream to avoid a 5gb wav will eating all your ram
+            req = requests.get(url, headers=headers, timeout=10, stream=True)
+            with file_path.open("wb") as asset_file:
+                for chunk in req.iter_content(chunk_size=8192):
+                    asset_file.write(chunk)
         except (TimeoutError, requests.exceptions.ReadTimeout):
             self.feed_download_healthy = False
             logger.exception("💾❌ Timeout Error: %s", url)
             return
 
         if req.status_code == HTTPStatus.OK:
-            with Path(file_path).open("wb") as asset_file:
-                asset_file.write(req.content)
-                logger.debug("💾 Success!")
+            logger.debug("💾 Success!")
         else:
             self.feed_download_healthy = False
             logger.error("💾❌ HTTP ERROR: %s", str(req.content))
