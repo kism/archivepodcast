@@ -1,14 +1,14 @@
 {
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@cspell/dict-en-au": "^1.0.36",
-    "@vitest/coverage-v8": "^3.1.4",
+    "@cspell/dict-en-au": "^1.1.5",
+    "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.0.9",
     "cspell": "^8.19.4",
     "happy-dom": "^15.11.7",
-    "html-validate": "^9.5.5",
+    "html-validate": "^9.7.1",
     "markdownlint-cli": "^0.43.0",
-    "stylelint": "^16.19.1",
+    "stylelint": "^16.23.1",
     "stylelint-config-standard": "^38.0.0",
     "vitest": "^3.0.9"
   },

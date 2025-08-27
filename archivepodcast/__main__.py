@@ -4,10 +4,10 @@ import argparse
 import time
 from pathlib import Path
 
-from . import __version__
 from . import logger as ap_logger
 from .ap_archiver import PodcastArchiver
 from .config import DEFAULT_LOGGING_CONFIG, ArchivePodcastConfig
+from .version import __version__
 
 INSTANCE_PATH = Path.cwd() / "instance"  # Default instance path for the app
 
