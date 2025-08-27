@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from lxml import etree
 
+from archivepodcast import bp_archivepodcast
 from archivepodcast.ap_health import PodcastArchiverHealth
 
 from . import FakeExceptionError
@@ -14,7 +15,6 @@ from . import FakeExceptionError
 
 def test_health_api(client, apa):
     """Verify health API returns OK status when system is healthy."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
 
@@ -29,7 +29,6 @@ def test_health_api(client, apa):
 
 def test_health_api_error(client, apa, monkeypatch):
     """Test the podcast section of the health API endpoint."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
 

@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import pytest
+from botocore.exceptions import ClientError
 
 from archivepodcast.ap_downloader import PodcastDownloader
 
@@ -169,7 +170,6 @@ def test_check_path_exists_s3(apd_aws, caplog):
 
 def test_check_path_exists_s3_client_error(apd_aws, monkeypatch, caplog):
     """Test handling non-404 S3 client error during path check."""
-    from botocore.exceptions import ClientError
 
     def client_error_not_404(*args, **kwargs):
         raise ClientError({"Error": {"Code": "LimitExceededException"}}, "LimitExceededException")

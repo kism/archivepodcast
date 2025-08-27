@@ -3,12 +3,13 @@
 import contextlib
 import datetime
 import json
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from lxml import etree
 
 from .ap_constants import PODCAST_DATE_FORMATS, PROCESS
 from .logger import get_logger
+from .version import __version__
 
 if TYPE_CHECKING:
     from .ap_archiver import PodcastArchiver  # pragma: no cover
@@ -21,7 +22,9 @@ logger = get_logger(__name__)
 class PodcastHealth:
     """Health status for an individual podcast."""
 
-    _LATEST_EPISODE_DEFAULT: ClassVar[dict[str, str]] = {"title": "Unknown", "pubdate": "Unknown"}
+    @staticmethod
+    def _get_latest_episode_default() -> dict[str, str]:
+        return {"title": "Unknown", "pubdate": "Unknown"}
 
     def __init__(self) -> None:
         """Initialise the Podcast Health object."""
@@ -30,14 +33,11 @@ class PodcastHealth:
         self.last_fetched: int = 0
         self.healthy_download: bool | None = None
         self.healthy_feed: bool = False
-
-        self.latest_episode: dict = self._LATEST_EPISODE_DEFAULT.copy()
-        self.episode_count: int = 0
         self.update_episode_info()
 
     def update_episode_info(self, tree: etree._ElementTree | None = None) -> None:
         """Update the latest episode info."""
-        new_latest_episode: dict = self._LATEST_EPISODE_DEFAULT.copy()
+        new_latest_episode: dict = self._get_latest_episode_default()
         new_episode_count: int = 0
 
         try:
@@ -104,8 +104,6 @@ class PodcastArchiverHealth:
 
     def __init__(self) -> None:
         """Initialise the Podcast Archiver Health object."""
-        from archivepodcast import __version__
-
         self.core: CoreHealth = CoreHealth()
         self.podcasts: dict[str, PodcastHealth] = {}
         self.templates: dict[str, WebpageHealth] = {}

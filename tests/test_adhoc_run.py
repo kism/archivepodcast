@@ -3,12 +3,12 @@ import logging
 
 import pytest
 
+from archivepodcast import __main__
+
 
 def test_archivepodcast_cli_from__main__(tmp_path, monkeypatch, place_test_config, caplog):
     """TEST: Run CLI from main."""
     place_test_config("testing_true_valid.toml", tmp_path)
-
-    from archivepodcast import __main__
 
     mock_args = argparse.Namespace(
         instance_path=str(tmp_path),
@@ -28,8 +28,6 @@ def test_archivepodcast_cli_from__main__(tmp_path, monkeypatch, place_test_confi
 def test_archivepodcast_cli_from__main__no_provided_instance_path(tmp_path, monkeypatch, place_test_config, caplog):
     """TEST: Run CLI from main."""
     place_test_config("testing_true_valid.toml", tmp_path)
-
-    from archivepodcast import __main__
 
     monkeypatch.setattr(
         "archivepodcast.__main__.INSTANCE_PATH",
@@ -52,8 +50,6 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(tmp_path, monk
 
 def test_archivepodcast_cli_from__main__no_instance_path(tmp_path, monkeypatch, place_test_config, caplog):
     place_test_config("testing_true_valid.toml", tmp_path)
-
-    from archivepodcast import __main__
 
     monkeypatch.setattr("pathlib.Path.exists", lambda x: False)  # Avoid pytest from using the repo's instance path
 

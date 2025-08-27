@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.16"
+version = "1.4.18"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -19,7 +19,7 @@ dependencies = [
     "python-magic>=0.4",
     "requests>=2.32",
     "tomlkit>=0.13",
-    "typed-ffmpeg>=2.6",
+    "typed-ffmpeg>=3.0",
     "waitress>=3.0",
 ]
 
@@ -45,6 +45,7 @@ test = [
     "detect-test-pollution",
     "moto[s3]",
     "requests-mock",
+    "pytest-socket>=0.7.0",
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
@@ -58,10 +59,6 @@ target-version = "py312"
 line-length = 120
 
 [tool.ruff.lint]
-extend-fixable = ["B", "I001"] # KG I think this means something...
-extend-unsafe-fixes = [
-    "F401",
-] # KG I don't like that this is fixed automatically (this doesn't work?)
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
@@ -72,7 +69,6 @@ ignore = [
     "TD003",  # KG Verbose TODO, only I work on this project
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
-    "S320",   # KG Word on the street says that lxml is safe
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -119,6 +115,8 @@ addopts = [
     "--cov=archivepodcast",
     "--cov-report=term",
     "--cov-report=html",
+    "--disable-socket",
+    "--allow-hosts=127.0.0.1,127.0.1.1",
 ]
 testpaths = ["tests"]
 filterwarnings = [
@@ -138,3 +136,23 @@ show_error_codes = true
 strict = true
 disable_error_code = ["type-arg"]
 exclude = ["tests/*"]
+
+
+
+# [tool.mypy]
+# files = ["archivepodcast"]
+# namespace_packages = false # God knows why this makes mypy take forever
+# explicit_package_bases = false # God knows why this makes mypy take forever
+# show_error_codes = true
+# strict = true
+# enable_error_code = [
+#     "ignore-without-code",
+#     "redundant-expr",
+#     "truthy-bool",
+#     "type-arg",
+#     "unused-awaitable",
+#     "possibly-undefined",
+#     "redundant-self",
+# ]
+# warn_unreachable = true
+# warn_redundant_casts = true

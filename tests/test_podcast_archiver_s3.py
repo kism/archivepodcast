@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from archivepodcast.ap_archiver import PodcastArchiver
+
 from . import FakeExceptionError
 
 CONTENT_TYPE_PARAMS = [
@@ -25,8 +27,6 @@ def test_config_valid(tmp_path, get_test_config, caplog, s3):
 
     bucket_name = config["app"]["s3"]["bucket"]
     s3.create_bucket(Bucket=bucket_name)
-
-    from archivepodcast.ap_archiver import PodcastArchiver
 
     with caplog.at_level(logging.DEBUG):
         PodcastArchiver(

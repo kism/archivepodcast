@@ -8,14 +8,15 @@ from pathlib import Path
 
 import pytest
 
-from archivepodcast.bp_archivepodcast import TZINFO_UTC
+from archivepodcast import bp_archivepodcast
+from archivepodcast.ap_archiver import Webpages
+from archivepodcast.bp_archivepodcast import TZINFO_UTC, _get_time_until_next_run
 
 from . import FakeExceptionError
 
 
 def test_app_paths(apa, client_live, client_live_s3, tmp_path):
     """Verify all expected application paths return correct responses."""
-    from archivepodcast import bp_archivepodcast
 
     assert len(apa.webpages) > 0
 
@@ -57,9 +58,6 @@ def test_app_paths_not_generated(apa, client_live, monkeypatch):
 
     monkeypatch.setattr("archivepodcast.ap_archiver.Webpages.add", mock_add_webpage)
 
-    from archivepodcast import bp_archivepodcast
-    from archivepodcast.ap_archiver import Webpages
-
     bp_archivepodcast.ap = apa
 
     apa.webpages = Webpages()
@@ -81,7 +79,6 @@ def test_app_paths_not_generated(apa, client_live, monkeypatch):
 
 def test_app_path_about(apa, client_live, tmp_path):
     """Test the about page."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
 
@@ -102,7 +99,6 @@ def test_app_path_about(apa, client_live, tmp_path):
 
 def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplog):
     """Test the RSS feed."""
-    from archivepodcast import bp_archivepodcast
 
     get_test_config("testing_true_valid.toml")
 
@@ -155,7 +151,6 @@ def test_rss_feed(
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
     ap = apa
@@ -197,7 +192,6 @@ def test_rss_feed_type_error(
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
     ap = apa
@@ -221,7 +215,6 @@ def test_rss_feed_unhandled_error(
     caplog,
 ):
     """Test the RSS feed."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
     ap = apa
@@ -252,7 +245,6 @@ def test_content_s3(
     app_live,
 ):
     """Test the RSS feed."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa_aws
     ap = apa_aws
@@ -268,7 +260,6 @@ def test_content_s3(
 
 def test_reload_config(app, apa, tmp_path, get_test_config, caplog):
     """Test the reload config function."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
 
@@ -282,7 +273,6 @@ def test_reload_config(app, apa, tmp_path, get_test_config, caplog):
 
 def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, caplog):
     """Test the reload config function."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
 
@@ -308,14 +298,12 @@ def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, ca
 )
 def test_time_until_next_run(time, expected_seconds):
     """Test the logic for waiting for the next run."""
-    from archivepodcast.bp_archivepodcast import _get_time_until_next_run
 
     assert _get_time_until_next_run(time) == expected_seconds
 
 
 def test_file_list(apa, client_live, tmp_path):
     """Test that files are listed."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
     ap = apa
@@ -337,7 +325,6 @@ def test_file_list(apa, client_live, tmp_path):
 
 def test_file_list_s3(apa_aws, client_live_s3):
     """Test that s3 files are listed."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa_aws
 
@@ -364,7 +351,6 @@ def test_file_list_s3(apa_aws, client_live_s3):
 
 def test_api_reload(apa, client_live, caplog):
     """Test the reload API endpoint."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
     apa.debug = True
@@ -375,7 +361,6 @@ def test_api_reload(apa, client_live, caplog):
 
 def test_api_reload_no_debug(apa, client_live, caplog):
     """Test the reload API endpoint."""
-    from archivepodcast import bp_archivepodcast
 
     bp_archivepodcast.ap = apa
     apa.debug = False

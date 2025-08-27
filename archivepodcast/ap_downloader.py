@@ -45,7 +45,15 @@ etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1
 
 def check_ffmpeg() -> None:
     """Check if ffmpeg is installed."""
-    if not shutil.which("ffmpeg"):
+    ffmpeg_paths = [
+        Path("/usr/bin/ffmpeg"),
+        Path("/usr/local/bin/ffmpeg"),
+        Path("C:/Program Files/ffmpeg/bin/ffmpeg.exe"),
+        Path("C:/ffmpeg/bin/ffmpeg.exe"),
+    ]
+    found_manually = any(ffmpeg_path.exists() for ffmpeg_path in ffmpeg_paths)
+
+    if not shutil.which("ffmpeg") and not found_manually:
         logger.error(FFMPEG_INFO)
         sys.exit(1)
 
@@ -515,6 +523,7 @@ class PodcastDownloader:
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
             self._download_to_local(url, file_path)
+            logger.debug("Downloaded asset: %s", file_path)
 
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
@@ -530,20 +539,22 @@ class PodcastDownloader:
         logger.info("💾 Downloading asset to: %s", file_path)
         headers = {"user-agent": "Mozilla/5.0"}
         try:
-            req = requests.get(url, headers=headers, timeout=10)
+            # stream to avoid a 5gb wav will eating all your ram
+            req = requests.get(url, headers=headers, timeout=10, stream=True)
+            req.raise_for_status()
+            with file_path.open("wb") as asset_file:
+                for chunk in req.iter_content(chunk_size=8192):
+                    asset_file.write(chunk)
         except (TimeoutError, requests.exceptions.ReadTimeout):
             self.feed_download_healthy = False
             logger.exception("💾❌ Timeout Error: %s", url)
             return
-
-        if req.status_code == HTTPStatus.OK:
-            with Path(file_path).open("wb") as asset_file:
-                asset_file.write(req.content)
-                logger.debug("💾 Success!")
-        else:
+        except requests.exceptions.RequestException:
             self.feed_download_healthy = False
-            logger.error("💾❌ HTTP ERROR: %s", str(req.content))
+            logger.exception("💾❌ Request Error: %s", url)
             return
+
+        logger.debug("💾 Success!")
 
         if not self.s3:
             self._append_to_local_paths_cache(file_path)
