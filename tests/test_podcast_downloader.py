@@ -174,6 +174,8 @@ def test_no_ffmpeg(tmp_path, caplog, monkeypatch):
 
     monkeypatch.setattr("shutil.which", lambda x: None)
 
+    monkeypatch.setattr("pathlib.Path.exists", lambda x: False)
+
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader") and pytest.raises(SystemExit):
         ap_downloader.check_ffmpeg()
 
@@ -228,9 +230,9 @@ def test_download_to_local_failure(apd, requests_mock, caplog):
     requests_mock.get(url, status_code=HTTPStatus.NOT_FOUND)
 
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
-        apd._download_to_local(url, "test.mp3")
+        apd._download_to_local(url, Path("test.mp3"))
 
-    assert "HTTP ERROR" in caplog.text
+    assert "Request Error" in caplog.text
 
 
 @pytest.mark.parametrize(
