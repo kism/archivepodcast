@@ -9,6 +9,7 @@ from lxml import etree
 
 from .ap_constants import PODCAST_DATE_FORMATS, PROCESS
 from .logger import get_logger
+from .version import __version__
 
 if TYPE_CHECKING:
     from .ap_archiver import PodcastArchiver  # pragma: no cover
@@ -103,8 +104,6 @@ class PodcastArchiverHealth:
 
     def __init__(self) -> None:
         """Initialise the Podcast Archiver Health object."""
-        from archivepodcast import __version__
-
         self.core: CoreHealth = CoreHealth()
         self.podcasts: dict[str, PodcastHealth] = {}
         self.templates: dict[str, WebpageHealth] = {}
