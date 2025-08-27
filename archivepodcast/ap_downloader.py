@@ -48,7 +48,7 @@ def check_ffmpeg() -> None:
     ffmpeg_paths = [Path("/usr/bin/ffmpeg"), Path("/usr/local/bin/ffmpeg")]
     found_manually = any(ffmpeg_path.exists() for ffmpeg_path in ffmpeg_paths)
 
-    if not shutil.which("ffmpeg") or not found_manually:
+    if not shutil.which("ffmpeg") and not found_manually:
         logger.error(FFMPEG_INFO)
         sys.exit(1)
 
