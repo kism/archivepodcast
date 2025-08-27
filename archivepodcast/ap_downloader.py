@@ -518,6 +518,7 @@ class PodcastDownloader:
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
             self._download_to_local(url, file_path)
+            logger.debug("Downloaded asset: %s", file_path)
 
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
