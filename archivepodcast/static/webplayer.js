@@ -30,7 +30,7 @@ export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
   try {
     const cover_image_element = document.getElementById("podcast-player-cover");
     cover_image_element.src = current_podcast_cover_image;
-  } catch (error) {}
+  } catch (_error) {}
 
   if ("mediaSession" in navigator && "MediaMetadata" in window) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -140,7 +140,7 @@ export function showJSDivs() {
     const cover_image_element = document.getElementById("podcast-player-cover");
     cover_image_element.src = placeholder_image;
     cover_image_element.style.display = "block";
-  } catch (error) {}
+  } catch (_error) {}
 
   const breadcrumbJSDiv = document.getElementById("podcast_select");
   if (breadcrumbJSDiv) {

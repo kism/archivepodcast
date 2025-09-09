@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, expect, it, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { populateHealth } from "../archivepodcast/static/health";
 
 beforeEach(() => {

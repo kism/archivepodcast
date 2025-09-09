@@ -1,12 +1,7 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, expect, it, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
-import {
-  loadPodcast,
-  playerSetCurrentEpisode,
-  populateEpisodeList,
-  showJSDivs,
-} from "../archivepodcast/static/webplayer";
+import { loadPodcast, playerSetCurrentEpisode, showJSDivs } from "../archivepodcast/static/webplayer";
 
 // region: media mock
 class MockMediaMetadata {
