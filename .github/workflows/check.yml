@@ -28,7 +28,7 @@ jobs:
         with:
           version: latest
       - name: Run Biome
-        run: biome ci --config-path biome.json .
+        run: biome ci
 
   check_html:
     runs-on: ubuntu-latest
