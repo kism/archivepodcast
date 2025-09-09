@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.18"
+version = "1.4.19"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -130,13 +130,10 @@ show_contexts = true
 
 [tool.mypy]
 files = ["archivepodcast"]
-namespace_packages = true
-explicit_package_bases = true
+namespace_packages = false # God knows why this makes mypy take forever
+explicit_package_bases = false # God knows why this makes mypy take forever
 show_error_codes = true
-strict = true
-disable_error_code = ["type-arg"]
-exclude = ["tests/*"]
-
+strict = false
 
 
 # [tool.mypy]

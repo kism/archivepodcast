@@ -26,7 +26,7 @@ Install Node.js and required frontend dependencies:
 Frontend tools are all handled by npm
 
 ```bash
-nvm use 24
+nvm use
 npm install
 ```
 

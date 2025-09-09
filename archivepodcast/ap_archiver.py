@@ -295,6 +295,12 @@ class PodcastArchiver:
         robots_txt_content = "User-Agent: *\nDisallow: /\n"
         self.webpages.add(path="robots.txt", mime="text/plain", content=robots_txt_content)
 
+        # favicon.ico
+        favicon_path = self.static_directory / "favicon.ico"
+        if favicon_path.is_file():
+            with favicon_path.open("rb") as favicon:
+                self.webpages.add(path="favicon.ico", mime="image/x-icon", content=favicon.read())
+
         # Static items
         static_items_to_copy = [file for file in self.static_directory.rglob("*") if file.is_file()]
 

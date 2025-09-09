@@ -52,7 +52,7 @@ def test_render_files(apa_aws, caplog):
     assert "guide.html" in list_files
     assert "about.html" not in list_files
 
-    assert "Writing 17 pages to files locally and to s3" in caplog.text
+    assert "Writing 18 pages to files locally and to s3" in caplog.text
     assert "Writing filelist.html to file locally and to s3" in caplog.text
     assert "Unhandled s3 error" not in caplog.text
 
