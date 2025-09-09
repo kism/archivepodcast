@@ -26,18 +26,22 @@ jobs:
           ffmpeg-version: release
           github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
       - name: Install the project
         run: uv sync --no-default-groups --group test
+
       - name: Test with pytest
-        run: uv run pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
+        run: .venv/bin/pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
