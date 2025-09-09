@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.19"
+version = "1.4.20.dev1"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -27,6 +27,7 @@ dependencies = [
 
 type = [
     "mypy",
+    "ty",
     "types-colorama",
     "types-lxml",
     "types-requests",
