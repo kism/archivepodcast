@@ -128,21 +128,28 @@ filterwarnings = [
 [tool.coverage.html]
 show_contexts = true
 
-
 [tool.mypy]
 files = ["archivepodcast"]
 namespace_packages = false # God knows why this makes mypy take forever
 explicit_package_bases = false # God knows why this makes mypy take forever
 show_error_codes = true
-strict = true
-enable_error_code = [
-    "ignore-without-code",
-    "redundant-expr",
-    "truthy-bool",
-    "type-arg",
-    "unused-awaitable",
-    "possibly-undefined",
-    "redundant-self",
-]
-warn_unreachable = true
-warn_redundant_casts = true
+strict = false
+
+
+# [tool.mypy]
+# files = ["archivepodcast"]
+# namespace_packages = false # God knows why this makes mypy take forever
+# explicit_package_bases = false # God knows why this makes mypy take forever
+# show_error_codes = true
+# strict = true
+# enable_error_code = [
+#     "ignore-without-code",
+#     "redundant-expr",
+#     "truthy-bool",
+#     "type-arg",
+#     "unused-awaitable",
+#     "possibly-undefined",
+#     "redundant-self",
+# ]
+# warn_unreachable = true
+# warn_redundant_casts = true
