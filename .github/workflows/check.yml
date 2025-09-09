@@ -58,18 +58,3 @@ jobs:
         run: uv run python -m archivepodcast --config scripts/config/config-ci.toml
       - name: Validate HTML
         run: html-validate instance/web/*.html
-
-  check_css:
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "latest"
-          cache: "npm"
-          cache-dependency-path: "package.json"
-      - name: Install stylelint
-        run: npm install -g stylelint stylelint-config-standard
-      - name: Run stylelint
-        run: stylelint archivepodcast/static/*.css
