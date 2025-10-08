@@ -420,9 +420,9 @@ class PodcastDownloader:
             ff = ffmpeg.output(
                 input_wav,
                 filename=mp3_file_path,
-                codec="mp3",
-                ab="4",
-            )  # VBR v4 might be overkill for voice
+                codec="libmp3lame",
+                aq="4",
+            )  # VBR v4 might be overkill for voice buy I pick it
 
             ff.run()
 
