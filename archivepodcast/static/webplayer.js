@@ -56,7 +56,14 @@ export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
 async function fetchAndParseXML(url) {
   console.log("Fetching and parsing XML from:", url);
 
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    cache: "no-cache",
+    headers: {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+  });
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }

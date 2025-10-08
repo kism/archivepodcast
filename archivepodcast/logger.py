@@ -69,7 +69,8 @@ LOG_LEVELS = [
 
 # This is the logging message format that I like.
 # LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # noqa: ERA001
-LOG_FORMAT = "%(levelname)s:%(name)s:%(threadName)s:%(message)s"
+LOG_FORMAT = "%(levelname)s:%(name)s:%(message)s"
+LOG_FORMAT_DEBUG = "%(levelname)s:%(name)s:%(threadName)s:%(message)s"
 TRACE_LEVEL_NUM = 5
 
 
@@ -152,7 +153,10 @@ def _has_console_handler(in_logger: logging.Logger) -> bool:
 
 def _add_console_handler(in_logger: logging.Logger) -> None:
     """Add a console handler to the logger."""
-    formatter = ColorFormatter(LOG_FORMAT)
+    if in_logger.getEffectiveLevel() <= logging.DEBUG:
+        formatter = ColorFormatter(LOG_FORMAT_DEBUG)
+    else:
+        formatter = ColorFormatter(LOG_FORMAT)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
 

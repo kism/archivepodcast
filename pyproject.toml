@@ -3,17 +3,20 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.20"
+version = "1.4.21"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.12,<3.14"
 dependencies = [
     "boto3>=1.36,<2",
     "colorama>=0.4.6",
-    "flask>=3.1, <4",
-    "jinja2>=3.1, <4",
+    "flask>=3.1,<4",
+    "jinja2>=3.1,<4",
+    # dnf install libxml2-devel libxslt-devel
+    # apt install libxml2-dev libxslt-dev
     "lxml>=5,<5.4", # Right now its broken for linux on a greater version
+    # "lxml>=6", # TESTING
     "markdown>=3.7",
     "psutil>=6.1.1",
     "python-magic>=0.4",

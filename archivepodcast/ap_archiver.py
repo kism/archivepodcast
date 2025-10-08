@@ -281,6 +281,8 @@ class PodcastArchiver:
             logger.error("❌ Unable to host podcast: %s, something is wrong", podcast["name_one_word"])
             self.health.update_podcast_status(podcast["name_one_word"], rss_available=False)
 
+        del tree
+
         logger.trace("Exiting _grab_podcast for %s", podcast["name_one_word"])
 
     def render_files(self) -> None:

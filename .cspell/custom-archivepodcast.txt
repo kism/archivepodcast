@@ -7,3 +7,5 @@ pubdate
 rawvoice
 srss
 webplayer
+devel
+libmp3lame
