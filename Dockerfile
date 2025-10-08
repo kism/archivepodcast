@@ -7,7 +7,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-alpine
 COPY --from=ffmpeg /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
 
 # Required for psutil
-RUN apk add gcc python3-dev musl-dev linux-headers
+RUN apk add gcc python3-dev musl-dev linux-headers libxml2-dev libxslt-dev
 
 # Install the project into `/app`
 WORKDIR /app
