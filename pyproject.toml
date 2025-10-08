@@ -7,13 +7,13 @@ version = "1.4.20.dev1"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13,<4"
 dependencies = [
     "boto3>=1.36,<2",
     "colorama>=0.4.6",
     "flask>=3.1, <4",
     "jinja2>=3.1, <4",
-    "lxml>=5.3.0",
+    "lxml>=5,<5.4",
     "markdown>=3.7",
     "psutil>=6.1.1",
     "python-magic>=0.4",
@@ -131,7 +131,7 @@ show_contexts = true
 
 [tool.mypy]
 files = ["archivepodcast"]
-namespace_packages = false # God knows why this makes mypy take forever
+namespace_packages = false     # God knows why this makes mypy take forever
 explicit_package_bases = false # God knows why this makes mypy take forever
 show_error_codes = true
 strict = false
