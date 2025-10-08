@@ -180,7 +180,11 @@ def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
 
 def _add_file_handler(in_logger: logging.Logger, log_path: Path) -> None:
     """Add a file handler to the logger."""
+    if not isinstance(log_path, Path):
+        log_path = Path(log_path)
+
     try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
         file_handler = RotatingFileHandler(log_path, maxBytes=1000000, backupCount=5)
     except IsADirectoryError as exc:
         err = "You are trying to log to a directory, try a file"

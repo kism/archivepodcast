@@ -210,6 +210,7 @@ class PodcastArchiver:
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
         self.health.update_podcast_status(podcast["name_one_word"], rss_available=True)
+        logger.trace("Exiting _update_rss_feed")
 
     def _download_podcast(self, podcast: dict, rss_file_path: Path) -> etree._ElementTree | None:
         tree, download_healthy = self.podcast_downloader.download_podcast(podcast)
@@ -279,6 +280,8 @@ class PodcastArchiver:
         else:
             logger.error("❌ Unable to host podcast: %s, something is wrong", podcast["name_one_word"])
             self.health.update_podcast_status(podcast["name_one_word"], rss_available=False)
+
+        logger.trace("Exiting _grab_podcast for %s", podcast["name_one_word"])
 
     def render_files(self) -> None:
         """Function to upload static to s3 and copy index.html."""

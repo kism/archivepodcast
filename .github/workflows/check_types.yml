@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Install libxml2
+        run: sudo apt-get install -y libxml2-dev libxslt-dev
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

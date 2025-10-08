@@ -37,11 +37,18 @@ class PodcastHealth:
 
     def update_episode_info(self, tree: etree._ElementTree | None = None) -> None:
         """Update the latest episode info."""
+        logger.trace("Updating podcast episode info")
         new_latest_episode: dict = self._get_latest_episode_default()
         new_episode_count: int = 0
 
         try:
             if tree is not None:
+                if len(tree.xpath("//item")) == 0:
+                    logger.warning("No episodes found in feed")
+                    self.latest_episode = new_latest_episode
+                    self.episode_count = new_episode_count
+                    return
+
                 latest_episode = tree.xpath("//item")[0]
 
                 # If we have the title, use it
@@ -127,6 +134,7 @@ class PodcastArchiverHealth:
 
     def update_podcast_status(self, podcast: str, **kwargs: bool | str | int) -> None:
         """Update the podcast."""
+        logger.trace("Updating podcast health for %s: %s", podcast, kwargs)
         if podcast not in self.podcasts:
             self.podcasts[podcast] = PodcastHealth()
 
@@ -136,6 +144,7 @@ class PodcastArchiverHealth:
 
     def update_podcast_episode_info(self, podcast: str, tree: etree._ElementTree) -> None:
         """Update the podcast episode info."""
+        logger.trace("Updating podcast episode info for %s", podcast)
         if podcast not in self.podcasts:
             self.podcasts[podcast] = PodcastHealth()
 
