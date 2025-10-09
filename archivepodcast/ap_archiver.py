@@ -1,6 +1,7 @@
 """Module to handle the ArchivePodcast object."""
 
 import contextlib
+import random
 import threading
 import time
 from pathlib import Path
@@ -15,7 +16,7 @@ from lxml import etree
 from .ap_downloader import PodcastDownloader
 from .ap_health import PodcastArchiverHealth
 from .ap_webpages import Webpages
-from .helpers import colour_id, list_all_s3_objects, tree_no_episodes
+from .helpers import list_all_s3_objects, tree_no_episodes
 from .logger import get_logger
 
 if TYPE_CHECKING:
@@ -298,7 +299,7 @@ class PodcastArchiver:
 
     def _render_files(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
-        logger.info("💾 Rendering static pages in thread (%s)", colour_id())
+        logger.info("💾 Rendering static pages in thread (%s)", random.randbytes(6).hex())
         self.health.update_core_status(currently_rendering=True)
 
         self.load_about_page()  # Done first since it affects the header for everything
