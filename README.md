@@ -77,17 +77,14 @@ An example guide on setting it up start to finish, with all features and saving 
 
 - Container Registry
 - header as a table, or divs
-- ~~Don't fail the whole feed if one episode fails~~
-- ~~Real docs (sphinx?)~~
-- Fix wild font size on /health safari mobile
-- ~~See if the str(Path()) is the way to go~~
-  - ~~Fix str path, use the path object as much as possible~~
-- ~~constants file~~
-- mypy require more data types specified
-  - config as object, otherwise typing is hell
-- investigate pydantic
-- ~~HTML Validate~~
-  - ~~Have a script for this too~~
-- ~~Mode to run without a webserver~~
-  - ~~Document this~~
-  - Cache the state of AP with pickle
+- Pydantic
+- Mypy in strict mode
+- Rich for logging, why not
+- Put things in directories
+- Async scraping
+- Progress bars (rich)
+- Fix font selection
+- Cloudflare worker cron
+- Terraform example
+- Health object scraper timer
+- Generate health page static version?

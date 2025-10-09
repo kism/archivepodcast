@@ -71,6 +71,7 @@ ignore = [
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
     "TD003",  # KG Verbose TODO, only I work on this project
+    "S311",   # KG I'll assume no real crypto will be done.
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
 ]
@@ -87,7 +88,6 @@ ignore = [
     "S101",    # KG asserts allowed in tests.
     "SLF001",  # KG Accessing private members is needed for testing.
     "PT004",   # KG monkeypatch doesn't return.
-    "S311",    # KG I'll assume no real crypto will be done in PyTest.
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
     "BLE001",  # KG Tests can use BaseException.
