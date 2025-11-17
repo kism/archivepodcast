@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from lxml import etree  # pragma: no cover
+from lxml import etree
 
 from .logger import get_logger
 

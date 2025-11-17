@@ -42,7 +42,7 @@ def run_ap_adhoc(
     logger.info("Waiting for html rendering to finish...")
 
     while ap.health.core.currently_rendering:
-        time.sleep(0.1)
+        time.sleep(0.05)
 
     logger.info("Done!")
 

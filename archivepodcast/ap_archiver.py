@@ -1,6 +1,7 @@
 """Module to handle the ArchivePodcast object."""
 
 import contextlib
+import random
 import threading
 import time
 from pathlib import Path
@@ -40,6 +41,7 @@ class PodcastArchiver:
         debug: bool = False,
     ) -> None:
         """Initialise the ArchivePodcast object."""
+        start_time = time.time()
         self.debug = debug
 
         # Health object
@@ -65,6 +67,8 @@ class PodcastArchiver:
 
         # Done, update health
         self.health.update_core_status(currently_loading_config=False)
+        elapsed_time = time.time() - start_time
+        logger.info("⏱️ Finished PodcastArchiver initialization in %.2f seconds", elapsed_time)
 
     def load_config(self, app_config: dict, podcast_list: list) -> None:
         """Load the config from the config file."""
@@ -143,11 +147,15 @@ class PodcastArchiver:
 
         for podcast in self.podcast_list:
             try:
+                start_time = time.time()
                 self._grab_podcast(podcast)
                 self.health.update_podcast_status(podcast["name_one_word"], healthy_feed=True)
             except Exception:
                 logger.exception("❌ Error grabbing podcast: %s", podcast["name_one_word"])
                 self.health.update_podcast_status(podcast["name_one_word"], healthy_feed=False)
+
+            elapsed_time = time.time() - start_time
+            logger.info("⏱️ Finished processing %s in %.2f seconds", podcast.get("name_one_word"), elapsed_time)
 
         try:
             logger.debug("💾 Updating filelist.html")
@@ -287,11 +295,11 @@ class PodcastArchiver:
 
     def render_files(self) -> None:
         """Function to upload static to s3 and copy index.html."""
-        logger.info("💾 Rendering static pages in thread")
         threading.Thread(target=self._render_files, daemon=True).start()
 
     def _render_files(self) -> None:
         """Actual function to upload static to s3 and copy index.html."""
+        logger.info("💾 Rendering static pages in thread (%s)", random.randbytes(6).hex())
         self.health.update_core_status(currently_rendering=True)
 
         self.load_about_page()  # Done first since it affects the header for everything
