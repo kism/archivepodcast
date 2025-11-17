@@ -72,6 +72,7 @@ ignore = [
     "TD002",  # KG Verbose TODO, only I work on this project
     "TD003",  # KG Verbose TODO, only I work on this project
     "S311",   # KG I'll assume no real crypto will be done.
+    "S311",   # KG I'll assume no real crypto will be done.
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
 ]
