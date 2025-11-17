@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.22.dev1"
+version = "1.4.22"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -71,6 +71,7 @@ ignore = [
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
     "TD003",  # KG Verbose TODO, only I work on this project
+    "S311",   # KG I'll assume no real crypto will be done.
     "S311",   # KG I'll assume no real crypto will be done.
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
