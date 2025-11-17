@@ -88,3 +88,5 @@ An example guide on setting it up start to finish, with all features and saving 
 - Terraform example
 - Health object scraper timer
 - Generate health page static version?
+- Use flask-cache
+- Better folder layout
