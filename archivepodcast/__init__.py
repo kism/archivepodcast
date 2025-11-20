@@ -8,13 +8,15 @@ from rich.traceback import install
 
 from . import bp_archivepodcast, logger
 from .config import ArchivePodcastConfig
-from .helpers import instance_dir
 from .version import __version__
 
 install()
 
 
-def create_app(ap_conf: ArchivePodcastConfig | None = None, instance_path: Path | None = None) -> Flask:
+def create_app(
+    ap_conf: ArchivePodcastConfig | None = None,
+    instance_path: Path | None = None,
+) -> Flask:
     """Create and configure the Flask application instance."""
     start_time = time.time()
 
@@ -27,13 +29,14 @@ def create_app(ap_conf: ArchivePodcastConfig | None = None, instance_path: Path 
         static_folder=None,
     )  # Create Flask app object
 
-    new_instance_path = Path(app.instance_path).resolve()
-    instance_dir.set(new_instance_path)
-
     logger.setup_logger(app)  # Setup logger with defaults defined in config module
 
     if ap_conf is None:
-        ap_conf = ArchivePodcastConfig()  # Loads app config from disk
+        config_path = Path(app.instance_path) / "config.json"
+        ap_conf = ArchivePodcastConfig().force_load_config_file(config_path)  # Loads app config from disk
+        ap_conf.write_config(config_path)
+
+    ap_conf.post_validate()
 
     app.logger.debug("Instance path is: %s", app.instance_path)
 

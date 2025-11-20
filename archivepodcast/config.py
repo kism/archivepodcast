@@ -5,10 +5,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal, Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .helpers import instance_dir
 from .logger import LoggingConf, get_logger
 
 # Logging should be all done at INFO level or higher as the log level hasn't been set yet
@@ -29,8 +28,8 @@ class AppWebPageConfig(BaseModel):
 class AppS3Config(BaseModel):
     """App S3 Config Object."""
 
-    cdn_domain: str = "https://public_url_of_s3_bucket/"
-    api_url: str = ""
+    cdn_domain: HttpUrl = HttpUrl("https://example.com/public_url_of_s3_bucket/")
+    api_url: HttpUrl | None = None
     bucket: str = ""
     access_key_id: str = ""
     secret_access_key: str = ""
@@ -40,7 +39,7 @@ class AppConfig(BaseModel):
     """App Config Object."""
 
     web_page: AppWebPageConfig = AppWebPageConfig()
-    inet_path: str = "http://localhost:5100/"
+    inet_path: HttpUrl = HttpUrl("http://localhost:5100/")
     storage_backend: Literal["local", "s3"] = "local"
     s3: AppS3Config = AppS3Config()
 
@@ -48,7 +47,7 @@ class AppConfig(BaseModel):
 class PodcastConfig(BaseModel):
     """Podcast Config Object."""
 
-    url: str = ""
+    url: HttpUrl = HttpUrl("https://example.com/podcast/feed.xml")
     new_name: str = ""
     name_one_word: str = ""
     description: str = ""
@@ -79,11 +78,8 @@ class ArchivePodcastConfig(BaseSettings):
     logging: LoggingConf = LoggingConf()
     flask: FlaskConfig = FlaskConfig()
 
-    def write_config(self, config_path: Path | None = None) -> None:
+    def write_config(self, config_path: Path) -> None:
         """Write the current settings to a JSON file."""
-        if config_path is None:
-            config_path = instance_dir.get_settings_path()
-
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
         config_data = json.loads(self.model_dump_json())
@@ -135,3 +131,13 @@ class ArchivePodcastConfig(BaseSettings):
             config = json.load(f)
 
         return cls(**config)
+
+    def post_validate(self) -> None:
+        """Post validation function."""
+        for i, podcast in enumerate(self.podcasts):
+            if podcast.name_one_word == "":
+                msg = f"Please fill in the podcast details on entry {i}\n"
+                msg += podcast.model_dump_json()
+                raise ValueError(msg)
+
+

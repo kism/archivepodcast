@@ -250,7 +250,7 @@ def send_content(path: str) -> Response | WerkzeugResponse:
         path_obj = Path(path)
         web_root = Path(ap.web_root)
         relative_path = str(path_obj).replace(str(web_root), "")  # The easiest way to get the "relative" path
-        new_path = ap_conf.app.s3.cdn_domain + "content/" + relative_path
+        new_path = ap_conf.app.s3.cdn_domain.encoded_string() + "content/" + relative_path
         return current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)  # type: ignore[no-any-return] # Huh?
 
     web_dir = Path(current_app.instance_path) / "web" / "content"

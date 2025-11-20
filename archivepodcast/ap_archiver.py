@@ -12,6 +12,7 @@ import magic
 import markdown
 from jinja2 import Environment, FileSystemLoader
 from lxml import etree
+from pydantic import HttpUrl
 
 from .ap_downloader import PodcastDownloader
 from .ap_health import PodcastArchiverHealth
@@ -95,8 +96,8 @@ class PodcastArchiver:
         if self.app_config.storage_backend == "s3":
             # This is specifically for pytest, as moto doesn't support the endpoint_url
             api_url = None
-            if self.app_config.s3.api_url != "":
-                api_url = self.app_config.s3.api_url
+            if isinstance(self.app_config.s3.api_url, HttpUrl):
+                api_url = self.app_config.s3.api_url.encoded_string()
 
             self.s3 = boto3.client(
                 "s3",

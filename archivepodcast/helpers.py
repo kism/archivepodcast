@@ -1,6 +1,5 @@
 """Helper utilities for archivepodcast."""
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from lxml import etree
@@ -44,27 +43,3 @@ def tree_no_episodes(tree: etree._ElementTree | None) -> bool:
         return True
     return len(tree.xpath("//item")) == 0
 
-
-class InstanceDir:
-    """Handler for the instance dir."""
-
-    _instance_dir: Path | None = None
-
-    def get(self) -> Path:
-        """Get the instance directory path."""
-        if self._instance_dir is None:
-            msg = "InstanceDir has not been set."
-            raise ValueError(msg)
-
-        return self._instance_dir
-
-    def get_settings_path(self) -> Path:
-        """Get the path to the settings file in the instance directory."""
-        return self.get() / "config.json"
-
-    def set(self, path: Path) -> None:
-        """Set the instance directory path."""
-        self._instance_dir = path
-
-
-instance_dir = InstanceDir()

@@ -102,12 +102,12 @@ class PodcastDownloader:
 
         file_list = self.s3_paths_cache if self.s3 is not None else [str(path) for path in self.local_paths_cache]
 
-        return base_url, file_list
+        return base_url.encoded_string(), file_list
 
     def download_podcast(self, podcast: PodcastConfig) -> tuple[etree._ElementTree | None, bool]:
         """Parse the rss, Download all the assets, this is main."""
         self.feed_download_healthy = True  # Until proven otherwise
-        response = self._fetch_podcast_rss(podcast.url)
+        response = self._fetch_podcast_rss(podcast.url.encoded_string())
         if response is None:
             return None, False
 
@@ -171,7 +171,7 @@ class PodcastDownloader:
     def _handle_link_tag(self, channel: etree._Element) -> None:
         """Handle the link tag in the podcast rss."""
         logger.trace("Podcast link: %s", str(channel.text))
-        channel.text = self.app_config.inet_path
+        channel.text = self.app_config.inet_path.encoded_string()
 
     def _handle_title_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the title tag in the podcast rss."""
@@ -187,7 +187,7 @@ class PodcastDownloader:
     def _handle_atom_link_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the Atom link tag in the podcast rss."""
         logger.trace("Atom link: %s", str(channel.attrib["href"]))
-        channel.attrib["href"] = self.app_config.inet_path + "rss/" + podcast.name_one_word
+        channel.attrib["href"] = self.app_config.inet_path.encoded_string() + "rss/" + podcast.name_one_word
         channel.text = " "
 
     def _handle_itunes_owner_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
@@ -212,7 +212,7 @@ class PodcastDownloader:
     def _handle_itunes_new_feed_url_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the iTunes new-feed-url tag in the podcast rss."""
         logger.trace("iTunes new-feed-url: %s", str(channel.text))
-        channel.text = self.app_config.inet_path + "rss/" + podcast.name_one_word
+        channel.text = self.app_config.inet_path.encoded_string() + "rss/" + podcast.name_one_word
 
     def _handle_itunes_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the iTunes image tag in the podcast rss."""
@@ -225,7 +225,7 @@ class PodcastDownloader:
             if filetype in url:
                 self._download_cover_art(url, title, podcast, filetype)
                 channel.attrib["href"] = (
-                    self.app_config.inet_path + "content/" + podcast.name_one_word + "/" + title + filetype
+                    self.app_config.inet_path.encoded_string() + "content/" + podcast.name_one_word + "/" + title + filetype
                 )
         channel.text = " "
 
@@ -237,7 +237,7 @@ class PodcastDownloader:
                 logger.trace("Image title: %s", str(child.text))
                 child.text = podcast.new_name
             elif child.tag == "link":
-                child.text = self.app_config.inet_path
+                child.text = self.app_config.inet_path.encoded_string()
             elif child.tag == "url":
                 title = self._cleanup_file_name(podcast.new_name)
                 url = child.text or ""
@@ -245,7 +245,7 @@ class PodcastDownloader:
                     if filetype in url:
                         self._download_asset(url, title, podcast, filetype)
                         child.text = (
-                            self.app_config.inet_path + "content/" + podcast.name_one_word + "/" + title + filetype
+                            self.app_config.inet_path.encoded_string() + "content/" + podcast.name_one_word + "/" + title + filetype
                         )
         channel.text = " "
 
@@ -297,7 +297,7 @@ class PodcastDownloader:
                 else:
                     self._download_asset(url, title, podcast, audio_format, file_date_string)
                 child.attrib["url"] = (
-                    self.app_config.inet_path
+                    self.app_config.inet_path.encoded_string()
                     + "content/"
                     + podcast.name_one_word
                     + "/"
@@ -317,7 +317,7 @@ class PodcastDownloader:
             if filetype in url:
                 self._download_asset(url, title, podcast, filetype, file_date_string)
                 child.attrib["href"] = (
-                    self.app_config.inet_path
+                    self.app_config.inet_path.encoded_string()
                     + "content/"
                     + podcast.name_one_word
                     + "/"
