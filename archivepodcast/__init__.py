@@ -17,21 +17,15 @@ def create_app() -> Flask:
     """Create and configure the Flask application instance."""
     start_time = time.time()
 
-
     app = Flask(
         __name__,
         instance_relative_config=True,
         static_folder=None,
     )  # Create Flask app object
 
-    logger.setup_logger(app)  # Setup logger with defaults defined in config module
-
-
-
     logger.setup_logger(app, ap_conf.logging)  # Setup logger with config
-    app.logger.debug(ap_conf.model_dump_json(indent=4))
 
-    app.logger.debug("Instance path is: %s", app.instance_path)
+    app.logger.info("Instance path is: %s", app.instance_path)
 
     # Flask config, at the root of the config object.
     app.config.from_object(ap_conf.flask)
