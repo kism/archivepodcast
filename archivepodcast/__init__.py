@@ -4,11 +4,14 @@ import time
 from pathlib import Path
 
 from flask import Flask, Response
+from rich.traceback import install
 
 from . import bp_archivepodcast, logger
 from .config import ArchivePodcastConfig
 from .helpers import instance_dir
 from .version import __version__
+
+install()
 
 
 def create_app(ap_conf: ArchivePodcastConfig | None = None, instance_path: Path | None = None) -> Flask:

@@ -102,7 +102,7 @@ class LoggingConf(BaseModel):
         return self
 
     @field_validator("path", mode="before")
-    def set_path(self, value: str | None) -> Path | None:
+    def set_path(cls, value: str | None) -> Path | None:
         """Set the path to a slugified version."""
         if value is None:
             return None

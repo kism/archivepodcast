@@ -72,7 +72,6 @@ class ArchivePodcastConfig(BaseSettings):
         case_sensitive=False,
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
-        json_file=instance_dir.get_settings_path(),
     )
 
     app: AppConfig = AppConfig()
