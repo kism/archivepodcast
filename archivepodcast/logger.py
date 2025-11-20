@@ -3,10 +3,11 @@
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Self, cast
 
 from colorama import Fore, Style, init
 from flask import Flask
+from pydantic import BaseModel, field_validator, model_validator
 
 init(autoreset=True)
 
@@ -67,6 +68,63 @@ LOG_LEVELS = [
     "CRITICAL",
 ]  # Valid str logging levels.
 
+
+MIN_LOG_LEVEL_INT = 0
+MAX_LOG_LEVEL_INT = 50
+
+
+class LoggingConf(BaseModel):
+    """Logging configuration definition."""
+
+    level: str | int = "INFO"
+    path: Path | None = None
+    simple: bool = False
+
+    @model_validator(mode="after")
+    def validate_vars(self) -> Self:
+        """Validate the logging level."""
+        if isinstance(self.level, int):
+            if self.level < MIN_LOG_LEVEL_INT or self.level > MAX_LOG_LEVEL_INT:
+                msg = (
+                    f"Invalid logging level {self.level}, must be between {MIN_LOG_LEVEL_INT} and {MAX_LOG_LEVEL_INT}."
+                )
+                logger.warning(msg)
+                logger.warning("Defaulting logging level to 'INFO'.")
+                self.level = "INFO"
+        else:
+            self.level = self.level.strip().upper()
+            if self.level not in LOG_LEVELS:
+                msg = f"Invalid logging level '{self.level}', must be one of {', '.join(LOG_LEVELS)}"
+                logger.warning(msg)
+                logger.warning("Defaulting logging level to 'INFO'.")
+                self.level = "INFO"
+
+        return self
+
+    @field_validator("path", mode="before")
+    def set_path(self, value: str | None) -> Path | None:
+        """Set the path to a slugified version."""
+        if value is None:
+            return None
+
+        if isinstance(value, str):
+            value = value.strip()
+
+        if value == "":
+            return None
+
+        return Path(value)
+
+    def setup_verbosity_cli(self, verbosity: int) -> None:
+        """Setup the logger from verbosity count from CLI."""
+        if verbosity >= 2:  # noqa: PLR2004 Magic number makes sense
+            self.level = TRACE_LEVEL_NUM
+        elif verbosity == 1:
+            self.level = logging.DEBUG
+        else:
+            self.level = logging.INFO
+
+
 # This is the logging message format that I like.
 # LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # noqa: ERA001
 LOG_FORMAT = "%(levelname)s:%(name)s:%(message)s"
@@ -100,14 +158,21 @@ logger = cast("CustomLogger", logging.getLogger(__name__))
 
 
 # Pass in the whole app object to make it obvious we are configuring the logger object within the app object.
-def setup_logger(app: Flask | None, logging_conf: dict, in_logger: logging.Logger | None = None) -> None:
+def setup_logger(
+    app: Flask | None,
+    logging_conf: LoggingConf | None = None,
+    in_logger: logging.Logger | None = None,
+) -> None:
     """Configure logging for the application.
 
     Args:
         app: The Flask application instance
-        logging_conf: Logging configuration dict with "level" and "path" keys
+        logging_conf: Logging configuration object
         in_logger: Optional logger instance to configure (mainly for testing)
     """
+    if logging_conf is None:
+        logging_conf = LoggingConf()
+
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
 
@@ -119,11 +184,11 @@ def setup_logger(app: Flask | None, logging_conf: dict, in_logger: logging.Logge
     if not _has_console_handler(in_logger):
         _add_console_handler(in_logger)
 
-    _set_log_level(in_logger, logging_conf["level"])
+    _set_log_level(in_logger, logging_conf.level)
 
     # If we are logging to a file
-    if not _has_file_handler(in_logger) and logging_conf["path"] != "":
-        _add_file_handler(in_logger, logging_conf["path"])
+    if not _has_file_handler(in_logger) and logging_conf.path is not None:
+        _add_file_handler(in_logger, logging_conf.path)
 
     # Configure modules that are external and have their own loggers
     logging.getLogger("waitress").setLevel(logging.INFO)  # Prod web server, info has useful info.
@@ -182,7 +247,7 @@ def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
         in_logger.setLevel(log_level)
 
 
-def _add_file_handler(in_logger: logging.Logger, log_path: Path) -> None:
+def _add_file_handler(in_logger: logging.Logger, log_path: Path | str) -> None:
     """Add a file handler to the logger."""
     if not isinstance(log_path, Path):
         log_path = Path(log_path)

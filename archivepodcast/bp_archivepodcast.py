@@ -12,10 +12,12 @@ from types import FrameType
 
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
 from lxml import etree
+from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 from .ap_archiver import PodcastArchiver
 from .ap_constants import TZINFO_UTC
 from .config import ArchivePodcastConfig
+from .instances import ap_conf
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -34,8 +36,8 @@ def initialise_archivepodcast() -> None:
     global ap  # noqa: PLW0603
 
     ap = PodcastArchiver(
-        app_config=current_app.config["app"],
-        podcast_list=current_app.config["podcast"],
+        app_config=ap_conf.app,
+        podcast_list=ap_conf.podcasts,
         instance_path=Path(current_app.instance_path),
         root_path=Path(current_app.root_path),
         debug=current_app.debug,
@@ -69,15 +71,10 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     logger.info("🙋 Got SIGHUP, Reloading Config")
 
     try:
-        ap_conf = ArchivePodcastConfig(instance_path=Path(current_app.instance_path))  # Loads app config from disk
-
-        # Other sections handled by config.py
-        for key, value in ap_conf.items():
-            if key != "flask":
-                current_app.config[key] = value
+        ap_conf = ArchivePodcastConfig()  # Loads app config from disk
 
         # Due to application context this cannot be done in a thread
-        ap.load_config(current_app.config["app"], current_app.config["podcast"])
+        ap.load_config(ap_conf.app, ap_conf.podcasts)
 
         # This is the slow part of the reload, no app context required so we can give run it in a thread.
         logger.info("🙋 Ad-Hoc grabbing podcasts in a thread")
@@ -244,23 +241,20 @@ def health() -> Response:
 
 
 @bp.route("/content/<path:path>")
-def send_content(path: str) -> Response:
+def send_content(path: str) -> Response | WerkzeugResponse:
     """Serve Content."""
     if not ap:
         return generate_not_initialized_error()
 
-    if current_app.config["app"]["storage_backend"] == "s3":
+    if ap_conf.app.storage_backend == "s3":
         path_obj = Path(path)
         web_root = Path(ap.web_root)
         relative_path = str(path_obj).replace(str(web_root), "")  # The easiest way to get the "relative" path
-        new_path = current_app.config["app"]["s3"]["cdn_domain"] + "content/" + relative_path
-        response = current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
-        response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
-    else:
-        web_dir = Path(current_app.instance_path) / "web" / "content"
-        response = send_from_directory(str(web_dir), path)
+        new_path = ap_conf.app.s3.cdn_domain + "content/" + relative_path
+        return current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)  # type: ignore[no-any-return] # Huh?
 
-    return response  # type: ignore[return-value]
+    web_dir = Path(current_app.instance_path) / "web" / "content"
+    return send_from_directory(str(web_dir), path)
 
 
 @bp.route("/filelist.html")
@@ -276,9 +270,11 @@ def rss(feed: str) -> Response:
         return generate_not_initialized_error()
 
     logger.debug("Sending rss feed: %s", feed)
+    rss_bytes = b""
     rss_str = ""
     try:
-        rss_str = ap.get_rss_feed(feed)
+        rss_bytes = ap.get_rss_feed(feed)
+        rss_str = rss_bytes.decode("utf-8")
     except TypeError:
         return_code = HTTPStatus.INTERNAL_SERVER_ERROR
         return Response(
