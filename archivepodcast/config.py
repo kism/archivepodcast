@@ -139,5 +139,3 @@ class ArchivePodcastConfig(BaseSettings):
                 msg = f"Please fill in the podcast details on entry {i}\n"
                 msg += podcast.model_dump_json()
                 raise ValueError(msg)
-
-

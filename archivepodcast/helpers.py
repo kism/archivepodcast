@@ -42,4 +42,3 @@ def tree_no_episodes(tree: etree._ElementTree | None) -> bool:
     if tree is None:
         return True
     return len(tree.xpath("//item")) == 0
-

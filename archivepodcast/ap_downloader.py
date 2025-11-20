@@ -225,7 +225,12 @@ class PodcastDownloader:
             if filetype in url:
                 self._download_cover_art(url, title, podcast, filetype)
                 channel.attrib["href"] = (
-                    self.app_config.inet_path.encoded_string() + "content/" + podcast.name_one_word + "/" + title + filetype
+                    self.app_config.inet_path.encoded_string()
+                    + "content/"
+                    + podcast.name_one_word
+                    + "/"
+                    + title
+                    + filetype
                 )
         channel.text = " "
 
@@ -245,7 +250,12 @@ class PodcastDownloader:
                     if filetype in url:
                         self._download_asset(url, title, podcast, filetype)
                         child.text = (
-                            self.app_config.inet_path.encoded_string() + "content/" + podcast.name_one_word + "/" + title + filetype
+                            self.app_config.inet_path.encoded_string()
+                            + "content/"
+                            + podcast.name_one_word
+                            + "/"
+                            + title
+                            + filetype
                         )
         channel.text = " "
 

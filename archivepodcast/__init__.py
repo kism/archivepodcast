@@ -1,7 +1,6 @@
 """Flask web application for archiving and serving podcasts."""
 
 import time
-from pathlib import Path
 
 from flask import Flask, Response
 from rich.traceback import install
