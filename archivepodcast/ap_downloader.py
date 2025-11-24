@@ -14,8 +14,10 @@ import ffmpeg
 import requests
 from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
 from lxml import etree
+from requests.exceptions import ReadTimeout, RequestException
 
 from .ap_constants import AUDIO_FORMATS, CONTENT_TYPES, FFMPEG_INFO, IMAGE_FORMATS, TZINFO_UTC
+from .config import AppConfig, PodcastConfig
 from .helpers import list_all_s3_objects
 from .logger import get_logger
 
@@ -64,11 +66,11 @@ check_ffmpeg()
 class PodcastDownloader:
     """PodcastDownloader object."""
 
-    def __init__(self, app_config: dict, s3: S3Client | None, web_root: Path) -> None:
+    def __init__(self, app_config: AppConfig, s3: S3Client | None, web_root: Path) -> None:
         """Initialise the PodcastDownloader object."""
         self.s3 = s3
-        self.s3_paths_cache: list = []
-        self.local_paths_cache: list = []
+        self.s3_paths_cache: list[str] = []
+        self.local_paths_cache: list[Path] = []
         self.feed_download_healthy: bool = True  # Need to change this if you do one podcast download per thread
         self.app_config = app_config
         self.web_root = web_root
@@ -80,7 +82,7 @@ class PodcastDownloader:
         """Update the file cache."""
         if self.s3:
             self.s3_paths_cache = []
-            s3_paths = list_all_s3_objects(self.s3, self.app_config["s3"]["bucket"])
+            s3_paths = list_all_s3_objects(self.s3, self.app_config.s3.bucket)
             for s3_path in s3_paths:
                 self.s3_paths_cache.append(s3_path["Key"])
 
@@ -88,25 +90,24 @@ class PodcastDownloader:
         else:
             web_root = Path(self.web_root)
             self.local_paths_cache = [
-                str(path.relative_to(web_root)) for path in Path(self.web_root).rglob("*") if path.is_file()
+                (path.relative_to(web_root)) for path in Path(self.web_root).rglob("*") if path.is_file()
             ]
             self.local_paths_cache.sort()
 
-    def get_file_list(self) -> tuple[str, list]:
+    def get_file_list(self) -> tuple[str, list[str]]:
         """Gets the base url and the file cache."""
         self.update_file_cache()
 
-        base_url = self.app_config["s3"]["cdn_domain"] if self.s3 is not None else self.app_config["inet_path"]
+        base_url = self.app_config.s3.cdn_domain if self.s3 is not None else self.app_config.inet_path
 
-        return (
-            base_url,
-            self.s3_paths_cache if self.s3 else self.local_paths_cache,
-        )
+        file_list = self.s3_paths_cache if self.s3 is not None else [str(path) for path in self.local_paths_cache]
 
-    def download_podcast(self, podcast: dict) -> tuple[etree._ElementTree | None, bool]:
+        return base_url.encoded_string(), file_list
+
+    def download_podcast(self, podcast: PodcastConfig) -> tuple[etree._ElementTree | None, bool]:
         """Parse the rss, Download all the assets, this is main."""
         self.feed_download_healthy = True  # Until proven otherwise
-        response = self._fetch_podcast_rss(podcast["url"])
+        response = self._fetch_podcast_rss(podcast.url.encoded_string())
         if response is None:
             return None, False
 
@@ -136,12 +137,12 @@ class PodcastDownloader:
 
         return response
 
-    def _process_podcast_rss(self, xml_first_child: etree._Element, podcast: dict) -> None:
+    def _process_podcast_rss(self, xml_first_child: etree._Element, podcast: PodcastConfig) -> None:
         """Process the podcast rss and update it with new values."""
         for channel in xml_first_child:
             self._process_channel_tag(channel, podcast)
 
-    def _process_channel_tag(self, channel: etree._Element, podcast: dict) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
+    def _process_channel_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
         """Process individual channel tags in the podcast rss."""
         match channel.tag:
             case "link":
@@ -170,97 +171,105 @@ class PodcastDownloader:
     def _handle_link_tag(self, channel: etree._Element) -> None:
         """Handle the link tag in the podcast rss."""
         logger.trace("Podcast link: %s", str(channel.text))
-        channel.text = self.app_config["inet_path"]
+        channel.text = self.app_config.inet_path.encoded_string()
 
-    def _handle_title_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_title_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the title tag in the podcast rss."""
         logger.info("📄 Source Podcast title: %s", str(channel.text))
-        if podcast["new_name"] != "":
-            channel.text = podcast["new_name"]
+        if podcast.new_name != "":
+            channel.text = podcast.new_name
 
-    def _handle_description_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_description_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the description tag in the podcast rss."""
         logger.trace("Podcast description: %s", str(channel.text))
-        channel.text = podcast["description"]
+        channel.text = podcast.description
 
-    def _handle_atom_link_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_atom_link_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the Atom link tag in the podcast rss."""
         logger.trace("Atom link: %s", str(channel.attrib["href"]))
-        channel.attrib["href"] = self.app_config["inet_path"] + "rss/" + podcast["name_one_word"]
+        channel.attrib["href"] = self.app_config.inet_path.encoded_string() + "rss/" + podcast.name_one_word
         channel.text = " "
 
-    def _handle_itunes_owner_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_itunes_owner_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the iTunes owner tag in the podcast rss."""
         logger.trace("iTunes owner: %s", str(channel.text))
         for child in channel:
             if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}name":
-                if podcast["new_name"] == "":
-                    podcast["new_name"] = child.text
-                child.text = podcast["new_name"]
+                if podcast.new_name == "":
+                    podcast.new_name = child.text or ""
+                child.text = podcast.new_name
             if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}email":
-                if podcast["contact_email"] == "":
-                    podcast["contact_email"] = child.text
-                child.text = podcast["contact_email"]
+                if podcast.contact_email == "":
+                    podcast.contact_email = child.text or ""
+                child.text = podcast.contact_email
 
-    def _handle_itunes_author_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_itunes_author_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the iTunes author tag in the podcast rss."""
         logger.trace("iTunes author: %s", str(channel.text))
-        if podcast["new_name"] != "":
-            channel.text = podcast["new_name"]
+        if podcast.new_name != "":
+            channel.text = podcast.new_name
 
-    def _handle_itunes_new_feed_url_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_itunes_new_feed_url_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the iTunes new-feed-url tag in the podcast rss."""
         logger.trace("iTunes new-feed-url: %s", str(channel.text))
-        channel.text = self.app_config["inet_path"] + "rss/" + podcast["name_one_word"]
+        channel.text = self.app_config.inet_path.encoded_string() + "rss/" + podcast.name_one_word
 
-    def _handle_itunes_image_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_itunes_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the iTunes image tag in the podcast rss."""
         logger.trace("iTunes image: %s", str(channel.attrib["href"]))
 
-        title = self._cleanup_file_name(podcast["new_name"])
+        title = self._cleanup_file_name(podcast.new_name)
         url = channel.attrib.get("href", "")
         logger.trace("Image URL: %s", url)
         for filetype in IMAGE_FORMATS:
             if filetype in url:
                 self._download_cover_art(url, title, podcast, filetype)
                 channel.attrib["href"] = (
-                    self.app_config["inet_path"] + "content/" + podcast["name_one_word"] + "/" + title + filetype
+                    self.app_config.inet_path.encoded_string()
+                    + "content/"
+                    + podcast.name_one_word
+                    + "/"
+                    + title
+                    + filetype
                 )
         channel.text = " "
 
-    def _handle_image_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the image tag in the podcast rss."""
         for child in channel:
             logger.trace("image > XML tag: %s", child.tag)
             if child.tag == "title":
                 logger.trace("Image title: %s", str(child.text))
-                child.text = podcast["new_name"]
+                child.text = podcast.new_name
             elif child.tag == "link":
-                child.text = self.app_config["inet_path"]
+                child.text = self.app_config.inet_path.encoded_string()
             elif child.tag == "url":
-                title = self._cleanup_file_name(podcast["new_name"])
+                title = self._cleanup_file_name(podcast.new_name)
                 url = child.text or ""
                 for filetype in IMAGE_FORMATS:
                     if filetype in url:
                         self._download_asset(url, title, podcast, filetype)
                         child.text = (
-                            self.app_config["inet_path"]
+                            self.app_config.inet_path.encoded_string()
                             + "content/"
-                            + podcast["name_one_word"]
+                            + podcast.name_one_word
                             + "/"
                             + title
                             + filetype
                         )
         channel.text = " "
 
-    def _handle_item_tag(self, channel: etree._Element, podcast: dict) -> None:
+    def _handle_item_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the item tag in the podcast rss."""
         file_date_string = self._get_file_date_string(channel)
+        title = ""
         for child in channel:
             if child.tag == "title":
                 title = str(child.text)
                 logger.debug("📢 Episode title: %s", title)
-            elif child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in str(child.tag):
+
+        for child in channel:
+            if child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in str(child.tag):
                 self._handle_enclosure_tag(child, title, podcast, file_date_string)
             elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
                 self._handle_episode_image_tag(child, title, podcast, file_date_string)
@@ -279,7 +288,9 @@ class PodcastDownloader:
                 file_date_string = file_date.strftime("%Y%m%d")
         return file_date_string
 
-    def _handle_enclosure_tag(self, child: etree._Element, title: str, podcast: dict, file_date_string: str) -> None:
+    def _handle_enclosure_tag(
+        self, child: etree._Element, title: str, podcast: PodcastConfig, file_date_string: str
+    ) -> None:
         """Handle the enclosure tag in the podcast rss."""
         logger.trace("Enclosure, URL: %s", child.attrib.get("url", ""))
         title = self._cleanup_file_name(title)
@@ -296,9 +307,9 @@ class PodcastDownloader:
                 else:
                     self._download_asset(url, title, podcast, audio_format, file_date_string)
                 child.attrib["url"] = (
-                    self.app_config["inet_path"]
+                    self.app_config.inet_path.encoded_string()
                     + "content/"
-                    + podcast["name_one_word"]
+                    + podcast.name_one_word
                     + "/"
                     + file_date_string
                     + "-"
@@ -307,7 +318,7 @@ class PodcastDownloader:
                 )
 
     def _handle_episode_image_tag(
-        self, child: etree._Element, title: str, podcast: dict, file_date_string: str
+        self, child: etree._Element, title: str, podcast: PodcastConfig, file_date_string: str
     ) -> None:
         """Handle the episode image tag in the podcast rss."""
         title = self._cleanup_file_name(title)
@@ -316,9 +327,9 @@ class PodcastDownloader:
             if filetype in url:
                 self._download_asset(url, title, podcast, filetype, file_date_string)
                 child.attrib["href"] = (
-                    self.app_config["inet_path"]
+                    self.app_config.inet_path.encoded_string()
                     + "content/"
-                    + podcast["name_one_word"]
+                    + podcast.name_one_word
                     + "/"
                     + file_date_string
                     + "-"
@@ -338,7 +349,7 @@ class PodcastDownloader:
 
         return file_exists
 
-    def _check_path_exists(self, file_path: Path) -> bool:
+    def _check_path_exists(self, file_path: Path | str) -> bool:
         """Check the path, s3 or local."""
         file_exists = False
 
@@ -356,7 +367,7 @@ class PodcastDownloader:
             if s3_key not in self.s3_paths_cache:
                 try:
                     # Head object to check if file exists
-                    self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_key)
+                    self.s3.head_object(Bucket=self.app_config.s3.bucket, Key=s3_key)
                     logger.debug(
                         "⛅ File: %s exists in s3 bucket",
                         s3_key,
@@ -380,11 +391,15 @@ class PodcastDownloader:
                 file_exists = True
 
         else:
+            if not isinstance(file_path, Path):
+                file_path = Path(file_path)
             file_exists = self._check_local_path_exists(file_path)
 
         return file_exists
 
-    def _handle_wav(self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = "") -> int:
+    def _handle_wav(
+        self, url: str, title: str, podcast: PodcastConfig, extension: str = "", file_date_string: str = ""
+    ) -> int:
         """Convert podcasts that have wav episodes 😔. Returns new file length."""
         logger.trace("🎵 Handling wav file: %s", title)
         new_length = None
@@ -392,7 +407,7 @@ class PodcastDownloader:
         if file_date_string != "":
             spacer = "-"
 
-        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        content_dir = Path(self.web_root) / "content" / podcast.name_one_word
         wav_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.wav"
         mp3_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.mp3"
 
@@ -448,7 +463,7 @@ class PodcastDownloader:
 
             msg = f"Checking length of s3 object: {s3_key}"
             logger.trace(msg)
-            response = self.s3.head_object(Bucket=self.app_config["s3"]["bucket"], Key=s3_key)
+            response = self.s3.head_object(Bucket=self.app_config.s3.bucket, Key=s3_key)
             new_length = response["ContentLength"]
             msg = f"Length of converted wav file {s3_key}: {new_length} bytes, stored in s3"
         else:
@@ -475,7 +490,7 @@ class PodcastDownloader:
             logger.info("💾⛅ Uploading to s3: %s", s3_path)
             self.s3.upload_file(
                 str(file_path),
-                self.app_config["s3"]["bucket"],
+                self.app_config.s3.bucket,
                 s3_path,
                 ExtraArgs={"ContentType": content_type},
             )
@@ -496,9 +511,9 @@ class PodcastDownloader:
             self.feed_download_healthy = False
             logger.exception("⛅❌ Unhandled s3 error: %s")
 
-    def _download_cover_art(self, url: str, title: str, podcast: dict, extension: str = "") -> None:
+    def _download_cover_art(self, url: str, title: str, podcast: PodcastConfig, extension: str = "") -> None:
         """Download cover art from url with appropriate file name."""
-        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        content_dir = Path(self.web_root) / "content" / podcast.name_one_word
         cover_art_destination = content_dir / f"{title}{extension}"
 
         local_file_found = self._check_local_path_exists(cover_art_destination)
@@ -511,14 +526,14 @@ class PodcastDownloader:
             self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
 
     def _download_asset(
-        self, url: str, title: str, podcast: dict, extension: str = "", file_date_string: str = ""
+        self, url: str, title: str, podcast: PodcastConfig, extension: str = "", file_date_string: str = ""
     ) -> None:
         """Download asset from url with appropriate file name."""
         spacer = ""
         if file_date_string != "":
             spacer = "-"
 
-        content_dir = Path(self.web_root) / "content" / podcast["name_one_word"]
+        content_dir = Path(self.web_root) / "content" / podcast.name_one_word
         file_path = content_dir / f"{file_date_string}{spacer}{title}{extension}"
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
@@ -545,11 +560,11 @@ class PodcastDownloader:
             with file_path.open("wb") as asset_file:
                 for chunk in req.iter_content(chunk_size=8192):
                     asset_file.write(chunk)
-        except (TimeoutError, requests.exceptions.ReadTimeout):
+        except (TimeoutError, ReadTimeout):
             self.feed_download_healthy = False
             logger.exception("💾❌ Timeout Error: %s", url)
             return
-        except requests.exceptions.RequestException:
+        except RequestException:
             self.feed_download_healthy = False
             logger.exception("💾❌ Request Error: %s", url)
             return

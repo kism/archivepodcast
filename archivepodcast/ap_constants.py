@@ -1,8 +1,16 @@
 """Constants for ArchivePodcast."""
 
 import datetime
+import os
+from pathlib import Path
 
 import psutil
+
+_env_instance_dir = os.getenv("INSTANCE_DIR")
+
+INSTANCE_DIR = Path(_env_instance_dir) if _env_instance_dir else Path(__file__).parent.parent / "instance"
+SETTINGS_FILE = INSTANCE_DIR / "config.json"
+
 
 # Test FFMPEG
 FFMPEG_INFO = """ffmpeg not found, please install it and ensure it's in PATH.

@@ -1,12 +1,18 @@
 """Logging configuration for archivepodcast."""
 
 import logging
+from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Self, cast
 
 from colorama import Fore, Style, init
 from flask import Flask
+from pydantic import BaseModel, field_validator, model_validator
+from rich.console import Console
+from rich.highlighter import NullHighlighter
+from rich.logging import RichHandler
+from rich.theme import Theme
 
 init(autoreset=True)
 
@@ -67,10 +73,67 @@ LOG_LEVELS = [
     "CRITICAL",
 ]  # Valid str logging levels.
 
+
+MIN_LOG_LEVEL_INT = 0
+MAX_LOG_LEVEL_INT = 50
+
+
+class LoggingConf(BaseModel):
+    """Logging configuration definition."""
+
+    level: str | int = "INFO"
+    path: Path | None = None
+    simple: bool = False
+
+    @model_validator(mode="after")
+    def validate_vars(self) -> Self:
+        """Validate the logging level."""
+        if isinstance(self.level, int):
+            if self.level < MIN_LOG_LEVEL_INT or self.level > MAX_LOG_LEVEL_INT:
+                msg = (
+                    f"Invalid logging level {self.level}, must be between {MIN_LOG_LEVEL_INT} and {MAX_LOG_LEVEL_INT}."
+                )
+                logger.warning(msg)
+                logger.warning("Defaulting logging level to 'INFO'.")
+                self.level = "INFO"
+        else:
+            self.level = self.level.strip().upper()
+            if self.level not in LOG_LEVELS:
+                msg = f"Invalid logging level '{self.level}', must be one of {', '.join(LOG_LEVELS)}"
+                logger.warning(msg)
+                logger.warning("Defaulting logging level to 'INFO'.")
+                self.level = "INFO"
+
+        return self
+
+    @field_validator("path", mode="before")
+    def set_path(cls, value: str | None) -> Path | None:  # noqa: N805 # ???
+        """Set the path to a slugified version."""
+        if value is None:
+            return None
+
+        if isinstance(value, str):
+            value = value.strip()
+
+        if value == "":
+            return None
+
+        return Path(value)
+
+    def setup_verbosity_cli(self, verbosity: int) -> None:
+        """Setup the logger from verbosity count from CLI."""
+        if verbosity >= 2:  # noqa: PLR2004 Magic number makes sense
+            self.level = TRACE_LEVEL_NUM
+        elif verbosity == 1:
+            self.level = logging.DEBUG
+        else:
+            self.level = logging.INFO
+
+
 # This is the logging message format that I like.
 # LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # noqa: ERA001
-LOG_FORMAT = "%(levelname)s:%(name)s:%(message)s"
-LOG_FORMAT_DEBUG = "%(levelname)s:%(name)s:%(threadName)s:%(message)s"
+SIMPLE_LOG_FORMAT = "%(levelname)s:%(message)s"
+SIMPLE_LOG_FORMAT_DEBUG = "%(levelname)s:%(name)s:%(message)s"
 TRACE_LEVEL_NUM = 5
 
 
@@ -100,14 +163,21 @@ logger = cast("CustomLogger", logging.getLogger(__name__))
 
 
 # Pass in the whole app object to make it obvious we are configuring the logger object within the app object.
-def setup_logger(app: Flask | None, logging_conf: dict, in_logger: logging.Logger | None = None) -> None:
+def setup_logger(
+    app: Flask | None,
+    logging_conf: LoggingConf | None = None,
+    in_logger: logging.Logger | None = None,
+) -> None:
     """Configure logging for the application.
 
     Args:
         app: The Flask application instance
-        logging_conf: Logging configuration dict with "level" and "path" keys
+        logging_conf: Logging configuration object
         in_logger: Optional logger instance to configure (mainly for testing)
     """
+    if logging_conf is None:
+        logging_conf = LoggingConf()
+
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
 
@@ -116,14 +186,14 @@ def setup_logger(app: Flask | None, logging_conf: dict, in_logger: logging.Logge
         app.logger.handlers.clear()  # Remove the Flask default handlers
 
     # If the logger doesn't have a console handler (root logger doesn't by default)
-    if not _has_console_handler(in_logger):
-        _add_console_handler(in_logger)
+    if not any(isinstance(handler, (RichHandler, StreamHandler)) for handler in in_logger.handlers):
+        _add_console_handler(logging_conf, in_logger)
 
-    _set_log_level(in_logger, logging_conf["level"])
+    _set_log_level(in_logger, logging_conf.level)
 
     # If we are logging to a file
-    if not _has_file_handler(in_logger) and logging_conf["path"] != "":
-        _add_file_handler(in_logger, logging_conf["path"])
+    if not _has_file_handler(in_logger) and logging_conf.path is not None:
+        _add_file_handler(in_logger, logging_conf.path)
 
     # Configure modules that are external and have their own loggers
     logging.getLogger("waitress").setLevel(logging.INFO)  # Prod web server, info has useful info.
@@ -151,16 +221,40 @@ def _has_console_handler(in_logger: logging.Logger) -> bool:
     return any(isinstance(handler, logging.StreamHandler) for handler in in_logger.handlers)
 
 
-def _add_console_handler(in_logger: logging.Logger) -> None:
+def _add_console_handler(
+    settings: LoggingConf,
+    in_logger: logging.Logger,
+) -> None:
     """Add a console handler to the logger."""
-    if in_logger.getEffectiveLevel() <= logging.DEBUG:
-        formatter = ColorFormatter(LOG_FORMAT_DEBUG)
+    if not settings.simple:
+        console = Console(theme=Theme({"logging.level.trace": "dim"}))
+        rich_handler = RichHandler(
+            console=console,
+            show_time=False,
+            rich_tracebacks=True,
+            highlighter=NullHighlighter(),
+        )
+        in_logger.addHandler(rich_handler)
     else:
-        formatter = ColorFormatter(LOG_FORMAT)
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
+        console_handler = StreamHandler()
+        if _get_log_level_int(settings.level) <= logging.DEBUG:
+            formatter = logging.Formatter(SIMPLE_LOG_FORMAT_DEBUG)
+        else:
+            formatter = logging.Formatter(SIMPLE_LOG_FORMAT)
 
-    in_logger.addHandler(console_handler)
+        console_handler.setFormatter(formatter)
+        in_logger.addHandler(console_handler)
+
+
+def _get_log_level_int(level: str | int) -> int:
+    """Get the log level as an int."""
+    if isinstance(level, int):
+        return level
+
+    level = level.upper()
+    if level == "TRACE":
+        return TRACE_LEVEL_NUM
+    return getattr(logging, level, logging.INFO)
 
 
 def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
@@ -182,7 +276,7 @@ def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
         in_logger.setLevel(log_level)
 
 
-def _add_file_handler(in_logger: logging.Logger, log_path: Path) -> None:
+def _add_file_handler(in_logger: logging.Logger, log_path: Path | str) -> None:
     """Add a file handler to the logger."""
     if not isinstance(log_path, Path):
         log_path = Path(log_path)
@@ -197,7 +291,7 @@ def _add_file_handler(in_logger: logging.Logger, log_path: Path) -> None:
         err = f"The user running this does not have access to the file: {log_path}"
         raise PermissionError(err) from exc
 
-    formatter = logging.Formatter(LOG_FORMAT)
+    formatter = logging.Formatter(SIMPLE_LOG_FORMAT)
     file_handler.setFormatter(formatter)
     in_logger.addHandler(file_handler)
     logger.info("Logging to file: %s", log_path)

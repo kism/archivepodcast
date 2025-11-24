@@ -6,6 +6,7 @@ import json
 from typing import TYPE_CHECKING
 
 from lxml import etree
+from pydantic import BaseModel
 
 from .ap_constants import PODCAST_DATE_FORMATS, PROCESS
 from .logger import get_logger
@@ -19,12 +20,15 @@ else:
 logger = get_logger(__name__)
 
 
+class EpisodeInfo(BaseModel):
+    """Episode Info Model."""
+
+    title: str = "Unknown"
+    pubdate: int = 0
+
+
 class PodcastHealth:
     """Health status for an individual podcast."""
-
-    @staticmethod
-    def _get_latest_episode_default() -> dict[str, str]:
-        return {"title": "Unknown", "pubdate": "Unknown"}
 
     def __init__(self) -> None:
         """Initialise the Podcast Health object."""
@@ -35,10 +39,10 @@ class PodcastHealth:
         self.healthy_feed: bool = False
         self.update_episode_info()
 
-    def update_episode_info(self, tree: etree._ElementTree | None = None) -> None:
+    def update_episode_info(self, tree: etree._ElementTree | etree._Element | None = None) -> None:
         """Update the latest episode info."""
         logger.trace("Updating podcast episode info")
-        new_latest_episode: dict = self._get_latest_episode_default()
+        new_latest_episode: EpisodeInfo = EpisodeInfo()
         new_episode_count: int = 0
 
         try:
@@ -53,7 +57,7 @@ class PodcastHealth:
 
                 # If we have the title, use it
                 with contextlib.suppress(IndexError):
-                    new_latest_episode["title"] = latest_episode.xpath("title")[0].text
+                    new_latest_episode.title = latest_episode.xpath("title")[0].text
 
                 # If we have the description, use it
                 with contextlib.suppress(IndexError):
@@ -61,11 +65,11 @@ class PodcastHealth:
 
                 # If we have the pubDate, try to parse it
                 if len(latest_episode.xpath("pubDate")) > 0 and latest_episode.xpath("pubDate")[0].text:
-                    pod_pubdate = latest_episode.xpath("pubDate")[0].text
+                    pod_pubdate = str(latest_episode.xpath("pubDate")[0].text) or "1970-01-01 00:00:00"
                     found_pubdate = False
                     for podcast_date_format in PODCAST_DATE_FORMATS:
                         try:
-                            new_latest_episode["pubdate"] = int(
+                            new_latest_episode.pubdate = int(
                                 datetime.datetime.strptime(pod_pubdate, podcast_date_format)
                                 .replace(tzinfo=datetime.UTC)
                                 .timestamp()
@@ -123,7 +127,7 @@ class PodcastArchiverHealth:
         self.assets = ap.webpages.get_list()
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-    def update_template_status(self, webpage: str, **kwargs: bool | str | int) -> None:
+    def update_template_status(self, webpage: str, **kwargs: bool | str | int | None) -> None:
         """Update the webpage."""
         if webpage not in self.templates:
             self.templates[webpage] = WebpageHealth()
@@ -132,7 +136,7 @@ class PodcastArchiverHealth:
             if value is not None and hasattr(self.templates[webpage], key):
                 setattr(self.templates[webpage], key, value)
 
-    def update_podcast_status(self, podcast: str, **kwargs: bool | str | int) -> None:
+    def update_podcast_status(self, podcast: str, **kwargs: bool | str | int | None) -> None:
         """Update the podcast."""
         logger.trace("Updating podcast health for %s: %s", podcast, kwargs)
         if podcast not in self.podcasts:
@@ -142,7 +146,7 @@ class PodcastArchiverHealth:
             if value is not None and hasattr(self.podcasts[podcast], key):
                 setattr(self.podcasts[podcast], key, value)
 
-    def update_podcast_episode_info(self, podcast: str, tree: etree._ElementTree) -> None:
+    def update_podcast_episode_info(self, podcast: str, tree: etree._ElementTree | etree._Element) -> None:
         """Update the podcast episode info."""
         logger.trace("Updating podcast episode info for %s", podcast)
         if podcast not in self.podcasts:
@@ -150,7 +154,7 @@ class PodcastArchiverHealth:
 
         self.podcasts[podcast].update_episode_info(tree)
 
-    def update_core_status(self, **kwargs: bool | str | int) -> None:
+    def update_core_status(self, **kwargs: bool | str | int | None) -> None:
         """Update the core."""
         for key, value in kwargs.items():
             if value is not None and hasattr(self.core, key):

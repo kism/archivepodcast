@@ -1,6 +1,6 @@
 # Config File
 
-If there is no config.toml file in the instance folder, the program will create one with the default values in archivepodcast/config.py.
+If there is no config.json file in the instance folder, the program will create one with the default values in archivepodcast/config.py.
 
 The default config will not be enough to start the program as you need to define the podcasts you want to archive.
 

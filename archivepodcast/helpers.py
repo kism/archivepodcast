@@ -10,11 +10,13 @@ logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client  # pragma: no cover
+    from mypy_boto3_s3.type_defs import ObjectTypeDef  # pragma: no cover
 else:
     S3Client = object
+    ObjectTypeDef = object
 
 
-def list_all_s3_objects(s3_client: S3Client, bucket: str) -> list:
+def list_all_s3_objects(s3_client: S3Client, bucket: str) -> list[ObjectTypeDef]:
     """List all objects in an S3 bucket using pagination.
 
     Args:
@@ -27,7 +29,7 @@ def list_all_s3_objects(s3_client: S3Client, bucket: str) -> list:
     paginator = s3_client.get_paginator("list_objects_v2")
     page_iterator = paginator.paginate(Bucket=bucket)
 
-    all_objects: list = []
+    all_objects: list[ObjectTypeDef] = []
     for page in page_iterator:
         if "Contents" in page:
             all_objects.extend(page["Contents"])

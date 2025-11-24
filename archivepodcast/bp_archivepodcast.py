@@ -12,10 +12,12 @@ from types import FrameType
 
 from flask import Blueprint, Response, current_app, render_template, send_from_directory
 from lxml import etree
+from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 from .ap_archiver import PodcastArchiver
 from .ap_constants import TZINFO_UTC
 from .config import ArchivePodcastConfig
+from .instances import get_ap_config
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -32,10 +34,11 @@ ap: PodcastArchiver | None = None
 def initialise_archivepodcast() -> None:
     """Initialize the archivepodcast app."""
     global ap  # noqa: PLW0603
+    ap_conf = get_ap_config()
 
     ap = PodcastArchiver(
-        app_config=current_app.config["app"],
-        podcast_list=current_app.config["podcast"],
+        app_config=ap_conf.app,
+        podcast_list=ap_conf.podcasts,
         instance_path=Path(current_app.instance_path),
         root_path=Path(current_app.root_path),
         debug=current_app.debug,
@@ -69,15 +72,10 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     logger.info("🙋 Got SIGHUP, Reloading Config")
 
     try:
-        ap_conf = ArchivePodcastConfig(instance_path=Path(current_app.instance_path))  # Loads app config from disk
-
-        # Other sections handled by config.py
-        for key, value in ap_conf.items():
-            if key != "flask":
-                current_app.config[key] = value
+        ap_conf = ArchivePodcastConfig()  # Loads app config from disk
 
         # Due to application context this cannot be done in a thread
-        ap.load_config(current_app.config["app"], current_app.config["podcast"])
+        ap.load_config(ap_conf.app, ap_conf.podcasts)
 
         # This is the slow part of the reload, no app context required so we can give run it in a thread.
         logger.info("🙋 Ad-Hoc grabbing podcasts in a thread")
@@ -244,23 +242,22 @@ def health() -> Response:
 
 
 @bp.route("/content/<path:path>")
-def send_content(path: str) -> Response:
+def send_content(path: str) -> Response | WerkzeugResponse:
     """Serve Content."""
     if not ap:
         return generate_not_initialized_error()
 
-    if current_app.config["app"]["storage_backend"] == "s3":
+    ap_conf = get_ap_config()
+
+    if ap_conf.app.storage_backend == "s3":
         path_obj = Path(path)
         web_root = Path(ap.web_root)
         relative_path = str(path_obj).replace(str(web_root), "")  # The easiest way to get the "relative" path
-        new_path = current_app.config["app"]["s3"]["cdn_domain"] + "content/" + relative_path
-        response = current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
-        response.headers["Cache-Control"] = "public, max-age=10800"  # 10800 seconds = 3 hours
-    else:
-        web_dir = Path(current_app.instance_path) / "web" / "content"
-        response = send_from_directory(str(web_dir), path)
+        new_path = ap_conf.app.s3.cdn_domain.encoded_string() + "content/" + relative_path
+        return current_app.redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)  # type: ignore[no-any-return] # Huh?
 
-    return response  # type: ignore[return-value]
+    web_dir = Path(current_app.instance_path) / "web" / "content"
+    return send_from_directory(str(web_dir), path)
 
 
 @bp.route("/filelist.html")
@@ -275,10 +272,14 @@ def rss(feed: str) -> Response:
     if not ap:
         return generate_not_initialized_error()
 
+    ap_conf = get_ap_config()
+
     logger.debug("Sending rss feed: %s", feed)
+    rss_bytes = b""
     rss_str = ""
     try:
-        rss_str = ap.get_rss_feed(feed)
+        rss_bytes = ap.get_rss_feed(feed)
+        rss_str = rss_bytes.decode("utf-8")
     except TypeError:
         return_code = HTTPStatus.INTERNAL_SERVER_ERROR
         return Response(
@@ -287,7 +288,7 @@ def rss(feed: str) -> Response:
                 error_code=str(return_code),
                 error_text="The developer probably messed something up",
                 about_page=get_about_page_exists(),
-                app_config=current_app.config["app"],
+                app_config=ap_conf.app,
                 header=ap.webpages.generate_header("error.html"),
             ),
             status=return_code,
@@ -314,8 +315,8 @@ def rss(feed: str) -> Response:
                     error_code=str(return_code),
                     error_text="Feed not found, you know you can copy and paste yeah?",
                     about_page=get_about_page_exists(),
-                    app_config=current_app.config["app"],
-                    podcasts=current_app.config["podcast"],
+                    app_config=ap_conf.app,
+                    podcasts=ap_conf.podcasts,
                     header=ap.webpages.generate_header("error.html"),
                 ),
                 status=return_code,
@@ -329,8 +330,8 @@ def rss(feed: str) -> Response:
                     error_code=str(return_code),
                     error_text="Feed not loadable, Internal Server Error",
                     about_page=get_about_page_exists(),
-                    app_config=current_app.config["app"],
-                    podcasts=current_app.config["podcast"],
+                    app_config=ap_conf.app,
+                    podcasts=ap_conf.podcasts,
                     header=ap.webpages.generate_header("error.html"),
                 ),
                 status=return_code,
@@ -361,12 +362,15 @@ def generate_not_initialized_error() -> Response:
     """Generate a not initialized 500 error."""
     logger.error("❌ ArchivePodcast object not initialized")
     default_header = '<header><a href="index.html">Home</a><hr></header>'
+
+    ap_conf = get_ap_config()
+
     return Response(
         render_template(
             "error.html.j2",
             error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
             error_text="Archive Podcast not initialized",
-            app_config=current_app.config["app"],
+            app_config=ap_conf.app,
             header=default_header,
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -378,6 +382,8 @@ def generate_not_generated_error(webpage_name: str) -> Response:
     if not ap:
         return generate_not_initialized_error()
 
+    ap_conf = get_ap_config()
+
     logger.error("❌ Requested page: %s not generated", webpage_name)
     return Response(
         render_template(
@@ -385,7 +391,7 @@ def generate_not_generated_error(webpage_name: str) -> Response:
             error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
             error_text=f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
             about_page=get_about_page_exists(),
-            app_config=current_app.config["app"],
+            app_config=ap_conf.app,
             header=ap.webpages.generate_header("error.html"),
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -397,13 +403,15 @@ def generate_404() -> Response:
     if not ap:
         return generate_not_initialized_error()
 
+    ap_conf = get_ap_config()
+
     returncode = HTTPStatus.NOT_FOUND
     render = render_template(
         "error.html.j2",
         error_code=str(returncode),
         error_text="Page not found, how did you even?",
         about_page=get_about_page_exists(),
-        app_config=current_app.config["app"],
+        app_config=ap_conf.app,
         header=ap.webpages.generate_header("error.html"),
     )
     return Response(render, status=returncode)

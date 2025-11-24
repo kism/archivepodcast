@@ -21,14 +21,14 @@ chown -R apuser:apuser /opt/archivepodcast
 
 ## Configuration
 
-Run the program once manually to create the default config.toml and then fill it in. You can ignore the cdn address and s3 config items.
+Run the program once manually to create the default config.json and then fill it in. You can ignore the cdn address and s3 config items.
 
 ```bash
 cd /opt/archivepodcast
 sudo -u apuser .venv/bin/waitress-serve --port=5100 --call 'archivepodcast:create_app'
 ```
 
-Edit: `/opt/archivepodcast/instance/config.toml` to your liking.
+Edit: `/opt/archivepodcast/instance/config.json` to your liking.
 
 ```toml
 [app]

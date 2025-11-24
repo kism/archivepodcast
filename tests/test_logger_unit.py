@@ -1,20 +1,38 @@
-"""Unit tests for the logger module."""
+"""Logger unit tests."""
 
 import logging
-from pathlib import Path
+import random
+from collections.abc import Generator
+from typing import TYPE_CHECKING
 
 import pytest
 
-import archivepodcast.logger
-from archivepodcast.logger import ColorFormatter, CustomLogger, _add_file_handler, _set_log_level
+from archivepodcast.logger import (
+    TRACE_LEVEL_NUM,
+    CustomLogger,
+    LoggingConf,
+    _set_log_level,
+    get_logger,
+    setup_logger,
+)
+from tests.helpers import assert_no_warnings_in_caplog
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+else:
+    MockerFixture = object
 
 
 @pytest.fixture
-def logger():
-    """Return a clean logger for testing, with cleanup after each test."""
-    logger = logging.getLogger("TEST_LOGGER")
+def logger() -> Generator[CustomLogger]:
+    """Logger to use in unit tests, including cleanup."""
+    random_str = str(random.randint(1, 99999))  # Avoid conflicts? this runs weird
 
-    assert len(logger.handlers) == 0  # Check the logger has no handlers
+    logger_raw = logging.getLogger(f"TEST_LOGGER_{random_str}")
+    assert len(logger_raw.handlers) == 0  # Check the logger has no handlers
+
+    setup_logger(None, in_logger=logger_raw)
+    logger = get_logger(logger_raw.name)
 
     yield logger
 
@@ -24,50 +42,19 @@ def logger():
         handler.close()
 
 
-def test_logging_permissions_error(logger, tmp_path, mocker):
-    """Test logging, mock a permission error."""
-
-    mock_open_func = mocker.mock_open(read_data="")
-    mock_open_func.side_effect = PermissionError("Permission denied")
-
-    mocker.patch("builtins.open", mock_open_func)
-
-    # TEST: That a permissions error is raised when open() results in a permissions error.
-    with pytest.raises(PermissionError):
-        _add_file_handler(logger, str(tmp_path))
-
-
-def test_config_logging_to_dir(logger, tmp_path):
-    """TEST: Correct exception is caught when you try log to a folder."""
-
-    with pytest.raises(IsADirectoryError):
-        _add_file_handler(logger, tmp_path)
-
-
-def test_handler_console_added(logger, app):
+def test_handler_console_added(logger: logging.Logger) -> None:
     """Test logging console handler."""
-    logging_conf = {"path": "", "level": "INFO"}  # Test only console handler
+    log_level = "INFO"
 
     # TEST: Only one handler (console), should exist when no logging path provided
-    archivepodcast.logger.setup_logger(app, logging_conf, logger)
+    config = LoggingConf(level=log_level, path=None)
+
+    setup_logger(app=None, logging_conf=config, in_logger=logger)
     assert len(logger.handlers) == 1
 
     # TEST: If a console handler exists, another one shouldn't be created
-    archivepodcast.logger.setup_logger(app, logging_conf, logger)
+    setup_logger(app=None, logging_conf=config, in_logger=logger)
     assert len(logger.handlers) == 1
-
-
-def test_handler_file_added(logger, tmp_path, app):
-    """Test logging file handler."""
-    logging_conf = {"path": str(Path(tmp_path) / "test.log"), "level": "INFO"}  # Test file handler
-
-    # TEST: Two handlers when logging to file expected
-    archivepodcast.logger.setup_logger(app, logging_conf, logger)
-    assert len(logger.handlers) == 2  # noqa: PLR2004 A console and a file handler are expected
-
-    # TEST: Two handlers when logging to file expected, another one shouldn't be created
-    archivepodcast.logger.setup_logger(app, logging_conf, logger)
-    assert len(logger.handlers) == 2  # noqa: PLR2004 A console and a file handler are expected
 
 
 @pytest.mark.parametrize(
@@ -77,51 +64,24 @@ def test_handler_file_added(logger, tmp_path, app):
         ("INFO", 20),
         ("WARNING", 30),
         ("INVALID", 20),
+        ("TRACE", TRACE_LEVEL_NUM),
     ],
 )
-def test_set_log_level(log_level_in, log_level_expected, logger):
+def test_set_log_level(log_level_in: str | int, log_level_expected: int, logger: logging.Logger) -> None:
     """Test if _set_log_level results in correct log_level."""
-
-    # TEST: Logger ends up with correct values
     _set_log_level(logger, log_level_in)
     assert logger.getEffectiveLevel() == log_level_expected
 
 
-def test_colour():
-    """Test colour messages."""
+def test_trace_level(logger: CustomLogger, caplog: pytest.LogCaptureFixture) -> None:
+    """Test trace level."""
 
-    formatter = ColorFormatter()
+    _set_log_level(logger, "TRACE")
 
-    class TestRecord(logging.LogRecord):
-        def __init__(self, levelno, msg, thread_name="TestThread", name="Test_Logger"):
-            self.levelno = levelno
-            self.msg = msg
-            self.name = name
-            self.args = ()
-            self.exc_info = None
-            self.exc_text = None
-            self.stack_info = None
-            self.threadName = thread_name
-            self.levelname = logging.getLevelName(levelno)
+    assert logger.getEffectiveLevel() == TRACE_LEVEL_NUM
 
-    log_records = [
-        TestRecord(levelno=10, msg="Test message str"),
-        TestRecord(levelno=10, msg=None),
-        TestRecord(levelno=10, msg=["Test", "message", "list"]),
-        TestRecord(levelno=10, msg=("Test", "message", "tuple")),
-        TestRecord(levelno=10, msg="Test", thread_name="Thread-"),
-        TestRecord(levelno=20, msg="Test", name="ap."),
-    ]
+    with caplog.at_level(TRACE_LEVEL_NUM):
+        logger.trace("Test trace")
 
-    for i in log_records:
-        assert formatter.format(i)
-
-
-def test_trace_log_level():
-    """Test trace log level."""
-
-    custom_logger = CustomLogger("TEST_LOGGER")
-    custom_logger.trace("Test trace message")
-
-    assert logging.getLevelName(pytest.TRACE_LEVEL_NUM) == "TRACE"
-    assert logging._nameToLevel["TRACE"] == pytest.TRACE_LEVEL_NUM
+    assert "Test trace" in caplog.text
+    assert_no_warnings_in_caplog(caplog)

@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.23.dev1"
+version = "1.5.0.dev1"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -19,8 +19,11 @@ dependencies = [
     # "lxml>=6", # TESTING
     "markdown>=3.7",
     "psutil>=6.1.1",
+    "pydantic>=2.12.4",
+    "pydantic-settings>=2.12.0",
     "python-magic>=0.4",
     "requests>=2.32",
+    "rich>=14.2.0",
     "tomlkit>=0.13",
     "typed-ffmpeg>=3.0",
     "waitress>=3.0",
@@ -133,28 +136,22 @@ filterwarnings = [
 [tool.coverage.html]
 show_contexts = true
 
+
 [tool.mypy]
 files = ["archivepodcast"]
-namespace_packages = false     # God knows why this makes mypy take forever
+namespace_packages = false # God knows why this makes mypy take forever
 explicit_package_bases = false # God knows why this makes mypy take forever
 show_error_codes = true
-strict = false
-
-
-# [tool.mypy]
-# files = ["archivepodcast"]
-# namespace_packages = false # God knows why this makes mypy take forever
-# explicit_package_bases = false # God knows why this makes mypy take forever
-# show_error_codes = true
-# strict = true
-# enable_error_code = [
-#     "ignore-without-code",
-#     "redundant-expr",
-#     "truthy-bool",
-#     "type-arg",
-#     "unused-awaitable",
-#     "possibly-undefined",
-#     "redundant-self",
-# ]
-# warn_unreachable = true
-# warn_redundant_casts = true
+strict = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+    "type-arg",
+    "unused-awaitable",
+    "possibly-undefined",
+    "redundant-self",
+]
+disable_error_code = ["misc"]
+warn_unreachable = true
+warn_redundant_casts = true

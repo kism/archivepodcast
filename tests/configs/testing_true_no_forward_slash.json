@@ -1,0 +1,32 @@
+{
+  "app": {
+    "inet_path": "http://localhost:5100",
+    "storage_backend": "s3",
+    "web_page": {
+      "title": "Pytest Podcast Archive [Local]",
+      "description": "My Podcast Archive, in pytest!",
+      "contact": "archivepodcast_pytest@localhost"
+    },
+    "s3": {
+      "cdn_domain": "https://cdn.my.cool.website",
+      "api_url": "",
+      "bucket": "archivepodcast-pytest",
+      "access_key_id": "abc",
+      "secret_access_key": "xyz"
+    }
+  },
+  "podcasts": [
+    {
+      "url": "https://pytest.internal/rss/test_source",
+      "new_name": "PyTest Podcast [Archive S3]",
+      "name_one_word": "test",
+      "description": "My Podcast Archive, in pytest!",
+      "live": false,
+      "contact_email": "test@localhost"
+    }
+  ],
+  "logging": {},
+  "flask": {
+    "TESTING": true
+  }
+}

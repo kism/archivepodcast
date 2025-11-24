@@ -4,9 +4,9 @@ This configuration uses S3 for asset storage while maintaining a standard web ap
 
 ## Configuration Requirements
 
-* In config.toml set storage_backend to 's3'
-* Fill in the s3 config with what's appropriate for your bucket, make sure your api credential has read + write on the bucket
-* Ensure you s3 bucket has a domain. In config.toml set the cdn_domain to that domain
+- In config.toml set storage_backend to 's3'
+- Fill in the s3 config with what's appropriate for your bucket, make sure your api credential has read + write on the bucket
+- Ensure you s3 bucket has a domain. In config.json set the cdn_domain to that domain
 
 ```toml
 [app]

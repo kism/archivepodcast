@@ -8,7 +8,7 @@ When you run the flask app, it will stay running and check for new episodes ever
 
 ## Run
 
-By default, it will look for config.toml in the usual paths, and the instance path is the current working directory / instance.
+By default, it will look for config.json in the usual paths, and the instance path is the current working directory / instance.
 
 ```bash
 .venv/bin/python -m archivepodcast
@@ -17,5 +17,5 @@ By default, it will look for config.toml in the usual paths, and the instance pa
 Alternatively you can specify either of these as arguments.
 
 ```bash
-.venv/bin/python -m archivepodcast --config path/to/config.toml --instance-path path/to/instance
+.venv/bin/python -m archivepodcast --config path/to/config.json --instance-path path/to/instance
 ```

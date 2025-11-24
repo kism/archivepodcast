@@ -2,27 +2,30 @@
 
 from http import HTTPStatus
 
+from flask.testing import FlaskClient
+
 from archivepodcast import bp_archivepodcast
+from archivepodcast.ap_archiver import PodcastArchiver
 
 
-def test_home(client, apa):
+def test_home(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Verify root path redirects to index.html."""
     bp_archivepodcast.ap = apa
     apa._render_files()
 
-    assert apa.webpages.get_webpage("index.html")
+    assert apa.webpages.get_webpage("index.html") is not None
 
     response = client.get("/")
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
     assert response.headers["Location"] == "/index.html"
 
 
-def test_home_index(client, apa):
+def test_home_index(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Test the hello API endpoint. This one uses the fixture in conftest.py."""
     bp_archivepodcast.ap = apa
     apa._render_files()
 
-    assert apa.webpages.get_webpage("index.html")
+    assert apa.webpages.get_webpage("index.html") is not None
 
     response = client.get("/index.html")
     # TEST: HTTP OK
@@ -33,7 +36,7 @@ def test_home_index(client, apa):
     assert b"<!DOCTYPE html>" in response.data
 
 
-def test_static_js_exists(client, apa):
+def test_static_js_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
     bp_archivepodcast.ap = apa
     apa._render_files()
@@ -47,7 +50,7 @@ def test_static_js_exists(client, apa):
     assert "text/javascript" in response.content_type
 
 
-def test_favicon_exists(client, apa):
+def test_favicon_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
     bp_archivepodcast.ap = apa
     apa._render_files()
@@ -56,7 +59,7 @@ def test_favicon_exists(client, apa):
     assert response.status_code == HTTPStatus.OK
 
 
-def test_guide_exists(client, apa):
+def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
     bp_archivepodcast.ap = apa
     apa._render_files()
@@ -65,7 +68,7 @@ def test_guide_exists(client, apa):
     assert response.status_code == HTTPStatus.OK
 
 
-def test_fonts_exist(client, apa):
+def test_fonts_exist(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/fonts/... loads."""
     bp_archivepodcast.ap = apa
     apa._render_files()
