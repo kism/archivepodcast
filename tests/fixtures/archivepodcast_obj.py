@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from mypy_boto3_s3.client import S3Client
 
 from archivepodcast.ap_archiver import PodcastArchiver
 from archivepodcast.ap_downloader import PodcastDownloader
@@ -12,9 +11,11 @@ from archivepodcast.config import ArchivePodcastConfig
 from tests.constants import FLASK_ROOT_PATH
 
 if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
     from pytest_mock import MockerFixture
 else:
     MockerFixture = object
+    S3Client = object
 
 
 @pytest.fixture

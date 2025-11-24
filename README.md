@@ -77,10 +77,10 @@ An example guide on setting it up start to finish, with all features and saving 
 
 - Container Registry
 - header as a table, or divs
-- Pydantic
-- Mypy in strict mode
-- Rich for logging, why not
-- Put things in directories
+- ~~Pydantic~~
+- ~~Mypy in strict mode~~
+- ~~Rich for logging, why not~~
+- Put source in directories
 - Async scraping
 - Progress bars (rich)
 - Fix font selection

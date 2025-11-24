@@ -5,16 +5,17 @@ from typing import TYPE_CHECKING
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from mypy_boto3_s3.client import S3Client
 
 from archivepodcast import create_app
 from archivepodcast.config import ArchivePodcastConfig
 from tests.constants import DUMMY_RSS_STR
 
 if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
     from pytest_mock import MockerFixture
 else:
     MockerFixture = object
+    S3Client = object
 
 
 @pytest.fixture

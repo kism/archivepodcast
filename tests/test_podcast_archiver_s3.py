@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from mypy_boto3_s3.client import S3Client
 from pydantic import HttpUrl
 
 from archivepodcast.ap_archiver import PodcastArchiver
@@ -14,11 +13,14 @@ from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.logger import TRACE_LEVEL_NUM
 from tests.constants import DUMMY_RSS_STR, FLASK_ROOT_PATH
 
+from . import FakeExceptionError
+
 if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
     from pytest_mock import MockerFixture
 else:
     MockerFixture = object
-from . import FakeExceptionError
+    S3Client = object
 
 CONTENT_TYPE_PARAMS = [
     ("index.html", "text/html"),
