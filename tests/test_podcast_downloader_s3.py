@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from botocore.exceptions import ClientError
 
-from archivepodcast.ap_downloader import PodcastDownloader
 from archivepodcast.config import ArchivePodcastConfig
-from archivepodcast.logger import TRACE_LEVEL_NUM
+from archivepodcast.downloader.downloader import PodcastDownloader
+from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 
 from . import FakeExceptionError
 
@@ -46,12 +46,10 @@ def test_init(
     assert pd.s3_paths_cache == []
 
 
-def test_download_podcast(
+async def test_download_podcast(
     apd_aws: PodcastDownloader,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test downloading podcast RSS and assets."""
@@ -60,10 +58,8 @@ def test_download_podcast(
     config = get_test_config(config_file)
     mock_podcast_definition = config.podcasts[0]
 
-    mock_get_podcast_source_rss("test_valid.rss")
-
-    with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_downloader"):
-        apd_aws.download_podcast(mock_podcast_definition)
+    with caplog.at_level(level=logging.INFO, logger="archivepodcast.downloader"):
+        await apd_aws.download_podcast(mock_podcast_definition)
 
     assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
@@ -84,12 +80,11 @@ def test_download_podcast(
     assert "content/test/PyTest-Podcast-Archive-S3.jpg" in s3_object_list_str
 
 
-def test_download_podcast_wav(
+@pytest.mark.asyncio
+async def mock_podcast_source_rss_wav(
     apd_aws: PodcastDownloader,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_wav: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test downloading podcast RSS and assets with WAV format."""
@@ -99,10 +94,8 @@ def test_download_podcast_wav(
     config = get_test_config(config_file)
     mock_podcast_definition = config.podcasts[0]
 
-    mock_get_podcast_source_rss("test_valid_wav.rss")
-
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        apd_aws.download_podcast(mock_podcast_definition)
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
+        await apd_aws.download_podcast(mock_podcast_definition)
 
     assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
@@ -121,7 +114,7 @@ def test_download_podcast_wav(
 
 def test_upload_asset_s3_no_client(apd: PodcastDownloader, caplog: pytest.LogCaptureFixture) -> None:
     """Test handling missing S3 client during upload."""
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
         apd._upload_asset_s3(Path("test.jpg"), ".jpg")
 
     assert "s3 client not found, cannot upload" in caplog.text
@@ -129,7 +122,7 @@ def test_upload_asset_s3_no_client(apd: PodcastDownloader, caplog: pytest.LogCap
 
 def test_upload_asset_s3_file_not_found(apd_aws: PodcastDownloader, caplog: pytest.LogCaptureFixture) -> None:
     """Test handling file not found error during S3 upload."""
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
         apd_aws._upload_asset_s3(Path("test_file_not_exist.jpg"), ".jpg")
 
     assert "Could not upload to s3, the source file was not found" in caplog.text
@@ -145,7 +138,7 @@ def test_upload_asset_s3_unhandled_exception(
 
     monkeypatch.setattr(apd_aws.s3, "upload_file", unhandled_exception)
 
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
         apd_aws._upload_asset_s3(Path("test_file_not_exist.jpg"), ".jpg")
 
     assert "Unhandled s3 error" in caplog.text
@@ -164,7 +157,7 @@ def test_upload_asset_s3_os_remove_error(
 
     monkeypatch.setattr(apd_aws.s3, "upload_file", lambda *args, **kwargs: None)
 
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
         apd_aws._upload_asset_s3(Path("test_file_mocked.jpg"), ".jpg")
 
     assert "Could not remove the local file, the source file was not found" in caplog.text
@@ -184,13 +177,13 @@ def test_check_path_exists_s3(apd_aws: PodcastDownloader, caplog: pytest.LogCapt
     assert apd_aws._check_path_exists("/content/test") is True
 
     # Test path handling and if the cache gets hit
-    with caplog.at_level(level=TRACE_LEVEL_NUM, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=TRACE_LEVEL_NUM, logger="archivepodcast.downloader"):
         assert apd_aws._check_path_exists("content/test") is True
         assert "s3 path content/test exists in s3_paths_cache, skipping" in caplog.text
 
     assert len(apd_aws.s3_paths_cache) == 1
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
         assert apd_aws._check_path_exists("content/test/not_exist") is False
 
     assert "File: content/test/not_exist does not exist" in caplog.text
@@ -209,7 +202,7 @@ def test_check_path_exists_s3_client_error(
 
     monkeypatch.setattr(apd_aws.s3, "head_object", client_error_not_404)
 
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
         assert apd_aws._check_path_exists("content/test") is False
 
     assert "s3 check file exists errored out?" in caplog.text
@@ -225,7 +218,7 @@ def test_check_path_exists_s3_unhandled_exception(
 
     monkeypatch.setattr(apd_aws.s3, "head_object", unhandled_exception)
 
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
         assert apd_aws._check_path_exists("content/test") is False
 
     assert "Unhandled s3 Error" in caplog.text

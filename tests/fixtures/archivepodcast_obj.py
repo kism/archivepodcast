@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from archivepodcast.ap_archiver import PodcastArchiver
-from archivepodcast.ap_downloader import PodcastDownloader
+from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
+from archivepodcast.downloader.downloader import PodcastDownloader
 from tests.constants import FLASK_ROOT_PATH
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ def apa(
         root_path=FLASK_ROOT_PATH,
     )
 
-    while apa.health.core.currently_loading_config or apa.health.core.currently_rendering:
+    while apa.health.currently_loading_config() or apa.health.currently_rendering():
         time.sleep(0.05)
 
     return apa
@@ -44,7 +44,7 @@ def apa(
 @pytest.fixture
 def no_render_files(monkeypatch: pytest.MonkeyPatch) -> None:
     """Monkeypatch render_files to prevent it from running."""
-    monkeypatch.setattr("archivepodcast.ap_archiver.PodcastArchiver.render_files", lambda _: None)
+    monkeypatch.setattr("archivepodcast.archiver.PodcastArchiver.render_files", lambda _: None)
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def apa_aws(
         root_path=FLASK_ROOT_PATH,
     )
 
-    while apa_aws.health.core.currently_loading_config or apa_aws.health.core.currently_rendering:
+    while apa_aws.health.currently_loading_config() or apa_aws.health.currently_rendering():
         time.sleep(0.05)
 
     return apa_aws
@@ -80,7 +80,7 @@ def apa_aws(
 
 # endregion
 
-# region: PodcastDownloader object
+# region PodcastDownloader object
 
 
 @pytest.fixture

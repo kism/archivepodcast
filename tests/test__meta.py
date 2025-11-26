@@ -26,14 +26,9 @@ def test_version_lock() -> None:
     with lock_path.open() as f:
         uv_lock = tomlkit.load(f)
 
-    found_version = False
-    for package in uv_lock.get("package", []):
-        if package["name"] == "archivepodcast":
-            assert package["version"] == __version__
-            found_version = True
-            break
-
-    assert found_version, "archivepodcast not found in uv.lock"
+    package = next((pkg for pkg in uv_lock.get("package", []) if pkg["name"] == "archivepodcast"), None)
+    assert package is not None, "archivepodcast not found in uv.lock"
+    assert package["version"] == __version__
 
 
 def test_wav_generation(tmp_path: Path) -> None:

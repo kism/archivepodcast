@@ -19,7 +19,7 @@ def get_test_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable
 
         config = ArchivePodcastConfig().force_load_config_file(filepath)
 
-        monkeypatch.setattr(archivepodcast.instances, "_conf_cache", config)
+        monkeypatch.setattr(archivepodcast.instances.config, "_conf_cache", config)
 
         return config
 

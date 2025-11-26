@@ -4,9 +4,9 @@ import argparse
 import time
 from pathlib import Path
 
-from . import logger as ap_logger
-from .ap_archiver import PodcastArchiver
-from .instances import get_ap_config
+from .archiver import PodcastArchiver
+from .instances.config import get_ap_config
+from .utils import logger as ap_logger
 from .version import __version__
 
 DEFAULT_INSTANCE_PATH = Path.cwd() / "instance"  # Default instance path for the app
@@ -42,7 +42,7 @@ def run_ap_adhoc(
 
     logger.info("Waiting for html rendering to finish...")
 
-    while ap.health.core.currently_rendering:
+    while ap.health.currently_rendering():
         time.sleep(0.05)
 
     logger.info("Done!")

@@ -9,3 +9,5 @@ srss
 webplayer
 devel
 libmp3lame
+AP
+slugified

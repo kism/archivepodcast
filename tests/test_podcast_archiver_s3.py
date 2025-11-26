@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from pydantic import HttpUrl
 
-from archivepodcast.ap_archiver import PodcastArchiver
+from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
-from archivepodcast.logger import TRACE_LEVEL_NUM
+from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from tests.constants import DUMMY_RSS_STR, FLASK_ROOT_PATH
 
 from . import FakeExceptionError
@@ -60,7 +60,7 @@ def test_config_valid(
 
 def test_render_files(apa_aws: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Test that static pages are uploaded to s3."""
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver.write_webpages"):
+    with caplog.at_level(level=logging.DEBUG):
         apa_aws._render_files()
 
     assert apa_aws.s3 is not None
@@ -79,7 +79,7 @@ def test_render_files(apa_aws: PodcastArchiver, caplog: pytest.LogCaptureFixture
 
 def test_check_s3_no_files(apa_aws: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Test that s3 files are checked."""
-    with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.INFO):
         apa_aws.check_s3_files()
 
     assert "Checking state of s3 bucket" in caplog.text
@@ -90,7 +90,7 @@ def test_check_s3_files(apa_aws: PodcastArchiver, caplog: pytest.LogCaptureFixtu
     """Test that s3 files are checked."""
     apa_aws._render_files()
 
-    with caplog.at_level(level=TRACE_LEVEL_NUM, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=TRACE_LEVEL_NUM):
         apa_aws.check_s3_files()
 
     assert "Checking state of s3 bucket" in caplog.text
@@ -104,9 +104,7 @@ def test_s3_object_content_type(
     caplog: pytest.LogCaptureFixture,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    mock_get_podcast_source_rss: MockerFixture,
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
     path: str,
     content_type: str,
 ) -> None:
@@ -154,7 +152,7 @@ def test_check_s3_files_problem_files(apa_aws: PodcastArchiver, caplog: pytest.L
         ContentType="text/html",
     )
 
-    with caplog.at_level(level=logging.WARNING, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.WARNING):
         apa_aws.check_s3_files()
 
     assert "S3 Path starts with a /, this is not expected: /index.html DELETING" in caplog.text
@@ -170,16 +168,13 @@ def test_check_s3_files_problem_files(apa_aws: PodcastArchiver, caplog: pytest.L
 def test_grab_podcasts_live(
     apa_aws: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
 ) -> None:
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid.rss")
 
     apa_aws.podcast_list[0].live = True
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.DEBUG):
         apa_aws.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive S3]" in caplog.text
@@ -202,13 +197,11 @@ def test_upload_to_s3_exception(
     apa_aws: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
     tmp_path: Path,
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid.rss")
+
     apa_aws.podcast_list[0].live = False
 
     rss_path = Path(tmp_path) / "web" / "rss" / "test"
@@ -221,7 +214,7 @@ def test_upload_to_s3_exception(
 
     monkeypatch.setattr(apa_aws.s3, "put_object", mock_unhandled_exception)
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.DEBUG):
         apa_aws.grab_podcasts()
 
     assert "Unhandled s3 error trying to upload the file:" in caplog.text
@@ -251,7 +244,7 @@ def test_load_s3_api_url(
 
     monkeypatch.setattr(apa_no_mocked_aws, "check_s3_files", lambda: None)
 
-    with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.INFO):
         apa_no_mocked_aws.load_s3()
 
     assert "Authenticated s3, using bucket: test" in caplog.text

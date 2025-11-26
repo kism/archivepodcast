@@ -4,13 +4,13 @@ from http import HTTPStatus
 
 from flask.testing import FlaskClient
 
-from archivepodcast import bp_archivepodcast
-from archivepodcast.ap_archiver import PodcastArchiver
+from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+from archivepodcast.instances import podcast_archiver
 
 
 def test_home(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Verify root path redirects to index.html."""
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     apa._render_files()
 
     assert apa.webpages.get_webpage("index.html") is not None
@@ -22,7 +22,7 @@ def test_home(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 def test_home_index(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Test the hello API endpoint. This one uses the fixture in conftest.py."""
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     apa._render_files()
 
     assert apa.webpages.get_webpage("index.html") is not None
@@ -38,7 +38,7 @@ def test_home_index(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 def test_static_js_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     apa._render_files()
 
     response = client.get("/static/clipboard.js")
@@ -52,7 +52,7 @@ def test_static_js_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 def test_favicon_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     apa._render_files()
 
     response = client.get("/favicon.ico")
@@ -61,7 +61,7 @@ def test_favicon_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     apa._render_files()
 
     response = client.get("/guide.html")
@@ -70,7 +70,7 @@ def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 def test_fonts_exist(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/fonts/... loads."""
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     apa._render_files()
 
     font_list = [

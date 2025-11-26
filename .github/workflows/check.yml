@@ -57,6 +57,6 @@ jobs:
           echo '#!/bin/bash' > /usr/local/bin/ffmpeg
           chmod +x /usr/local/bin/ffmpeg
       - name: Generate the HTML
-        run: uv run python -m archivepodcast --config scripts/config/config-ci.toml
+        run: uv run python -m archivepodcast --config scripts/config/config-ci.json
       - name: Validate HTML
         run: html-validate instance/web/*.html

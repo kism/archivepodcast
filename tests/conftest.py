@@ -8,6 +8,7 @@ pytest_plugins = [  # Magic list of fixtures to load
     "tests.fixtures.archivepodcast_obj",
     "tests.fixtures.aws",
     "tests.fixtures.configs",
-    "tests.fixtures.requests",
+    # "tests.fixtures.requests",
     "tests.fixtures.threads",
+    "tests.fixtures.aiohttp",
 ]

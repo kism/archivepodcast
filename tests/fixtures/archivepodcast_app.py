@@ -34,12 +34,10 @@ def app(tmp_path: Path, get_test_config: Callable[[str], ArchivePodcastConfig]) 
 def app_live(
     tmp_path: Path,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
 ) -> Flask:
     """This fixture uses the default config within the flask app."""
-    mock_get_podcast_source_rss("test_valid.rss")
+    get_test_config("testing_true_valid_live.json")
 
     return create_app(instance_path_override=str(tmp_path))
 
@@ -48,14 +46,11 @@ def app_live(
 def app_live_s3(
     tmp_path: Path,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
     mocked_aws: MockerFixture,
     s3: S3Client,
 ) -> Flask:
     """This fixture uses the default config within the flask app."""
-    mock_get_podcast_source_rss("test_valid.rss")
 
     config = get_test_config("testing_true_valid_live_s3.json")
     bucket_name = config.app.s3.bucket

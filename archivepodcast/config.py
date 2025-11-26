@@ -8,7 +8,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .logger import LoggingConf, get_logger
+from .utils.logger import LoggingConf, get_logger
 
 # Logging should be all done at INFO level or higher as the log level hasn't been set yet
 # Modules should all setup logging like this so the log messages include the modules name.
@@ -75,7 +75,7 @@ class ArchivePodcastConfig(BaseSettings):
     model_config = SettingsConfigDict(
         extra="ignore",
         env_file=".env",
-        env_prefix="ACERE_",
+        env_prefix="AP_",
         case_sensitive=False,
         env_file_encoding="utf-8",
         env_nested_delimiter="__",

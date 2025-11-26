@@ -10,16 +10,18 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import aiohttp
 import ffmpeg
-import requests
-from botocore.exceptions import ClientError  # No need to import boto3 since the object just gets passed in
+from botocore.exceptions import (
+    ClientError as S3ClientError,
+)
 from lxml import etree
-from requests.exceptions import ReadTimeout, RequestException
 
-from .ap_constants import AUDIO_FORMATS, CONTENT_TYPES, FFMPEG_INFO, IMAGE_FORMATS, TZINFO_UTC
-from .config import AppConfig, PodcastConfig
-from .helpers import list_all_s3_objects
-from .logger import get_logger
+from archivepodcast.config import AppConfig, PodcastConfig
+from archivepodcast.utils.logger import get_logger
+from archivepodcast.utils.s3 import list_all_s3_objects
+
+from .constants import AUDIO_FORMATS, CONTENT_TYPES, FFMPEG_INFO, IMAGE_FORMATS
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client  # pragma: no cover
@@ -74,6 +76,7 @@ class PodcastDownloader:
         self.feed_download_healthy: bool = True  # Need to change this if you do one podcast download per thread
         self.app_config = app_config
         self.web_root = web_root
+        self._session: aiohttp.ClientSession | None = None
         self.update_file_cache()
 
         logger.trace("PodcastDownloader config (re)loaded")
@@ -104,45 +107,58 @@ class PodcastDownloader:
 
         return base_url.encoded_string(), file_list
 
-    def download_podcast(self, podcast: PodcastConfig) -> tuple[etree._ElementTree | None, bool]:
+    def _get_session(self) -> aiohttp.ClientSession:
+        """Start the aiohttp session."""
+        if self._session is None:
+            self._session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=300), connector=aiohttp.TCPConnector(limit=10, limit_per_host=5)
+            )
+
+        return self._session
+
+    async def download_podcast(self, podcast: PodcastConfig) -> tuple[etree._ElementTree | None, bool]:
         """Parse the rss, Download all the assets, this is main."""
         self.feed_download_healthy = True  # Until proven otherwise
-        response = self._fetch_podcast_rss(podcast.url.encoded_string())
-        if response is None:
+        content = await self._fetch_podcast_rss(podcast.url.encoded_string())
+        if content is None:
             return None, False
 
-        podcast_rss = etree.fromstring(response.content)
+        podcast_rss = etree.fromstring(content)
         logger.info("📄 Downloaded rss feed, processing")
         logger.trace(str(podcast_rss))
 
         xml_first_child = podcast_rss[0]
-        self._process_podcast_rss(xml_first_child, podcast)
+        await self._process_podcast_rss(xml_first_child, podcast)
         podcast_rss[0] = xml_first_child
 
         return etree.ElementTree(podcast_rss), self.feed_download_healthy
 
-    def _fetch_podcast_rss(self, url: str) -> requests.Response | None:
+    async def _fetch_podcast_rss(self, url: str) -> bytes | None:
         """Fetch the podcast rss from the given URL."""
+        session = self._get_session()
+
         logger.debug("📜 Fetching podcast rss: %s", url)
         try:
-            response = requests.get(url, timeout=10)  # Some feeds are proper slow
-            if response.status_code != HTTPStatus.OK:
-                msg = f"❌ Not a great web response getting RSS: {response.status_code}\n{response.content.decode()}"
-                logger.error(msg)
-                return None
-            logger.debug("📄 Success fetching podcast RSS: %s", response.status_code)
-        except ValueError:
-            logger.exception("❌ Real early failure on grabbing the podcast rss, weird")
-            response = None
+            async with session.get(url) as response:
+                if response.status != HTTPStatus.OK:
+                    msg = f"❌ Not a great web response getting RSS: {response.status}\n{await response.text()}"
+                    logger.error(msg)
+                    return None
 
-        return response
+                logger.debug("📄 Success fetching podcast RSS: %s", response.status)
+                return await response.read()
 
-    def _process_podcast_rss(self, xml_first_child: etree._Element, podcast: PodcastConfig) -> None:
+        except aiohttp.ClientError:
+            logger.error("❌ Timeout fetching podcast rss: %s", url)  # noqa: TRY400
+
+        return None
+
+    async def _process_podcast_rss(self, xml_first_child: etree._Element, podcast: PodcastConfig) -> None:
         """Process the podcast rss and update it with new values."""
         for channel in xml_first_child:
-            self._process_channel_tag(channel, podcast)
+            await self._process_channel_tag(channel, podcast)
 
-    def _process_channel_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
+    async def _process_channel_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
         """Process individual channel tags in the podcast rss."""
         match channel.tag:
             case "link":
@@ -160,11 +176,11 @@ class PodcastDownloader:
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
                 self._handle_itunes_new_feed_url_tag(channel, podcast)
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                self._handle_itunes_image_tag(channel, podcast)
+                await self._handle_itunes_image_tag(channel, podcast)
             case "image":
-                self._handle_image_tag(channel, podcast)
+                await self._handle_image_tag(channel, podcast)
             case "item":
-                self._handle_item_tag(channel, podcast)
+                await self._handle_item_tag(channel, podcast)
             case _:
                 logger.trace("Unhandled root-level XML tag %s, (under channel.tag) leaving as-is", channel.tag)
 
@@ -214,7 +230,7 @@ class PodcastDownloader:
         logger.trace("iTunes new-feed-url: %s", str(channel.text))
         channel.text = self.app_config.inet_path.encoded_string() + "rss/" + podcast.name_one_word
 
-    def _handle_itunes_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    async def _handle_itunes_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the iTunes image tag in the podcast rss."""
         logger.trace("iTunes image: %s", str(channel.attrib["href"]))
 
@@ -223,7 +239,7 @@ class PodcastDownloader:
         logger.trace("Image URL: %s", url)
         for filetype in IMAGE_FORMATS:
             if filetype in url:
-                self._download_cover_art(url, title, podcast, filetype)
+                await self._download_cover_art(url, title, podcast, filetype)
                 channel.attrib["href"] = (
                     self.app_config.inet_path.encoded_string()
                     + "content/"
@@ -234,7 +250,7 @@ class PodcastDownloader:
                 )
         channel.text = " "
 
-    def _handle_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    async def _handle_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the image tag in the podcast rss."""
         for child in channel:
             logger.trace("image > XML tag: %s", child.tag)
@@ -248,7 +264,7 @@ class PodcastDownloader:
                 url = child.text or ""
                 for filetype in IMAGE_FORMATS:
                     if filetype in url:
-                        self._download_asset(url, title, podcast, filetype)
+                        await self._download_asset(url, title, podcast, filetype)
                         child.text = (
                             self.app_config.inet_path.encoded_string()
                             + "content/"
@@ -259,7 +275,7 @@ class PodcastDownloader:
                         )
         channel.text = " "
 
-    def _handle_item_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    async def _handle_item_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the item tag in the podcast rss."""
         file_date_string = self._get_file_date_string(channel)
         title = ""
@@ -270,9 +286,9 @@ class PodcastDownloader:
 
         for child in channel:
             if child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in str(child.tag):
-                self._handle_enclosure_tag(child, title, podcast, file_date_string)
+                await self._handle_enclosure_tag(child, title, podcast, file_date_string)
             elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                self._handle_episode_image_tag(child, title, podcast, file_date_string)
+                await self._handle_episode_image_tag(child, title, podcast, file_date_string)
 
     def _get_file_date_string(self, channel: etree._Element) -> str:
         """Get the file date string from the channel."""
@@ -280,7 +296,7 @@ class PodcastDownloader:
         for child in channel:
             if child.tag == "pubDate":
                 original_date = str(child.text)
-                file_date = datetime.datetime(1970, 1, 1, tzinfo=TZINFO_UTC)
+                file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
                 with contextlib.suppress(ValueError):
                     file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
                 with contextlib.suppress(ValueError):
@@ -288,7 +304,7 @@ class PodcastDownloader:
                 file_date_string = file_date.strftime("%Y%m%d")
         return file_date_string
 
-    def _handle_enclosure_tag(
+    async def _handle_enclosure_tag(
         self, child: etree._Element, title: str, podcast: PodcastConfig, file_date_string: str
     ) -> None:
         """Handle the enclosure tag in the podcast rss."""
@@ -300,12 +316,12 @@ class PodcastDownloader:
             new_audio_format = audio_format
             if audio_format in url:
                 if audio_format == ".wav":
-                    new_length = self._handle_wav(url, title, podcast, audio_format, file_date_string)
+                    new_length = await self._handle_wav(url, title, podcast, audio_format, file_date_string)
                     new_audio_format = ".mp3"
                     child.attrib["type"] = "audio/mpeg"
                     child.attrib["length"] = str(new_length)
                 else:
-                    self._download_asset(url, title, podcast, audio_format, file_date_string)
+                    await self._download_asset(url, title, podcast, audio_format, file_date_string)
                 child.attrib["url"] = (
                     self.app_config.inet_path.encoded_string()
                     + "content/"
@@ -317,7 +333,7 @@ class PodcastDownloader:
                     + new_audio_format
                 )
 
-    def _handle_episode_image_tag(
+    async def _handle_episode_image_tag(
         self, child: etree._Element, title: str, podcast: PodcastConfig, file_date_string: str
     ) -> None:
         """Handle the episode image tag in the podcast rss."""
@@ -325,7 +341,7 @@ class PodcastDownloader:
         url = child.attrib.get("href", "")
         for filetype in IMAGE_FORMATS:
             if filetype in url:
-                self._download_asset(url, title, podcast, filetype, file_date_string)
+                await self._download_asset(url, title, podcast, filetype, file_date_string)
                 child.attrib["href"] = (
                     self.app_config.inet_path.encoded_string()
                     + "content/"
@@ -375,8 +391,8 @@ class PodcastDownloader:
                     self.s3_paths_cache.append(s3_key)
                     file_exists = True
 
-                except ClientError as e:
-                    if e.response["Error"]["Code"] == "404":
+                except S3ClientError as e:
+                    if e.response.get("Error", {}).get("Code") == "404":
                         logger.debug(
                             "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
                             s3_key,
@@ -397,7 +413,7 @@ class PodcastDownloader:
 
         return file_exists
 
-    def _handle_wav(
+    async def _handle_wav(
         self, url: str, title: str, podcast: PodcastConfig, extension: str = "", file_date_string: str = ""
     ) -> int:
         """Convert podcasts that have wav episodes 😔. Returns new file length."""
@@ -420,7 +436,7 @@ class PodcastDownloader:
 
         # If the asset hasn't already been downloaded and converted
         if not self._check_path_exists(mp3_file_path):
-            self._download_asset(
+            await self._download_asset(
                 url,
                 title,
                 podcast,
@@ -511,7 +527,7 @@ class PodcastDownloader:
             self.feed_download_healthy = False
             logger.exception("⛅❌ Unhandled s3 error: %s")
 
-    def _download_cover_art(self, url: str, title: str, podcast: PodcastConfig, extension: str = "") -> None:
+    async def _download_cover_art(self, url: str, title: str, podcast: PodcastConfig, extension: str = "") -> None:
         """Download cover art from url with appropriate file name."""
         content_dir = Path(self.web_root) / "content" / podcast.name_one_word
         cover_art_destination = content_dir / f"{title}{extension}"
@@ -519,13 +535,13 @@ class PodcastDownloader:
         local_file_found = self._check_local_path_exists(cover_art_destination)
 
         if not local_file_found:
-            self._download_to_local(url, cover_art_destination)
+            await self._download_to_local(url, cover_art_destination)
 
         if self.s3:
             logger.info("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
             self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
 
-    def _download_asset(
+    async def _download_asset(
         self, url: str, title: str, podcast: PodcastConfig, extension: str = "", file_date_string: str = ""
     ) -> None:
         """Download asset from url with appropriate file name."""
@@ -537,7 +553,7 @@ class PodcastDownloader:
         file_path = content_dir / f"{file_date_string}{spacer}{title}{extension}"
 
         if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
-            self._download_to_local(url, file_path)
+            await self._download_to_local(url, file_path)
             logger.debug("Downloaded asset: %s", file_path)
 
             # For if we are using s3 as a backend
@@ -548,23 +564,29 @@ class PodcastDownloader:
         else:
             logger.trace(f"Already downloaded: {title}{extension}")
 
-    def _download_to_local(self, url: str, file_path: Path) -> None:
+    async def _download_to_local(self, url: str, file_path: Path) -> None:
         """Download the asset from the url."""
+        session = self._get_session()
+
         logger.debug("💾 Downloading: %s", url)
         logger.info("💾 Downloading asset to: %s", file_path)
         headers = {"user-agent": "Mozilla/5.0"}
         try:
-            # stream to avoid a 5gb wav will eating all your ram
-            req = requests.get(url, headers=headers, timeout=10, stream=True)
-            req.raise_for_status()
-            with file_path.open("wb") as asset_file:
-                for chunk in req.iter_content(chunk_size=8192):
-                    asset_file.write(chunk)
-        except (TimeoutError, ReadTimeout):
+            async with session.get(url, headers=headers) as response:
+                response.raise_for_status()
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                with file_path.open("wb") as asset_file:
+                    while True:
+                        chunk = await response.content.read(8192)
+                        if not chunk:
+                            break
+                        asset_file.write(chunk)
+
+        except aiohttp.ServerTimeoutError:
             self.feed_download_healthy = False
             logger.exception("💾❌ Timeout Error: %s", url)
             return
-        except RequestException:
+        except aiohttp.ClientError:
             self.feed_download_healthy = False
             logger.exception("💾❌ Request Error: %s", url)
             return

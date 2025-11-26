@@ -75,19 +75,19 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ## Todo
 
-- Container Registry
-- header as a table, or divs
 - ~~Pydantic~~
 - ~~Mypy in strict mode~~
 - ~~Rich for logging, why not~~
-- Put source in directories
+- ~~Put source code in separate directories~~
+- ~~docs toml -> json~~
+- ~~Health object scraper timer~~
+- ~~Generate health page static version?~~
+- ~~fix pytest~~
 - Async scraping
-- Progress bars (rich)
-- Fix font selection
-- Cloudflare worker cron
-- Terraform example
-- Health object scraper timer
-- Generate health page static version?
-- Use flask-cache
-- Better folder layout
-- docs toml -> json
+  - ~~aiohttp~~
+  - aioboto3core?
+- Container Registry
+- header as a table, or divs
+- Fix font selection for frontend, done?
+- Cloudflare worker cron (CF still in beta)
+  - Terraform example

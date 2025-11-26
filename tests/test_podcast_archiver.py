@@ -1,13 +1,13 @@
 """Tests for PodcastArchiver functionality."""
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from archivepodcast.ap_archiver import PodcastArchiver
+from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from tests.constants import DUMMY_RSS_STR
 
 from . import FakeExceptionError
@@ -20,7 +20,7 @@ else:
 
 def test_no_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Verify behavior when about page is missing."""
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
         apa.load_about_page()
 
     assert "About page doesn't exist" in caplog.text
@@ -32,7 +32,7 @@ def test_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture, tmp_
     with about_path.open("w") as f:
         f.write("About page exists!")
 
-    with caplog.at_level(level=logging.INFO, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.INFO, logger="archivepodcast.archiver"):
         apa.load_about_page()
 
     assert "About page exists!" in caplog.text
@@ -40,7 +40,7 @@ def test_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture, tmp_
 
 def test_check_s3_files_no_client(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Test that s3 files are checked."""
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
         apa.check_s3_files()
 
     assert "Checking state of s3 bucket" in caplog.text
@@ -50,12 +50,9 @@ def test_check_s3_files_no_client(apa: PodcastArchiver, caplog: pytest.LogCaptur
 def test_grab_podcasts_not_live(
     apa: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: Callable[[str], Coroutine[Any, Any, None]],
 ) -> None:
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid.rss")
 
     apa.podcast_list[0].live = False
 
@@ -63,7 +60,7 @@ def test_grab_podcasts_not_live(
     rss_path.parent.mkdir(parents=True, exist_ok=True)
     rss_path.write_text(DUMMY_RSS_STR)
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
@@ -82,13 +79,10 @@ def test_grab_podcasts_not_live(
 def test_grab_podcasts_unhandled_exception(
     apa: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid.rss")
 
     apa.podcast_list[0].live = False
 
@@ -101,7 +95,7 @@ def test_grab_podcasts_unhandled_exception(
 
     monkeypatch.setattr(apa, "_grab_podcast", mock_get_rss_feed_exception)
 
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
     assert "Error grabbing podcast:" in caplog.text
@@ -110,8 +104,6 @@ def test_grab_podcasts_unhandled_exception(
 def test_grab_podcasts_invalid_rss(
     apa: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test grabbing podcasts."""
@@ -123,7 +115,7 @@ def test_grab_podcasts_invalid_rss(
     rss_path.parent.mkdir(parents=True, exist_ok=True)
     rss_path.write_text(rss)
 
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
     assert "Error parsing rss file:" in caplog.text
@@ -132,16 +124,13 @@ def test_grab_podcasts_invalid_rss(
 def test_grab_podcasts_not_live_no_existing_feed(
     apa: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
 ) -> None:
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid.rss")
 
     apa.podcast_list[0].live = False
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
@@ -154,16 +143,13 @@ def test_grab_podcasts_not_live_no_existing_feed(
 def test_grab_podcasts_live(
     apa: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
 ) -> None:
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid.rss")
 
     apa.podcast_list[0].live = True
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
@@ -199,19 +185,20 @@ def test_create_folder_structure_no_perms(apa: PodcastArchiver, monkeypatch: pyt
 def test_grab_podcasts_unhandled_exception_rss(
     apa: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid.rss")
 
     apa.podcast_list[0].live = True
 
-    monkeypatch.setattr(apa.podcast_downloader, "download_podcast", lambda _: (None, False))
+    async def no_download_podcast(*args: Any, **kwargs: Any) -> tuple[None, bool]:
+        return None, False
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+
+    monkeypatch.setattr(apa.podcast_downloader, "download_podcast", lambda _: no_download_podcast())
+
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
     assert "Unable to download podcast, something is wrong" in caplog.text
@@ -220,20 +207,16 @@ def test_grab_podcasts_unhandled_exception_rss(
 def test_grab_podcasts_no_episodes(
     apa: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
-    mock_get_podcast_source_rss: Callable[[str], None],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_no_episodes: MockerFixture,
 ) -> None:
     """Test grabbing podcasts."""
-    mock_get_podcast_source_rss("test_valid_no_episodes.rss")
-
     apa.podcast_list[0].live = True
 
     rss_path = Path(apa.instance_path) / "web" / "rss" / "test"
     rss_path.parent.mkdir(parents=True, exist_ok=True)
     rss_path.write_text(DUMMY_RSS_STR)
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_archiver"):
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text  # The case due to config.json

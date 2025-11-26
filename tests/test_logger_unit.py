@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from archivepodcast.logger import (
+from archivepodcast.utils.logger import (
     TRACE_LEVEL_NUM,
     CustomLogger,
     LoggingConf,

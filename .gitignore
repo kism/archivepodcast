@@ -1,4 +1,9 @@
 # This app
+
+# Cloudflare workers
+wrangler.toml
+.venv-workers
+
 # Stop poetry coming back
 poetry.lock
 temp.py

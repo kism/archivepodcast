@@ -30,27 +30,32 @@ sudo -u apuser .venv/bin/waitress-serve --port=5100 --call 'archivepodcast:creat
 
 Edit: `/opt/archivepodcast/instance/config.json` to your liking.
 
-```toml
-[app]
-inet_path = "https://mycooldomain.org/"
-storage_backend = "local"
-
-[app.web_page]
-title = "Podcast Archive"
-description = "My Cool  Podcast Archive"
-contact = "email@example.com"
-
-[[podcast]]
-url = "https://feeds.megaphone.fm/replyall"
-new_name = "Reply All [Archive]"
-name_one_word = "replyall"
-description = ""
-live = true
-contact_email = "archivepodcast@localhost"
-
-[logging]
-level = "INFO"
-path = ""
+```json
+{
+  "app": {
+    "inet_path": "https://mycooldomain.org/",
+    "storage_backend": "local",
+    "web_page": {
+      "title": "Podcast Archive",
+      "description": "My Cool  Podcast Archive",
+      "contact": "email@example.com"
+    }
+  },
+  "podcasts": [
+    {
+      "url": "https://feeds.megaphone.fm/replyall",
+      "new_name": "Reply All [Archive]",
+      "name_one_word": "replyall",
+      "description": "",
+      "live": true,
+      "contact_email": "archivepodcast@localhost"
+    }
+  ],
+  "logging": {
+    "level": "INFO",
+    "path": ""
+  }
+}
 ```
 
 ## Service Configuration

@@ -8,9 +8,9 @@ import pytest
 from flask.testing import FlaskClient
 from lxml import etree
 
-from archivepodcast import bp_archivepodcast
-from archivepodcast.ap_archiver import PodcastArchiver
-from archivepodcast.ap_health import PodcastArchiverHealth
+from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+from archivepodcast.instances import podcast_archiver
+from archivepodcast.utils.health import PodcastArchiverHealth
 from tests.constants import DUMMY_RSS_STR, TEST_RSS_LOCATION
 
 from . import FakeExceptionError
@@ -19,7 +19,7 @@ from . import FakeExceptionError
 def test_health_api(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Verify health API returns OK status when system is healthy."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
 
     response = client.get("/api/health")
     # TEST: HTTP OK
@@ -33,9 +33,9 @@ def test_health_api(client: FlaskClient, apa: PodcastArchiver) -> None:
 def test_health_api_error(client: FlaskClient, apa: PodcastArchiver, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test the podcast section of the health API endpoint."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
 
-    monkeypatch.setattr("archivepodcast.ap_health.PodcastArchiverHealth.get_health", lambda: FakeExceptionError)
+    monkeypatch.setattr("archivepodcast.utils.health.PodcastArchiverHealth.get_health", lambda: FakeExceptionError)
 
     response = client.get("/api/health")
     data = response.get_json()
@@ -73,7 +73,7 @@ def test_podcast_health_errors(caplog: pytest.LogCaptureFixture) -> None:
         ap_health.update_podcast_episode_info("test", tree)
 
     assert "Error parsing podcast episode info" not in caplog.text  # The dummy rss doesn't have pubDate
-    assert ap_health.podcasts["test"].episode_count == 1
+    assert ap_health._podcasts["test"].episode_count == 1
 
     tree = etree.fromstring(
         "<?xml version='1.0'?><rss><channel><item><pubDate>INVALID</pubDate></item></channel></rss>"

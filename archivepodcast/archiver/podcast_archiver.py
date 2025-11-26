@@ -1,6 +1,8 @@
 """Module to handle the ArchivePodcast object."""
 
+import asyncio
 import contextlib
+import json
 import random
 import threading
 import time
@@ -14,16 +16,18 @@ from jinja2 import Environment, FileSystemLoader
 from lxml import etree
 from pydantic import HttpUrl
 
-from .ap_downloader import PodcastDownloader
-from .ap_health import PodcastArchiverHealth
-from .ap_webpages import Webpage, Webpages
-from .helpers import list_all_s3_objects, tree_no_episodes
-from .logger import get_logger
+from archivepodcast.downloader import PodcastDownloader
+from archivepodcast.utils.health import PodcastArchiverHealth
+from archivepodcast.utils.logger import get_logger
+from archivepodcast.utils.s3 import list_all_s3_objects
+
+from .helpers import tree_no_episodes
+from .webpages import Webpage, Webpages
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client  # pragma: no cover
 
-    from .config import AppConfig, PodcastConfig  # pragma: no cover
+    from archivepodcast.config import AppConfig, PodcastConfig  # pragma: no cover
 else:
     S3Client = object
     AppConfig = object
@@ -35,7 +39,7 @@ logger = get_logger(__name__)
 class PodcastArchiver:
     """Main podcast archiving system that coordinates downloading, storage and serving of podcasts."""
 
-    # region: Init
+    # region Init
     def __init__(
         self,
         app_config: AppConfig,
@@ -52,6 +56,7 @@ class PodcastArchiver:
         # Health object
         self.health = PodcastArchiverHealth()
         self.health.update_core_status(currently_loading_config=True)
+        self.health.set_host_info(app_config)
 
         # There are so many, but I use them all
         self.root_path = Path(root_path)
@@ -73,6 +78,7 @@ class PodcastArchiver:
         # Done, update health
         self.health.update_core_status(currently_loading_config=False)
         elapsed_time = time.time() - start_time
+        self.health.set_event_time("flask_app_init/PodcastArchiver_init", elapsed_time)
         logger.info("⏱️ Finished PodcastArchiver initialization in %.2f seconds", elapsed_time)
 
     def load_config(self, app_config: AppConfig, podcast_list: list[PodcastConfig]) -> None:
@@ -90,7 +96,7 @@ class PodcastArchiver:
         """Return the rss file for a given feed."""
         return self.podcast_rss[feed]
 
-    # region: S3
+    # region S3
     def load_s3(self) -> None:
         """Function to get a s3 credential if one is needed."""
         if self.app_config.storage_backend == "s3":
@@ -140,33 +146,52 @@ class PodcastArchiver:
 
     # endregion
 
-    # region: Archive
+    # region Archive
 
     def grab_podcasts(self) -> None:
         """Download and process all configured podcasts.
 
         Updates health metrics and regenerates file listings after processing.
         """
-        current_datetime = int(time.time())
-        self.health.update_core_status(last_run=current_datetime)
+        current_datetime = time.time()
+        self.health.update_core_status(last_run=int(current_datetime))
 
+        task_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(task_loop)
+
+        # Process all podcasts concurrently
+        tasks = []
         for podcast in self.podcast_list:
-            start_time = time.time()
-            try:
-                self._grab_podcast(podcast)
-                self.health.update_podcast_status(podcast.name_one_word, healthy_feed=True)
-            except Exception:
-                logger.exception("❌ Error grabbing podcast: %s", podcast.name_one_word)
-                self.health.update_podcast_status(podcast.name_one_word, healthy_feed=False)
+            task = self._grab_podcast_with_metrics(podcast)
+            tasks.append(task)
 
-            elapsed_time = time.time() - start_time
-            logger.info("⏱️ Finished processing %s in %.2f seconds", podcast.name_one_word, elapsed_time)
+        task_loop.run_until_complete(asyncio.gather(*tasks))
+        task_loop.close()
 
         try:
             logger.debug("💾 Updating filelist.html")
             self.render_filelist_html()
         except Exception:
             logger.exception("❌ Unhandled exception rendering filelist.html")
+
+        total_duration = time.time() - current_datetime
+        self.health.set_event_time("grab_podcasts", total_duration)
+
+        self.write_health_s3()
+
+    async def _grab_podcast_with_metrics(self, podcast: "PodcastConfig") -> None:
+        """Wrapper to handle metrics and error handling for individual podcast processing."""
+        podcast_grab_start_time = time.time()
+        try:
+            await self._grab_podcast(podcast)
+            self.health.update_podcast_status(podcast.name_one_word, healthy_feed=True)
+        except Exception:
+            logger.exception("❌ Error grabbing podcast: %s", podcast.name_one_word)
+            self.health.update_podcast_status(podcast.name_one_word, healthy_feed=False)
+
+        elapsed_time = time.time() - podcast_grab_start_time
+        self.health.set_event_time(f"grab_podcasts/{podcast.name_one_word}", elapsed_time)
+        logger.info("⏱️ Finished processing %s in %.2f seconds", podcast.name_one_word, elapsed_time)
 
     def _load_rss_from_file(self, podcast: PodcastConfig, rss_file_path: Path) -> etree._ElementTree | None:
         """Load the rss from file."""
@@ -175,11 +200,13 @@ class PodcastArchiver:
             logger.info("📄 Loading rss from file: %s", rss_file_path)
         else:
             logger.warning("📄 Loading rss from file: %s", rss_file_path)
-        if rss_file_path.exists():
+        if rss_file_path.is_file():
             try:
-                tree = etree.parse(str(rss_file_path))
+                tree = etree.parse(rss_file_path)
             except etree.XMLSyntaxError:
                 logger.exception("❌ Error parsing rss file: %s", rss_file_path)
+        elif rss_file_path.is_dir():
+            logger.error("❌ Calculated RSS feed path is a directory, not a file: %s", rss_file_path)
         else:
             logger.error("❌ Cannot find rss feed file: %s", rss_file_path)
 
@@ -230,8 +257,8 @@ class PodcastArchiver:
         self.health.update_podcast_status(podcast.name_one_word, rss_available=True)
         logger.trace("Exiting _update_rss_feed")
 
-    def _download_podcast(self, podcast: PodcastConfig, rss_file_path: Path) -> etree._ElementTree | None:
-        tree, download_healthy = self.podcast_downloader.download_podcast(podcast)
+    async def _download_podcast(self, podcast: PodcastConfig, rss_file_path: Path) -> etree._ElementTree | None:
+        tree, download_healthy = await self.podcast_downloader.download_podcast(podcast)
         if tree:
             if tree_no_episodes(tree):
                 logger.error("❌ Downloaded podcast rss %s has no episodes, not writing to disk", podcast.name_one_word)
@@ -255,7 +282,7 @@ class PodcastArchiver:
 
         return tree
 
-    def _grab_podcast(self, podcast: PodcastConfig) -> None:
+    async def _grab_podcast(self, podcast: PodcastConfig) -> None:
         """Function to download a podcast and store the rss."""
         tree = None
         previous_feed = b""
@@ -266,8 +293,12 @@ class PodcastArchiver:
 
         rss_file_path = self.web_root / "rss" / podcast.name_one_word
 
+        if podcast.name_one_word == "":
+            logger.error("❌ Podcast has no name_one_word set in config, cannot proceed")
+            return
+
         if podcast.live is True:  # download all the podcasts
-            tree = self._download_podcast(podcast, rss_file_path)
+            tree = await self._download_podcast(podcast, rss_file_path)
             if tree:
                 last_fetched = int(time.time())
                 self.health.update_podcast_status(
@@ -339,7 +370,12 @@ class PodcastArchiver:
 
         # Templates
         env = Environment(loader=FileSystemLoader(str(self.template_directory)), autoescape=True)
-        templates_to_render = ["guide.html.j2", "index.html.j2", "health.html.j2", "webplayer.html.j2"]
+        templates_to_render = [
+            "guide.html.j2",
+            "index.html.j2",
+            "health.html.j2",
+            "webplayer.html.j2",
+        ]
 
         logger.debug("💾 Templates to render: %s", templates_to_render)
 
@@ -370,7 +406,7 @@ class PodcastArchiver:
 
     # endregion
 
-    # region: Housekeeping
+    # region Housekeeping
 
     def make_folder_structure(self) -> None:
         """Ensure that web_root folder structure exists."""
@@ -393,13 +429,14 @@ class PodcastArchiver:
 
     # endregion
 
-    # region: Other webpages
+    # region Other webpages
 
     def render_filelist_html(self) -> None:
         """Function to render filelist.html.
 
         This is separate from render_files() since it needs to be done after grabbing podcasts.
         """
+        start_time = time.time()
         self.check_s3_files()
         base_url, file_list = self.podcast_downloader.get_file_list()
 
@@ -424,6 +461,20 @@ class PodcastArchiver:
         self.webpages.add(path=output_filename, mime="text/html", content=rendered_output)
         self.health.update_template_status(output_filename, last_rendered=current_time)
         self.write_webpages([self.webpages.get_webpage(output_filename)])
+        elapsed_time = time.time() - start_time
+        self.health.set_event_time("grab_podcasts/_render_filelist_html", elapsed_time)
+
+    def write_health_s3(self) -> None:
+        """Write health.json to s3."""
+        if not self.s3:
+            return
+
+        health_json = self.health.get_health(self).model_dump()
+        health_json_str = json.dumps(health_json, sort_keys=True, indent=4)
+
+        self.webpages.add(path="api/health", mime="application/json", content=health_json_str)
+
+        self.write_webpages([self.webpages.get_webpage("api/health")])
 
     def write_webpages(self, webpages: list[Webpage]) -> None:
         """Write files to disk, and to s3 if needed."""
@@ -454,12 +505,15 @@ class PodcastArchiver:
                 s3_key = webpage_path.as_posix()
                 logger.trace("⛅💾 Writing page s3: %s", s3_key)
 
-                self.s3.put_object(
-                    Body=page_content_bytes,
-                    Bucket=self.app_config.s3.bucket,
-                    Key=s3_key,
-                    ContentType=webpage.mime,
-                )
+                try:
+                    self.s3.put_object(
+                        Body=page_content_bytes,
+                        Bucket=self.app_config.s3.bucket,
+                        Key=s3_key,
+                        ContentType=webpage.mime,
+                    )
+                except Exception:
+                    logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s", s3_key)
 
         logger.info("💾 Done writing %s", str_webpages)
 

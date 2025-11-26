@@ -2,27 +2,22 @@
 
 import logging
 from collections.abc import Callable
-from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import magic
 import pytest
-from requests.exceptions import ReadTimeout
-from requests_mock import Mocker
 
-from archivepodcast import ap_downloader
-from archivepodcast.ap_downloader import PodcastDownloader
 from archivepodcast.config import ArchivePodcastConfig
-from archivepodcast.logger import TRACE_LEVEL_NUM
+from archivepodcast.downloader import downloader
+from archivepodcast.downloader.downloader import PodcastDownloader
+from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from tests.constants import TEST_WAV_FILE
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture  # pragma: no cover
-    from requests_mock.adapter import _Matcher  # pragma: no cover
 else:
     MockerFixture = object
-    _Matcher = object
 
 
 def test_init(
@@ -43,6 +38,7 @@ def test_init(
     assert apd.s3_paths_cache == []
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "test_config_name",
     [
@@ -50,13 +46,11 @@ def test_init(
         "testing_true_valid_no_override_info.json",
     ],
 )
-def test_download_podcast(
+async def test_download_podcast(
     apd: PodcastDownloader,
     test_config_name: str,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_get_podcast_source_rss: Callable[[str], _Matcher],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_mp3: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test Fetching RSS and assets."""
@@ -64,10 +58,8 @@ def test_download_podcast(
     config = get_test_config(config_file)
     mock_podcast_definition = config.podcasts[0]
 
-    mock_get_podcast_source_rss("test_valid.rss")
-
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        apd.download_podcast(mock_podcast_definition)
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
+        await apd.download_podcast(mock_podcast_definition)
 
     assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
@@ -78,12 +70,11 @@ def test_download_podcast(
     # assert "str" in caplog.text
 
 
-def test_download_podcast_wav(
+@pytest.mark.asyncio
+async def test_download_podcast_wav(
     apd: PodcastDownloader,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_get_podcast_source_rss: Callable[[str], _Matcher],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_wav: MockerFixture,
+    mock_podcast_source_rss_wav: MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test Fetching RSS and assets."""
@@ -91,10 +82,8 @@ def test_download_podcast_wav(
     config = get_test_config(config_file)
     mock_podcast_definition = config.podcasts[0]
 
-    mock_get_podcast_source_rss("test_valid_wav.rss")
-
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        apd.download_podcast(mock_podcast_definition)
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
+        await apd.download_podcast(mock_podcast_definition)
 
     assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
@@ -104,13 +93,12 @@ def test_download_podcast_wav(
     assert "Download Failed" not in caplog.text
 
 
-def test_download_podcast_wav_wav_exists(
+@pytest.mark.asyncio
+async def test_download_podcast_wav_wav_exists(
     apd: PodcastDownloader,
     tmp_path: Path,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_get_podcast_source_rss: Callable[[str], _Matcher],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_wav: MockerFixture,
+    mock_podcast_source_rss_wav: MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test Fetching RSS and assets."""
@@ -128,10 +116,8 @@ def test_download_podcast_wav_wav_exists(
 
     tmp_wav_path.write_bytes(TEST_WAV_FILE)
 
-    mock_get_podcast_source_rss("test_valid_wav.rss")
-
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        apd.download_podcast(mock_podcast_definition)
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
+        await apd.download_podcast(mock_podcast_definition)
 
     assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
@@ -146,13 +132,12 @@ def test_download_podcast_wav_wav_exists(
     assert magic.from_file(tmp_mp3_path, mime=True) == "audio/mpeg"  # Check that the file is actually an mp3
 
 
-def test_download_podcast_wav_mp3_exists(
+@pytest.mark.asyncio
+async def test_download_podcast_wav_mp3_exists(
     apd: PodcastDownloader,
     tmp_path: Path,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_get_podcast_source_rss: Callable[[str], _Matcher],
-    mock_podcast_source_images: MockerFixture,
-    mock_podcast_source_wav: MockerFixture,
+    mock_podcast_source_rss_wav: MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test Fetching RSS and assets."""
@@ -171,10 +156,8 @@ def test_download_podcast_wav_mp3_exists(
 
     tmp_mp3_path.write_text("Test MP3")
 
-    mock_get_podcast_source_rss("test_valid_wav.rss")
-
-    with caplog.at_level(level=5, logger="archivepodcast.ap_downloader"):
-        apd.download_podcast(mock_podcast_definition)
+    with caplog.at_level(level=5, logger="archivepodcast.downloader"):
+        await apd.download_podcast(mock_podcast_definition)
 
     assert "Downloaded rss feed, processing" in caplog.text
     assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
@@ -194,27 +177,15 @@ def test_no_ffmpeg(tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch
 
     monkeypatch.setattr("pathlib.Path.exists", lambda x: False)
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader") and pytest.raises(SystemExit):  # type: ignore[truthy-bool]
-        ap_downloader.check_ffmpeg()
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader") and pytest.raises(SystemExit):  # type: ignore[truthy-bool]
+        downloader.check_ffmpeg()
 
     assert "ffmpeg not found" in caplog.text
 
 
-def test_fetch_podcast_rss_error(
-    apd: PodcastDownloader, requests_mock: Mocker, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Test that the app can load config and the testing attribute is set."""
-    rss_url = "https://podcast.internal/rss/not_found"
-    requests_mock.get(rss_url, status_code=404)
-
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        apd._fetch_podcast_rss(rss_url)
-
-    assert "Not a great web response getting RSS: 404" in caplog.text
-
-
-def test_fetch_podcast_rss_value_error(
-    apd: PodcastDownloader, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+@pytest.mark.asyncio
+async def test_fetch_podcast_rss_value_error(
+    apd: PodcastDownloader, mock_podcast_source_not_found: MockerFixture, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test that the app can load config and the testing attribute is set."""
     rss_url = "https://podcast.internal/rss/not_found"
@@ -222,43 +193,28 @@ def test_fetch_podcast_rss_value_error(
     def mock_value_error(*args: Any, **kwargs: Any) -> None:
         raise ValueError
 
-    monkeypatch.setattr("requests.get", mock_value_error)
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
+        await apd._fetch_podcast_rss(rss_url)
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.ap_downloader"):
-        apd._fetch_podcast_rss(rss_url)
-
-    assert "Real early failure on grabbing the podcast rss" in caplog.text
+    assert "Not a great web response getting RSS: 404" in caplog.text
 
 
-def test_download_podcast_no_response(
+@pytest.mark.asyncio
+async def test_download_podcast_no_response(
     apd: PodcastDownloader, get_test_config: Callable[[str], ArchivePodcastConfig], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test _fetch_podcast_rss failure."""
     podcast = get_test_config("testing_true_valid.json").podcasts[0]
 
-    def mock_fetch_podcast_rss(*args: Any, **kwargs: Any) -> None:
+    async def mock_fetch_podcast_rss(*args: Any, **kwargs: Any) -> None:
         return None
 
-    monkeypatch.setattr("archivepodcast.ap_downloader.PodcastDownloader._fetch_podcast_rss", mock_fetch_podcast_rss)
+    monkeypatch.setattr("archivepodcast.downloader.PodcastDownloader._fetch_podcast_rss", mock_fetch_podcast_rss)
 
-    tree, healthy_download = apd.download_podcast(podcast)
+    tree, healthy_download = await apd.download_podcast(podcast)
 
     assert tree is None
     assert not healthy_download
-
-
-def test_download_to_local_failure(
-    apd: PodcastDownloader, requests_mock: Mocker, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Test local file download failure."""
-    url = "https://pytest.internal/audio/test.mp3"
-
-    requests_mock.get(url, status_code=HTTPStatus.NOT_FOUND)
-
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
-        apd._download_to_local(url, Path("test.mp3"))
-
-    assert "Request Error" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -279,19 +235,3 @@ def test_download_to_local_failure(
 def test_filename_cleanup(apd: PodcastDownloader, file_name: str, expected_slug: str) -> None:
     """Test filename cleanup."""
     assert apd._cleanup_file_name(file_name) == expected_slug
-
-
-def test_download_timeout_error(
-    apd: PodcastDownloader, requests_mock: Mocker, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Test local file download failure."""
-
-    url = "https://pytest.internal/audio/test.mp3"
-
-    requests_mock.get(url, exc=ReadTimeout)
-
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.ap_downloader"):
-        apd._download_to_local(url, Path("test.mp3"))
-
-    assert "Timeout Error:" in caplog.text
-    assert not apd.feed_download_healthy

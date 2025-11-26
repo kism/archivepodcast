@@ -1,16 +1,4 @@
-"""Constants for ArchivePodcast."""
-
-import datetime
-import os
-from pathlib import Path
-
-import psutil
-
-_env_instance_dir = os.getenv("INSTANCE_DIR")
-
-INSTANCE_DIR = Path(_env_instance_dir) if _env_instance_dir else Path(__file__).parent.parent / "instance"
-SETTINGS_FILE = INSTANCE_DIR / "config.json"
-
+"""Constants for the downloader module."""
 
 # Test FFMPEG
 FFMPEG_INFO = """ffmpeg not found, please install it and ensure it's in PATH.
@@ -33,9 +21,3 @@ CONTENT_TYPES = {
     ".m4a": "audio/mpeg",
     ".flac": "audio/flac",
 }
-
-TZINFO_UTC = datetime.datetime.now(datetime.UTC).astimezone().tzinfo
-
-PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
-
-PROCESS = psutil.Process()
