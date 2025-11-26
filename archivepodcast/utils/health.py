@@ -102,7 +102,7 @@ class Host(BaseModel):
     """Info about a host config entry."""
 
     host_type: str = ""
-    url: str = ""  # Don't use HttpUrl since we arent validating
+    url: str = ""  # Don't use HttpUrl since we aren't validating
 
 
 class HostingInfo(BaseModel):
