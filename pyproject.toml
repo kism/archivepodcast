@@ -9,7 +9,6 @@ authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "aioboto3>=15.5.0",
     "aiohttp>=3.13.2",
     "boto3>=1.36,<2",
     "colorama>=0.4.6",
@@ -18,7 +17,7 @@ dependencies = [
     # dnf install libxml2-devel libxslt-devel
     # apt install libxml2-dev libxslt-dev
     "lxml>=5,<5.4", # Right now its broken for linux on a greater version
-    # "lxml>=6", # TESTING
+    # "lxml>=6.0.2", # TESTING
     "markdown>=3.7",
     "psutil>=6.1.1",
     "pydantic>=2.12.4",
@@ -76,10 +75,8 @@ ignore = [
     "TD002",  # KG Verbose TODO, only I work on this project
     "TD003",  # KG Verbose TODO, only I work on this project
     "S311",   # KG I'll assume no real crypto will be done.
-    "S311",   # KG I'll assume no real crypto will be done.
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
-    "D105",   # KG Docstrings for magic methods not required
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -160,4 +157,4 @@ warn_redundant_casts = true
 
 [[tool.ty.overrides]]
 include = ["tests/**"]
-rules = { "unresolved-attribute" = "ignore" }
+rules = { "unresolved-attribute" = "ignore" } # Blame the flask client object

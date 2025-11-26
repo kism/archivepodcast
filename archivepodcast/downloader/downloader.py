@@ -107,6 +107,12 @@ class PodcastDownloader:
 
         return base_url.encoded_string(), file_list
 
+    async def close_session(self) -> None:
+        """Close the aiohttp session."""
+        if self._session is not None:
+            await self._session.close()
+            self._session = None
+
     def _get_session(self) -> aiohttp.ClientSession:
         """Start the aiohttp session."""
         if self._session is None:

@@ -113,7 +113,6 @@ class PodcastArchiver:
             )
             logger.info("⛅ Authenticated s3, using bucket: %s", self.app_config.s3.bucket)
             self.health.update_core_status(s3_enabled=True)
-            self.check_s3_files()
         else:
             logger.info("⛅ Not using s3")
             self.health.update_core_status(s3_enabled=False)
@@ -176,6 +175,8 @@ class PodcastArchiver:
 
         total_duration = time.time() - current_datetime
         self.health.set_event_time("grab_podcasts", total_duration)
+
+        asyncio.run(self.podcast_downloader.close_session())
 
         self.write_health_s3()
 

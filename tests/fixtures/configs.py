@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-import archivepodcast
 from archivepodcast.config import ArchivePodcastConfig
+from archivepodcast.instances import config as _config_instance
 from tests.constants import TEST_CONFIGS_LOCATION
 
 
@@ -19,7 +19,7 @@ def get_test_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable
 
         config = ArchivePodcastConfig().force_load_config_file(filepath)
 
-        monkeypatch.setattr(archivepodcast.instances.config, "_conf_cache", config)
+        monkeypatch.setattr(_config_instance, "_conf_cache", config)
 
         return config
 
