@@ -192,6 +192,7 @@ test = [
     { name = "pytest-random-order" },
     { name = "pytest-socket" },
     { name = "tomlkit" },
+    { name = "types-aiobotocore-s3" },
 ]
 type = [
     { name = "botocore-stubs" },
@@ -235,6 +236,7 @@ requires-dist = [
     { name = "ty", marker = "extra == 'type'" },
     { name = "typed-ffmpeg", specifier = ">=3.7" },
     { name = "types-aiobotocore", marker = "extra == 'type'" },
+    { name = "types-aiobotocore-s3", marker = "extra == 'test'" },
     { name = "types-aiobotocore-s3", marker = "extra == 'type'" },
     { name = "types-lxml", marker = "extra == 'type'" },
     { name = "types-markdown", marker = "extra == 'type'" },
