@@ -72,8 +72,8 @@ class PaginatorMock:
                 "StartAfter": "",
                 "RequestCharged": "requester",
                 "ResponseMetadata": {
-                    "RequestId": "EXAMPLEREQUEST123",
-                    "HostId": "EXAMPLEHOST123",
+                    "RequestId": "EXAMPLE_REQUEST123",
+                    "HostId": "EXAMPLE_HOST123",
                     "HTTPStatusCode": 200,
                     "RetryAttempts": 0,
                     "HTTPHeaders": {},
@@ -133,8 +133,8 @@ class S3ClientMock:
             "StartAfter": "",
             "RequestCharged": "requester",
             "ResponseMetadata": {
-                "RequestId": "EXAMPLE123456789",
-                "HostId": "EXAMPLE123/5678abcdefghijklambdaisawesome/mnopqrstuvwxyzABCDEFGH",
+                "RequestId": "EXAMPLE_REQUEST123",
+                "HostId": "EXAMPLE_HOST123",
                 "HTTPStatusCode": 200,
                 "RetryAttempts": 0,
                 "HTTPHeaders": {},
