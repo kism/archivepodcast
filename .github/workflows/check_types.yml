@@ -26,7 +26,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install the project
-        run: uv sync --no-default-groups --group type
+        run: uv sync --extra type
       - name: Check types with mypy
         run: uv run mypy
 
@@ -44,6 +44,6 @@ jobs:
         with:
           enable-cache: true
       - name: Install the project
-        run: uv sync --no-default-groups --group type
+        run: uv sync --extra type
       - name: Check types with ty
         run: uv run ty check

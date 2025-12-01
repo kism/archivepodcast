@@ -49,7 +49,7 @@ jobs:
         with:
           enable-cache: true
       - name: Get dependencies
-        run: uv sync --no-default-groups
+        run: uv sync
       - name: Prepare to generate the HTML
         run: mkdir -p instance/web/rss/ && cp -f scripts/config/rss-ci.rss instance/web/rss/test
       - name: Create fake ffmpeg

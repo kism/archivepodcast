@@ -72,8 +72,8 @@ class PaginatorMock:
                 "StartAfter": "",
                 "RequestCharged": "requester",
                 "ResponseMetadata": {
-                    "RequestId": "EXAMPLE123456789",
-                    "HostId": "EXAMPLE123/5678abcdefghijklambdaisawesome/mnopqrstuvwxyzABCDEFGH",
+                    "RequestId": "EXAMPLEREQUEST123",
+                    "HostId": "EXAMPLEHOST123",
                     "HTTPStatusCode": 200,
                     "RetryAttempts": 0,
                     "HTTPHeaders": {},
@@ -150,7 +150,7 @@ class S3ClientMock:
 
         # Update the s3_file_cache with the new file
         size = len(Body) if hasattr(Body, "__len__") else 0
-        s3_file_cache.add_file(S3File(key=Key, size=size))  # This is to make tests pass lmao, might be a hack
+        s3_file_cache.add_file(S3File(key=Key, size=size))  # This is to make tests pass, might be a hack
 
     async def delete_object(self, Bucket: str, Key: str) -> None:
         _objects.pop(Key, None)
