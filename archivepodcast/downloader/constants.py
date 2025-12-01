@@ -21,3 +21,7 @@ CONTENT_TYPES = {
     ".m4a": "audio/mpeg",
     ".flac": "audio/flac",
 }
+
+USER_AGENT = "Podcasts/4024.230.1 CFNetwork/1568.200.51 Darwin/24.1.0"
+
+DOWNLOAD_RETRY_COUNT = 5

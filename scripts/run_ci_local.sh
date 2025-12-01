@@ -26,7 +26,7 @@ check_return() {
 echo "Running code checks locally"
 
 # Prerequisites
-uv sync
+uv sync --all-extras --upgrade
 
 echo "Npm version: $(npm --version), Expected: 11"
 npm install

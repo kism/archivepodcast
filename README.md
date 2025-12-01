@@ -84,6 +84,7 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ## Todo
 
+- Patch asyncio.sleep for pytest
 - Container Registry
 - header as a table, or divs
 - Fix font selection for frontend, done?

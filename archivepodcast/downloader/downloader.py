@@ -6,7 +6,6 @@ import datetime
 import re
 import shutil
 import sys
-from http import HTTPStatus
 from pathlib import Path
 
 import aiohttp
@@ -21,7 +20,8 @@ from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.utils.logger import get_logger
 from archivepodcast.utils.s3 import S3File
 
-from .constants import AUDIO_FORMATS, CONTENT_TYPES, FFMPEG_INFO, IMAGE_FORMATS
+from .constants import AUDIO_FORMATS, CONTENT_TYPES, DOWNLOAD_RETRY_COUNT, FFMPEG_INFO, IMAGE_FORMATS, USER_AGENT
+from .helpers import delay_download
 
 logger = get_logger(__name__)
 
@@ -105,12 +105,14 @@ class PodcastDownloader:
             await self._session.close()
             self._session = None
 
-    def _get_session(self) -> aiohttp.ClientSession:
+    def _get_aiohttp_session(self) -> aiohttp.ClientSession:
         """Start the aiohttp session."""
         if self._session is None:
             logger.debug("Starting new aiohttp session")
             self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=300), connector=aiohttp.TCPConnector(limit=10, limit_per_host=5)
+                timeout=aiohttp.ClientTimeout(total=300),  # 5 minutes, why not
+                connector=aiohttp.TCPConnector(limit=100),  # 100 is default
+                headers={"User-Agent": USER_AGENT},
             )
 
         return self._session
@@ -118,7 +120,14 @@ class PodcastDownloader:
     async def download_podcast(self, podcast: PodcastConfig) -> tuple[etree._ElementTree | None, bool]:
         """Parse the rss, Download all the assets, this is main."""
         self.feed_download_healthy = True  # Until proven otherwise
-        content = await self._fetch_podcast_rss(podcast.url.encoded_string())
+
+        content = None
+        for n in range(DOWNLOAD_RETRY_COUNT):
+            content = await self._fetch_podcast_rss(podcast.url.encoded_string(), podcast.name_one_word)
+            if content is not None:
+                break
+            await delay_download(n)
+
         if content is None:
             return None, False
 
@@ -132,24 +141,21 @@ class PodcastDownloader:
 
         return etree.ElementTree(podcast_rss), self.feed_download_healthy
 
-    async def _fetch_podcast_rss(self, url: str) -> bytes | None:
+    async def _fetch_podcast_rss(self, url: str, podcast_name: str) -> bytes | None:
         """Fetch the podcast rss from the given URL."""
-        session = self._get_session()
+        session = self._get_aiohttp_session()
 
         logger.debug("📜 Fetching podcast rss: %s", url)
         try:
             logger.trace("Starting fetch for podcast RSS: %s", url)
             async with session.get(url) as response:
-                if response.status != HTTPStatus.OK:
-                    msg = f"❌ Not a great web response getting RSS: {response.status}\n{await response.text()}"
-                    logger.error(msg)
-                    return None
+                response.raise_for_status()
 
                 logger.debug("📄 Success fetching podcast RSS: %s", response.status)
                 return await response.read()
 
-        except aiohttp.ClientError:
-            logger.error("❌ Timeout fetching podcast rss: %s", url)  # noqa: TRY400
+        except aiohttp.ClientError as e:
+            logger.error("❌ RSS download attempt failed for podcast %s: %s", podcast_name, type(e).__name__)  # noqa: TRY400
 
         return None
 
@@ -528,11 +534,11 @@ class PodcastDownloader:
                 else:
                     logger.debug("💾⛅ Uploading to s3: %s", s3_path)
 
-                await s3_client.upload_file(
-                    Filename=str(file_path),
+                await s3_client.put_object(
                     Bucket=self.app_config.s3.bucket,
                     Key=s3_path,
-                    ExtraArgs={"ContentType": content_type},
+                    Body=file_path.read_bytes(),
+                    ContentType=content_type,
                 )
                 logger.trace(f"Uploaded asset to s3: {s3_path}")
 
@@ -592,30 +598,45 @@ class PodcastDownloader:
 
     async def _download_to_local(self, url: str, file_path: Path) -> None:
         """Download the asset from the url."""
-        session = self._get_session()
+        session = self._get_aiohttp_session()
 
         logger.debug("💾 Downloading: %s", url)
         logger.info("💾 Downloading asset to: %s", file_path)
-        headers = {"user-agent": "Mozilla/5.0"}
-        try:
-            logger.trace("Downloading asset from URL: %s", url)
-            async with session.get(url, headers=headers) as response:
-                response.raise_for_status()
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                with file_path.open("wb") as asset_file:
-                    while True:
-                        chunk = await response.content.read(8192)
-                        if not chunk:
-                            break
-                        asset_file.write(chunk)
+        headers = {"user-agent": USER_AGENT}
 
-        except aiohttp.ServerTimeoutError:
-            self.feed_download_healthy = False
-            logger.exception("💾❌ Timeout Error: %s", url)
-            return
-        except aiohttp.ClientError:
-            self.feed_download_healthy = False
-            logger.exception("💾❌ Request Error: %s", url)
+        async def _attempt_download() -> bool:
+            """Attempt to download the asset."""
+            try:
+                logger.trace("Downloading asset from URL: %s", url)
+                async with session.get(url, headers=headers) as response:
+                    response.raise_for_status()
+                    file_path.parent.mkdir(parents=True, exist_ok=True)
+                    with file_path.open("wb") as asset_file:
+                        while True:
+                            chunk = await response.content.read(8192)
+                            if not chunk:
+                                break
+                            asset_file.write(chunk)
+
+            except aiohttp.ServerTimeoutError:
+                self.feed_download_healthy = False
+                logger.exception("💾❌ Timeout Error: %s", url)
+                return False
+            except aiohttp.ClientError:
+                self.feed_download_healthy = False
+                logger.exception("💾❌ Request Error: %s", url)
+                return False
+
+            return True
+
+        success = False
+        for n in range(DOWNLOAD_RETRY_COUNT):
+            success = await _attempt_download()
+            if success:
+                break
+            await delay_download(n)
+        if not success:
+            logger.error("💾❌ Failed to download asset after multiple attempts: %s", url)
             return
 
         logger.debug("💾 Success, downloaded to %s", file_path)

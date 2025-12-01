@@ -194,9 +194,9 @@ async def test_fetch_podcast_rss_value_error(
         raise ValueError
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
-        await apd._fetch_podcast_rss(rss_url)
+        await apd._fetch_podcast_rss(rss_url, "podcast_that_does_not_exist")
 
-    assert "Not a great web response getting RSS: 404" in caplog.text
+    assert "RSS download attempt failed for podcast podcast_that_does_not_exist: ClientResponseError" in caplog.text
 
 
 @pytest.mark.asyncio

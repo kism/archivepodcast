@@ -2,7 +2,6 @@ import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from logging import getLogger
-from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
 import pytest
@@ -92,20 +91,6 @@ class S3ClientMock:
 
     def get_waiter(self, waiter_name: str) -> None:
         pass
-
-    async def upload_file(
-        self,
-        Filename: str,
-        Bucket: str,
-        Key: str,
-        ExtraArgs: dict[str, object] | None = None,
-        Callback: object | None = None,
-        Config: object | None = None,
-    ) -> None:
-        file_path = Path(Filename)
-        with file_path.open("rb") as f:  # noqa: ASYNC230 # Fine in tests
-            body = f.read()
-            _objects[Key] = PutObjectRequestBucketPutObjectTypeDef(Key=Key, Body=body)
 
     async def list_objects_v2(self, Bucket: str, **kwargs: object) -> ListObjectsV2OutputTypeDef:
         contents: list[ObjectTypeDef] = []
