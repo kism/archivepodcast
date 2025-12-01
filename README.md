@@ -84,7 +84,7 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ## Todo
 
-- Patch asyncio.sleep for pytest
+- warnings when s3 put, or rss download takes too long
 - Container Registry
 - header as a table, or divs
 - Fix font selection for frontend, done?

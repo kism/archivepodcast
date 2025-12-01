@@ -6,6 +6,7 @@ import datetime
 import re
 import shutil
 import sys
+import time
 from pathlib import Path
 
 import aiohttp
@@ -19,6 +20,7 @@ from archivepodcast.instances.config import get_ap_config_s3_client
 from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.utils.logger import get_logger
 from archivepodcast.utils.s3 import S3File
+from archivepodcast.utils.time import warn_if_too_long
 
 from .constants import AUDIO_FORMATS, CONTENT_TYPES, DOWNLOAD_RETRY_COUNT, FFMPEG_INFO, IMAGE_FORMATS, USER_AGENT
 from .helpers import delay_download
@@ -110,8 +112,10 @@ class PodcastDownloader:
         if self._session is None:
             logger.debug("Starting new aiohttp session")
             self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=300),  # 5 minutes, why not
-                connector=aiohttp.TCPConnector(limit=100),  # 100 is default
+                # timeout, 5 minutes, why not
+                timeout=aiohttp.ClientTimeout(total=300),
+                # tcp connector, 100 is default connection limit, force_close seems to fix some issues
+                connector=aiohttp.TCPConnector(limit=100, force_close=True),
                 headers={"User-Agent": USER_AGENT},
             )
 
@@ -123,7 +127,9 @@ class PodcastDownloader:
 
         content = None
         for n in range(DOWNLOAD_RETRY_COUNT):
+            start_time = time.time()
             content = await self._fetch_podcast_rss(podcast.url.encoded_string(), podcast.name_one_word)
+            warn_if_too_long(f"download podcast rss: {podcast.name_one_word}", time.time() - start_time)
             if content is not None:
                 break
             await delay_download(n)
@@ -143,12 +149,12 @@ class PodcastDownloader:
 
     async def _fetch_podcast_rss(self, url: str, podcast_name: str) -> bytes | None:
         """Fetch the podcast rss from the given URL."""
-        session = self._get_aiohttp_session()
+        aiohttp_session = self._get_aiohttp_session()
 
         logger.debug("📜 Fetching podcast rss: %s", url)
         try:
             logger.trace("Starting fetch for podcast RSS: %s", url)
-            async with session.get(url) as response:
+            async with aiohttp_session.get(url) as response:
                 response.raise_for_status()
 
                 logger.debug("📄 Success fetching podcast RSS: %s", response.status)
@@ -534,12 +540,14 @@ class PodcastDownloader:
                 else:
                     logger.debug("💾⛅ Uploading to s3: %s", s3_path)
 
+                start_time = time.time()
                 await s3_client.put_object(
                     Bucket=self.app_config.s3.bucket,
                     Key=s3_path,
                     Body=file_path.read_bytes(),
                     ContentType=content_type,
                 )
+                warn_if_too_long(f"upload asset to s3: {s3_path}", time.time() - start_time, large_file=True)
                 logger.trace(f"Uploaded asset to s3: {s3_path}")
 
             s3_file_cache.add_file(S3File(key=s3_path, size=file_path.stat().st_size))
@@ -598,17 +606,17 @@ class PodcastDownloader:
 
     async def _download_to_local(self, url: str, file_path: Path) -> None:
         """Download the asset from the url."""
-        session = self._get_aiohttp_session()
+        aiohttp_session = self._get_aiohttp_session()
 
         logger.debug("💾 Downloading: %s", url)
         logger.info("💾 Downloading asset to: %s", file_path)
-        headers = {"user-agent": USER_AGENT}
 
         async def _attempt_download() -> bool:
             """Attempt to download the asset."""
             try:
                 logger.trace("Downloading asset from URL: %s", url)
-                async with session.get(url, headers=headers) as response:
+                start_time = time.time()
+                async with aiohttp_session.get(url) as response:
                     response.raise_for_status()
                     file_path.parent.mkdir(parents=True, exist_ok=True)
                     with file_path.open("wb") as asset_file:
@@ -618,13 +626,15 @@ class PodcastDownloader:
                                 break
                             asset_file.write(chunk)
 
+                warn_if_too_long(f"download asset: {file_path}", time.time() - start_time, large_file=True)
+
             except aiohttp.ServerTimeoutError:
                 self.feed_download_healthy = False
                 logger.exception("💾❌ Timeout Error: %s", url)
                 return False
-            except aiohttp.ClientError:
+            except aiohttp.ClientError as e:
                 self.feed_download_healthy = False
-                logger.exception("💾❌ Request Error: %s", url)
+                logger.exception("💾❌ Request Error: %s for %s", type(e).__name__, url)
                 return False
 
             return True

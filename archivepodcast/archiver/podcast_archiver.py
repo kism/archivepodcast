@@ -19,6 +19,7 @@ from archivepodcast.instances.health import health
 from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.logger import get_logger
+from archivepodcast.utils.time import warn_if_too_long
 
 from .helpers import tree_no_episodes
 from .webpages import Webpage, Webpages
@@ -248,6 +249,7 @@ class PodcastArchiver:
             async with session.create_client("s3", **s3_config.__dict__) as s3_client:
                 try:
                     # Upload the file
+                    start_time = time.time()
                     logger.trace("Uploading feed %s to s3...", podcast.name_one_word)
                     await s3_client.put_object(
                         Body=self.podcast_rss[podcast.name_one_word],
@@ -255,6 +257,8 @@ class PodcastArchiver:
                         Key="rss/" + podcast.name_one_word,
                         ContentType="application/rss+xml",
                     )
+                    warn_if_too_long(f"upload feed {podcast.name_one_word} to s3", time.time() - start_time)
+
                     logger.info('📄⛅ Uploaded feed: "%s" to s3', podcast.name_one_word)
                 except Exception:  # pylint: disable=broad-exception-caught
                     logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s")
@@ -521,12 +525,14 @@ class PodcastArchiver:
 
                 async with session.create_client("s3", **s3_config.__dict__) as s3_client:
                     try:
+                        start_time = time.time()
                         await s3_client.put_object(
                             Body=page_content_bytes,
                             Bucket=self.app_config.s3.bucket,
                             Key=s3_key,
                             ContentType=webpage.mime,
                         )
+                        warn_if_too_long(f"upload page: {s3_key} to s3", time.time() - start_time)
                         logger.trace(f"Uploaded page to s3: {s3_key}")
                     except Exception:
                         logger.exception("⛅❌ Unhandled s3 error trying to upload the file: %s", s3_key)
