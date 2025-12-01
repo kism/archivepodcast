@@ -6,7 +6,6 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Self, cast
 
-from colorama import Fore, Style, init
 from flask import Flask
 from pydantic import BaseModel, field_validator, model_validator
 from rich.console import Console
@@ -14,54 +13,9 @@ from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 from rich.theme import Theme
 
-init(autoreset=True)
-
-COLOURS = {
-    "TRACE": Fore.CYAN,
-    "DEBUG": Fore.GREEN,
-    "INFO": Fore.WHITE,
-    "WARNING": Fore.YELLOW,
-    "ERROR": Fore.RED,
-    "CRITICAL": Fore.RED,
-}
-
 DESIRED_LEVEL_NAME_LEN = 5
 DESIRED_NAME_LEN = 16
 DESIRED_THREAD_NAME_LEN = 13
-
-
-class ColorFormatter(logging.Formatter):
-    """Custom formatter to add colour to the log messages."""
-
-    def _format_value(self, value: Any) -> str:  # noqa: ANN401
-        """Format a log message value into a string representation."""
-        if isinstance(value, tuple):
-            return "  ".join(map(str, value))
-        if isinstance(value, list):
-            return "  \n".join(map(str, value))
-        return str(value) if value is not None else "<NoneType>"
-
-    def format(self, record: logging.LogRecord) -> str:
-        """Format the log record."""
-        record.msg = self._format_value(record.msg)
-        record.name = record.name.replace("archivepodcast", "ap")
-
-        if record.threadName and "Thread-" in record.threadName:
-            record.threadName = record.threadName[record.threadName.find("(") + 1 : record.threadName.find(")")]
-
-        if record.name.startswith("ap") and record.levelno <= logging.INFO:
-            record.levelname = record.levelname.ljust(DESIRED_LEVEL_NAME_LEN)
-            record.name = record.name.ljust(DESIRED_NAME_LEN)
-            record.threadName = record.threadName.ljust(DESIRED_THREAD_NAME_LEN) if record.threadName else ""
-        elif not record.name.startswith("ap"):
-            record.threadName = ""
-
-        if colour := COLOURS.get(record.levelname):
-            record.name = f"{colour}{record.name}{Style.RESET_ALL}"
-            record.levelname = f"{colour}{record.levelname}{Style.RESET_ALL}"
-            record.msg = f"{colour}{record.msg}{Style.RESET_ALL}"
-
-        return super().format(record)
 
 
 LOG_LEVELS = [
@@ -202,8 +156,10 @@ def setup_logger(
     logging.getLogger("botocore").setLevel(logging.WARNING)  # Can be noisy
     logging.getLogger("boto3").setLevel(logging.WARNING)  # Can be noisy
     logging.getLogger("s3transfer").setLevel(logging.WARNING)  # Can be noisy
+    logging.getLogger("aiobotocore").setLevel(logging.INFO)  # Can be noisy
+    logging.getLogger("asyncio").setLevel(logging.INFO)  # Can be noisy
 
-    logger.info("Logger configuration set!")
+    logger.debug("Logger configuration set!")
 
 
 def get_logger(name: str) -> CustomLogger:
@@ -269,7 +225,7 @@ def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
             )
         else:
             in_logger.setLevel(log_level)
-            logger.info("Showing log level: INFO and above")
+            logger.debug("Showing log level: INFO and above")
             logger.debug("Showing log level: DEBUG")
             logger.trace("Showing log level: TRACE")
     else:

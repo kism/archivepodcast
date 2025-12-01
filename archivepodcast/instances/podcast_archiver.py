@@ -1,5 +1,6 @@
 """Blueprint and helpers for the ArchivePodcast app."""
 
+import asyncio
 import datetime
 import os
 import signal
@@ -9,10 +10,12 @@ from http import HTTPStatus
 from pathlib import Path
 from types import FrameType
 
-from flask import Response, current_app, render_template
+from flask import Response, current_app, render_template, send_file
 
 from archivepodcast.archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
+from archivepodcast.instances.health import health
+from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.logger import get_logger
 
 from .config import get_ap_config
@@ -27,6 +30,7 @@ def initialise_archivepodcast() -> None:
     global _ap  # noqa: PLW0603
     ap_conf = get_ap_config()
 
+    start_time = time.time()
     _ap = PodcastArchiver(
         app_config=ap_conf.app,
         podcast_list=ap_conf.podcasts,
@@ -44,6 +48,7 @@ def initialise_archivepodcast() -> None:
 
     # Start thread: podcast backup loop
     threading.Thread(target=podcast_loop, daemon=True).start()
+    event_times.set_event_time("create_app/initialise_archivepodcast", time.time() - start_time)
 
 
 def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
@@ -56,7 +61,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
         logger.error("❌ ArchivePodcast object not initialized")
         return
 
-    _ap.health.update_core_status(currently_loading_config=True)
+    health.update_core_status(currently_loading_config=True)
     logger.debug("Handle Sighup %s %s", signal_num, handler)
 
     logger.info("🙋 Got SIGHUP, Reloading Config")
@@ -80,9 +85,9 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
 
     end_time = time.time()  # Record the end time
     duration = end_time - start_time  # Calculate the duration
-    _ap.health.set_event_time("reload_config", duration)
+    event_times.set_event_time("reload_config", duration)
     logger.info("🙋 Finished adhoc config reload in  %.2f seconds", duration)
-    _ap.health.update_core_status(currently_loading_config=False)
+    health.update_core_status(currently_loading_config=False)
 
 
 def podcast_loop() -> None:
@@ -93,13 +98,15 @@ def podcast_loop() -> None:
         logger.critical("❌ ArchivePodcast object not initialized, podcast_loop dead")
         return
 
-    if _ap.s3 is not None:
+    if _ap.s3:
         logger.info("⛅ We are in s3 mode, missing episode files will be downloaded, uploaded to s3, and then deleted")
 
     while True:
         _ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
         current_datetime = datetime.datetime.now(tz=datetime.UTC)
+
+        asyncio.run(_ap.write_health_s3())
 
         # Calculate time until next run
         seconds_until_next_run = _get_time_until_next_run(current_datetime)
@@ -136,6 +143,12 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
     try:
         webpage = _ap.webpages.get_webpage(webpage_name)
     except KeyError:
+        webpage_parts = webpage_name.split("/")
+        static_path = Path(current_app.instance_path) / "web" / "/".join(webpage_parts)
+        if static_path.is_file():
+            logger.warning("Webpage not in cache serving from disk: %s", static_path)
+            return send_file(static_path)
+
         return generate_not_generated_error(webpage_name)
 
     cache_control = "public, max-age=180"

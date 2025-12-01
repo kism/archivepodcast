@@ -1,4 +1,4 @@
-import time
+import asyncio
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -11,11 +11,12 @@ from archivepodcast.downloader.downloader import PodcastDownloader
 from tests.constants import FLASK_ROOT_PATH
 
 if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client
     from pytest_mock import MockerFixture
+
+    from tests.fixtures.aws import AWSAioSessionMock
 else:
     MockerFixture = object
-    S3Client = object
+    AWSAioSessionMock = object
 
 
 @pytest.fixture
@@ -35,47 +36,39 @@ def apa(
         root_path=FLASK_ROOT_PATH,
     )
 
-    while apa.health.currently_loading_config() or apa.health.currently_rendering():
-        time.sleep(0.05)
+    asyncio.run(apa._render_files())  # Needed in this case?
 
     return apa
 
 
 @pytest.fixture
 def no_render_files(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Monkeypatch render_files to prevent it from running."""
-    monkeypatch.setattr("archivepodcast.archiver.PodcastArchiver.render_files", lambda _: None)
+    """Monkeypatch _render_files to prevent it from running."""
+
+    async def dummy_render_files(self: PodcastArchiver) -> None:
+        """Dummy render files function."""
+        return
+
+    monkeypatch.setattr("archivepodcast.archiver.PodcastArchiver._render_files", dummy_render_files)
 
 
 @pytest.fixture
 def apa_aws(
     tmp_path: Path,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    no_render_files: MockerFixture,
+    mock_get_session: AWSAioSessionMock,
     caplog: pytest.LogCaptureFixture,
-    s3: S3Client,
-    mocked_aws: MockerFixture,
 ) -> PodcastArchiver:
     """Return a Podcast Archive Object with mocked AWS."""
     config_file = "testing_true_valid_s3.json"
     config = get_test_config(config_file)
 
-    bucket_name = config.app.s3.bucket
-    s3.create_bucket(Bucket=bucket_name)
-
-    # Prevent weird threading issues
-
-    apa_aws = PodcastArchiver(
+    return PodcastArchiver(
         app_config=config.app,
         podcast_list=config.podcasts,
         instance_path=tmp_path,
         root_path=FLASK_ROOT_PATH,
     )
-
-    while apa_aws.health.currently_loading_config() or apa_aws.health.currently_rendering():
-        time.sleep(0.05)
-
-    return apa_aws
 
 
 # endregion
@@ -95,14 +88,13 @@ def apd(
 
     web_root = apa.web_root
 
-    return PodcastDownloader(app_config=config.app, s3=None, web_root=web_root)
+    return PodcastDownloader(app_config=config.app, s3=False, web_root=web_root)
 
 
 @pytest.fixture
 def apd_aws(
     apa_aws: PodcastArchiver,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mocked_aws: MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ) -> PodcastDownloader:
     """Return a Podcast Archive Object with mocked AWS."""

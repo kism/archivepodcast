@@ -3,62 +3,59 @@
 
 [project]
 name = "archivepodcast"
-version = "1.5.0.dev1"
+version = "1.5.0rc1"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
+    "flask[async]>=3.1,<4",
+    "aiobotocore>=2.25.2",
     "aiohttp>=3.13.2",
-    "boto3>=1.36,<2",
-    "colorama>=0.4.6",
-    "flask>=3.1,<4",
     "jinja2>=3.1,<4",
     # dnf install libxml2-devel libxslt-devel
     # apt install libxml2-dev libxslt-dev
     "lxml>=5,<5.4", # Right now its broken for linux on a greater version
     # "lxml>=6.0.2", # TESTING
-    "markdown>=3.7",
-    "psutil>=6.1.1",
-    "pydantic>=2.12.4",
-    "pydantic-settings>=2.12.0",
+    "markdown>=3.10",
+    "psutil>=7.1.3",
+    "pydantic>=2.12",
+    "pydantic-settings>=2.12",
     "python-magic>=0.4",
     "rich>=14.2.0",
-    "typed-ffmpeg>=3.0",
+    "typed-ffmpeg>=3.7",
     "waitress>=3.0",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 type = [
     "mypy",
     "ty",
-    "types-colorama",
     "types-lxml",
     "types-psutil",
     "types-Markdown",
-    "boto3-stubs[s3]",
-    "types-aioboto3[s3]",
+    "botocore-stubs",
+    "types-aiobotocore",
+    "types-aiobotocore-s3",
 ]
 
 lint = ["ruff"]
 
+profile = ["aiomonitor"]
+
 test = [
-    "pytest",
+    "pytest>=9.0",
     "pytest-cov",
     "pytest-mock",
     "pytest-random-order",
     "detect-test-pollution",
     "pytest-asyncio",
-    "moto[s3]",
-    "pytest-aiohttp",
     "tomlkit>=0.13",
     "pytest-socket>=0.7.0",
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
 
-[tool.uv]
-default-groups = ["test", "type", "lint", "docs"]
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
@@ -94,6 +91,9 @@ ignore = [
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
     "BLE001",  # KG Tests can use BaseException.
+]
+"tests/fixtures/aws.py" = [
+    "N803", # KG AWS Just breaks the rules here
 ]
 
 "docs/*.py" = [
@@ -155,6 +155,18 @@ disable_error_code = ["misc"]
 warn_unreachable = true
 warn_redundant_casts = true
 
+
 [[tool.ty.overrides]]
+# Blame the flask client object
 include = ["tests/**"]
-rules = { "unresolved-attribute" = "ignore" } # Blame the flask client object
+[tool.ty.overrides.rules]
+"unresolved-attribute" = "ignore"
+
+[[tool.ty.overrides]]
+# Not sure what ty is upset about here
+include = [
+    "archivepodcast/blueprints/rss.py",
+    "archivepodcast/archiver/podcast_archiver.py",
+]
+[tool.ty.overrides.rules]
+"invalid-argument-type" = "ignore"

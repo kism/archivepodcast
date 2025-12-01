@@ -9,6 +9,7 @@ from rich.traceback import install
 from .blueprints import bp_api, bp_content, bp_rss, bp_static, bp_webpages
 from .instances import podcast_archiver
 from .instances.config import get_ap_config
+from .instances.profiler import event_times
 from .utils import logger
 from .version import __version__
 
@@ -52,15 +53,15 @@ def create_app(instance_path_override: str | None = None) -> Flask:
 
     app.app_context().push()  # God knows what does this does but it fixes everything
 
-    @app.errorhandler(404)
+    @app.errorhandler(404)  # type: ignore[untyped-decorator]
     def invalid_route(e: str) -> Response:
         """404 Handler."""
         app.logger.debug("Error handler: invalid_route: %s", e)
         return podcast_archiver.generate_404()
 
     duration = time.time() - start_time
-    app.logger.info("🙋 ArchivePodcast Version: %s webapp initialised in %.2f seconds.", __version__, duration)
-    podcast_archiver.get_ap().health.set_event_time("flask_app_init", duration)
+    app.logger.info("🙋 ArchivePodcast version: %s, webapp initialised in %.2f seconds.", __version__, duration)
+    event_times.set_event_time("create_app", duration)
     app.logger.info("🙋 Starting Web Server")
     app.logger.info(ap_conf.app.inet_path)
 

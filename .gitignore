@@ -11,8 +11,6 @@ temp.py
 # Node is just for development tools
 package-lock.json
 
-# Don't know what created this
-core
 
 # Just incase
 *.mp3
@@ -20,6 +18,7 @@ core
 *.jpeg
 *.png
 *.wav
+*.prof
 
 # CSpell
 .cspell/.cspellcache

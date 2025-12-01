@@ -20,7 +20,8 @@ else:
     MockerFixture = object
 
 
-def test_init(
+@pytest.mark.asyncio
+async def test_init(
     get_test_config: Callable[[str], ArchivePodcastConfig],
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
@@ -32,10 +33,9 @@ def test_init(
     web_root = Path(tmp_path) / "web"
 
     with caplog.at_level(TRACE_LEVEL_NUM):
-        apd = PodcastDownloader(app_config=config.app, s3=None, web_root=web_root)
+        PodcastDownloader(app_config=config.app, s3=False, web_root=web_root)
 
     assert "PodcastDownloader config (re)loaded" in caplog.text
-    assert apd.s3_paths_cache == []
 
 
 @pytest.mark.asyncio
@@ -141,7 +141,7 @@ async def test_download_podcast_wav_mp3_exists(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test Fetching RSS and assets."""
-    apd.s3 = None
+    apd.s3 = False
     config_file = "testing_true_valid.json"
     config = get_test_config(config_file)
     mock_podcast_definition = config.podcasts[0]

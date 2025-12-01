@@ -8,25 +8,20 @@ import shutil
 import sys
 from http import HTTPStatus
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import aiohttp
 import ffmpeg
-from botocore.exceptions import (
-    ClientError as S3ClientError,
-)
+from aiobotocore.session import get_session
+from botocore.exceptions import ClientError as S3ClientError
 from lxml import etree
 
 from archivepodcast.config import AppConfig, PodcastConfig
+from archivepodcast.instances.config import get_ap_config_s3_client
+from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.s3 import list_all_s3_objects
+from archivepodcast.utils.s3 import S3File
 
 from .constants import AUDIO_FORMATS, CONTENT_TYPES, FFMPEG_INFO, IMAGE_FORMATS
-
-if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client  # pragma: no cover
-else:
-    S3Client = object
 
 logger = get_logger(__name__)
 
@@ -68,28 +63,21 @@ check_ffmpeg()
 class PodcastDownloader:
     """PodcastDownloader object."""
 
-    def __init__(self, app_config: AppConfig, s3: S3Client | None, web_root: Path) -> None:
+    def __init__(self, app_config: AppConfig, *, s3: bool, web_root: Path) -> None:
         """Initialise the PodcastDownloader object."""
         self.s3 = s3
-        self.s3_paths_cache: list[str] = []
         self.local_paths_cache: list[Path] = []
         self.feed_download_healthy: bool = True  # Need to change this if you do one podcast download per thread
         self.app_config = app_config
         self.web_root = web_root
         self._session: aiohttp.ClientSession | None = None
-        self.update_file_cache()
 
         logger.trace("PodcastDownloader config (re)loaded")
 
-    def update_file_cache(self) -> None:
+    async def update_file_cache(self) -> None:
         """Update the file cache."""
         if self.s3:
-            self.s3_paths_cache = []
-            s3_paths = list_all_s3_objects(self.s3, self.app_config.s3.bucket)
-            for s3_path in s3_paths:
-                self.s3_paths_cache.append(s3_path["Key"])
-
-            self.s3_paths_cache.sort()
+            await s3_file_cache.get_all(self.app_config.s3.bucket)
         else:
             web_root = Path(self.web_root)
             self.local_paths_cache = [
@@ -97,13 +85,17 @@ class PodcastDownloader:
             ]
             self.local_paths_cache.sort()
 
-    def get_file_list(self) -> tuple[str, list[str]]:
+    async def get_file_list(self) -> tuple[str, list[str]]:
         """Gets the base url and the file cache."""
-        self.update_file_cache()
+        await self.update_file_cache()
 
-        base_url = self.app_config.s3.cdn_domain if self.s3 is not None else self.app_config.inet_path
+        base_url = self.app_config.s3.cdn_domain if self.s3 else self.app_config.inet_path
 
-        file_list = self.s3_paths_cache if self.s3 is not None else [str(path) for path in self.local_paths_cache]
+        file_list = (
+            [s3_file["Key"] for s3_file in await s3_file_cache.get_all(self.app_config.s3.bucket)]
+            if self.s3
+            else [str(path) for path in self.local_paths_cache]
+        )
 
         return base_url.encoded_string(), file_list
 
@@ -116,6 +108,7 @@ class PodcastDownloader:
     def _get_session(self) -> aiohttp.ClientSession:
         """Start the aiohttp session."""
         if self._session is None:
+            logger.debug("Starting new aiohttp session")
             self._session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=300), connector=aiohttp.TCPConnector(limit=10, limit_per_host=5)
             )
@@ -130,7 +123,7 @@ class PodcastDownloader:
             return None, False
 
         podcast_rss = etree.fromstring(content)
-        logger.info("📄 Downloaded rss feed, processing")
+        logger.debug("📄 Downloaded rss feed, processing")
         logger.trace(str(podcast_rss))
 
         xml_first_child = podcast_rss[0]
@@ -145,6 +138,7 @@ class PodcastDownloader:
 
         logger.debug("📜 Fetching podcast rss: %s", url)
         try:
+            logger.trace("Starting fetch for podcast RSS: %s", url)
             async with session.get(url) as response:
                 if response.status != HTTPStatus.OK:
                     msg = f"❌ Not a great web response getting RSS: {response.status}\n{await response.text()}"
@@ -197,7 +191,7 @@ class PodcastDownloader:
 
     def _handle_title_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
         """Handle the title tag in the podcast rss."""
-        logger.info("📄 Source Podcast title: %s", str(channel.text))
+        logger.debug("📄 Source Podcast title: %s", str(channel.text))
         if podcast.new_name != "":
             channel.text = podcast.new_name
 
@@ -371,11 +365,11 @@ class PodcastDownloader:
 
         return file_exists
 
-    def _check_path_exists(self, file_path: Path | str) -> bool:
+    async def _check_path_exists(self, file_path: Path | str) -> bool:
         """Check the path, s3 or local."""
         file_exists = False
 
-        if self.s3 is not None:
+        if self.s3:
             # Convert file_path to a Path object if it isn't already
             file_path = Path(file_path)
 
@@ -386,27 +380,31 @@ class PodcastDownloader:
             # Convert to a posix path (forward slashes) and ensure no leading slash
             s3_key = file_path.as_posix().lstrip("/")
 
-            if s3_key not in self.s3_paths_cache:
-                try:
-                    # Head object to check if file exists
-                    self.s3.head_object(Bucket=self.app_config.s3.bucket, Key=s3_key)
-                    logger.debug(
-                        "⛅ File: %s exists in s3 bucket",
-                        s3_key,
-                    )
-                    self.s3_paths_cache.append(s3_key)
-                    file_exists = True
+            if not s3_file_cache.check_file_exists(s3_key):
+                session = get_session()
+                ap_s3_config = get_ap_config_s3_client()
 
-                except S3ClientError as e:
-                    if e.response.get("Error", {}).get("Code") == "404":
+                async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
+                    try:
+                        # Head object to check if file exists
+                        my_object = await s3_client.head_object(Bucket=self.app_config.s3.bucket, Key=s3_key)
                         logger.debug(
-                            "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
+                            "⛅ File: %s exists in s3 bucket",
                             s3_key,
                         )
-                    else:
-                        logger.exception("⛅❌ s3 check file exists errored out?")
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.exception("⛅❌ Unhandled s3 Error:")
+                        s3_file_cache.add_file(S3File(key=s3_key, size=my_object.get("ContentLength", 0)))
+                        file_exists = True
+
+                    except S3ClientError as e:
+                        if e.response.get("Error", {}).get("Code") == "404":
+                            logger.debug(
+                                "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
+                                s3_key,
+                            )
+                        else:
+                            logger.exception("⛅❌ s3 check file exists errored out?")
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        logger.exception("⛅❌ Unhandled s3 Error:")
 
             else:
                 logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_key)
@@ -441,7 +439,7 @@ class PodcastDownloader:
                 mp3_file_path.unlink()
 
         # If the asset hasn't already been downloaded and converted
-        if not self._check_path_exists(mp3_file_path):
+        if not await self._check_path_exists(mp3_file_path):
             await self._download_asset(
                 url,
                 title,
@@ -472,7 +470,7 @@ class PodcastDownloader:
             logger.info("♻ Done")
 
             if self.s3:
-                self._upload_asset_s3(mp3_file_path, extension)
+                await self._upload_asset_s3(mp3_file_path, extension)
         else:
             logger.debug("Episode has already been converted: %s", mp3_file_path)
 
@@ -485,7 +483,12 @@ class PodcastDownloader:
 
             msg = f"Checking length of s3 object: {s3_key}"
             logger.trace(msg)
-            response = self.s3.head_object(Bucket=self.app_config.s3.bucket, Key=s3_key)
+
+            session = get_session()
+            ap_s3_config = get_ap_config_s3_client()
+            async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
+                response = await s3_client.head_object(Bucket=self.app_config.s3.bucket, Key=s3_key)
+
             new_length = response["ContentLength"]
             msg = f"Length of converted wav file {s3_key}: {new_length} bytes, stored in s3"
         else:
@@ -496,7 +499,7 @@ class PodcastDownloader:
 
         return new_length
 
-    def _upload_asset_s3(self, file_path: Path, extension: str, *, remove_original: bool = True) -> None:
+    async def _upload_asset_s3(self, file_path: Path, extension: str, *, remove_original: bool = True) -> None:
         """Upload asset to s3."""
         if not self.s3:
             logger.error("⛅❌ s3 client not found, cannot upload")
@@ -507,16 +510,33 @@ class PodcastDownloader:
             file_path = Path(self.web_root) / file_path
         s3_path = file_path.relative_to(self.web_root).as_posix()
         s3_path = s3_path.removeprefix("/")
+
+        if not remove_original:
+            # So if we are not removing the original, we can check if we can skip the upload
+            file_size = file_path.stat().st_size
+            if s3_file_cache.check_file_exists(s3_path, file_size):
+                logger.debug("⛅ File: %s exists in s3_paths_cache and matches in size, skipping upload", s3_path)
+                return
+
         try:
             # Upload the file
-            logger.info("💾⛅ Uploading to s3: %s", s3_path)
-            self.s3.upload_file(
-                str(file_path),
-                self.app_config.s3.bucket,
-                s3_path,
-                ExtraArgs={"ContentType": content_type},
-            )
-            self.s3_paths_cache.append(s3_path)
+            session = get_session()
+            ap_s3_config = get_ap_config_s3_client()
+            async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
+                if remove_original:
+                    logger.info("💾⛅ Uploading to s3: %s", s3_path)
+                else:
+                    logger.debug("💾⛅ Uploading to s3: %s", s3_path)
+
+                await s3_client.upload_file(
+                    Filename=str(file_path),
+                    Bucket=self.app_config.s3.bucket,
+                    Key=s3_path,
+                    ExtraArgs={"ContentType": content_type},
+                )
+                logger.trace(f"Uploaded asset to s3: {s3_path}")
+
+            s3_file_cache.add_file(S3File(key=s3_path, size=file_path.stat().st_size))
 
             if remove_original:
                 logger.info("💾 Removing local file: %s", file_path)
@@ -544,8 +564,8 @@ class PodcastDownloader:
             await self._download_to_local(url, cover_art_destination)
 
         if self.s3:
-            logger.info("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
-            self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
+            logger.debug("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
+            await self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
 
     async def _download_asset(
         self, url: str, title: str, podcast: PodcastConfig, extension: str = "", file_date_string: str = ""
@@ -558,14 +578,14 @@ class PodcastDownloader:
         content_dir = Path(self.web_root) / "content" / podcast.name_one_word
         file_path = content_dir / f"{file_date_string}{spacer}{title}{extension}"
 
-        if not self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
+        if not await self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
             await self._download_to_local(url, file_path)
             logger.debug("Downloaded asset: %s", file_path)
 
             # For if we are using s3 as a backend
             # wav logic since this gets called in handle_wav
             if extension != ".wav" and self.s3:
-                self._upload_asset_s3(file_path, extension)
+                await self._upload_asset_s3(file_path, extension)
 
         else:
             logger.trace(f"Already downloaded: {title}{extension}")
@@ -578,6 +598,7 @@ class PodcastDownloader:
         logger.info("💾 Downloading asset to: %s", file_path)
         headers = {"user-agent": "Mozilla/5.0"}
         try:
+            logger.trace("Downloading asset from URL: %s", url)
             async with session.get(url, headers=headers) as response:
                 response.raise_for_status()
                 file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -597,7 +618,7 @@ class PodcastDownloader:
             logger.exception("💾❌ Request Error: %s", url)
             return
 
-        logger.debug("💾 Success!")
+        logger.debug("💾 Success, downloaded to %s", file_path)
 
         if not self.s3:
             self._append_to_local_paths_cache(file_path)

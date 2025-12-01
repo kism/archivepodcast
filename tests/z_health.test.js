@@ -58,6 +58,18 @@ const healthData = {
   version: "1.2.2",
 };
 
+const profileData = {
+  name: "root",
+  duration: 0.1234,
+  children: [
+    {
+      name: "load_config",
+      duration: 0.0456,
+      children: [],
+    },
+  ],
+};
+
 describe("Health API", () => {
   test("fetches health data on page load", () => {
     global.fetch.mockResolvedValueOnce({
@@ -65,8 +77,13 @@ describe("Health API", () => {
       json: async () => ({ ...healthData }),
     });
 
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ...profileData }),
+    });
+
     document.dispatchEvent(new Event("DOMContentLoaded"));
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
     expect(global.fetch).toHaveBeenCalledWith("/api/health");
   });
 

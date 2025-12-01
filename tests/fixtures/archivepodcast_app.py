@@ -11,11 +11,9 @@ from archivepodcast.config import ArchivePodcastConfig
 from tests.constants import DUMMY_RSS_STR
 
 if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client
     from pytest_mock import MockerFixture
 else:
     MockerFixture = object
-    S3Client = object
 
 
 @pytest.fixture
@@ -34,6 +32,7 @@ def app(tmp_path: Path, get_test_config: Callable[[str], ArchivePodcastConfig]) 
 def app_live(
     tmp_path: Path,
     get_test_config: Callable[[str], ArchivePodcastConfig],
+    no_threading_start: MockerFixture,
     mock_podcast_source_rss_valid: MockerFixture,
 ) -> Flask:
     """This fixture uses the default config within the flask app."""
@@ -46,15 +45,10 @@ def app_live(
 def app_live_s3(
     tmp_path: Path,
     get_test_config: Callable[[str], ArchivePodcastConfig],
+    no_threading_start: MockerFixture,
     mock_podcast_source_rss_valid: MockerFixture,
-    mocked_aws: MockerFixture,
-    s3: S3Client,
 ) -> Flask:
     """This fixture uses the default config within the flask app."""
-
-    config = get_test_config("testing_true_valid_live_s3.json")
-    bucket_name = config.app.s3.bucket
-    s3.create_bucket(Bucket=bucket_name)
 
     return create_app(instance_path_override=str(tmp_path))
 

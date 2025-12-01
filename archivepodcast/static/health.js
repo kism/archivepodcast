@@ -5,6 +5,7 @@
 // Initialize health check on page load
 document.addEventListener("DOMContentLoaded", () => {
   fetchHealth();
+  fetchProfile();
 });
 
 /**
@@ -20,6 +21,63 @@ export function fetchHealth() {
       populateHealth(data);
     })
     .catch((error) => console.error("Error fetching health data:", error));
+}
+
+export function fetchProfile() {
+  fetch("/api/profile")
+    .then((response) => {
+      return response.json();
+    })
+    .then((data) => {
+      console.log("Profile data received");
+      populateProfile(data);
+    })
+    .catch((error) => console.error("Error fetching profile data:", error));
+}
+
+function recursiveTimerDisplay(data, indent = 0) {
+  const div = document.createElement("div");
+
+  // Create indentation string
+  const indentStr = " ".repeat(indent);
+
+  // Create the main line with event name
+  let msg = `${indentStr}${data.name || "Unknown Event"}: `;
+
+  // Add duration if available
+  if (data.duration !== null && data.duration !== undefined) {
+    msg += `${data.duration.toFixed(2)}s\n`;
+  } else {
+    msg += "∞\n";
+  }
+
+  // Add the message to the div
+  div.textContent += msg;
+
+  // Recursively process children if they exist
+  if (data.children && Array.isArray(data.children)) {
+    for (const child of data.children) {
+      const childDiv = recursiveTimerDisplay(child, indent + 2);
+      div.textContent += childDiv.textContent;
+    }
+  }
+
+  return div;
+}
+
+export function populateProfile(data) {
+  const profileDiv = document.getElementById("profile");
+  profileDiv.innerHTML = "";
+
+  const description = document.createElement("h3");
+  description.textContent = `Timer stats per: /api/profile`;
+  profileDiv.appendChild(description);
+
+  // Just display it raw for now
+  const timerDisplay = recursiveTimerDisplay(data);
+  timerDisplay.classList.add("health-table");
+  timerDisplay.style.whiteSpace = "pre";
+  profileDiv.appendChild(timerDisplay);
 }
 
 /**
@@ -103,7 +161,3 @@ function generateTable(data) {
   }
   return table;
 }
-
-// Poll health status every second for 30 seconds
-const intervalId = setInterval(fetchHealth, 1000);
-setTimeout(() => clearInterval(intervalId), 30000);

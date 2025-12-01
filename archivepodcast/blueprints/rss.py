@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 bp = Blueprint("rss", __name__)
 
 
-@bp.route("/rss/<string:feed>", methods=["GET"])
+@bp.route("/rss/<string:feed>", methods=["GET"])  # type: ignore[untyped-decorator]
 def rss(feed: str) -> Response:
     """Send RSS Feed."""
     ap = get_ap()

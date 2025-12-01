@@ -1,5 +1,6 @@
 """Instances for ArchivePodcast application."""
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from archivepodcast.config import ArchivePodcastConfig
@@ -23,3 +24,23 @@ def get_ap_config(config_path: Path | None = None) -> ArchivePodcastConfig:
         _conf_cache = ArchivePodcastConfig().force_load_config_file(config_path)
 
     return _conf_cache
+
+
+@dataclass
+class S3ClientConfig:
+    """Configuration for S3 client."""
+
+    aws_secret_access_key: str
+    aws_access_key_id: str
+    endpoint_url: str | None
+
+
+def get_ap_config_s3_client() -> object:
+    """Get the S3 client from the global ArchivePodcastConfig instance."""
+    ap_config = get_ap_config()
+
+    return S3ClientConfig(
+        aws_secret_access_key=ap_config.app.s3.secret_access_key,
+        aws_access_key_id=ap_config.app.s3.access_key_id,
+        endpoint_url=ap_config.app.s3.api_url.encoded_string() if ap_config.app.s3.api_url else None,
+    )

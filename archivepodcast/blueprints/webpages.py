@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 bp = Blueprint("webpages", __name__)
 
 
-@bp.route("/")
+@bp.route("/")  # type: ignore[untyped-decorator]
 def home() -> Response:
     """Flask Home.
 
@@ -28,25 +28,25 @@ def home() -> Response:
     )
 
 
-@bp.route("/index.html")
+@bp.route("/index.html")  # type: ignore[untyped-decorator]
 def home_index() -> Response:
     """Flask Home."""
     return send_ap_cached_webpage("index.html")
 
 
-@bp.route("/guide.html")
+@bp.route("/guide.html")  # type: ignore[untyped-decorator]
 def home_guide() -> Response:
     """Podcast app guide."""
     return send_ap_cached_webpage("guide.html")
 
 
-@bp.route("/webplayer.html")
+@bp.route("/webplayer.html")  # type: ignore[untyped-decorator]
 def home_web_player() -> Response:
     """Podcast app guide."""
     return send_ap_cached_webpage("webplayer.html")
 
 
-@bp.route("/about.html")
+@bp.route("/about.html")  # type: ignore[untyped-decorator]
 def home_about() -> Response:
     """Flask Home, s3 backup compatible."""
     if get_about_page_exists():
@@ -55,13 +55,14 @@ def home_about() -> Response:
     return generate_404()
 
 
-@bp.route("/health")
+@bp.route("/health")  # type: ignore[untyped-decorator]
+@bp.route("/health.html")  # type: ignore[untyped-decorator]
 def health() -> Response:
     """Health check."""
     return send_ap_cached_webpage("health.html")
 
 
-@bp.route("/filelist.html")
+@bp.route("/filelist.html")  # type: ignore[untyped-decorator]
 def home_filelist() -> Response:
     """Serve Filelist."""
     return send_ap_cached_webpage("filelist.html")

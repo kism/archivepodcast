@@ -40,6 +40,15 @@ git lfs fetch --all
 git lfs pull
 ```
 
+### Pre Commit Hooks
+
+To set up pre-commit hooks run:
+
+```bash
+uv tool add pre-commit --upgrade
+pre-commit install
+```
+
 ### Setup Python Environment
 
 #### Development
@@ -75,19 +84,11 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ## Todo
 
-- ~~Pydantic~~
-- ~~Mypy in strict mode~~
-- ~~Rich for logging, why not~~
-- ~~Put source code in separate directories~~
-- ~~docs toml -> json~~
-- ~~Health object scraper timer~~
-- ~~Generate health page static version?~~
-- ~~fix pytest~~
-- Async scraping
-  - ~~aiohttp~~
-  - aioboto3core?
 - Container Registry
 - header as a table, or divs
 - Fix font selection for frontend, done?
 - Cloudflare worker cron (CF still in beta)
   - Terraform example
+- pydantic xml
+
+Prod time to beat running adhoc, 56 seconds.

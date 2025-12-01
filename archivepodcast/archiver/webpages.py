@@ -54,7 +54,7 @@ class Webpages:
         """Add a webpage."""
         self._webpages[path] = Webpage(path=path, mime=mime, content=content)
 
-    def get_all(self) -> dict[str, Webpage]:
+    def get_all_pages(self) -> dict[str, Webpage]:
         """Return the webpages."""
         return self._webpages
 

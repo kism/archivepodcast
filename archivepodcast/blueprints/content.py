@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 bp = Blueprint("content", __name__)
 
 
-@bp.route("/content/<path:path>")
+@bp.route("/content/<path:path>")  # type: ignore[untyped-decorator]
 def send_content(path: str) -> Response | WerkzeugResponse:
     """Serve Content."""
     ap = get_ap()

@@ -61,6 +61,9 @@ class FakeResponse:
     async def read(self) -> bytes:
         return self._data
 
+    async def raw_headers(self) -> bytes:
+        return b""
+
     async def __aenter__(self) -> Self:
         return self
 
@@ -78,6 +81,16 @@ class FakeSession:
             return FakeResponse(data=b"", status=404)
 
         return FakeResponse(data=response_def["data"], status=response_def["status"])
+
+    async def request(self, method: str, url: str, **kwargs: Any) -> FakeResponse:
+        response_def = self.responses.get(url)
+        if response_def is None:
+            return FakeResponse(data=b"", status=404)
+
+        return FakeResponse(data=response_def["data"], status=response_def["status"])
+
+    async def send(self, *args: object, **kwargs: object) -> FakeResponse:
+        return FakeResponse(data=b"", status=404)
 
     async def __aenter__(self) -> Self:
         return self

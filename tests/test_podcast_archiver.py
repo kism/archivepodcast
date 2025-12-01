@@ -18,30 +18,33 @@ else:
     MockerFixture = object
 
 
-def test_no_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
+@pytest.mark.asyncio
+async def test_no_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Verify behavior when about page is missing."""
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
-        apa.load_about_page()
+        await apa._load_about_page()
 
     assert "About page doesn't exist" in caplog.text
 
 
-def test_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture, tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture, tmp_path: Path) -> None:
     """Test about page."""
     about_path = tmp_path / "about.md"
     with about_path.open("w") as f:
         f.write("About page exists!")
 
     with caplog.at_level(level=logging.INFO, logger="archivepodcast.archiver"):
-        apa.load_about_page()
+        await apa._load_about_page()
 
     assert "About page exists!" in caplog.text
 
 
-def test_check_s3_files_no_client(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
+@pytest.mark.asyncio
+async def test_check_s3_files_no_client(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Test that s3 files are checked."""
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
-        apa.check_s3_files()
+        await apa._check_s3_files()
 
     assert "Checking state of s3 bucket" in caplog.text
     assert "No s3 client to list" in caplog.text
@@ -154,7 +157,7 @@ def test_grab_podcasts_live(
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
     assert "Wrote rss to disk:" in caplog.text
-    assert "Hosted: http://localhost:5100/rss/test" in caplog.text
+    assert "Hosted feed: http://localhost:5100/rss/test" in caplog.text
 
     assert "Loading rss from file" not in caplog.text
 
@@ -179,7 +182,7 @@ def test_create_folder_structure_no_perms(apa: PodcastArchiver, monkeypatch: pyt
     monkeypatch.setattr(Path, "mkdir", mock_os_makedirs_permission_error)
 
     with pytest.raises(PermissionError):
-        apa.make_folder_structure()
+        apa._make_folder_structure()
 
 
 def test_grab_podcasts_unhandled_exception_rss(
@@ -194,7 +197,6 @@ def test_grab_podcasts_unhandled_exception_rss(
 
     async def no_download_podcast(*args: Any, **kwargs: Any) -> tuple[None, bool]:
         return None, False
-
 
     monkeypatch.setattr(apa.podcast_downloader, "download_podcast", lambda _: no_download_podcast())
 

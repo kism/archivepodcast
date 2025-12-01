@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Self
 
 from lxml import etree
 from psutil import Process
-from pydantic import BaseModel, field_serializer
+from pydantic import BaseModel
 
 from archivepodcast.utils.logger import get_logger
 from archivepodcast.version import __version__
@@ -146,17 +146,6 @@ class CoreHealth(BaseModel):
     debug: bool = False
 
 
-class EventLastTime(BaseModel):
-    """Event Last Time Model."""
-
-    duration: datetime.timedelta
-
-    @field_serializer("duration")
-    def serialize_duration(self, value: datetime.timedelta) -> float:
-        """Serialize duration to total seconds."""
-        return value.total_seconds()
-
-
 class PodcastArchiverHealthAPI(BaseModel):
     """Podcast Archiver Health API Model."""
 
@@ -164,7 +153,6 @@ class PodcastArchiverHealthAPI(BaseModel):
     podcasts: dict[str, PodcastHealth]
     templates: dict[str, WebpageHealth]
     version: str
-    event_times: dict[str, EventLastTime]
     assets: dict[str, str]
     host_info: HostingInfo
 
@@ -177,7 +165,6 @@ class PodcastArchiverHealth:
         self._core: CoreHealth = CoreHealth()
         self._podcasts: dict[str, PodcastHealth] = {}
         self._templates: dict[str, WebpageHealth] = {}
-        self._event_times: dict[str, EventLastTime] = {}
         self._assets: dict[str, str] = {}
         self._version: str = __version__
         self._host_info: HostingInfo = HostingInfo()
@@ -192,7 +179,6 @@ class PodcastArchiverHealth:
             core=self._core,
             podcasts=self._podcasts,
             templates=self._templates,
-            event_times=self._event_times,
             assets=self._assets,
             version=self._version,
             host_info=self._host_info,
@@ -231,16 +217,6 @@ class PodcastArchiverHealth:
         for key, value in kwargs.items():
             if value is not None and key in valid_attrs:
                 setattr(self._core, key, value)
-
-    def set_event_time(self, event: str, duration: datetime.timedelta | float) -> None:
-        """Set the event last time."""
-        if isinstance(duration, int):
-            duration = 999999999.0  # Always use float for durations
-
-        if isinstance(duration, float):
-            duration = datetime.timedelta(seconds=duration)
-
-        self._event_times[event] = EventLastTime(duration=duration)
 
     def currently_rendering(
         self,

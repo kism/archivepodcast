@@ -7,11 +7,12 @@ from collections.abc import Callable
 from datetime import UTC
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+from pytest_mock import MockerFixture
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.archiver.webpages import Webpages
@@ -19,6 +20,11 @@ from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.instances import podcast_archiver
 from archivepodcast.instances.podcast_archiver import _get_time_until_next_run
 from tests.constants import DUMMY_RSS_STR
+
+if TYPE_CHECKING:
+    from tests.fixtures.aws import AWSAioSessionMock
+else:
+    AWSAioSessionMock = object
 
 from . import FakeExceptionError
 
@@ -66,6 +72,7 @@ def test_app_paths_not_generated(
     apa: PodcastArchiver,
     client_live: FlaskClient,
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test the error for when a page has not been generated."""
     # Ensure that no webpages can be added by the thread.
@@ -88,13 +95,17 @@ def test_app_paths_not_generated(
     ]
 
     for webpage in webpage_list:
-        response = client_live.get(webpage)
-        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, (
-            f"Expected internal server error on {webpage}, got {response.status_code}"
-        )
+        with caplog.at_level(level=logging.WARNING):
+            response = client_live.get(webpage)
+
+        assert response.status_code == HTTPStatus.OK
+        assert "Webpage not in cache serving from disk" in caplog.text
+        assert webpage in caplog.text
+        caplog.clear()
 
 
-def test_app_path_about(
+@pytest.mark.asyncio
+async def test_app_path_about(
     apa: PodcastArchiver,
     client_live: FlaskClient,
     tmp_path: Path,
@@ -107,13 +118,13 @@ def test_app_path_about(
     if about_path.exists():
         about_path.unlink()
 
-    apa.load_about_page()
+    await apa._load_about_page()
     response = client_live.get("/about.html")
     assert response.status_code == HTTPStatus.NOT_FOUND
 
     about_path.write_text("Test")
 
-    apa.load_about_page()
+    await apa._load_about_page()
     response = client_live.get("/about.html")
     assert response.status_code == HTTPStatus.OK, f"About page should exist, got status code: {response.status_code}"
 
@@ -217,6 +228,7 @@ def test_content_s3(
     apa_aws: PodcastArchiver,
     app_live_s3: Flask,
     monkeypatch: pytest.MonkeyPatch,
+    mock_get_session: MockerFixture,
 ) -> None:
     """Test the RSS feed."""
 
@@ -288,7 +300,8 @@ def test_time_until_next_run(time: datetime.datetime, expected_seconds: int) -> 
     assert _get_time_until_next_run(time) == expected_seconds
 
 
-def test_file_list(apa: PodcastArchiver, client_live: Flask, tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_file_list(apa: PodcastArchiver, client_live: Flask, tmp_path: Path) -> None:
     """Test that files are listed."""
 
     podcast_archiver._ap = apa
@@ -300,7 +313,7 @@ def test_file_list(apa: PodcastArchiver, client_live: Flask, tmp_path: Path) -> 
     file_path.write_text("test")
 
     ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
-    ap._render_files()
+    await ap._render_filelist_html()
 
     response = client_live.get("/filelist.html")
 
@@ -309,32 +322,45 @@ def test_file_list(apa: PodcastArchiver, client_live: Flask, tmp_path: Path) -> 
     assert str(content_path) in response.data.decode("utf-8")
 
 
-def test_file_list_s3(apa_aws: PodcastArchiver, client_live_s3: Flask) -> None:
+@pytest.mark.asyncio
+async def test_file_list_s3(
+    apa_aws: PodcastArchiver,
+    client_live_s3: Flask,
+    mock_get_session: AWSAioSessionMock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test that s3 files are listed."""
 
-    podcast_archiver._ap = apa_aws
+    monkeypatch.setattr(podcast_archiver, "_ap", apa_aws)
 
     content_s3_path = "content/test/20200101-Test-Episode.mp3"
 
-    assert apa_aws.s3 is not None
+    assert apa_aws.s3 is True
 
-    apa_aws.s3.put_object(Bucket=apa_aws.app_config.s3.bucket, Key=content_s3_path, Body=b"test")
+    async with mock_get_session.create_client("s3") as s3_client:
+        await s3_client.put_object(Bucket=apa_aws.app_config.s3.bucket, Key=content_s3_path, Body=b"test")
 
     # Check that the file is in the cache
     apa_aws.podcast_downloader.__init__(app_config=apa_aws.app_config, s3=apa_aws.s3, web_root=apa_aws.web_root)
-    _, file_cache = apa_aws.podcast_downloader.get_file_list()
+
+    _, file_cache = await apa_aws.podcast_downloader.get_file_list()
     assert content_s3_path in file_cache
 
     # Check that the file is in filelist.html
-    apa_aws._render_files()
+    with caplog.at_level(logging.DEBUG):
+        await apa_aws._render_files()
+        await apa_aws._render_filelist_html()
+
+    assert "Done writing filelist.html to file" in caplog.text
 
     response = client_live_s3.get("/filelist.html")
     assert response.status_code == HTTPStatus.OK
 
     response_html = response.data.decode("utf-8")
 
-    assert "/index.html" in response_html
-    assert content_s3_path in response_html
+    assert "/index.html" in response_html  # File list
+    assert content_s3_path in response_html  # Content
 
 
 def test_api_reload(
@@ -345,7 +371,6 @@ def test_api_reload(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test the reload API endpoint."""
-
     monkeypatch.setattr(podcast_archiver, "_ap", apa)
     apa.debug = True
 

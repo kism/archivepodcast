@@ -29,3 +29,14 @@ def error_on_raise_in_thread(monkeypatch: pytest.MonkeyPatch) -> Generator[None]
     yield
     if last_exception:
         raise last_exception
+
+
+@pytest.fixture
+def no_threading_start(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Monkeypatch threading.Thread.start to prevent threads from starting."""
+
+    def dummy_start(self: threading.Thread) -> None:
+        """Dummy start method that does nothing."""
+        return
+
+    monkeypatch.setattr("threading.Thread.start", dummy_start)
