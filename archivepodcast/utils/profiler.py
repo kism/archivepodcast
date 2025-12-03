@@ -62,3 +62,27 @@ class EventLastTime(BaseModel):
             new_child = EventLastTime(name=child_name)
             new_child.set_event_time(rest_of_path, duration)
             self.children.append(new_child)
+
+
+def _get_times_recursive(event: EventLastTime, indent: int = 0) -> str:
+    """Get the event times recursively for printing."""
+    if event.name == "/":
+        event.name = "root"
+    msg = " " * indent + f"{event.name}: "
+    if event.duration is not None:
+        msg += f"{event.duration.total_seconds():.2f}s\n"
+    else:
+        msg += "No duration\n"
+    if event.children is not None:
+        for child in event.children:
+            msg += _get_times_recursive(child, indent + 2)
+    return msg
+
+
+def get_event_times_str(event_times: EventLastTime) -> str:
+    """Print the event times to the logger."""
+    msg = "Event times, async so anything can be held up by anything else in a pool >>>\n"
+    msg += _get_times_recursive(event_times, indent=1)
+    if msg.split("\n")[-1] == "":
+        msg = "\n".join(msg.split("\n")[:-1])
+    return msg

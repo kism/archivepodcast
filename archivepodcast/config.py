@@ -31,6 +31,7 @@ class AppS3Config(BaseModel):
     cdn_domain: HttpUrl = HttpUrl("https://example.com/public_url_of_s3_bucket/")
     api_url: HttpUrl | None = None
     bucket: str = ""
+    region: str = ""
     access_key_id: str = ""
     secret_access_key: str = ""
 

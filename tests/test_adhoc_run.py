@@ -41,7 +41,7 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
     place_test_config("testing_true_valid.json", tmp_path)
 
     monkeypatch.setattr(
-        "archivepodcast.__main__.DEFAULT_INSTANCE_PATH",
+        "archivepodcast.constants.DEFAULT_INSTANCE_PATH",
         tmp_path,
     )  # Avoid pytest from using the repo's instance path
 
@@ -74,7 +74,7 @@ def test_archivepodcast_cli_from__main__no_instance_path(
     monkeypatch.setattr("pathlib.Path.exists", lambda x: False)  # Avoid pytest from using the repo's instance path
 
     monkeypatch.setattr(
-        "archivepodcast.__main__.DEFAULT_INSTANCE_PATH",
+        "archivepodcast.constants.DEFAULT_INSTANCE_PATH",
         tmp_path,
     )  # Avoid pytest from using the repo's instance path
 
