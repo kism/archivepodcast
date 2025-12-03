@@ -27,6 +27,9 @@ dependencies = [
     "waitress>=3.0",
 ]
 
+[project.urls]
+repository = "https://github.com/kism/archivepodcast"
+
 [project.optional-dependencies]
 type = [
     "mypy",
