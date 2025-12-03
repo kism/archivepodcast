@@ -1,6 +1,7 @@
 """Flask web application for archiving and serving podcasts."""
 
 import asyncio
+import os
 import time
 from pathlib import Path
 
@@ -9,7 +10,6 @@ from rich.traceback import install
 
 from .archiver import PodcastArchiver
 from .blueprints import bp_api, bp_content, bp_rss, bp_static, bp_webpages
-from .constants import DEFAULT_INSTANCE_PATH
 from .instances import podcast_archiver
 from .instances.config import get_ap_config
 from .instances.health import health
@@ -20,7 +20,9 @@ from .utils import logger as ap_logger
 from .utils.log_messages import log_intro
 from .utils.profiler import get_event_times_str
 
-install()
+# Don't if we are in lambda
+if not os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+    install()
 
 
 def create_app(instance_path_override: str | None = None) -> Flask:
@@ -76,23 +78,14 @@ def create_app(instance_path_override: str | None = None) -> Flask:
 
 
 def run_ap_adhoc(
-    instance_path: Path | None = None,
-    config_path: Path | None = None,
+    instance_path: Path,
 ) -> None:
     """Main for adhoc running."""
     logger = ap_logger.get_logger(__name__)
 
     start_time = time.time()
-    if not instance_path:
-        msg = f"Instance path not provided, using default: {DEFAULT_INSTANCE_PATH}"
-        logger.info(msg)
-        instance_path = DEFAULT_INSTANCE_PATH  # pragma: no cover # This avoids issues in PyTest
-        if not instance_path.exists():
-            msg = f"Instance path ({instance_path}) does not exist, not creating it for safety."
-            raise FileNotFoundError(msg)
 
-    if not config_path:
-        config_path = instance_path / "config.json"
+    config_path = instance_path / "config.json"
 
     ap_conf = get_ap_config(config_path=config_path)
     ap_conf.write_config(config_path)
