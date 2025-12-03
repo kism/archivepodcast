@@ -3,27 +3,47 @@
 import datetime
 import logging
 import signal
+from collections.abc import Callable
+from datetime import UTC
 from http import HTTPStatus
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import pytest
+from flask import Flask
+from flask.testing import FlaskClient
+from pytest_mock import MockerFixture
 
-from archivepodcast import bp_archivepodcast
-from archivepodcast.ap_archiver import Webpages
-from archivepodcast.bp_archivepodcast import TZINFO_UTC, _get_time_until_next_run
+from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+from archivepodcast.archiver.webpages import Webpages
+from archivepodcast.config import ArchivePodcastConfig
+from archivepodcast.instances import podcast_archiver
+from archivepodcast.instances.path_helper import get_app_paths
+from archivepodcast.instances.podcast_archiver import _get_time_until_next_run
+from tests.constants import DUMMY_RSS_STR
+
+if TYPE_CHECKING:
+    from tests.fixtures.aws import AWSAioSessionMock
+else:
+    AWSAioSessionMock = object
 
 from . import FakeExceptionError
 
 
-def test_app_paths(apa, client_live, client_live_s3, tmp_path):
+def test_app_paths(
+    apa: PodcastArchiver,
+    client_live: FlaskClient,
+    client_live_s3: FlaskClient,
+    tmp_path: Path,
+) -> None:
     """Verify all expected application paths return correct responses."""
 
-    assert len(apa.webpages) > 0
+    assert len(apa.renderer.webpages) > 0
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
 
     for client in [client_live, client_live_s3]:
-        assert client
+        assert client is not None
 
         valid_path_list = [
             "/index.html",
@@ -49,18 +69,23 @@ def test_app_paths(apa, client_live, client_live_s3, tmp_path):
         assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_app_paths_not_generated(apa, client_live, monkeypatch):
+def test_app_paths_not_generated(
+    apa: PodcastArchiver,
+    client_live: FlaskClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test the error for when a page has not been generated."""
     # Ensure that no webpages can be added by the thread.
 
-    def mock_add_webpage(*args, **kwargs):
+    def mock_add_webpage(*args: Any, **kwargs: Any) -> None:
         pass
 
-    monkeypatch.setattr("archivepodcast.ap_archiver.Webpages.add", mock_add_webpage)
+    podcast_archiver._ap = apa
 
-    bp_archivepodcast.ap = apa
+    monkeypatch.setattr("archivepodcast.archiver.webpages.Webpages.add", mock_add_webpage)
 
-    apa.webpages = Webpages()
+    apa.renderer.webpages = Webpages()
 
     webpage_list = [
         "/index.html",
@@ -71,91 +96,51 @@ def test_app_paths_not_generated(apa, client_live, monkeypatch):
     ]
 
     for webpage in webpage_list:
-        response = client_live.get(webpage)
-        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, (
-            f"Expected internal server error on {webpage}, got {response.status_code}"
-        )
+        with caplog.at_level(level=logging.WARNING):
+            response = client_live.get(webpage)
+
+        assert response.status_code == HTTPStatus.OK
+        assert "Webpage not in cache serving from disk" in caplog.text
+        assert webpage in caplog.text
+        caplog.clear()
 
 
-def test_app_path_about(apa, client_live, tmp_path):
+@pytest.mark.asyncio
+async def test_app_path_about(
+    apa: PodcastArchiver,
+    client_live: FlaskClient,
+    tmp_path: Path,
+) -> None:
     """Test the about page."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
 
     about_path = Path(tmp_path) / "about.md"
     if about_path.exists():
         about_path.unlink()
 
-    apa.load_about_page()
+    await apa.renderer._load_about_page()
     response = client_live.get("/about.html")
     assert response.status_code == HTTPStatus.NOT_FOUND
 
     about_path.write_text("Test")
 
-    apa.load_about_page()
+    await apa.renderer._load_about_page()
     response = client_live.get("/about.html")
     assert response.status_code == HTTPStatus.OK, f"About page should exist, got status code: {response.status_code}"
 
 
-def test_app_paths_not_initialized(client_live, tmp_path, get_test_config, caplog):
-    """Test the RSS feed."""
-
-    get_test_config("testing_true_valid.toml")
-
-    bp_archivepodcast.ap = None
-
-    required_to_be_initialized_http = [
-        bp_archivepodcast.home_index,
-        bp_archivepodcast.home_guide,
-        bp_archivepodcast.home_filelist,
-        bp_archivepodcast.home_web_player,
-        bp_archivepodcast.api_health,
-        bp_archivepodcast.api_reload,
-        bp_archivepodcast.generate_404,
-    ]
-
-    for function_path in required_to_be_initialized_http:
-        response = function_path()
-        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-
-    response = bp_archivepodcast.generate_not_generated_error("test.html")  # This one needs a parameter
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-
-    required_to_be_initialized_str_arg = [
-        bp_archivepodcast.send_content,
-        bp_archivepodcast.rss,
-    ]
-
-    for function_path in required_to_be_initialized_str_arg:
-        response = function_path("test")
-        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-
-    required_to_be_initialized = [
-        bp_archivepodcast.podcast_loop,
-    ]
-
-    with caplog.at_level(logging.ERROR):
-        for function_path in required_to_be_initialized:
-            function_path()
-            assert "ArchivePodcast object not initialized" in caplog.text
-
-    with caplog.at_level(logging.ERROR):
-        bp_archivepodcast.reload_config(signal.SIGHUP)
-        assert "ArchivePodcast object not initialized" in caplog.text
-
-
 def test_rss_feed(
-    apa,
-    app_live,
-    tmp_path,
-    caplog,
-):
+    apa: PodcastArchiver,
+    app_live: Flask,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test the RSS feed."""
 
-    bp_archivepodcast.ap = apa
-    ap = apa
-    ap.podcast_list[0]["live"] = True
-    ap.grab_podcasts()
+    podcast_archiver._ap = apa
+    apa.podcast_list[0].live = True
+    apa.grab_podcasts()
 
     client_live = app_live.test_client()
 
@@ -168,15 +153,15 @@ def test_rss_feed(
 
     rss_file = Path(tmp_path) / "web" / "rss" / "test_from_file"
     rss_file.parent.mkdir(parents=True, exist_ok=True)
-    rss_file.write_text(pytest.DUMMY_RSS_STR)
+    rss_file.write_text(DUMMY_RSS_STR)
 
-    assert Path(ap.instance_path).joinpath("web", "rss", "test_from_file").exists()
+    assert get_app_paths().instance_path.joinpath("web", "rss", "test_from_file").exists()
 
     with caplog.at_level(logging.WARNING):
         response = client_live.get("/rss/test_from_file")
 
     response_str = response.data.decode("utf-8")
-    assert response_str == pytest.DUMMY_RSS_STR
+    assert response_str == DUMMY_RSS_STR
     assert response.status_code == HTTPStatus.OK
     assert "not live, sending cached version from disk" in caplog.text
 
@@ -185,20 +170,20 @@ def test_rss_feed(
 
 
 def test_rss_feed_type_error(
-    apa,
-    app_live,
-    tmp_path,
-    monkeypatch,
-    caplog,
-):
+    apa: PodcastArchiver,
+    app_live: Flask,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test the RSS feed."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     ap = apa
 
     client_live = app_live.test_client()
 
-    def return_type_error(*args, **kwargs):
+    def return_type_error(*args: Any, **kwargs: Any) -> None:
         raise TypeError
 
     monkeypatch.setattr(ap, "get_rss_feed", return_type_error)
@@ -208,15 +193,15 @@ def test_rss_feed_type_error(
 
 
 def test_rss_feed_unhandled_error(
-    apa,
-    app_live,
-    tmp_path,
-    monkeypatch,
-    caplog,
-):
+    apa: PodcastArchiver,
+    app_live: Flask,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test the RSS feed."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     ap = apa
 
     ap.grab_podcasts()
@@ -224,14 +209,14 @@ def test_rss_feed_unhandled_error(
     client_live = app_live.test_client()
 
     with Path(tmp_path / "web" / "rss" / "test").open("w") as file:
-        file.write(pytest.DUMMY_RSS_STR)
+        file.write(DUMMY_RSS_STR)
 
-    def return_key_error(*args, **kwargs):
+    def return_key_error(*args: Any, **kwargs: Any) -> None:
         raise KeyError
 
     monkeypatch.setattr(ap, "get_rss_feed", return_key_error)
 
-    def return_unhandled_error(*args, **kwargs):
+    def return_unhandled_error(*args: Any, **kwargs: Any) -> None:
         raise FakeExceptionError
 
     monkeypatch.setattr("lxml.etree.tostring", return_unhandled_error)
@@ -241,50 +226,64 @@ def test_rss_feed_unhandled_error(
 
 
 def test_content_s3(
-    apa_aws,
-    app_live,
-):
+    apa_aws: PodcastArchiver,
+    app_live_s3: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+    mock_get_session: MockerFixture,
+) -> None:
     """Test the RSS feed."""
 
-    bp_archivepodcast.ap = apa_aws
+    monkeypatch.setattr(podcast_archiver, "_ap", apa_aws)
+
     ap = apa_aws
 
     ap.grab_podcasts()
-    app_live.config["app"]["storage_backend"] = "s3"
 
-    client_live = app_live.test_client()
+    client_live = app_live_s3.test_client()
 
     response = client_live.get("/content/test/20200101-Test-Episode.mp3")
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
 
 
-def test_reload_config(app, apa, tmp_path, get_test_config, caplog):
+def test_reload_config(
+    app: Flask,
+    apa: PodcastArchiver,
+    tmp_path: Path,
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test the reload config function."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
 
-    get_test_config("testing_true_valid.toml")
+    get_test_config("testing_true_valid.json")
 
     with caplog.at_level(logging.DEBUG), app.app_context():
-        bp_archivepodcast.reload_config(signal.SIGHUP)
+        podcast_archiver.reload_config(signal.SIGHUP)
 
     assert "Finished adhoc config reload" in caplog.text
 
 
-def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, caplog):
+def test_reload_config_exception(
+    apa: PodcastArchiver,
+    tmp_path: Path,
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test the reload config function."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
 
-    get_test_config("testing_true_valid.toml")
+    get_test_config("testing_true_valid.json")
 
-    def load_config_exception(*args, **kwargs):
+    def load_config_exception(*args: Any, **kwargs: Any) -> None:
         raise FakeExceptionError
 
-    monkeypatch.setattr(bp_archivepodcast.ap, "load_config", load_config_exception)
+    monkeypatch.setattr(podcast_archiver._ap, "load_config", load_config_exception)
 
     with caplog.at_level(logging.ERROR):
-        bp_archivepodcast.reload_config(signal.SIGHUP)
+        podcast_archiver.reload_config(signal.SIGHUP)
 
     assert "Error reloading config" in caplog.text
 
@@ -292,20 +291,21 @@ def test_reload_config_exception(apa, tmp_path, get_test_config, monkeypatch, ca
 @pytest.mark.parametrize(
     ("time", "expected_seconds"),
     [
-        (datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=TZINFO_UTC), 1200),  # 1200 seconds = 20 minutes
-        (datetime.datetime(2020, 1, 1, 0, 30, 0, tzinfo=TZINFO_UTC), 3000),  # 3000 seconds = 50 minutes
+        (datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=UTC), 1200),  # 1200 seconds = 20 minutes
+        (datetime.datetime(2020, 1, 1, 0, 30, 0, tzinfo=UTC), 3000),  # 3000 seconds = 50 minutes
     ],
 )
-def test_time_until_next_run(time, expected_seconds):
+def test_time_until_next_run(time: datetime.datetime, expected_seconds: int) -> None:
     """Test the logic for waiting for the next run."""
 
     assert _get_time_until_next_run(time) == expected_seconds
 
 
-def test_file_list(apa, client_live, tmp_path):
+@pytest.mark.asyncio
+async def test_file_list(apa: PodcastArchiver, client_live: Flask, tmp_path: Path) -> None:
     """Test that files are listed."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     ap = apa
 
     content_path = Path("content") / "test" / "20200101-Test-Episode.mp3"
@@ -313,8 +313,12 @@ def test_file_list(apa, client_live, tmp_path):
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text("test")
 
-    ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
-    ap._render_files()
+    # First render the static files to ensure they exist in the file cache
+    await ap.renderer.render_files()
+
+    # Generate file list and render HTML
+    file_list = await ap.get_file_list()
+    await ap.renderer.render_filelist_html(file_list)
 
     response = client_live.get("/filelist.html")
 
@@ -323,46 +327,74 @@ def test_file_list(apa, client_live, tmp_path):
     assert str(content_path) in response.data.decode("utf-8")
 
 
-def test_file_list_s3(apa_aws, client_live_s3):
+@pytest.mark.asyncio
+async def test_file_list_s3(
+    apa_aws: PodcastArchiver,
+    client_live_s3: Flask,
+    mock_get_session: AWSAioSessionMock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test that s3 files are listed."""
 
-    bp_archivepodcast.ap = apa_aws
+    monkeypatch.setattr(podcast_archiver, "_ap", apa_aws)
 
     content_s3_path = "content/test/20200101-Test-Episode.mp3"
 
-    apa_aws.s3.put_object(Bucket=apa_aws.app_config["s3"]["bucket"], Key=content_s3_path, Body=b"test")
+    assert apa_aws.s3 is True
+
+    async with mock_get_session.create_client("s3") as s3_client:
+        await s3_client.put_object(Bucket=apa_aws._app_config.s3.bucket, Key=content_s3_path, Body=b"test")
 
     # Check that the file is in the cache
-    apa_aws.podcast_downloader.__init__(app_config=apa_aws.app_config, s3=apa_aws.s3, web_root=apa_aws.web_root)
-    _, file_cache = apa_aws.podcast_downloader.get_file_list()
+    await apa_aws.update_file_cache()
+
+    # First render the static files to ensure they exist in the file cache
+    await apa_aws.renderer.render_files()
+
+    file_list = await apa_aws.get_file_list()
+    file_cache = file_list.files
     assert content_s3_path in file_cache
 
     # Check that the file is in filelist.html
-    apa_aws._render_files()
+    with caplog.at_level(logging.DEBUG):
+        file_list = await apa_aws.get_file_list()
+        await apa_aws.renderer.render_filelist_html(file_list)
+
+    assert "Done writing filelist.html to file" in caplog.text
 
     response = client_live_s3.get("/filelist.html")
     assert response.status_code == HTTPStatus.OK
 
     response_html = response.data.decode("utf-8")
 
-    assert "/index.html" in response_html
-    assert content_s3_path in response_html
+    # S3 file list should include content files but not locally rendered HTML files
+    assert content_s3_path in response_html  # Content
 
 
-def test_api_reload(apa, client_live, caplog):
+def test_api_reload(
+    apa: PodcastArchiver,
+    client_live: Flask,
+    place_test_config: Callable[[str, Path], None],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test the reload API endpoint."""
-
-    bp_archivepodcast.ap = apa
+    monkeypatch.setattr(podcast_archiver, "_ap", apa)
     apa.debug = True
+
+    place_test_config("testing_true_valid.json", get_app_paths().instance_path)
 
     response = client_live.get("/api/reload")
     assert response.status_code == HTTPStatus.OK
+    assert "does not exist, loading defaults" not in caplog.text
+    assert "Podcast has no name_one_word set in config, cannot proceed" not in caplog.text
 
 
-def test_api_reload_no_debug(apa, client_live, caplog):
+def test_api_reload_no_debug(apa: PodcastArchiver, client_live: Flask, caplog: pytest.LogCaptureFixture) -> None:
     """Test the reload API endpoint."""
 
-    bp_archivepodcast.ap = apa
+    podcast_archiver._ap = apa
     apa.debug = False
 
     response = client_live.get("/api/reload")

@@ -4,22 +4,23 @@ import contextlib
 import random
 import shutil
 import string
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 
 from archivepodcast import create_app
-from archivepodcast.config import ConfigValidationError
+from archivepodcast.config import ArchivePodcastConfig
 
 
-def test_instance_path_check(get_test_config):
+def test_instance_path_check(get_test_config: Callable[[str], ArchivePodcastConfig], tmp_path: Path) -> None:
     """Ensure instance path is specified when using dictionary config."""
 
-    with pytest.raises(AttributeError):
-        create_app(get_test_config("testing_false_valid.toml"))
+    with pytest.raises(ValueError, match="Flask TESTING mode requires instance_path to be a tmp_path"):
+        create_app()
 
 
-def test_config_validate_test_instance_path(get_test_config):
+def test_config_validate_test_instance_path(get_test_config: Callable[[str], ArchivePodcastConfig]) -> None:
     """Verify that tmp_path is required in testing mode."""
     repo_instance_path = Path.cwd() / "instance"
     incorrect_instance_root = repo_instance_path / "_TEST"
@@ -32,10 +33,10 @@ def test_config_validate_test_instance_path(get_test_config):
         incorrect_instance_root.mkdir()
         incorrect_instance_path.mkdir()
 
-    with pytest.raises(ConfigValidationError) as exc_info:
-        create_app(config_dict=get_test_config("testing_true_valid.toml"), instance_path=incorrect_instance_path)
+    with pytest.raises(ValueError, match="Flask TESTING mode requires instance_path to be a tmp_path") as exc_info:
+        create_app()
 
-    assert isinstance(exc_info.type, type(ConfigValidationError))
-    assert "['flask']['TESTING'] is True but instance_path is not a tmp_path" in str(exc_info.getrepr())
+    assert isinstance(exc_info.type, type(ValueError))
+    assert "Flask TESTING mode requires instance_path to be a tmp_path" in str(exc_info.getrepr())
 
     shutil.rmtree(incorrect_instance_root)

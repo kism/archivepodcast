@@ -40,6 +40,15 @@ git lfs fetch --all
 git lfs pull
 ```
 
+### Pre Commit Hooks
+
+To set up pre-commit hooks run:
+
+```bash
+uv tool add pre-commit --upgrade
+pre-commit install
+```
+
 ### Setup Python Environment
 
 #### Development
@@ -75,18 +84,15 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ## Todo
 
+- ~~path_helper lazy load~~
+- ~~warnings when s3 put, or rss download takes too long~~
+- ~~generic response logger for aiohttp~~
+- ~~change log format to start with podcast name~~
 - Container Registry
 - header as a table, or divs
-- Pydantic
-- Mypy in strict mode
-- Rich for logging, why not
-- Put things in directories
-- Async scraping
-- Progress bars (rich)
-- Fix font selection
-- Cloudflare worker cron
-- Terraform example
-- Health object scraper timer
-- Generate health page static version?
-- Use flask-cache
-- Better folder layout
+- Fix font selection for frontend, done?
+- Cloudflare worker cron (CF still in beta)
+  - Terraform example
+- pydantic xml
+
+Prod time to beat running adhoc, 56 seconds.

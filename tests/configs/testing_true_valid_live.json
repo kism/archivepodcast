@@ -1,0 +1,23 @@
+{
+  "app": {
+    "inet_path": "http://localhost:5100/",
+    "storage_backend": "local",
+    "web_page": {
+      "title": "Pytest Podcast Archive [Local]"
+    }
+  },
+  "podcasts": [
+    {
+      "url": "https://pytest.internal/rss/test_source",
+      "new_name": "PyTest Podcast [Archive]",
+      "name_one_word": "test",
+      "description": "My Podcast Archive, in pytest!",
+      "live": true,
+      "contact_email": "test@localhost"
+    }
+  ],
+  "logging": {},
+  "flask": {
+    "TESTING": true
+  }
+}

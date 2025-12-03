@@ -21,36 +21,41 @@ chown -R apuser:apuser /opt/archivepodcast
 
 ## Configuration
 
-Run the program once manually to create the default config.toml and then fill it in. You can ignore the cdn address and s3 config items.
+Run the program once manually to create the default config.json and then fill it in. You can ignore the cdn address and s3 config items.
 
 ```bash
 cd /opt/archivepodcast
 sudo -u apuser .venv/bin/waitress-serve --port=5100 --call 'archivepodcast:create_app'
 ```
 
-Edit: `/opt/archivepodcast/instance/config.toml` to your liking.
+Edit: `/opt/archivepodcast/instance/config.json` to your liking.
 
-```toml
-[app]
-inet_path = "https://mycooldomain.org/"
-storage_backend = "local"
-
-[app.web_page]
-title = "Podcast Archive"
-description = "My Cool  Podcast Archive"
-contact = "email@example.com"
-
-[[podcast]]
-url = "https://feeds.megaphone.fm/replyall"
-new_name = "Reply All [Archive]"
-name_one_word = "replyall"
-description = ""
-live = true
-contact_email = "archivepodcast@localhost"
-
-[logging]
-level = "INFO"
-path = ""
+```json
+{
+  "app": {
+    "inet_path": "https://mycooldomain.org/",
+    "storage_backend": "local",
+    "web_page": {
+      "title": "Podcast Archive",
+      "description": "My Cool  Podcast Archive",
+      "contact": "email@example.com"
+    }
+  },
+  "podcasts": [
+    {
+      "url": "https://feeds.megaphone.fm/replyall",
+      "new_name": "Reply All [Archive]",
+      "name_one_word": "replyall",
+      "description": "",
+      "live": true,
+      "contact_email": "archivepodcast@localhost"
+    }
+  ],
+  "logging": {
+    "level": "INFO",
+    "path": ""
+  }
+}
 ```
 
 ## Service Configuration

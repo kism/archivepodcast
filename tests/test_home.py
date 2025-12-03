@@ -2,27 +2,33 @@
 
 from http import HTTPStatus
 
-from archivepodcast import bp_archivepodcast
+import pytest
+from flask.testing import FlaskClient
+
+from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+from archivepodcast.instances import podcast_archiver
 
 
-def test_home(client, apa):
+@pytest.mark.asyncio
+async def test_home(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Verify root path redirects to index.html."""
-    bp_archivepodcast.ap = apa
-    apa._render_files()
+    podcast_archiver._ap = apa
+    await apa.renderer.render_files()
 
-    assert apa.webpages.get_webpage("index.html")
+    assert apa.renderer.webpages.get_webpage("index.html") is not None
 
     response = client.get("/")
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
     assert response.headers["Location"] == "/index.html"
 
 
-def test_home_index(client, apa):
+@pytest.mark.asyncio
+async def test_home_index(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Test the hello API endpoint. This one uses the fixture in conftest.py."""
-    bp_archivepodcast.ap = apa
-    apa._render_files()
+    podcast_archiver._ap = apa
+    await apa.renderer.render_files()
 
-    assert apa.webpages.get_webpage("index.html")
+    assert apa.renderer.webpages.get_webpage("index.html") is not None
 
     response = client.get("/index.html")
     # TEST: HTTP OK
@@ -33,10 +39,11 @@ def test_home_index(client, apa):
     assert b"<!DOCTYPE html>" in response.data
 
 
-def test_static_js_exists(client, apa):
+@pytest.mark.asyncio
+async def test_static_js_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
-    bp_archivepodcast.ap = apa
-    apa._render_files()
+    podcast_archiver._ap = apa
+    await apa.renderer.render_files()
 
     response = client.get("/static/clipboard.js")
     assert response.status_code == HTTPStatus.OK
@@ -47,28 +54,31 @@ def test_static_js_exists(client, apa):
     assert "text/javascript" in response.content_type
 
 
-def test_favicon_exists(client, apa):
+@pytest.mark.asyncio
+async def test_favicon_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
-    bp_archivepodcast.ap = apa
-    apa._render_files()
+    podcast_archiver._ap = apa
+    await apa.renderer.render_files()
 
     response = client.get("/favicon.ico")
     assert response.status_code == HTTPStatus.OK
 
 
-def test_guide_exists(client, apa):
+@pytest.mark.asyncio
+async def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
-    bp_archivepodcast.ap = apa
-    apa._render_files()
+    podcast_archiver._ap = apa
+    await apa.renderer.render_files()
 
     response = client.get("/guide.html")
     assert response.status_code == HTTPStatus.OK
 
 
-def test_fonts_exist(client, apa):
+@pytest.mark.asyncio
+async def test_fonts_exist(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/fonts/... loads."""
-    bp_archivepodcast.ap = apa
-    apa._render_files()
+    podcast_archiver._ap = apa
+    await apa.renderer.render_files()
 
     font_list = [
         "/static/fonts/fira-code-v12-latin-500.woff2",

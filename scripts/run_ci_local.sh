@@ -26,7 +26,7 @@ check_return() {
 echo "Running code checks locally"
 
 # Prerequisites
-uv sync
+uv sync --all-extras --upgrade
 
 echo "Npm version: $(npm --version), Expected: 11"
 npm install
@@ -78,6 +78,6 @@ check_return $?
 echo_magenta "html-validate"
 mkdir -p instance/web/rss/
 cp -f scripts/config/rss-ci.rss instance/web/rss/test
-.venv/bin/python -m archivepodcast --config scripts/config/config-ci.toml >/dev/null 2>&1
+.venv/bin/python -m archivepodcast --config scripts/config/config-ci.json >/dev/null 2>&1
 npx html-validate instance/web/*.html
 check_return $?

@@ -1,18 +1,25 @@
 import argparse
 import logging
+from collections.abc import Callable
+from pathlib import Path
 
 import pytest
 
 from archivepodcast import __main__
 
 
-def test_archivepodcast_cli_from__main__(tmp_path, monkeypatch, place_test_config, caplog):
+def test_archivepodcast_cli_from__main__(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    place_test_config: Callable[[str, Path], None],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """TEST: Run CLI from main."""
-    place_test_config("testing_true_valid.toml", tmp_path)
+    place_test_config("testing_true_valid.json", tmp_path)
 
     mock_args = argparse.Namespace(
         instance_path=str(tmp_path),
-        config=str(tmp_path / "config.toml"),
+        config=str(tmp_path / "config.json"),
     )
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda self: mock_args)
 
@@ -20,47 +27,60 @@ def test_archivepodcast_cli_from__main__(tmp_path, monkeypatch, place_test_confi
         __main__.main()
 
     # We get to the intro
-    assert "ArchivePodcast Version" in caplog.text
-    assert " running adhoc" in caplog.text
-    assert "ArchivePodcast ran adhoc in" in caplog.text
+    assert "ArchivePodcast version" in caplog.text
+    assert "starting in adhoc mode" in caplog.text
 
 
-def test_archivepodcast_cli_from__main__no_provided_instance_path(tmp_path, monkeypatch, place_test_config, caplog):
+def test_archivepodcast_cli_from__main__no_provided_instance_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    place_test_config: Callable[[str, Path], None],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """TEST: Run CLI from main."""
-    place_test_config("testing_true_valid.toml", tmp_path)
+    place_test_config("testing_true_valid.json", tmp_path)
 
     monkeypatch.setattr(
-        "archivepodcast.__main__.INSTANCE_PATH",
+        "archivepodcast.__main__.DEFAULT_INSTANCE_PATH",
         tmp_path,
     )  # Avoid pytest from using the repo's instance path
 
     mock_args = argparse.Namespace(
         instance_path="",
-        config=str(tmp_path / "config.toml"),
+        config=str(tmp_path / "config.json"),
     )
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda self: mock_args)
 
-    with caplog.at_level(logging.WARNING):
+    with caplog.at_level(logging.INFO):
         __main__.main()
 
     # We get to the intro
     assert "Instance path not provided, using default" in caplog.text
+
+    with caplog.at_level(logging.WARNING):
+        __main__.main()
+
     assert "not creating it for safety" not in caplog.text
 
 
-def test_archivepodcast_cli_from__main__no_instance_path(tmp_path, monkeypatch, place_test_config, caplog):
-    place_test_config("testing_true_valid.toml", tmp_path)
+def test_archivepodcast_cli_from__main__no_instance_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    place_test_config: Callable[[str, Path], None],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    place_test_config("testing_true_valid.json", tmp_path)
 
     monkeypatch.setattr("pathlib.Path.exists", lambda x: False)  # Avoid pytest from using the repo's instance path
 
     monkeypatch.setattr(
-        "archivepodcast.__main__.INSTANCE_PATH",
+        "archivepodcast.__main__.DEFAULT_INSTANCE_PATH",
         tmp_path,
     )  # Avoid pytest from using the repo's instance path
 
     mock_args = argparse.Namespace(
         instance_path="",
-        config=str(tmp_path / "config.toml"),
+        config=str(tmp_path / "config.json"),
     )
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda self: mock_args)
 

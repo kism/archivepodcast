@@ -3,59 +3,60 @@
 
 [project]
 name = "archivepodcast"
-version = "1.4.22"
+version = "1.5.0"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "boto3>=1.36,<2",
-    "colorama>=0.4.6",
-    "flask>=3.1,<4",
+    "flask[async]>=3.1,<4",
+    "aiobotocore>=2.25.2",
+    "aiohttp>=3.13.2",
     "jinja2>=3.1,<4",
     # dnf install libxml2-devel libxslt-devel
     # apt install libxml2-dev libxslt-dev
     "lxml>=5,<5.4", # Right now its broken for linux on a greater version
-    # "lxml>=6", # TESTING
-    "markdown>=3.7",
-    "psutil>=6.1.1",
+    # "lxml>=6.0.2", # TESTING
+    "markdown>=3.10",
+    "psutil>=7.1.3",
+    "pydantic>=2.12",
+    "pydantic-settings>=2.12",
     "python-magic>=0.4",
-    "requests>=2.32",
-    "tomlkit>=0.13",
-    "typed-ffmpeg>=3.0",
+    "rich>=14.2.0",
+    "typed-ffmpeg>=3.7",
     "waitress>=3.0",
 ]
 
-[dependency-groups]
-
+[project.optional-dependencies]
 type = [
     "mypy",
     "ty",
-    "types-colorama",
     "types-lxml",
-    "types-requests",
     "types-psutil",
     "types-Markdown",
-    "boto3-stubs[s3]",
+    "botocore-stubs",
+    "types-aiobotocore",
+    "types-aiobotocore-s3",
 ]
 
 lint = ["ruff"]
 
+profile = ["aiomonitor"]
+
 test = [
-    "pytest",
+    "pytest>=9.0",
     "pytest-cov",
     "pytest-mock",
     "pytest-random-order",
     "detect-test-pollution",
-    "moto[s3]",
-    "requests-mock",
+    "types-aiobotocore-s3", # Mock uses typed dict
+    "pytest-asyncio",
+    "tomlkit>=0.13",
     "pytest-socket>=0.7.0",
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
 
-[tool.uv]
-default-groups = ["test", "type", "lint", "docs"]
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
@@ -71,7 +72,6 @@ ignore = [
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
     "TD003",  # KG Verbose TODO, only I work on this project
-    "S311",   # KG I'll assume no real crypto will be done.
     "S311",   # KG I'll assume no real crypto will be done.
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
@@ -92,6 +92,9 @@ ignore = [
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
     "BLE001",  # KG Tests can use BaseException.
+]
+"tests/fixtures/aws.py" = [
+    "N803", # KG AWS Just breaks the rules here
 ]
 
 "docs/*.py" = [
@@ -122,6 +125,7 @@ addopts = [
     "--cov-report=html",
     "--disable-socket",
     "--allow-hosts=127.0.0.1,127.0.1.1",
+    "--asyncio-mode=auto",
 ]
 testpaths = ["tests"]
 filterwarnings = [
@@ -133,28 +137,37 @@ filterwarnings = [
 [tool.coverage.html]
 show_contexts = true
 
+
 [tool.mypy]
-files = ["archivepodcast"]
-namespace_packages = false     # God knows why this makes mypy take forever
-explicit_package_bases = false # God knows why this makes mypy take forever
+files = ["archivepodcast", "tests"]
+namespace_packages = false # God knows why this makes mypy take forever
 show_error_codes = true
-strict = false
+strict = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+    "type-arg",
+    "unused-awaitable",
+    "possibly-undefined",
+    "redundant-self",
+]
+disable_error_code = ["misc"]
+warn_unreachable = true
+warn_redundant_casts = true
 
 
-# [tool.mypy]
-# files = ["archivepodcast"]
-# namespace_packages = false # God knows why this makes mypy take forever
-# explicit_package_bases = false # God knows why this makes mypy take forever
-# show_error_codes = true
-# strict = true
-# enable_error_code = [
-#     "ignore-without-code",
-#     "redundant-expr",
-#     "truthy-bool",
-#     "type-arg",
-#     "unused-awaitable",
-#     "possibly-undefined",
-#     "redundant-self",
-# ]
-# warn_unreachable = true
-# warn_redundant_casts = true
+[[tool.ty.overrides]]
+# Blame the flask client object
+include = ["tests/**"]
+[tool.ty.overrides.rules]
+"unresolved-attribute" = "ignore"
+
+[[tool.ty.overrides]]
+# Not sure what ty is upset about here
+include = [
+    "archivepodcast/blueprints/rss.py",
+    "archivepodcast/archiver/podcast_archiver.py",
+]
+[tool.ty.overrides.rules]
+"invalid-argument-type" = "ignore"

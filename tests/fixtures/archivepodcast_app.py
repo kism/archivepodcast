@@ -1,73 +1,71 @@
+from collections.abc import Callable
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 import pytest
+from flask import Flask
+from flask.testing import FlaskClient
 
 from archivepodcast import create_app
+from archivepodcast.config import ArchivePodcastConfig
+from tests.constants import DUMMY_RSS_STR
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+else:
+    MockerFixture = object
 
 
 @pytest.fixture
-def app(tmp_path, get_test_config):
+def app(tmp_path: Path, get_test_config: Callable[[str], ArchivePodcastConfig]) -> Flask:
     """This fixture uses the default config within the flask app."""
 
     # Create a dummy RSS file since this app instance is not live and requires an existing rss feed.
     (tmp_path / "web" / "rss").mkdir(parents=True)
     with (tmp_path / "web" / "rss" / "test").open("w") as file:
-        file.write(pytest.DUMMY_RSS_STR)
+        file.write(DUMMY_RSS_STR)
 
-    return create_app(config_dict=get_test_config("testing_true_valid.toml"), instance_path=tmp_path)
+    return create_app(instance_path_override=str(tmp_path))
 
 
 @pytest.fixture
 def app_live(
-    tmp_path,
-    get_test_config,
-    mock_get_podcast_source_rss,
-    mock_podcast_source_images,
-    mock_podcast_source_mp3,
-):
+    tmp_path: Path,
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    no_threading_start: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
+) -> Flask:
     """This fixture uses the default config within the flask app."""
-    mock_get_podcast_source_rss("test_valid.rss")
+    get_test_config("testing_true_valid_live.json")
 
-    return create_app(config_dict=get_test_config("testing_true_valid_live.toml"), instance_path=tmp_path)
+    return create_app(instance_path_override=str(tmp_path))
 
 
 @pytest.fixture
 def app_live_s3(
-    tmp_path,
-    get_test_config,
-    mock_get_podcast_source_rss,
-    mock_podcast_source_images,
-    mock_podcast_source_mp3,
-    mocked_aws,
-    s3,
-):
+    tmp_path: Path,
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    no_threading_start: MockerFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
+) -> Flask:
     """This fixture uses the default config within the flask app."""
-    mock_get_podcast_source_rss("test_valid.rss")
 
-    config = get_test_config("testing_true_valid_live_s3.toml")
-    bucket_name = config["app"]["s3"]["bucket"]
-    s3.create_bucket(Bucket=bucket_name)
-
-    return create_app(config_dict=config, instance_path=tmp_path)
+    return create_app(instance_path_override=str(tmp_path))
 
 
 @pytest.fixture
-def client(app):
+def client(app: Flask) -> FlaskClient:
     """This returns a test client for the default app()."""
     return app.test_client()
 
 
 @pytest.fixture
-def client_live(app_live):
+def client_live(app_live: Flask) -> FlaskClient:
     """This returns a test client for the default app()."""
     return app_live.test_client()
 
 
 @pytest.fixture
-def client_live_s3(app_live_s3):
+def client_live_s3(app_live_s3: Flask) -> FlaskClient:
     """This returns a test client for the default app()."""
     return app_live_s3.test_client()
-
-
-@pytest.fixture
-def runner(app):
-    """TODO?????"""
-    return app.test_cli_runner()
