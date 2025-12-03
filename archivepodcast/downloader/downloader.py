@@ -177,7 +177,7 @@ class PodcastsDownloader(AssetDownloader):
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
                 self._handle_itunes_new_feed_url_tag(channel)
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                await self._handle_itunes_image_tag(channel, s3_remove_original=True)
+                await self._handle_itunes_image_tag(channel, s3_remove_original=False)
             case "image":
                 await self._handle_image_tag(channel)
             case "item":

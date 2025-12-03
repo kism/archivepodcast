@@ -173,7 +173,7 @@ class AssetDownloader:
 
         # If we (now) have a file here, upload to s3 if needed
         if self._s3 and (local_file_found or not remote_file_found):
-            logger.critical(
+            logger.debug(
                 "[%s] Uploading podcast cover art to s3 not deleting local file to allow overriding",
                 self._podcast.name_one_word,
             )
