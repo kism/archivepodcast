@@ -9,9 +9,9 @@ import aiohttp
 import pytest
 from botocore.exceptions import ClientError
 
+from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.downloader.downloader import PodcastsDownloader
-from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from tests.fixtures.aws import S3ClientMock
 from tests.models.aiohttp import FakeSession

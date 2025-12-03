@@ -13,8 +13,6 @@ from archivepodcast.instances import podcast_archiver
 from archivepodcast.utils.health import PodcastArchiverHealth
 from tests.constants import DUMMY_RSS_STR, TEST_RSS_LOCATION
 
-from . import FakeExceptionError
-
 
 def test_health_api(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Verify health API returns OK status when system is healthy."""

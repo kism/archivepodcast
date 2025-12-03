@@ -10,7 +10,7 @@ jobs:
   spellcheck: # run the action
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: streetsidesoftware/cspell-action@v6
         with:
           incremental_files_only: false # Fine for small projects
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: "latest"

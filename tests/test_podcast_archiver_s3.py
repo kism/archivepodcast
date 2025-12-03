@@ -55,7 +55,7 @@ def test_config_valid(
 
 
 @pytest.mark.asyncio
-async def testender_files(
+async def test_render_files(
     apa_aws: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
     mock_get_session: AWSAioSessionMock,
