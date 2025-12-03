@@ -177,7 +177,7 @@ class PodcastsDownloader(AssetDownloader):
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
                 self._handle_itunes_new_feed_url_tag(channel)
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                await self._handle_itunes_image_tag(channel)
+                await self._handle_itunes_image_tag(channel, s3_remove_original=False)
             case "image":
                 await self._handle_image_tag(channel)
             case "item":
@@ -235,7 +235,7 @@ class PodcastsDownloader(AssetDownloader):
         logger.trace("[%s] iTunes new-feed-url: %s", self._podcast.name_one_word, str(channel.text))
         channel.text = self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
 
-    async def _handle_itunes_image_tag(self, channel: etree._Element) -> None:
+    async def _handle_itunes_image_tag(self, channel: etree._Element, *, s3_remove_original: bool = True) -> None:
         """Handle the iTunes image tag in the podcast rss."""
         logger.trace("[%s] iTunes image: %s", self._podcast.name_one_word, str(channel.attrib["href"]))
         title = self._cleanup_file_name(self._podcast.new_name)
@@ -243,7 +243,7 @@ class PodcastsDownloader(AssetDownloader):
         logger.trace("[%s] Image URL: %s", self._podcast.name_one_word, url)
         for filetype in IMAGE_FORMATS:
             if filetype in url:
-                await self._download_cover_art(url, title, filetype)
+                await self._download_cover_art(url, title, filetype, s3_remove_original=s3_remove_original)
                 channel.attrib["href"] = (
                     self._app_config.inet_path.encoded_string()
                     + "content/"
@@ -321,7 +321,12 @@ class PodcastsDownloader(AssetDownloader):
                     + new_audio_format
                 )
 
-    async def _handle_episode_image_tag(self, child: etree._Element, title: str, file_date_string: str) -> None:
+    async def _handle_episode_image_tag(
+        self,
+        child: etree._Element,
+        title: str,
+        file_date_string: str,
+    ) -> None:
         """Handle the episode image tag in the podcast rss."""
         title = self._cleanup_file_name(title)
         url = child.attrib.get("href", "")
