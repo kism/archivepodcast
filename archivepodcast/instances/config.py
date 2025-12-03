@@ -32,6 +32,7 @@ class S3ClientConfig(BaseModel):
 
     aws_secret_access_key: str
     aws_access_key_id: str
+    region_name: str | None = None
     endpoint_url: str | None
 
 
@@ -42,5 +43,6 @@ def get_ap_config_s3_client() -> S3ClientConfig:
     return S3ClientConfig(
         aws_secret_access_key=ap_config.app.s3.secret_access_key,
         aws_access_key_id=ap_config.app.s3.access_key_id,
+        region_name=ap_config.app.s3.region if ap_config.app.s3.region else None,
         endpoint_url=ap_config.app.s3.api_url.encoded_string() if ap_config.app.s3.api_url else None,
     )

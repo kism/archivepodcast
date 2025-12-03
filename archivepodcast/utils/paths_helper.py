@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from archivepodcast.constants import APP_DIRECTORY
 from archivepodcast.instances.path_cache import local_file_cache
 
 
@@ -13,7 +14,7 @@ class AppPathsHelper:
         self.root_path = Path(root_path)
         self.instance_path = Path(instance_path)
         self.web_root: Path = self.instance_path / "web"  # This gets used so often, it's worth the variable
-        self.app_directory = Path("archivepodcast")
+        self.app_directory = APP_DIRECTORY
         self.static_directory = self.app_directory / "static"
         self.template_directory = self.app_directory / "templates"
 
