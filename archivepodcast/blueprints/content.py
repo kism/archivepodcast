@@ -7,9 +7,7 @@ from flask import Blueprint, Response, current_app, redirect, send_from_director
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 from archivepodcast.instances.config import get_ap_config
-from archivepodcast.instances.podcast_archiver import (
-    get_ap,
-)
+from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -19,13 +17,11 @@ bp = Blueprint("content", __name__)
 @bp.route("/content/<path:path>")  # type: ignore[untyped-decorator]
 def send_content(path: str) -> Response | WerkzeugResponse:
     """Serve Content."""
-    ap = get_ap()
-
     ap_conf = get_ap_config()
 
     if ap_conf.app.storage_backend == "s3":
         path_obj = Path(path)
-        web_root = Path(ap.web_root)
+        web_root = Path(get_app_paths().web_root)
         relative_path = str(path_obj).replace(str(web_root), "")  # The easiest way to get the "relative" path
         new_path = ap_conf.app.s3.cdn_domain.encoded_string() + "content/" + relative_path
         return redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)

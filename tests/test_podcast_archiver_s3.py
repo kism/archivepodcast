@@ -10,7 +10,7 @@ import pytest
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
-from tests.constants import DUMMY_RSS_STR, FLASK_ROOT_PATH
+from tests.constants import DUMMY_RSS_STR
 from tests.fixtures.aws import S3ClientMock
 
 from . import FakeExceptionError
@@ -48,8 +48,6 @@ def test_config_valid(
         PodcastArchiver(
             app_config=config.app,
             podcast_list=config.podcasts,
-            instance_path=tmp_path,
-            root_path=FLASK_ROOT_PATH,
         )
 
     assert "Not using s3" not in caplog.text
@@ -57,19 +55,19 @@ def test_config_valid(
 
 
 @pytest.mark.asyncio
-async def test_render_files(
+async def testender_files(
     apa_aws: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
     mock_get_session: AWSAioSessionMock,
 ) -> None:
     """Test that static pages are uploaded to s3."""
     with caplog.at_level(level=logging.DEBUG):
-        await apa_aws._render_files()
+        await apa_aws.renderer.render_files()
 
     assert apa_aws.s3
 
     async with mock_get_session.create_client("s3") as s3_client:
-        list_files = await s3_client.list_objects_v2(Bucket=apa_aws.app_config.s3.bucket)
+        list_files = await s3_client.list_objects_v2(Bucket=apa_aws._app_config.s3.bucket)
 
     list_files_str = [path["Key"] for path in list_files.get("Contents", [])]
 
@@ -85,7 +83,7 @@ async def test_render_files(
 async def test_check_s3_no_files(apa_aws: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Test that s3 files are checked."""
     with caplog.at_level(level=0):
-        await apa_aws._check_s3_files()
+        await apa_aws.renderer._check_s3_files()
 
     assert "Checking state of s3 bucket" in caplog.text
     assert "No objects found in the bucket" in caplog.text
@@ -94,10 +92,10 @@ async def test_check_s3_no_files(apa_aws: PodcastArchiver, caplog: pytest.LogCap
 @pytest.mark.asyncio
 async def test__check_s3_files(apa_aws: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Test that s3 files are checked."""
-    await apa_aws._render_files()
+    await apa_aws.renderer.render_files()
 
     with caplog.at_level(level=TRACE_LEVEL_NUM):
-        await apa_aws._check_s3_files()
+        await apa_aws.renderer._check_s3_files()
 
     assert "Checking state of s3 bucket" in caplog.text
     assert "S3 Bucket Contents" in caplog.text
@@ -117,10 +115,11 @@ async def test_s3_object_content_type(
     content_type: str,
 ) -> None:
     """Verify correct content types are set for S3 objects."""
-    await apa_aws._render_files()
-    await apa_aws._render_filelist_html()
+    await apa_aws.renderer.render_files()
+    file_list = await apa_aws.get_file_list()
+    await apa_aws.renderer.render_filelist_html(file_list)
 
-    bucket = apa_aws.app_config.s3.bucket
+    bucket = apa_aws._app_config.s3.bucket
 
     assert apa_aws.s3
 
@@ -141,42 +140,42 @@ async def test_check_s3_files_problem_files(
 
     async with mock_get_session.create_client("s3") as s3_client:
         await s3_client.put_object(
-            Bucket=apa_aws.app_config.s3.bucket,
+            Bucket=apa_aws._app_config.s3.bucket,
             Key="/index.html",
             Body="TEST leading slash",
             ContentType="text/html",
         )
 
         await s3_client.put_object(
-            Bucket=apa_aws.app_config.s3.bucket,
+            Bucket=apa_aws._app_config.s3.bucket,
             Key="content/test//episode.mp3",
             Body="TEST double slash",
             ContentType="text/html",
         )
 
         await s3_client.put_object(
-            Bucket=apa_aws.app_config.s3.bucket,
+            Bucket=apa_aws._app_config.s3.bucket,
             Key="/content/test//episode.mp3",
             Body="TEST double slash and leading slash",
             ContentType="text/html",
         )
 
         await s3_client.put_object(
-            Bucket=apa_aws.app_config.s3.bucket,
+            Bucket=apa_aws._app_config.s3.bucket,
             Key="content/test/empty_file.mp3",
             Body="",
             ContentType="text/html",
         )
 
     with caplog.at_level(level=logging.WARNING):
-        await apa_aws._check_s3_files()
+        await apa_aws.renderer._check_s3_files()
 
     assert "S3 Path starts with a /, this is not expected: /index.html DELETING" in caplog.text
     assert "S3 Path contains a //, this is not expected: content/test//episode.mp3 DELETING" in caplog.text
     assert "S3 Object is empty: content/test/empty_file.mp3 DELETING" in caplog.text
 
     async with mock_get_session.create_client("s3") as s3_client:
-        s3_object_list = await s3_client.list_objects_v2(Bucket=apa_aws.app_config.s3.bucket)
+        s3_object_list = await s3_client.list_objects_v2(Bucket=apa_aws._app_config.s3.bucket)
     s3_object_list_str = [path["Key"] for path in s3_object_list.get("Contents", [])]
 
     assert s3_object_list_str == []

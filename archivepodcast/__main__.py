@@ -9,9 +9,10 @@ from typing import TYPE_CHECKING
 from .archiver import PodcastArchiver
 from .instances.config import get_ap_config
 from .instances.health import health
+from .instances.path_helper import get_app_paths
 from .instances.profiler import event_times
 from .utils import logger as ap_logger
-from .version import __version__
+from .utils.log_messages import log_intro
 
 if TYPE_CHECKING:
     from archivepodcast.utils.profiler import EventLastTime  # pragma: no cover
@@ -52,6 +53,7 @@ def run_ap_adhoc(
 ) -> None:
     """Main for adhoc running."""
     logger = ap_logger.get_logger(__name__)
+
     start_time = time.time()
     if not instance_path:
         msg = f"Instance path not provided, using default: {DEFAULT_INSTANCE_PATH}"
@@ -69,11 +71,12 @@ def run_ap_adhoc(
     ap_logger.setup_logger(app=None, logging_conf=ap_conf.logging)  # Setup logger with config
 
     podcast_archiver_start_time = time.time()
+
+    get_app_paths(root_path=Path.cwd(), instance_path=instance_path)
+
     ap = PodcastArchiver(
         app_config=ap_conf.app,
         podcast_list=ap_conf.podcasts,
-        instance_path=instance_path,
-        root_path=Path.cwd(),
         debug=False,  # The debug of the ap object is only for the Flask web server
     )
     event_times.set_event_time("PodcastArchiver", time.time() - podcast_archiver_start_time)
@@ -82,7 +85,7 @@ def run_ap_adhoc(
     asyncio.run(ap.write_health_s3())
     event_times.set_event_time("/", time.time() - start_time)
 
-    logger.trace(health.get_health(ap=ap).model_dump_json(indent=4))
+    logger.trace(health.get_health().model_dump_json(indent=4))
     logger.trace(event_times.model_dump_json(indent=4))
     logger.info(get_event_times_str())
     logger.info("Done!")
@@ -93,7 +96,7 @@ def main() -> None:
     ap_logger.setup_logger(app=None)  # Setup logger with defaults defined in config module
 
     logger = ap_logger.get_logger(__name__)
-    logger.info("🙋 ArchivePodcast version: %s, running adhoc", __version__)
+    log_intro("adhoc", logger)
 
     parser = argparse.ArgumentParser(description="Archivepodcast.")
     parser.add_argument(

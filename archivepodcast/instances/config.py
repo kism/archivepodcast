@@ -1,7 +1,8 @@
 """Instances for ArchivePodcast application."""
 
-from dataclasses import dataclass
 from pathlib import Path
+
+from pydantic import BaseModel
 
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.utils.logger import get_logger
@@ -26,8 +27,7 @@ def get_ap_config(config_path: Path | None = None) -> ArchivePodcastConfig:
     return _conf_cache
 
 
-@dataclass
-class S3ClientConfig:
+class S3ClientConfig(BaseModel):
     """Configuration for S3 client."""
 
     aws_secret_access_key: str
@@ -35,7 +35,7 @@ class S3ClientConfig:
     endpoint_url: str | None
 
 
-def get_ap_config_s3_client() -> object:
+def get_ap_config_s3_client() -> S3ClientConfig:
     """Get the S3 client from the global ArchivePodcastConfig instance."""
     ap_config = get_ap_config()
 

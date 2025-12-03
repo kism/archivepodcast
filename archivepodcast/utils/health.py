@@ -169,11 +169,10 @@ class PodcastArchiverHealth:
         self._version: str = __version__
         self._host_info: HostingInfo = HostingInfo()
 
-    def get_health(self, ap: PodcastArchiver) -> PodcastArchiverHealthAPI:
+    def get_health(self) -> PodcastArchiverHealthAPI:
         """Return the health."""
         if PROCESS is not None:
             self._core.memory_mb = PROCESS.memory_info().rss / (1024 * 1024)
-        self._assets = ap.webpages.get_list()
 
         return PodcastArchiverHealthAPI(
             core=self._core,
@@ -183,6 +182,10 @@ class PodcastArchiverHealth:
             version=self._version,
             host_info=self._host_info,
         )
+
+    def set_asset(self, path: str, mime: str) -> None:
+        """Set an asset."""
+        self._assets[path] = mime
 
     def update_template_status(self, webpage: str, **kwargs: bool | str | int | None) -> None:
         """Update the webpage."""

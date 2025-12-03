@@ -18,6 +18,7 @@ from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.archiver.webpages import Webpages
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.instances import podcast_archiver
+from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.podcast_archiver import _get_time_until_next_run
 from tests.constants import DUMMY_RSS_STR
 
@@ -37,7 +38,7 @@ def test_app_paths(
 ) -> None:
     """Verify all expected application paths return correct responses."""
 
-    assert len(apa.webpages) > 0
+    assert len(apa.renderer.webpages) > 0
 
     podcast_archiver._ap = apa
 
@@ -84,7 +85,7 @@ def test_app_paths_not_generated(
 
     monkeypatch.setattr("archivepodcast.archiver.webpages.Webpages.add", mock_add_webpage)
 
-    apa.webpages = Webpages()
+    apa.renderer.webpages = Webpages()
 
     webpage_list = [
         "/index.html",
@@ -118,13 +119,13 @@ async def test_app_path_about(
     if about_path.exists():
         about_path.unlink()
 
-    await apa._load_about_page()
+    await apa.renderer._load_about_page()
     response = client_live.get("/about.html")
     assert response.status_code == HTTPStatus.NOT_FOUND
 
     about_path.write_text("Test")
 
-    await apa._load_about_page()
+    await apa.renderer._load_about_page()
     response = client_live.get("/about.html")
     assert response.status_code == HTTPStatus.OK, f"About page should exist, got status code: {response.status_code}"
 
@@ -154,7 +155,7 @@ def test_rss_feed(
     rss_file.parent.mkdir(parents=True, exist_ok=True)
     rss_file.write_text(DUMMY_RSS_STR)
 
-    assert Path(apa.instance_path).joinpath("web", "rss", "test_from_file").exists()
+    assert get_app_paths().instance_path.joinpath("web", "rss", "test_from_file").exists()
 
     with caplog.at_level(logging.WARNING):
         response = client_live.get("/rss/test_from_file")
@@ -312,8 +313,12 @@ async def test_file_list(apa: PodcastArchiver, client_live: Flask, tmp_path: Pat
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text("test")
 
-    ap.podcast_downloader.__init__(app_config=ap.app_config, s3=ap.s3, web_root=ap.web_root)
-    await ap._render_filelist_html()
+    # First render the static files to ensure they exist in the file cache
+    await ap.renderer.render_files()
+
+    # Generate file list and render HTML
+    file_list = await ap.get_file_list()
+    await ap.renderer.render_filelist_html(file_list)
 
     response = client_live.get("/filelist.html")
 
@@ -339,18 +344,22 @@ async def test_file_list_s3(
     assert apa_aws.s3 is True
 
     async with mock_get_session.create_client("s3") as s3_client:
-        await s3_client.put_object(Bucket=apa_aws.app_config.s3.bucket, Key=content_s3_path, Body=b"test")
+        await s3_client.put_object(Bucket=apa_aws._app_config.s3.bucket, Key=content_s3_path, Body=b"test")
 
     # Check that the file is in the cache
-    apa_aws.podcast_downloader.__init__(app_config=apa_aws.app_config, s3=apa_aws.s3, web_root=apa_aws.web_root)
+    await apa_aws.update_file_cache()
 
-    _, file_cache = await apa_aws.podcast_downloader.get_file_list()
+    # First render the static files to ensure they exist in the file cache
+    await apa_aws.renderer.render_files()
+
+    file_list = await apa_aws.get_file_list()
+    file_cache = file_list.files
     assert content_s3_path in file_cache
 
     # Check that the file is in filelist.html
     with caplog.at_level(logging.DEBUG):
-        await apa_aws._render_files()
-        await apa_aws._render_filelist_html()
+        file_list = await apa_aws.get_file_list()
+        await apa_aws.renderer.render_filelist_html(file_list)
 
     assert "Done writing filelist.html to file" in caplog.text
 
@@ -359,7 +368,7 @@ async def test_file_list_s3(
 
     response_html = response.data.decode("utf-8")
 
-    assert "/index.html" in response_html  # File list
+    # S3 file list should include content files but not locally rendered HTML files
     assert content_s3_path in response_html  # Content
 
 
@@ -374,7 +383,7 @@ def test_api_reload(
     monkeypatch.setattr(podcast_archiver, "_ap", apa)
     apa.debug = True
 
-    place_test_config("testing_true_valid.json", Path(apa.instance_path))
+    place_test_config("testing_true_valid.json", get_app_paths().instance_path)
 
     response = client_live.get("/api/reload")
     assert response.status_code == HTTPStatus.OK

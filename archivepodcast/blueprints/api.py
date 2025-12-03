@@ -45,14 +45,12 @@ def api_reload() -> Response:
 @bp.route("/api/health")  # type: ignore[untyped-decorator]
 def api_health() -> Response:
     """Health check."""
-    ap = get_ap()
-
     try:
-        health_json = health.get_health(ap).model_dump()
+        health_json = health.get_health().model_dump()
         # Alphabetical json
         health_json_str = json.dumps(health_json, sort_keys=True, indent=4)
     except Exception:
-        logger.exception("❌ Error getting health")
+        logger.exception("Error getting health")
         health_json_str = json.dumps({"core": {"alive": False}}, sort_keys=True, indent=4)
 
     return Response(

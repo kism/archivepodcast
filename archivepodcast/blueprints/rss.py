@@ -39,7 +39,7 @@ def rss(feed: str) -> Response:
                 error_text="The developer probably messed something up",
                 about_page=get_about_page_exists(),
                 app_config=ap_conf.app,
-                header=ap.webpages.generate_header("error.html"),
+                header=ap.renderer.webpages.generate_header("error.html"),
             ),
             status=return_code,
         )
@@ -67,7 +67,7 @@ def rss(feed: str) -> Response:
                     about_page=get_about_page_exists(),
                     app_config=ap_conf.app,
                     podcasts=ap_conf.podcasts,
-                    header=ap.webpages.generate_header("error.html"),
+                    header=ap.renderer.webpages.generate_header("error.html"),
                 ),
                 status=return_code,
             )
@@ -82,7 +82,7 @@ def rss(feed: str) -> Response:
                     about_page=get_about_page_exists(),
                     app_config=ap_conf.app,
                     podcasts=ap_conf.podcasts,
-                    header=ap.webpages.generate_header("error.html"),
+                    header=ap.renderer.webpages.generate_header("error.html"),
                 ),
                 status=return_code,
             )

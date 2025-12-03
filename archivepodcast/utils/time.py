@@ -1,4 +1,4 @@
-"""Helper functions for time-related operations."""
+"""Time related utils for ArchivePodcast."""
 
 from datetime import timedelta
 

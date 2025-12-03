@@ -15,7 +15,9 @@ from flask import Response, current_app, render_template, send_file
 from archivepodcast.archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.instances.health import health
+from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
+from archivepodcast.utils.log_messages import log_time
 from archivepodcast.utils.logger import get_logger
 
 from .config import get_ap_config
@@ -31,11 +33,11 @@ def initialise_archivepodcast() -> None:
     ap_conf = get_ap_config()
 
     start_time = time.time()
+    get_app_paths(root_path=Path.cwd(), instance_path=Path(current_app.instance_path))
+
     _ap = PodcastArchiver(
         app_config=ap_conf.app,
         podcast_list=ap_conf.podcasts,
-        instance_path=Path(current_app.instance_path),
-        root_path=Path(current_app.root_path),
         debug=current_app.debug,
     )
 
@@ -58,7 +60,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     """
     start_time = time.time()
     if not _ap:
-        logger.error("❌ ArchivePodcast object not initialized")
+        logger.error("ArchivePodcast object not initialized")
         return
 
     health.update_core_status(currently_loading_config=True)
@@ -81,7 +83,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
         threading.Thread(target=_ap.grab_podcasts, daemon=True).start()
 
     except Exception:
-        logger.exception("❌ Error reloading config")
+        logger.exception("Error reloading config")
 
     end_time = time.time()  # Record the end time
     duration = end_time - start_time  # Calculate the duration
@@ -95,11 +97,11 @@ def podcast_loop() -> None:
     logger.info("🙋 Started thread: podcast_loop. Grabbing episodes, building rss feeds. Repeating hourly.")
 
     if _ap is None:
-        logger.critical("❌ ArchivePodcast object not initialized, podcast_loop dead")
+        logger.critical("ArchivePodcast object not initialized, podcast_loop dead")
         return
 
     if _ap.s3:
-        logger.info("⛅ We are in s3 mode, missing episode files will be downloaded, uploaded to s3, and then deleted")
+        logger.info("We are in s3 mode, missing episode files will be downloaded, uploaded to s3, and then deleted")
 
     while True:
         _ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
@@ -118,9 +120,8 @@ def podcast_loop() -> None:
         # request has completed, meaning that this infinite loop won't ruin everything
         # that being said, this one log message will never be covered, but I don't care
         current_datetime = datetime.datetime.now(tz=datetime.UTC)
-        logger.info(
-            "🌄 Waking up, its %s, looking for new episodes", current_datetime.strftime("%Y-%m-%d %H:%M:%S")
-        )  # pragma: no cover
+        logger.info("🌄 Waking up, its %s, looking for new episodes")  # pragma: no cover
+        log_time(logger)  # pragma: no cover
 
 
 def _get_time_until_next_run(current_time: datetime.datetime) -> int:
@@ -141,7 +142,7 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
         return generate_not_initialized_error()
 
     try:
-        webpage = _ap.webpages.get_webpage(webpage_name)
+        webpage = _ap.renderer.webpages.get_webpage(webpage_name)
     except KeyError:
         webpage_parts = webpage_name.split("/")
         static_path = Path(current_app.instance_path) / "web" / "/".join(webpage_parts)
@@ -165,7 +166,7 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
 
 def generate_not_initialized_error() -> Response:
     """Generate a not initialized 500 error."""
-    logger.error("❌ ArchivePodcast object not initialized")
+    logger.error("ArchivePodcast object not initialized")
     default_header = '<header><a href="index.html">Home</a><hr></header>'
 
     ap_conf = get_ap_config()
@@ -189,7 +190,7 @@ def generate_not_generated_error(webpage_name: str) -> Response:
 
     ap_conf = get_ap_config()
 
-    logger.error("❌ Requested page: %s not generated", webpage_name)
+    logger.error("Requested page: %s not generated", webpage_name)
     return Response(
         render_template(
             "error.html.j2",
@@ -197,7 +198,7 @@ def generate_not_generated_error(webpage_name: str) -> Response:
             error_text=f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
             about_page=get_about_page_exists(),
             app_config=ap_conf.app,
-            header=_ap.webpages.generate_header("error.html"),
+            header=_ap.renderer.webpages.generate_header("error.html"),
         ),
         status=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
@@ -207,7 +208,7 @@ def get_about_page_exists() -> bool:
     """Check if about.html exists, needed for some templates."""
     about_page_exists = False
     if _ap is not None:
-        about_page_exists = _ap.about_page_exists
+        about_page_exists = _ap.renderer.about_page_exists
 
     return about_page_exists
 
@@ -226,7 +227,7 @@ def generate_404() -> Response:
         error_text="Page not found, how did you even?",
         about_page=get_about_page_exists(),
         app_config=ap_conf.app,
-        header=_ap.webpages.generate_header("error.html"),
+        header=_ap.renderer.webpages.generate_header("error.html"),
     )
     return Response(render, status=returncode)
 
@@ -234,7 +235,7 @@ def generate_404() -> Response:
 def get_ap() -> PodcastArchiver:
     """Get the global ArchivePodcast object."""
     if _ap is None:
-        logger.error("❌ ArchivePodcast object not initialized")
+        logger.error("ArchivePodcast object not initialized")
         msg = "ArchivePodcast object not initialized"
         raise RuntimeError(msg)
 

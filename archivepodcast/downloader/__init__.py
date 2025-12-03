@@ -1,5 +1,5 @@
 """Downloader package for ArchivePodcast."""
 
-from .downloader import PodcastDownloader
+from .downloader import PodcastsDownloader
 
-__all__ = ["PodcastDownloader"]
+__all__ = ["PodcastsDownloader"]

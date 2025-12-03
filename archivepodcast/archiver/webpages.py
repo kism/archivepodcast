@@ -2,6 +2,8 @@
 
 from typing import ClassVar
 
+from archivepodcast.instances.health import health
+
 
 class Webpage:
     """Represents a cached webpage with its metadata."""
@@ -27,7 +29,7 @@ class Webpages:
     WEBPAGE_NICE_NAMES: ClassVar[dict[str, str]] = {
         "index.html": "Home",
         "guide.html": "Guide",
-        "filelist.html": "File List",
+        "filelist.html#/content/": "File List",  # Navigate to /content/ by default
         "webplayer.html": "Web Player",
         "about.html": "About",
     }
@@ -53,6 +55,7 @@ class Webpages:
     def add(self, path: str, mime: str, content: str | bytes) -> None:
         """Add a webpage."""
         self._webpages[path] = Webpage(path=path, mime=mime, content=content)
+        health.set_asset(path, mime)
 
     def get_all_pages(self) -> dict[str, Webpage]:
         """Return the webpages."""

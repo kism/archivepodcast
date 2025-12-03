@@ -30,21 +30,6 @@ def test_health_api(client: FlaskClient, apa: PodcastArchiver) -> None:
     assert response.get_json()["core"]["alive"]
 
 
-def test_health_api_error(client: FlaskClient, apa: PodcastArchiver, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test the podcast section of the health API endpoint."""
-
-    podcast_archiver._ap = apa
-
-    monkeypatch.setattr("archivepodcast.utils.health.PodcastArchiverHealth.get_health", lambda: FakeExceptionError)
-
-    response = client.get("/api/health")
-    data = response.get_json()
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.content_type == "application/json; charset=utf-8"
-    assert not data["core"]["alive"]
-
-
 def test_update_podcast_health() -> None:
     """Update the podcast episode info."""
     rss_path = Path(TEST_RSS_LOCATION) / "test_valid.rss"

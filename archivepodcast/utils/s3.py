@@ -35,14 +35,7 @@ class S3FileCache(BaseModel):
     _files: list[ObjectTypeDef] = []
 
     async def get_all(self, bucket: str) -> list[ObjectTypeDef]:
-        """List all objects in an S3 bucket using pagination.
-
-        Args:
-            bucket: Name of the S3 bucket
-
-        Returns:
-            List of all objects in the bucket
-        """
+        """List all objects in an S3 bucket using pagination."""
         if self._last_cache_time:
             age = (datetime.now(tz=UTC) - self._last_cache_time).total_seconds()
             logger.trace("S3 Cache hit! Age: %.2f seconds", age)
@@ -54,7 +47,7 @@ class S3FileCache(BaseModel):
         s3_config = get_ap_config_s3_client()
 
         session = get_session()
-        async with session.create_client("s3", **s3_config.__dict__) as s3_client:
+        async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
             paginator = s3_client.get_paginator("list_objects_v2")
             page_iterator = paginator.paginate(Bucket=bucket)
 
@@ -66,6 +59,11 @@ class S3FileCache(BaseModel):
         self._files = all_objects
         self._last_cache_time = datetime.now(tz=UTC)
         return all_objects
+
+    async def get_all_list_str(self, bucket: str) -> list[str]:
+        """Get all S3 file keys as strings."""
+        s3_files = await self.get_all(bucket)
+        return [s3_file["Key"] for s3_file in s3_files]
 
     def add_file(self, s3_file: S3File) -> None:
         """Append a new S3 file to the cache.

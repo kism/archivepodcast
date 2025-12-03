@@ -13,9 +13,9 @@ from archivepodcast.instances import podcast_archiver
 async def test_home(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Verify root path redirects to index.html."""
     podcast_archiver._ap = apa
-    await apa._render_files()
+    await apa.renderer.render_files()
 
-    assert apa.webpages.get_webpage("index.html") is not None
+    assert apa.renderer.webpages.get_webpage("index.html") is not None
 
     response = client.get("/")
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
@@ -26,9 +26,9 @@ async def test_home(client: FlaskClient, apa: PodcastArchiver) -> None:
 async def test_home_index(client: FlaskClient, apa: PodcastArchiver) -> None:
     """Test the hello API endpoint. This one uses the fixture in conftest.py."""
     podcast_archiver._ap = apa
-    await apa._render_files()
+    await apa.renderer.render_files()
 
-    assert apa.webpages.get_webpage("index.html") is not None
+    assert apa.renderer.webpages.get_webpage("index.html") is not None
 
     response = client.get("/index.html")
     # TEST: HTTP OK
@@ -43,7 +43,7 @@ async def test_home_index(client: FlaskClient, apa: PodcastArchiver) -> None:
 async def test_static_js_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
     podcast_archiver._ap = apa
-    await apa._render_files()
+    await apa.renderer.render_files()
 
     response = client.get("/static/clipboard.js")
     assert response.status_code == HTTPStatus.OK
@@ -58,7 +58,7 @@ async def test_static_js_exists(client: FlaskClient, apa: PodcastArchiver) -> No
 async def test_favicon_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
     podcast_archiver._ap = apa
-    await apa._render_files()
+    await apa.renderer.render_files()
 
     response = client.get("/favicon.ico")
     assert response.status_code == HTTPStatus.OK
@@ -68,7 +68,7 @@ async def test_favicon_exists(client: FlaskClient, apa: PodcastArchiver) -> None
 async def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/archivepodcast.js loads."""
     podcast_archiver._ap = apa
-    await apa._render_files()
+    await apa.renderer.render_files()
 
     response = client.get("/guide.html")
     assert response.status_code == HTTPStatus.OK
@@ -78,7 +78,7 @@ async def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
 async def test_fonts_exist(client: FlaskClient, apa: PodcastArchiver) -> None:
     """TEST: /static/fonts/... loads."""
     podcast_archiver._ap = apa
-    await apa._render_files()
+    await apa.renderer.render_files()
 
     font_list = [
         "/static/fonts/fira-code-v12-latin-500.woff2",

@@ -11,7 +11,7 @@ from .instances import podcast_archiver
 from .instances.config import get_ap_config
 from .instances.profiler import event_times
 from .utils import logger
-from .version import __version__
+from .utils.log_messages import log_intro
 
 install()
 
@@ -60,9 +60,8 @@ def create_app(instance_path_override: str | None = None) -> Flask:
         return podcast_archiver.generate_404()
 
     duration = time.time() - start_time
-    app.logger.info("🙋 ArchivePodcast version: %s, webapp initialised in %.2f seconds.", __version__, duration)
+    log_intro("webapp", app.logger)
     event_times.set_event_time("create_app", duration)
-    app.logger.info("🙋 Starting Web Server")
-    app.logger.info(ap_conf.app.inet_path)
+    app.logger.info("🙋 Starting Web Server: %s", ap_conf.app.inet_path)
 
     return app

@@ -1,4 +1,4 @@
-"""Helper functions for the ArchivePodcast archiver."""
+"""Helper functions for rss processing."""
 
 from lxml import etree
 

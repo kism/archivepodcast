@@ -4,26 +4,29 @@
 import contextlib
 import datetime
 import re
-import shutil
-import sys
 import time
-from pathlib import Path
+from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import aiohttp
-import ffmpeg
-from aiobotocore.session import get_session
-from botocore.exceptions import ClientError as S3ClientError
 from lxml import etree
 
 from archivepodcast.config import AppConfig, PodcastConfig
-from archivepodcast.instances.config import get_ap_config_s3_client
-from archivepodcast.instances.path_cache import s3_file_cache
+from archivepodcast.instances.health import health
+from archivepodcast.utils.log_messages import log_aiohttp_exception
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.s3 import S3File
+from archivepodcast.utils.rss import tree_no_episodes
 from archivepodcast.utils.time import warn_if_too_long
 
-from .constants import AUDIO_FORMATS, CONTENT_TYPES, DOWNLOAD_RETRY_COUNT, FFMPEG_INFO, IMAGE_FORMATS, USER_AGENT
+from .asset_downloader import AssetDownloader
+from .constants import AUDIO_FORMATS, DOWNLOAD_RETRY_COUNT, IMAGE_FORMATS
 from .helpers import delay_download
+
+if TYPE_CHECKING:
+    from archivepodcast.config import AppConfig, PodcastConfig  # pragma: no cover
+else:
+    AppConfig = object
+    PodcastConfig = object
 
 logger = get_logger(__name__)
 
@@ -44,281 +47,254 @@ etree.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
 etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
 
 
-def check_ffmpeg() -> None:
-    """Check if ffmpeg is installed."""
-    ffmpeg_paths = [
-        Path("/usr/bin/ffmpeg"),
-        Path("/usr/local/bin/ffmpeg"),
-        Path("C:/Program Files/ffmpeg/bin/ffmpeg.exe"),
-        Path("C:/ffmpeg/bin/ffmpeg.exe"),
-    ]
-    found_manually = any(ffmpeg_path.exists() for ffmpeg_path in ffmpeg_paths)
-
-    if not shutil.which("ffmpeg") and not found_manually:
-        logger.error(FFMPEG_INFO)
-        sys.exit(1)
-
-
-check_ffmpeg()
-
-
-class PodcastDownloader:
+class PodcastsDownloader(AssetDownloader):
     """PodcastDownloader object."""
 
-    def __init__(self, app_config: AppConfig, *, s3: bool, web_root: Path) -> None:
-        """Initialise the PodcastDownloader object."""
-        self.s3 = s3
-        self.local_paths_cache: list[Path] = []
-        self.feed_download_healthy: bool = True  # Need to change this if you do one podcast download per thread
-        self.app_config = app_config
-        self.web_root = web_root
-        self._session: aiohttp.ClientSession | None = None
+    async def download_podcast(
+        self,
+    ) -> etree._ElementTree | None:
+        """Parse the rss, Download all the assets, this is main."""
+        self._feed_download_healthy = True
+        feed_rss_healthy = True
+        tree = await self._download_and_parse_rss()
 
-        logger.trace("PodcastDownloader config (re)loaded")
-
-    async def update_file_cache(self) -> None:
-        """Update the file cache."""
-        if self.s3:
-            await s3_file_cache.get_all(self.app_config.s3.bucket)
+        if tree:
+            if tree_no_episodes(tree):
+                logger.error(
+                    "Downloaded podcast rss %s has no episodes, not writing to disk", self._podcast.name_one_word
+                )
+                feed_rss_healthy = False
+            else:
+                # Write rss to disk
+                tree.write(
+                    str(self._rss_file_path),
+                    encoding="utf-8",
+                    xml_declaration=True,
+                )
+                logger.debug("[%s] Wrote rss to disk: %s", self._podcast.name_one_word, self._rss_file_path)
         else:
-            web_root = Path(self.web_root)
-            self.local_paths_cache = [
-                (path.relative_to(web_root)) for path in Path(self.web_root).rglob("*") if path.is_file()
-            ]
-            self.local_paths_cache.sort()
+            feed_rss_healthy = False
+            logger.error("Unable to download podcast, something is wrong, will try to load from file")
 
-    async def get_file_list(self) -> tuple[str, list[str]]:
-        """Gets the base url and the file cache."""
-        await self.update_file_cache()
+        if not feed_rss_healthy:
+            self._feed_download_healthy = False
 
-        base_url = self.app_config.s3.cdn_domain if self.s3 else self.app_config.inet_path
-
-        file_list = (
-            [s3_file["Key"] for s3_file in await s3_file_cache.get_all(self.app_config.s3.bucket)]
-            if self.s3
-            else [str(path) for path in self.local_paths_cache]
+        health.update_podcast_status(
+            self._podcast.name_one_word,
+            healthy_feed=feed_rss_healthy,
+            healthy_download=self._feed_download_healthy,
         )
 
-        return base_url.encoded_string(), file_list
+        return tree
 
-    async def close_session(self) -> None:
-        """Close the aiohttp session."""
-        if self._session is not None:
-            await self._session.close()
-            self._session = None
-
-    def _get_aiohttp_session(self) -> aiohttp.ClientSession:
-        """Start the aiohttp session."""
-        if self._session is None:
-            logger.debug("Starting new aiohttp session")
-            self._session = aiohttp.ClientSession(
-                # timeout, 5 minutes, why not
-                timeout=aiohttp.ClientTimeout(total=300),
-                # tcp connector, 100 is default connection limit, force_close seems to fix some issues
-                connector=aiohttp.TCPConnector(limit=100, force_close=True),
-                headers={"User-Agent": USER_AGENT},
-            )
-
-        return self._session
-
-    async def download_podcast(self, podcast: PodcastConfig) -> tuple[etree._ElementTree | None, bool]:
-        """Parse the rss, Download all the assets, this is main."""
-        self.feed_download_healthy = True  # Until proven otherwise
-
+    async def _download_and_parse_rss(self) -> etree._ElementTree | None:
+        """Download and parse the podcast RSS feed."""
         content = None
         for n in range(DOWNLOAD_RETRY_COUNT):
             start_time = time.time()
-            content = await self._fetch_podcast_rss(podcast.url.encoded_string(), podcast.name_one_word)
-            warn_if_too_long(f"download podcast rss: {podcast.name_one_word}", time.time() - start_time)
+            content, status = await self._fetch_podcast_rss()
+            warn_if_too_long(f"[{self._podcast.name_one_word}] download podcast rss", time.time() - start_time)
+
+            if status in {HTTPStatus.NOT_FOUND, HTTPStatus.FORBIDDEN}:
+                logger.error(
+                    "[%s] RSS download attempt failed with HTTP status %s, not retrying",
+                    self._podcast.name_one_word,
+                    status,
+                )
+                return None
+            if status not in {HTTPStatus.OK, HTTPStatus.MOVED_PERMANENTLY, HTTPStatus.FOUND}:
+                logger.warning(
+                    "[%s] RSS download attempt %d/%d failed with HTTP status %s",
+                    self._podcast.name_one_word,
+                    n + 1,
+                    DOWNLOAD_RETRY_COUNT,
+                    status,
+                )
             if content is not None:
                 break
             await delay_download(n)
 
         if content is None:
-            return None, False
+            return None
 
+        logger.debug("[%s] Success fetching podcast RSS", self._podcast.name_one_word)
+
+        try:
+            podcast_rss = etree.fromstring(content)
+        except etree.XMLSyntaxError:
+            logger.error(  # noqa: TRY400
+                "[%s] Downloaded podcast rss (length %d) is not valid XML, cannot process podcast feed",
+                self._podcast.name_one_word,
+                len(content),
+            )
+            self._feed_download_healthy = False
+            return None
         podcast_rss = etree.fromstring(content)
-        logger.debug("📄 Downloaded rss feed, processing")
+        logger.debug("[%s] Downloaded rss feed, processing", self._podcast.name_one_word)
         logger.trace(str(podcast_rss))
 
         xml_first_child = podcast_rss[0]
-        await self._process_podcast_rss(xml_first_child, podcast)
+        await self._process_podcast_rss(xml_first_child)
         podcast_rss[0] = xml_first_child
 
-        return etree.ElementTree(podcast_rss), self.feed_download_healthy
+        return etree.ElementTree(podcast_rss)
 
-    async def _fetch_podcast_rss(self, url: str, podcast_name: str) -> bytes | None:
-        """Fetch the podcast rss from the given URL."""
-        aiohttp_session = self._get_aiohttp_session()
-
-        logger.debug("📜 Fetching podcast rss: %s", url)
+    async def _fetch_podcast_rss(self) -> tuple[bytes | None, HTTPStatus | None]:
+        """Fetch the podcast RSS feed."""
+        logger.debug(
+            "[%s] Starting fetch for podcast RSS: %s", self._podcast.name_one_word, self._podcast.url.encoded_string()
+        )
         try:
-            logger.trace("Starting fetch for podcast RSS: %s", url)
-            async with aiohttp_session.get(url) as response:
-                response.raise_for_status()
-
-                logger.debug("📄 Success fetching podcast RSS: %s", response.status)
-                return await response.read()
+            async with self._aiohttp_session.get(self._podcast.url.encoded_string()) as response:
+                return await response.read(), HTTPStatus(response.status)
 
         except aiohttp.ClientError as e:
-            logger.error("❌ RSS download attempt failed for podcast %s: %s", podcast_name, type(e).__name__)  # noqa: TRY400
+            log_aiohttp_exception(self._podcast.name_one_word, self._podcast.url.encoded_string(), e, logger)
+        return None, None
 
-        return None
+    # region RSS Hell
 
-    async def _process_podcast_rss(self, xml_first_child: etree._Element, podcast: PodcastConfig) -> None:
+    async def _process_podcast_rss(self, xml_first_child: etree._Element) -> None:
         """Process the podcast rss and update it with new values."""
         for channel in xml_first_child:
-            await self._process_channel_tag(channel, podcast)
+            await self._process_channel_tag(channel)
 
-    async def _process_channel_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
+    async def _process_channel_tag(self, channel: etree._Element) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
         """Process individual channel tags in the podcast rss."""
         match channel.tag:
             case "link":
                 self._handle_link_tag(channel)
             case "title":
-                self._handle_title_tag(channel, podcast)
+                self._handle_title_tag(channel)
             case "description":
-                self._handle_description_tag(channel, podcast)
+                self._handle_description_tag(channel)
             case "{http://www.w3.org/2005/Atom}link":
-                self._handle_atom_link_tag(channel, podcast)
+                self._handle_atom_link_tag(channel)
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}owner":
-                self._handle_itunes_owner_tag(channel, podcast)
+                self._handle_itunes_owner_tag(channel)
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}author":
-                self._handle_itunes_author_tag(channel, podcast)
+                self._handle_itunes_author_tag(channel)
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
-                self._handle_itunes_new_feed_url_tag(channel, podcast)
+                self._handle_itunes_new_feed_url_tag(channel)
             case "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                await self._handle_itunes_image_tag(channel, podcast)
+                await self._handle_itunes_image_tag(channel)
             case "image":
-                await self._handle_image_tag(channel, podcast)
+                await self._handle_image_tag(channel)
             case "item":
-                await self._handle_item_tag(channel, podcast)
+                await self._handle_item_tag(channel)
             case _:
-                logger.trace("Unhandled root-level XML tag %s, (under channel.tag) leaving as-is", channel.tag)
+                logger.trace(
+                    "[%s] Unhandled root-level XML tag %s, (under channel.tag) leaving as-is",
+                    self._podcast.name_one_word,
+                    channel.tag,
+                )
 
     def _handle_link_tag(self, channel: etree._Element) -> None:
         """Handle the link tag in the podcast rss."""
-        logger.trace("Podcast link: %s", str(channel.text))
-        channel.text = self.app_config.inet_path.encoded_string()
+        logger.trace("[%s] Podcast link: %s", self._podcast.name_one_word, str(channel.text))
+        channel.text = self._app_config.inet_path.encoded_string()
 
-    def _handle_title_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    def _handle_title_tag(self, channel: etree._Element) -> None:
         """Handle the title tag in the podcast rss."""
-        logger.debug("📄 Source Podcast title: %s", str(channel.text))
-        if podcast.new_name != "":
-            channel.text = podcast.new_name
+        logger.debug("[%s] Source Podcast title: %s", self._podcast.name_one_word, str(channel.text))
+        if self._podcast.new_name != "":
+            channel.text = self._podcast.new_name
 
-    def _handle_description_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    def _handle_description_tag(self, channel: etree._Element) -> None:
         """Handle the description tag in the podcast rss."""
-        logger.trace("Podcast description: %s", str(channel.text))
-        channel.text = podcast.description
+        logger.trace("[%s] Podcast description: %s", self._podcast.name_one_word, str(channel.text))
+        channel.text = self._podcast.description
 
-    def _handle_atom_link_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    def _handle_atom_link_tag(self, channel: etree._Element) -> None:
         """Handle the Atom link tag in the podcast rss."""
-        logger.trace("Atom link: %s", str(channel.attrib["href"]))
-        channel.attrib["href"] = self.app_config.inet_path.encoded_string() + "rss/" + podcast.name_one_word
+        logger.trace("[%s] Atom link: %s", self._podcast.name_one_word, str(channel.attrib["href"]))
+        channel.attrib["href"] = self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
         channel.text = " "
 
-    def _handle_itunes_owner_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    def _handle_itunes_owner_tag(self, channel: etree._Element) -> None:
         """Handle the iTunes owner tag in the podcast rss."""
-        logger.trace("iTunes owner: %s", str(channel.text))
+        logger.trace("[%s] iTunes owner: %s", self._podcast.name_one_word, str(channel.text))
         for child in channel:
             if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}name":
-                if podcast.new_name == "":
-                    podcast.new_name = child.text or ""
-                child.text = podcast.new_name
+                if self._podcast.new_name == "":
+                    self._podcast.new_name = child.text or ""
+                child.text = self._podcast.new_name
             if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}email":
-                if podcast.contact_email == "":
-                    podcast.contact_email = child.text or ""
-                child.text = podcast.contact_email
+                if self._podcast.contact_email == "":
+                    self._podcast.contact_email = child.text or ""
+                child.text = self._podcast.contact_email
 
-    def _handle_itunes_author_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    def _handle_itunes_author_tag(self, channel: etree._Element) -> None:
         """Handle the iTunes author tag in the podcast rss."""
-        logger.trace("iTunes author: %s", str(channel.text))
-        if podcast.new_name != "":
-            channel.text = podcast.new_name
+        logger.trace("[%s] iTunes author: %s", self._podcast.name_one_word, str(channel.text))
+        if self._podcast.new_name != "":
+            channel.text = self._podcast.new_name
 
-    def _handle_itunes_new_feed_url_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    def _handle_itunes_new_feed_url_tag(self, channel: etree._Element) -> None:
         """Handle the iTunes new-feed-url tag in the podcast rss."""
-        logger.trace("iTunes new-feed-url: %s", str(channel.text))
-        channel.text = self.app_config.inet_path.encoded_string() + "rss/" + podcast.name_one_word
+        logger.trace("[%s] iTunes new-feed-url: %s", self._podcast.name_one_word, str(channel.text))
+        channel.text = self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
 
-    async def _handle_itunes_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    async def _handle_itunes_image_tag(self, channel: etree._Element) -> None:
         """Handle the iTunes image tag in the podcast rss."""
-        logger.trace("iTunes image: %s", str(channel.attrib["href"]))
-
-        title = self._cleanup_file_name(podcast.new_name)
+        logger.trace("[%s] iTunes image: %s", self._podcast.name_one_word, str(channel.attrib["href"]))
+        title = self._cleanup_file_name(self._podcast.new_name)
         url = channel.attrib.get("href", "")
-        logger.trace("Image URL: %s", url)
+        logger.trace("[%s] Image URL: %s", self._podcast.name_one_word, url)
         for filetype in IMAGE_FORMATS:
             if filetype in url:
-                await self._download_cover_art(url, title, podcast, filetype)
+                await self._download_cover_art(url, title, filetype)
                 channel.attrib["href"] = (
-                    self.app_config.inet_path.encoded_string()
+                    self._app_config.inet_path.encoded_string()
                     + "content/"
-                    + podcast.name_one_word
+                    + self._podcast.name_one_word
                     + "/"
                     + title
                     + filetype
                 )
         channel.text = " "
 
-    async def _handle_image_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    async def _handle_image_tag(self, channel: etree._Element) -> None:
         """Handle the image tag in the podcast rss."""
         for child in channel:
-            logger.trace("image > XML tag: %s", child.tag)
+            logger.trace("[%s] image > XML tag: %s", self._podcast.name_one_word, child.tag)
             if child.tag == "title":
-                logger.trace("Image title: %s", str(child.text))
-                child.text = podcast.new_name
+                logger.trace("[%s] Image title: %s", self._podcast.name_one_word, str(child.text))
+                child.text = self._podcast.new_name
             elif child.tag == "link":
-                child.text = self.app_config.inet_path.encoded_string()
+                child.text = self._app_config.inet_path.encoded_string()
             elif child.tag == "url":
-                title = self._cleanup_file_name(podcast.new_name)
+                title = self._cleanup_file_name(self._podcast.new_name)
                 url = child.text or ""
                 for filetype in IMAGE_FORMATS:
                     if filetype in url:
-                        await self._download_asset(url, title, podcast, filetype)
+                        await self._download_asset(url, title, filetype)
                         child.text = (
-                            self.app_config.inet_path.encoded_string()
+                            self._app_config.inet_path.encoded_string()
                             + "content/"
-                            + podcast.name_one_word
+                            + self._podcast.name_one_word
                             + "/"
                             + title
                             + filetype
                         )
         channel.text = " "
 
-    async def _handle_item_tag(self, channel: etree._Element, podcast: PodcastConfig) -> None:
+    async def _handle_item_tag(self, channel: etree._Element) -> None:
         """Handle the item tag in the podcast rss."""
         file_date_string = self._get_file_date_string(channel)
         title = ""
         for child in channel:
             if child.tag == "title":
                 title = str(child.text)
-                logger.debug("📢 Episode title: %s", title)
+                logger.trace("Episode title: %s", title)
 
         for child in channel:
             if child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in str(child.tag):
-                await self._handle_enclosure_tag(child, title, podcast, file_date_string)
+                await self._handle_enclosure_tag(child, title, file_date_string)
             elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                await self._handle_episode_image_tag(child, title, podcast, file_date_string)
+                await self._handle_episode_image_tag(child, title, file_date_string)
 
-    def _get_file_date_string(self, channel: etree._Element) -> str:
-        """Get the file date string from the channel."""
-        file_date_string = "00000000"
-        for child in channel:
-            if child.tag == "pubDate":
-                original_date = str(child.text)
-                file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
-                with contextlib.suppress(ValueError):
-                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
-                with contextlib.suppress(ValueError):
-                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
-                file_date_string = file_date.strftime("%Y%m%d")
-        return file_date_string
-
-    async def _handle_enclosure_tag(
-        self, child: etree._Element, title: str, podcast: PodcastConfig, file_date_string: str
-    ) -> None:
+    async def _handle_enclosure_tag(self, child: etree._Element, title: str, file_date_string: str) -> None:
         """Handle the enclosure tag in the podcast rss."""
         logger.trace("Enclosure, URL: %s", child.attrib.get("url", ""))
         title = self._cleanup_file_name(title)
@@ -328,16 +304,16 @@ class PodcastDownloader:
             new_audio_format = audio_format
             if audio_format in url:
                 if audio_format == ".wav":
-                    new_length = await self._handle_wav(url, title, podcast, audio_format, file_date_string)
+                    new_length = await self._handle_wav(url, title, audio_format, file_date_string)
                     new_audio_format = ".mp3"
                     child.attrib["type"] = "audio/mpeg"
                     child.attrib["length"] = str(new_length)
                 else:
-                    await self._download_asset(url, title, podcast, audio_format, file_date_string)
+                    await self._download_asset(url, title, audio_format, file_date_string)
                 child.attrib["url"] = (
-                    self.app_config.inet_path.encoded_string()
+                    self._app_config.inet_path.encoded_string()
                     + "content/"
-                    + podcast.name_one_word
+                    + self._podcast.name_one_word
                     + "/"
                     + file_date_string
                     + "-"
@@ -345,19 +321,17 @@ class PodcastDownloader:
                     + new_audio_format
                 )
 
-    async def _handle_episode_image_tag(
-        self, child: etree._Element, title: str, podcast: PodcastConfig, file_date_string: str
-    ) -> None:
+    async def _handle_episode_image_tag(self, child: etree._Element, title: str, file_date_string: str) -> None:
         """Handle the episode image tag in the podcast rss."""
         title = self._cleanup_file_name(title)
         url = child.attrib.get("href", "")
         for filetype in IMAGE_FORMATS:
             if filetype in url:
-                await self._download_asset(url, title, podcast, filetype, file_date_string)
+                await self._download_cover_art(url, title, filetype)
                 child.attrib["href"] = (
-                    self.app_config.inet_path.encoded_string()
+                    self._app_config.inet_path.encoded_string()
                     + "content/"
-                    + podcast.name_one_word
+                    + self._podcast.name_one_word
                     + "/"
                     + file_date_string
                     + "-"
@@ -365,300 +339,7 @@ class PodcastDownloader:
                     + filetype
                 )
 
-    def _check_local_path_exists(self, file_path: Path) -> bool:
-        """Check if the file exists locally."""
-        file_exists = file_path.is_file()
-
-        if file_exists:
-            self._append_to_local_paths_cache(file_path)
-            logger.debug("📁 File: %s exists locally", file_path)
-        else:
-            logger.debug("📁 File: %s does not exist locally", file_path)
-
-        return file_exists
-
-    async def _check_path_exists(self, file_path: Path | str) -> bool:
-        """Check the path, s3 or local."""
-        file_exists = False
-
-        if self.s3:
-            # Convert file_path to a Path object if it isn't already
-            file_path = Path(file_path)
-
-            # If it's an absolute path and under web_root, make it relative to web_root
-            if file_path.is_absolute() and file_path.is_relative_to(self.web_root):
-                file_path = file_path.relative_to(self.web_root)
-
-            # Convert to a posix path (forward slashes) and ensure no leading slash
-            s3_key = file_path.as_posix().lstrip("/")
-
-            if not s3_file_cache.check_file_exists(s3_key):
-                session = get_session()
-                ap_s3_config = get_ap_config_s3_client()
-
-                async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
-                    try:
-                        # Head object to check if file exists
-                        my_object = await s3_client.head_object(Bucket=self.app_config.s3.bucket, Key=s3_key)
-                        logger.debug(
-                            "⛅ File: %s exists in s3 bucket",
-                            s3_key,
-                        )
-                        s3_file_cache.add_file(S3File(key=s3_key, size=my_object.get("ContentLength", 0)))
-                        file_exists = True
-
-                    except S3ClientError as e:
-                        if e.response.get("Error", {}).get("Code") == "404":
-                            logger.debug(
-                                "⛅ File: %s does not exist 🙅‍ in the s3 bucket",
-                                s3_key,
-                            )
-                        else:
-                            logger.exception("⛅❌ s3 check file exists errored out?")
-                    except Exception:  # pylint: disable=broad-exception-caught
-                        logger.exception("⛅❌ Unhandled s3 Error:")
-
-            else:
-                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_key)
-                file_exists = True
-
-        else:
-            if not isinstance(file_path, Path):
-                file_path = Path(file_path)
-            file_exists = self._check_local_path_exists(file_path)
-
-        return file_exists
-
-    async def _handle_wav(
-        self, url: str, title: str, podcast: PodcastConfig, extension: str = "", file_date_string: str = ""
-    ) -> int:
-        """Convert podcasts that have wav episodes 😔. Returns new file length."""
-        logger.trace("🎵 Handling wav file: %s", title)
-        new_length = None
-        spacer = ""  # This logic can be removed since WAVs will always have a date
-        if file_date_string != "":
-            spacer = "-"
-
-        content_dir = Path(self.web_root) / "content" / podcast.name_one_word
-        wav_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.wav"
-        mp3_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.mp3"
-
-        # If we need do download and convert a wav there is a small chance
-        # the user has had ffmpeg issues, remove existing files to play it safe
-        if wav_file_path.exists():
-            with contextlib.suppress(Exception):
-                wav_file_path.unlink()
-                mp3_file_path.unlink()
-
-        # If the asset hasn't already been downloaded and converted
-        if not await self._check_path_exists(mp3_file_path):
-            await self._download_asset(
-                url,
-                title,
-                podcast,
-                extension,
-                file_date_string,
-            )
-
-            logger.info("♻ Converting episode %s to mp3", title)
-            logger.debug("♻ MP3 File Path: %s", mp3_file_path)
-
-            input_wav = ffmpeg.input(filename=wav_file_path)
-            ff = ffmpeg.output(
-                input_wav,
-                filename=mp3_file_path,
-                codec="libmp3lame",
-                aq="4",
-            )  # VBR v4 might be overkill for voice buy I pick it
-
-            ff.run()
-
-            logger.info("♻ Done")
-
-            # Remove wav since we are done with it
-            logger.info("♻ Removing wav version of %s", title)
-            if wav_file_path.exists():
-                wav_file_path.unlink()
-            logger.info("♻ Done")
-
-            if self.s3:
-                await self._upload_asset_s3(mp3_file_path, extension)
-        else:
-            logger.debug("Episode has already been converted: %s", mp3_file_path)
-
-        if self.s3:
-            # Convert mp3_file_path to a Path object and make relative to web_root
-            s3_file_path = Path(mp3_file_path).relative_to(self.web_root)
-
-            # Convert to posix path (forward slashes) for S3
-            s3_key = s3_file_path.as_posix()
-
-            msg = f"Checking length of s3 object: {s3_key}"
-            logger.trace(msg)
-
-            session = get_session()
-            ap_s3_config = get_ap_config_s3_client()
-            async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
-                response = await s3_client.head_object(Bucket=self.app_config.s3.bucket, Key=s3_key)
-
-            new_length = response["ContentLength"]
-            msg = f"Length of converted wav file {s3_key}: {new_length} bytes, stored in s3"
-        else:
-            new_length = mp3_file_path.stat().st_size
-            msg = f"Length of converted wav file: {mp3_file_path} {new_length} bytes, stored locally"
-
-        logger.trace(msg)
-
-        return new_length
-
-    async def _upload_asset_s3(self, file_path: Path, extension: str, *, remove_original: bool = True) -> None:
-        """Upload asset to s3."""
-        if not self.s3:
-            logger.error("⛅❌ s3 client not found, cannot upload")
-            return
-        content_type = CONTENT_TYPES[extension]
-        file_path = Path(file_path)
-        if not file_path.is_absolute():
-            file_path = Path(self.web_root) / file_path
-        s3_path = file_path.relative_to(self.web_root).as_posix()
-        s3_path = s3_path.removeprefix("/")
-
-        if not remove_original:
-            # So if we are not removing the original, we can check if we can skip the upload
-            file_size = file_path.stat().st_size
-            if s3_file_cache.check_file_exists(s3_path, file_size):
-                logger.debug("⛅ File: %s exists in s3_paths_cache and matches in size, skipping upload", s3_path)
-                return
-
-        try:
-            # Upload the file
-            session = get_session()
-            ap_s3_config = get_ap_config_s3_client()
-            async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
-                if remove_original:
-                    logger.info("💾⛅ Uploading to s3: %s", s3_path)
-                else:
-                    logger.debug("💾⛅ Uploading to s3: %s", s3_path)
-
-                start_time = time.time()
-                await s3_client.put_object(
-                    Bucket=self.app_config.s3.bucket,
-                    Key=s3_path,
-                    Body=file_path.read_bytes(),
-                    ContentType=content_type,
-                )
-                warn_if_too_long(f"upload asset to s3: {s3_path}", time.time() - start_time, large_file=True)
-                logger.trace(f"Uploaded asset to s3: {s3_path}")
-
-            s3_file_cache.add_file(S3File(key=s3_path, size=file_path.stat().st_size))
-
-            if remove_original:
-                logger.info("💾 Removing local file: %s", file_path)
-                try:
-                    Path(file_path).unlink()
-                except FileNotFoundError:  # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
-                    msg = f"⛅❌ Could not remove the local file, the source file was not found: {file_path}"
-                    logger.exception(msg)
-
-        except FileNotFoundError:
-            self.feed_download_healthy = False
-            logger.exception("⛅❌ Could not upload to s3, the source file was not found: %s", file_path)
-        except Exception:
-            self.feed_download_healthy = False
-            logger.exception("⛅❌ Unhandled s3 error: %s")
-
-    async def _download_cover_art(self, url: str, title: str, podcast: PodcastConfig, extension: str = "") -> None:
-        """Download cover art from url with appropriate file name."""
-        content_dir = Path(self.web_root) / "content" / podcast.name_one_word
-        cover_art_destination = content_dir / f"{title}{extension}"
-
-        local_file_found = self._check_local_path_exists(cover_art_destination)
-
-        if not local_file_found:
-            await self._download_to_local(url, cover_art_destination)
-
-        if self.s3:
-            logger.debug("💾⛅ Uploading podcast cover art to s3 not deleting local file to allow overriding")
-            await self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
-
-    async def _download_asset(
-        self, url: str, title: str, podcast: PodcastConfig, extension: str = "", file_date_string: str = ""
-    ) -> None:
-        """Download asset from url with appropriate file name."""
-        spacer = ""
-        if file_date_string != "":
-            spacer = "-"
-
-        content_dir = Path(self.web_root) / "content" / podcast.name_one_word
-        file_path = content_dir / f"{file_date_string}{spacer}{title}{extension}"
-
-        if not await self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
-            await self._download_to_local(url, file_path)
-            logger.debug("Downloaded asset: %s", file_path)
-
-            # For if we are using s3 as a backend
-            # wav logic since this gets called in handle_wav
-            if extension != ".wav" and self.s3:
-                await self._upload_asset_s3(file_path, extension)
-
-        else:
-            logger.trace(f"Already downloaded: {title}{extension}")
-
-    async def _download_to_local(self, url: str, file_path: Path) -> None:
-        """Download the asset from the url."""
-        aiohttp_session = self._get_aiohttp_session()
-
-        logger.debug("💾 Downloading: %s", url)
-        logger.info("💾 Downloading asset to: %s", file_path)
-
-        async def _attempt_download() -> bool:
-            """Attempt to download the asset."""
-            try:
-                logger.trace("Downloading asset from URL: %s", url)
-                start_time = time.time()
-                async with aiohttp_session.get(url) as response:
-                    response.raise_for_status()
-                    file_path.parent.mkdir(parents=True, exist_ok=True)
-                    with file_path.open("wb") as asset_file:
-                        while True:
-                            chunk = await response.content.read(8192)
-                            if not chunk:
-                                break
-                            asset_file.write(chunk)
-
-                warn_if_too_long(f"download asset: {file_path}", time.time() - start_time, large_file=True)
-
-            except aiohttp.ServerTimeoutError:
-                self.feed_download_healthy = False
-                logger.exception("💾❌ Timeout Error: %s", url)
-                return False
-            except aiohttp.ClientError as e:
-                self.feed_download_healthy = False
-                logger.exception("💾❌ Request Error: %s for %s", type(e).__name__, url)
-                return False
-
-            return True
-
-        success = False
-        for n in range(DOWNLOAD_RETRY_COUNT):
-            success = await _attempt_download()
-            if success:
-                break
-            await delay_download(n)
-        if not success:
-            logger.error("💾❌ Failed to download asset after multiple attempts: %s", url)
-            return
-
-        logger.debug("💾 Success, downloaded to %s", file_path)
-
-        if not self.s3:
-            self._append_to_local_paths_cache(file_path)
-
-    def _append_to_local_paths_cache(self, file_path: Path) -> None:
-        file_path = Path(file_path).relative_to(self.web_root)
-
-        if file_path not in self.local_paths_cache:
-            self.local_paths_cache.append(file_path)
+    # region Helpers
 
     def _cleanup_file_name(self, file_name: str | bytes) -> str:
         """Convert a file name into a URL-safe slug format.
@@ -692,5 +373,19 @@ class PodcastDownloader:
         file_name = file_name.strip()
         file_name = file_name.replace(" ", "-")
 
-        logger.trace("Clean Filename: '%s'", file_name)
+        logger.trace("[%s] Clean Filename: '%s'", self._podcast.name_one_word, file_name)
         return file_name
+
+    def _get_file_date_string(self, channel: etree._Element) -> str:
+        """Get the file date string from the channel."""
+        file_date_string = "00000000"
+        for child in channel:
+            if child.tag == "pubDate":
+                original_date = str(child.text)
+                file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+                with contextlib.suppress(ValueError):
+                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
+                with contextlib.suppress(ValueError):
+                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
+                file_date_string = file_date.strftime("%Y%m%d")
+        return file_date_string

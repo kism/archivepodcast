@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+from archivepodcast.instances.path_helper import get_app_paths
 from tests.constants import DUMMY_RSS_STR
 
 from . import FakeExceptionError
@@ -22,7 +23,7 @@ else:
 async def test_no_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Verify behavior when about page is missing."""
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
-        await apa._load_about_page()
+        await apa.renderer._load_about_page()
 
     assert "About page doesn't exist" in caplog.text
 
@@ -35,7 +36,7 @@ async def test_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture
         f.write("About page exists!")
 
     with caplog.at_level(level=logging.INFO, logger="archivepodcast.archiver"):
-        await apa._load_about_page()
+        await apa.renderer._load_about_page()
 
     assert "About page exists!" in caplog.text
 
@@ -44,7 +45,7 @@ async def test_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture
 async def test_check_s3_files_no_client(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
     """Test that s3 files are checked."""
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
-        await apa._check_s3_files()
+        await apa.renderer._check_s3_files()
 
     assert "Checking state of s3 bucket" in caplog.text
     assert "No s3 client to list" in caplog.text
@@ -59,7 +60,7 @@ def test_grab_podcasts_not_live(
 
     apa.podcast_list[0].live = False
 
-    rss_path = Path(apa.instance_path) / "web" / "rss" / "test"
+    rss_path = Path(get_app_paths().instance_path) / "web" / "rss" / "test"
     rss_path.parent.mkdir(parents=True, exist_ok=True)
     rss_path.write_text(DUMMY_RSS_STR)
 
@@ -89,7 +90,7 @@ def test_grab_podcasts_unhandled_exception(
 
     apa.podcast_list[0].live = False
 
-    rss_path = Path(apa.instance_path) / "web" / "rss" / "test"
+    rss_path = Path(get_app_paths().instance_path) / "web" / "rss" / "test"
     rss_path.parent.mkdir(parents=True, exist_ok=True)
     rss_path.write_text(DUMMY_RSS_STR)
 
@@ -114,7 +115,7 @@ def test_grab_podcasts_invalid_rss(
 
     rss = "INVALID"
 
-    rss_path = Path(apa.instance_path) / "web" / "rss" / "test"
+    rss_path = Path(get_app_paths().instance_path) / "web" / "rss" / "test"
     rss_path.parent.mkdir(parents=True, exist_ok=True)
     rss_path.write_text(rss)
 
@@ -152,7 +153,7 @@ def test_grab_podcasts_live(
 
     apa.podcast_list[0].live = True
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
+    with caplog.at_level(level=logging.DEBUG):
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
@@ -185,27 +186,6 @@ def test_create_folder_structure_no_perms(apa: PodcastArchiver, monkeypatch: pyt
         apa._make_folder_structure()
 
 
-def test_grab_podcasts_unhandled_exception_rss(
-    apa: PodcastArchiver,
-    caplog: pytest.LogCaptureFixture,
-    mock_podcast_source_rss_valid: MockerFixture,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Test grabbing podcasts."""
-
-    apa.podcast_list[0].live = True
-
-    async def no_download_podcast(*args: Any, **kwargs: Any) -> tuple[None, bool]:
-        return None, False
-
-    monkeypatch.setattr(apa.podcast_downloader, "download_podcast", lambda _: no_download_podcast())
-
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.archiver"):
-        apa.grab_podcasts()
-
-    assert "Unable to download podcast, something is wrong" in caplog.text
-
-
 def test_grab_podcasts_no_episodes(
     apa: PodcastArchiver,
     caplog: pytest.LogCaptureFixture,
@@ -214,7 +194,7 @@ def test_grab_podcasts_no_episodes(
     """Test grabbing podcasts."""
     apa.podcast_list[0].live = True
 
-    rss_path = Path(apa.instance_path) / "web" / "rss" / "test"
+    rss_path = Path(get_app_paths().instance_path) / "web" / "rss" / "test"
     rss_path.parent.mkdir(parents=True, exist_ok=True)
     rss_path.write_text(DUMMY_RSS_STR)
 

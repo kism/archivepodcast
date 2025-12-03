@@ -28,7 +28,7 @@ def test_archivepodcast_cli_from__main__(
 
     # We get to the intro
     assert "ArchivePodcast version" in caplog.text
-    assert " running adhoc" in caplog.text
+    assert "starting in adhoc mode" in caplog.text
 
 
 def test_archivepodcast_cli_from__main__no_provided_instance_path(

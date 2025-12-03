@@ -84,7 +84,10 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ## Todo
 
-- warnings when s3 put, or rss download takes too long
+- ~~path_helper lazy load~~
+- ~~warnings when s3 put, or rss download takes too long~~
+- ~~generic response logger for aiohttp~~
+- ~~change log format to start with podcast name~~
 - Container Registry
 - header as a table, or divs
 - Fix font selection for frontend, done?

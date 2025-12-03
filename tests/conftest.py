@@ -11,4 +11,5 @@ pytest_plugins = [  # Magic list of fixtures to load
     "tests.fixtures.asyncio",
     "tests.fixtures.threads",
     "tests.fixtures.aiohttp",
+    "tests.fixtures.paths",
 ]
