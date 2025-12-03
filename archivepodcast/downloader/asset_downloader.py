@@ -132,22 +132,52 @@ class AssetDownloader:
         if not self._s3:
             self._append_to_local_paths_cache(file_path)
 
-    async def _download_cover_art(self, url: str, title: str, extension: str = "") -> None:
+    async def _download_cover_art(
+        self,
+        url: str,
+        title: str,
+        extension: str = "",
+        *,
+        s3_remove_original: bool = True,
+    ) -> None:
         """Download cover art from url with appropriate file name."""
         content_dir = get_app_paths().web_root / "content" / self._podcast.name_one_word
         cover_art_destination = content_dir / f"{title}{extension}"
 
+        remote_file_found = False
         local_file_found = self._check_local_path_exists(cover_art_destination)
 
-        if not local_file_found:
+        # If we are using s3
+        #    we haven't found the local file
+        #    we will remove the original after upload
+        # Check s3 for the file
+        if (
+            self._s3
+            and not local_file_found
+            and s3_remove_original
+            and await self._check_path_exists(cover_art_destination)
+        ):
+            remote_file_found = True
+
+        # Download to local if we aren't using s3 and haven't found it locally
+        if not self._s3 and not local_file_found:
             await self._download_to_local(url, cover_art_destination)
 
-        if self._s3:
+        # Download to local if we haven't found it locally or remotely
+        if self._s3 and not local_file_found and not remote_file_found:
+            await self._download_to_local(url, cover_art_destination)
+
+        # Download to local if we are using s3 but not removing original and haven't found it locally
+        if self._s3 and not s3_remove_original and not local_file_found:
+            await self._download_to_local(url, cover_art_destination)
+
+        # If we (now) have a file here, upload to s3 if needed
+        if self._s3 and (local_file_found or not remote_file_found):
             logger.debug(
                 "[%s] Uploading podcast cover art to s3 not deleting local file to allow overriding",
                 self._podcast.name_one_word,
             )
-            await self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
+            await self._upload_asset_s3(cover_art_destination, extension, remove_original=s3_remove_original)
 
     async def _handle_wav(self, url: str, title: str, extension: str = "", file_date_string: str = "") -> int:
         """Convert podcasts that have wav episodes 😔. Returns new file length."""
