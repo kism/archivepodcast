@@ -14,7 +14,6 @@ from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 from rich.theme import Theme
 
-
 DESIRED_LEVEL_NAME_LEN = 5
 DESIRED_NAME_LEN = 16
 DESIRED_THREAD_NAME_LEN = 13
