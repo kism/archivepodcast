@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
+  publish:
     name: "Build and publish release"
     runs-on: ubuntu-latest
 
