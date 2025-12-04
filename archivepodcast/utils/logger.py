@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 from rich.theme import Theme
+
 from archivepodcast.utils.serverless import is_running_serverless
 
 DESIRED_LEVEL_NAME_LEN = 5
