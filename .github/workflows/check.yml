@@ -54,7 +54,7 @@ jobs:
         run: |
           mkdir -p instance/web/rss/
           cp -f scripts/config/rss-ci.rss instance/web/rss/test
-          cp -f scripts/config/episodes-ci.json instance/config.json
+          cp -f scripts/config/config-ci.json instance/config.json
       - name: Create fake ffmpeg
         run: |
           echo '#!/bin/bash' > /usr/local/bin/ffmpeg
