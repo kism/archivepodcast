@@ -17,10 +17,9 @@ from .instances.profiler import event_times
 from .utils import logger as ap_logger
 from .utils.log_messages import log_intro
 from .utils.profiler import get_event_times_str
-from .utils.serverless import is_running_serverless
 
 # Don't if we are in lambda
-if not is_running_serverless():
+if not ap_logger.force_simple_logger():
     install()
 
 

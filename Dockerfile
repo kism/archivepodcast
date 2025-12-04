@@ -105,7 +105,7 @@ FROM ghcr.io/astral-sh/uv:python3.14-alpine
 COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
 
 # Required for psutil
-RUN apk add gcc python3-dev musl-dev linux-headers libxml2-dev libxslt-dev lame-libs
+RUN apk add gcc python3-dev musl-dev linux-headers libxml2-dev libxslt-dev lame-libs libmagic
 
 # Install the project into `/app`
 WORKDIR /app
@@ -131,6 +131,8 @@ RUN rm -rf /usr/local/bin/uv*
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
+
+ENV AP_SIMPLE_LOGGING=1
 
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []

@@ -1,6 +1,7 @@
 """Logging configuration for archivepodcast."""
 
 import logging
+import os
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -13,7 +14,6 @@ from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 from rich.theme import Theme
 
-from archivepodcast.utils.serverless import is_running_serverless
 
 DESIRED_LEVEL_NAME_LEN = 5
 DESIRED_NAME_LEN = 16
@@ -136,7 +136,7 @@ def setup_logger(
 
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
-        if is_running_serverless():
+        if force_simple_logger():
             logging_conf.simple = True
             in_logger.propagate = False  # Prevent double logging in serverless envs
 
@@ -256,3 +256,10 @@ def _add_file_handler(in_logger: logging.Logger, log_path: Path | str) -> None:
     file_handler.setFormatter(formatter)
     in_logger.addHandler(file_handler)
     logger.info("Logging to file: %s", log_path)
+
+
+def force_simple_logger() -> bool:
+    """Check if the application is running in a serverless environment."""
+    return (os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None) or (
+        os.getenv("AP_SIMPLE_LOGGING", "").lower() in ["1", "true"]
+    )
