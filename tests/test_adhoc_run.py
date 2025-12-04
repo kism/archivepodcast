@@ -42,9 +42,9 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
     place_test_config("testing_true_valid.json", tmp_path)
 
     monkeypatch.setattr(
-        "archivepodcast.constants.DEFAULT_INSTANCE_PATH",
+        "archivepodcast.__main__.DEFAULT_INSTANCE_PATH",
         tmp_path,
-    )  # Avoid pytest from using the repo's instance path
+    )  # Since this is set at import time, we have to patch it directly
 
     mock_args = argparse.Namespace(
         instance_path="",
