@@ -1,26 +1,24 @@
 # --- Minimal FFmpeg build stage ---
-FROM alpine:3.22 AS ffmpeg-builder
+FROM debian:bookworm-slim AS ffmpeg-builder
 
 # Basic build deps
-RUN apk add --no-cache \
-    build-base \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     yasm \
     git \
     wget \
     tar \
-    pkgconfig \
+    pkg-config \
     automake \
     autoconf \
-    libtool
-
-# Optional audio codec libs
-# Remove what you don't need
-RUN apk add --no-cache \
+    libtool \
+    ca-certificates \
     libvorbis-dev \
-    opus-dev \
-    flac-dev \
-    lame-dev \
-    libogg-dev
+    libopus-dev \
+    libflac-dev \
+    libmp3lame-dev \
+    libogg-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 
