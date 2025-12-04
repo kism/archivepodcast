@@ -38,7 +38,6 @@ class LoggingConf(BaseModel):
 
     level: str | int = "INFO"
     path: Path | None = None
-    simple: bool = False
 
     @model_validator(mode="after")
     def validate_vars(self) -> Self:
@@ -135,9 +134,8 @@ def setup_logger(
 
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
-        if force_simple_logger():
-            logging_conf.simple = True
-            in_logger.propagate = False  # Prevent double logging in serverless envs
+
+    in_logger.handlers.clear()
 
     # The root logger has no handlers initially in flask, app.logger does though.
     if app:
@@ -186,7 +184,7 @@ def _add_console_handler(
     in_logger: logging.Logger,
 ) -> None:
     """Add a console handler to the logger."""
-    if not settings.simple:
+    if not force_simple_logger():
         console = Console(theme=Theme({"logging.level.trace": "dim"}))
         rich_handler = RichHandler(
             console=console,

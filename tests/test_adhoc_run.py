@@ -18,6 +18,8 @@ def test_archivepodcast_cli_from__main__(
     """TEST: Run CLI from main."""
     place_test_config("testing_true_valid.json", tmp_path)
 
+    os.environ["AP_SIMPLE_LOGGING"] = "true"
+
     mock_args = argparse.Namespace(
         instance_path=str(tmp_path),
         config=str(tmp_path / "config.json"),
