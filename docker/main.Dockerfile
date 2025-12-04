@@ -101,28 +101,21 @@ RUN ./configure \
 RUN make -j$(nproc) && make install
 
 
-# --- Final application stage ---
-FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim
+# --- Python dependencies stage ---
+FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS python-builder
 
-COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
-
-# Required for psutil and other dependencies
+# Required for building Python dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     python3-dev \
     libxml2-dev \
     libxslt1-dev \
-    libmagic1 \
-    lame \
     && rm -rf /var/lib/apt/lists/*
 
-# Install the project into `/app`
 WORKDIR /app
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
-
-# Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
 # Install the project's dependencies using the lockfile and settings
@@ -131,20 +124,33 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project
 
-# Then, add the rest of the project source code and install it
-# Installing separately from its dependencies allows optimal layer caching
-ADD archivepodcast archivepodcast
+# Copy application code and install the project
+COPY archivepodcast archivepodcast
 
-# We don't need this anymore
-RUN rm -rf /usr/local/bin/uv*
+# --- Final runtime stage ---
+FROM python:3.14-slim-bookworm
+
+# Copy FFmpeg from builder
+COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=ffmpeg-builder /usr/local/bin/ffprobe /usr/local/bin/ffprobe
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmagic1 \
+    lame \
+    libxml2 \
+    libxslt1.1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy Python virtual environment from builder
+COPY --from=python-builder /app/.venv /app/.venv
+COPY --from=python-builder /app/archivepodcast /app/archivepodcast
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
-
 ENV AP_SIMPLE_LOGGING=1
-
-# Reset the entrypoint, don't invoke `uv`
-ENTRYPOINT []
 
 EXPOSE 5100
 
