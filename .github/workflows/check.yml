@@ -51,12 +51,15 @@ jobs:
       - name: Get dependencies
         run: uv sync
       - name: Prepare to generate the HTML
-        run: mkdir -p instance/web/rss/ && cp -f scripts/config/rss-ci.rss instance/web/rss/test
+        run: |
+          mkdir -p instance/web/rss/
+          cp -f scripts/config/rss-ci.rss instance/web/rss/test
+          cp -f scripts/config/episodes-ci.json instance/config.json
       - name: Create fake ffmpeg
         run: |
           echo '#!/bin/bash' > /usr/local/bin/ffmpeg
           chmod +x /usr/local/bin/ffmpeg
       - name: Generate the HTML
-        run: uv run python -m archivepodcast --config scripts/config/config-ci.json
+        run: uv run python -m archivepodcast
       - name: Validate HTML
         run: html-validate instance/web/*.html
