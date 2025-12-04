@@ -10,8 +10,8 @@ on:
       - "docs/**"
 
 env:
+  PYTEST_TAG: kism/archivepodcast:pytest
   TEST_TAG: kism/archivepodcast:test
-  LATEST_TAG: kism/archivepodcast:latest
 
 jobs:
   docker:
@@ -30,11 +30,11 @@ jobs:
           file: tests/Dockerfile
           load: true
           push: false
-          tags: archivepodcast-pytest
+          tags: ${{ env.PYTEST_TAG }}
 
       - name: Run pytest tests
         run: |
-          docker run --rm archivepodcast-pytest
+          docker run --rm ${{ env.PYTEST_TAG }}
 
       - name: Build and export to Docker
         uses: docker/build-push-action@v6
