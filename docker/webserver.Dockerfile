@@ -100,12 +100,18 @@ RUN make -j$(nproc) && make install
 
 
 # --- Final application stage ---
-FROM ghcr.io/astral-sh/uv:python3.14-alpine
+FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim
 
 COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
 
-# Required for psutil
-RUN apk add gcc python3-dev musl-dev linux-headers libxml2-dev libxslt-dev lame-libs libmagic
+# Required for psutil and other dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    python3-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install the project into `/app`
 WORKDIR /app
