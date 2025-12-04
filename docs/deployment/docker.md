@@ -7,7 +7,7 @@ Instructions for building and running the application using Docker containers.
 ## Build
 
 ```bash
-DOCKER_BUILDKIT=1 docker build --tag 'archivepodcast-webserver' .
+DOCKER_BUILDKIT=1 docker build --tag 'archivepodcast' .
 ```
 
 ## Run
@@ -18,7 +18,7 @@ docker run \
     --name archivepodcast \
     --publish 5100:5100 \
     --mount type=bind,source="$(pwd)"/instance,target=/app/instance \
-    archivepodcast-webserver
+    archivepodcast
 ```
 
 ```bash
@@ -26,6 +26,6 @@ docker run \
     --rm \
     --name archivepodcast \
     --mount type=bind,source="$(pwd)"/instance,target=/app/instance \
-    archivepodcast-webserver \
+    archivepodcast \
     python -m archivepodcast
 ```
