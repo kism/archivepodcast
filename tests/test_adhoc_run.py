@@ -3,10 +3,42 @@ import logging
 import os
 from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
+from flask import Flask
 
 from archivepodcast import __main__
+from archivepodcast.utils import logger as ap_logger
+from archivepodcast.utils.logger import LoggingConf
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+else:
+    MockerFixture = object  # pragma: no cover
+
+
+@pytest.fixture
+def preserve_caplog_handlers(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fixture to preserve pytest's caplog handlers when setup_logger is called."""
+    original_setup_logger = ap_logger.setup_logger
+
+    def setup_logger_preserve_caplog(
+        app: Flask | None,
+        logging_conf: LoggingConf | None = None,
+        in_logger: logging.Logger | None = None,
+    ) -> None:
+        root_logger = logging.getLogger()
+        # Save pytest's caplog handlers
+        caplog_handlers = list(root_logger.handlers)
+        # Call original setup
+        original_setup_logger(app, logging_conf, in_logger)
+        # Re-add caplog handlers
+        for handler in caplog_handlers:
+            if handler not in root_logger.handlers:
+                root_logger.addHandler(handler)
+
+    monkeypatch.setattr(ap_logger, "setup_logger", setup_logger_preserve_caplog)
 
 
 def test_archivepodcast_cli_from__main__(
@@ -14,8 +46,10 @@ def test_archivepodcast_cli_from__main__(
     monkeypatch: pytest.MonkeyPatch,
     place_test_config: Callable[[str, Path], None],
     caplog: pytest.LogCaptureFixture,
+    preserve_caplog_handlers: MockerFixture,
 ) -> None:
     """TEST: Run CLI from main."""
+    os.environ["AP_SIMPLE_LOGGING"] = "true"
     place_test_config("testing_true_valid.json", tmp_path)
 
     mock_args = argparse.Namespace(
@@ -37,8 +71,10 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
     monkeypatch: pytest.MonkeyPatch,
     place_test_config: Callable[[str, Path], None],
     caplog: pytest.LogCaptureFixture,
+    preserve_caplog_handlers: None,
 ) -> None:
     """TEST: Run CLI from main."""
+    os.environ["AP_SIMPLE_LOGGING"] = "true"
     place_test_config("testing_true_valid.json", tmp_path)
 
     monkeypatch.setattr(

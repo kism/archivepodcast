@@ -38,7 +38,6 @@ class LoggingConf(BaseModel):
 
     level: str | int = "INFO"
     path: Path | None = None
-    simple: bool = False
 
     @model_validator(mode="after")
     def validate_vars(self) -> Self:
@@ -135,16 +134,18 @@ def setup_logger(
 
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
-        if force_simple_logger():
-            logging_conf.simple = True
-            in_logger.propagate = False  # Prevent double logging in serverless envs
 
     # The root logger has no handlers initially in flask, app.logger does though.
     if app:
         app.logger.handlers.clear()  # Remove the Flask default handlers
 
+    if not running_in_serverless_environment():
+        in_logger.handlers.clear()
+
     # If the logger doesn't have a console handler (root logger doesn't by default)
-    if not any(isinstance(handler, (RichHandler, StreamHandler)) for handler in in_logger.handlers):
+    if (not any(isinstance(handler, (RichHandler, StreamHandler)) for handler in in_logger.handlers)) and (
+        not running_in_serverless_environment()  # Serverless should have their own handler
+    ):
         _add_console_handler(logging_conf, in_logger)
 
     _set_log_level(in_logger, logging_conf.level)
@@ -176,17 +177,12 @@ def _has_file_handler(in_logger: logging.Logger) -> bool:
     return any(isinstance(handler, logging.FileHandler) for handler in in_logger.handlers)
 
 
-def _has_console_handler(in_logger: logging.Logger) -> bool:
-    """Check if logger has a console handler."""
-    return any(isinstance(handler, logging.StreamHandler) for handler in in_logger.handlers)
-
-
 def _add_console_handler(
     settings: LoggingConf,
     in_logger: logging.Logger,
 ) -> None:
     """Add a console handler to the logger."""
-    if not settings.simple:
+    if not force_simple_logger():
         console = Console(theme=Theme({"logging.level.trace": "dim"}))
         rich_handler = RichHandler(
             console=console,
@@ -257,8 +253,11 @@ def _add_file_handler(in_logger: logging.Logger, log_path: Path | str) -> None:
     logger.info("Logging to file: %s", log_path)
 
 
+def running_in_serverless_environment() -> bool:
+    """Check if the application is running in a serverless environment."""
+    return os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None
+
+
 def force_simple_logger() -> bool:
     """Check if the application is running in a serverless environment."""
-    return (os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None) or (
-        os.getenv("AP_SIMPLE_LOGGING", "").lower() in ["1", "true"]
-    )
+    return running_in_serverless_environment() or (os.getenv("AP_SIMPLE_LOGGING", "").lower() in ["1", "true"])
