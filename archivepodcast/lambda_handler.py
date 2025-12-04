@@ -10,7 +10,7 @@ from archivepodcast import run_ap_adhoc
 logger = logging.getLogger()
 
 
-def lambda_handler(event: Any, context: Any) -> None:  # noqa: ANN401, ARG001, D103
+def handler(event: Any, context: Any) -> None:  # noqa: ANN401, ARG001, D103
     # Copy the RO instance folder to /tmp/instance since it needs to be writable
     local_instance_path = Path("/opt/instance")
     instance_path = Path("/tmp/instance")  # noqa: S108
