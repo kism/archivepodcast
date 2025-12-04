@@ -87,5 +87,6 @@ An example guide on setting it up start to finish, with all features and saving 
 - fix readme again
 - Fix font selection for frontend
 - pydantic xml
+- self test function to ensure ffmpeg works
 
 Prod time to beat running adhoc, 56 seconds.
