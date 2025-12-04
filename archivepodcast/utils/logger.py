@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 from rich.theme import Theme
+from archivepodcast.utils.serverless import is_running_serverless
 
 DESIRED_LEVEL_NAME_LEN = 5
 DESIRED_NAME_LEN = 16
@@ -134,6 +135,9 @@ def setup_logger(
 
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
+        if is_running_serverless():
+            logging_conf.simple = True
+            in_logger.propagate = False  # Prevent double logging in serverless envs
 
     # The root logger has no handlers initially in flask, app.logger does though.
     if app:

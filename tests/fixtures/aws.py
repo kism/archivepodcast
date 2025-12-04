@@ -131,7 +131,6 @@ class S3ClientMock:
 
     async def put_object(self, Bucket: str, Key: str, Body: str | bytes, ContentType: str = "") -> None:
         _objects[Key] = PutObjectRequestBucketPutObjectTypeDef(Key=Key, Body=Body, ContentType=ContentType)
-        logger.critical("Mock put_object called for key %s, new length of cache : %s", Key, len(_objects))
 
         # Update the s3_file_cache with the new file
         size = len(Body) if hasattr(Body, "__len__") else 0

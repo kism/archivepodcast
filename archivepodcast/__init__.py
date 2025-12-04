@@ -1,7 +1,6 @@
 """Flask web application for archiving and serving podcasts."""
 
 import asyncio
-import os
 import time
 from pathlib import Path
 
@@ -15,13 +14,13 @@ from .instances.config import get_ap_config
 from .instances.health import health
 from .instances.path_helper import get_app_paths
 from .instances.profiler import event_times
-from .utils import logger
 from .utils import logger as ap_logger
 from .utils.log_messages import log_intro
 from .utils.profiler import get_event_times_str
+from .utils.serverless import is_running_serverless
 
 # Don't if we are in lambda
-if not os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+if not is_running_serverless():
     install()
 
 
@@ -37,13 +36,14 @@ def create_app(instance_path_override: str | None = None) -> Flask:
     )  # Create Flask app object
 
     ap_conf = get_ap_config(Path(app.instance_path) / "config.json")
-    ap_conf.write_config(Path(app.instance_path) / "config.json")
 
     if ap_conf.flask.TESTING and not app.instance_path.startswith("/tmp"):  # noqa: S108
         msg = "Flask TESTING mode requires instance_path to be a tmp_path."
         raise ValueError(msg)
 
-    logger.setup_logger(app, ap_conf.logging)  # Setup logger with config
+    ap_conf.write_config(Path(app.instance_path) / "config.json")
+
+    ap_logger.setup_logger(app, ap_conf.logging)  # Setup logger with config
 
     app.logger.info("Instance path is: %s", app.instance_path)
 
@@ -72,7 +72,7 @@ def create_app(instance_path_override: str | None = None) -> Flask:
     duration = time.time() - start_time
     log_intro("webapp", app.logger)
     event_times.set_event_time("create_app", duration)
-    app.logger.info("🙋 Starting Web Server: %s", ap_conf.app.inet_path)
+    app.logger.info("Starting Web Server: %s", ap_conf.app.inet_path)
 
     return app
 
