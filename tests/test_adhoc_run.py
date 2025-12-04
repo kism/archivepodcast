@@ -16,9 +16,8 @@ def test_archivepodcast_cli_from__main__(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """TEST: Run CLI from main."""
-    place_test_config("testing_true_valid.json", tmp_path)
-
     os.environ["AP_SIMPLE_LOGGING"] = "true"
+    place_test_config("testing_true_valid.json", tmp_path)
 
     mock_args = argparse.Namespace(
         instance_path=str(tmp_path),
@@ -41,6 +40,7 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """TEST: Run CLI from main."""
+    os.environ["AP_SIMPLE_LOGGING"] = "true"
     place_test_config("testing_true_valid.json", tmp_path)
 
     monkeypatch.setattr(
