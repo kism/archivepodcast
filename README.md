@@ -84,12 +84,8 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ## Todo
 
-- readme again
-- Container Registry
-- header as a table, or divs
-- Fix font selection for frontend, done?
-- Cloudflare worker cron (CF still in beta)
-  - Terraform example
+- fix readme again
+- Fix font selection for frontend
 - pydantic xml
 
 Prod time to beat running adhoc, 56 seconds.
