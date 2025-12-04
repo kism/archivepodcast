@@ -20,3 +20,12 @@ docker run \
     --mount type=bind,source="$(pwd)"/instance,target=/app/instance \
     archivepodcast
 ```
+
+```bash
+docker run \
+    --rm \
+    --name archivepodcast \
+    --mount type=bind,source="$(pwd)"/instance,target=/app/instance \
+    archivepodcast \
+    python -m archivepodcast
+```

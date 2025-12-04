@@ -9,18 +9,21 @@ from rich.traceback import install
 
 from .archiver import PodcastArchiver
 from .blueprints import bp_api, bp_content, bp_rss, bp_static, bp_webpages
-from .constants import DEFAULT_INSTANCE_PATH
 from .instances import podcast_archiver
 from .instances.config import get_ap_config
 from .instances.health import health
 from .instances.path_helper import get_app_paths
 from .instances.profiler import event_times
-from .utils import logger
 from .utils import logger as ap_logger
 from .utils.log_messages import log_intro
 from .utils.profiler import get_event_times_str
+from .version import __version__
 
-install()
+__all__ = ["__version__", "create_app", "run_ap_adhoc"]
+
+# Don't if we are in lambda
+if not ap_logger.force_simple_logger():
+    install()
 
 
 def create_app(instance_path_override: str | None = None) -> Flask:
@@ -35,13 +38,14 @@ def create_app(instance_path_override: str | None = None) -> Flask:
     )  # Create Flask app object
 
     ap_conf = get_ap_config(Path(app.instance_path) / "config.json")
-    ap_conf.write_config(Path(app.instance_path) / "config.json")
 
     if ap_conf.flask.TESTING and not app.instance_path.startswith("/tmp"):  # noqa: S108
         msg = "Flask TESTING mode requires instance_path to be a tmp_path."
         raise ValueError(msg)
 
-    logger.setup_logger(app, ap_conf.logging)  # Setup logger with config
+    ap_conf.write_config(Path(app.instance_path) / "config.json")
+
+    ap_logger.setup_logger(app, ap_conf.logging)  # Setup logger with config
 
     app.logger.info("Instance path is: %s", app.instance_path)
 
@@ -70,29 +74,20 @@ def create_app(instance_path_override: str | None = None) -> Flask:
     duration = time.time() - start_time
     log_intro("webapp", app.logger)
     event_times.set_event_time("create_app", duration)
-    app.logger.info("🙋 Starting Web Server: %s", ap_conf.app.inet_path)
+    app.logger.info("Starting Web Server: %s", ap_conf.app.inet_path)
 
     return app
 
 
 def run_ap_adhoc(
-    instance_path: Path | None = None,
-    config_path: Path | None = None,
+    instance_path: Path,
 ) -> None:
     """Main for adhoc running."""
     logger = ap_logger.get_logger(__name__)
 
     start_time = time.time()
-    if not instance_path:
-        msg = f"Instance path not provided, using default: {DEFAULT_INSTANCE_PATH}"
-        logger.info(msg)
-        instance_path = DEFAULT_INSTANCE_PATH  # pragma: no cover # This avoids issues in PyTest
-        if not instance_path.exists():
-            msg = f"Instance path ({instance_path}) does not exist, not creating it for safety."
-            raise FileNotFoundError(msg)
 
-    if not config_path:
-        config_path = instance_path / "config.json"
+    config_path = instance_path / "config.json"
 
     ap_conf = get_ap_config(config_path=config_path)
     ap_conf.write_config(config_path)

@@ -42,6 +42,12 @@ jobs:
       - name: Install the project
         run: uv sync --extra test
 
+      - name: Ensure that pytest isnt getting polluted by the default instance dir.
+        run: |
+          mkdir -p instance
+          echo 'ensuring that this never gets touched by pytest' > instance/config.json
+          chmod 000 instance/config.json
+
       - name: Test with pytest
         run: .venv/bin/pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
 
