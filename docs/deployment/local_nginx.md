@@ -6,11 +6,11 @@ This configuration describes how to serve the application statically through ngi
 
 So since this webapp isn't very dynamic you can just host the web root folder with nginx if you set it up right.
 
-Same as README_local.md but:
+Same as `local.md` but:
 
-* Do not use the reverse proxy settings
-* Set the nginx web root to `<instance path>/web`
-* Set the media type for the rss feeds
+- Do not use the reverse proxy settings
+- Set the nginx web root to `<instance path>/web`
+- Set the media type for the rss feeds
 
 ```text
 location = /rss/<your feed name> {

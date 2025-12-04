@@ -334,9 +334,9 @@ class AssetDownloader:
 
         if file_exists:
             self._append_to_local_paths_cache(file_path)
-            logger.debug("File: %s exists locally", file_path)
+            logger.trace("File: %s exists locally", file_path)
         else:
-            logger.debug("File: %s does not exist locally", file_path)
+            logger.trace("File: %s does not exist locally", file_path)
 
         return file_exists
 

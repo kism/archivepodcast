@@ -129,11 +129,14 @@ ENV UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project
+    uv sync --frozen --no-install-project --extra test
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
 ADD archivepodcast archivepodcast
+ADD tests tests
+ADD uv.lock uv.lock
+ADD pyproject.toml pyproject.toml
 
 # We don't need this anymore
 RUN rm -rf /usr/local/bin/uv*
@@ -148,4 +151,4 @@ ENTRYPOINT []
 
 EXPOSE 5100
 
-CMD [ "waitress-serve", "--listen", "0.0.0.0:5100", "--trusted-proxy", "*", "--trusted-proxy-headers", "x-forwarded-for x-forwarded-proto x-forwarded-port", "--log-untrusted-proxy-headers", "--clear-untrusted-proxy-headers", "--threads", "4", "--call", "archivepodcast:create_app" ]
+CMD [ "pytest" ]

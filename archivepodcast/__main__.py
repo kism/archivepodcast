@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 from . import run_ap_adhoc
+from .constants import DEFAULT_INSTANCE_PATH
 from .utils import logger as ap_logger
 from .utils.log_messages import log_intro
 
@@ -23,18 +24,19 @@ def main() -> None:
         help="Path to the instance directory.",
     )
 
-    parser.add_argument(
-        "--config",
-        type=str,
-        default="",
-        help="Path to the config file.",
-    )
     args = parser.parse_args()
 
     instance_path = Path(args.instance_path) if args.instance_path else None
-    config_path = Path(args.config) if args.config else None
 
-    run_ap_adhoc(instance_path=instance_path, config_path=config_path)
+    if not instance_path:
+        msg = f"Instance path not provided, using default: {DEFAULT_INSTANCE_PATH}"
+        logger.info(msg)
+        instance_path = DEFAULT_INSTANCE_PATH  # pragma: no cover # This avoids issues in PyTest
+        if not instance_path.exists():
+            msg = f"Instance path ({instance_path}) does not exist, not creating it for safety."
+            raise FileNotFoundError(msg)
+
+    run_ap_adhoc(instance_path=instance_path)
 
 
 if __name__ == "__main__":

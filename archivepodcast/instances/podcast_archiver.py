@@ -44,7 +44,7 @@ def initialise_archivepodcast() -> None:
     signal.signal(signal.SIGHUP, reload_config)
 
     pid = os.getpid()
-    logger.info("🙋 Podcast Archive running! PID: %s", pid)
+    logger.info("Podcast Archive running! PID: %s", pid)
     logger.debug("Get ram usage in %% kb: ps -p %s -o %%mem,rss", pid)
     logger.debug("Reload with: kill -HUP %s", pid)
 
@@ -66,7 +66,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     health.update_core_status(currently_loading_config=True)
     logger.debug("Handle Sighup %s %s", signal_num, handler)
 
-    logger.info("🙋 Got SIGHUP, Reloading Config")
+    logger.info("Got SIGHUP, Reloading Config")
 
     try:
         logger.critical(current_app.instance_path)
@@ -79,7 +79,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
         _ap.load_config(ap_conf.app, ap_conf.podcasts)
 
         # This is the slow part of the reload, no app context required so we can give run it in a thread.
-        logger.info("🙋 Ad-Hoc grabbing podcasts in a thread")
+        logger.info("Ad-Hoc grabbing podcasts in a thread")
         threading.Thread(target=_ap.grab_podcasts, daemon=True).start()
 
     except Exception:
@@ -88,13 +88,13 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
     end_time = time.time()  # Record the end time
     duration = end_time - start_time  # Calculate the duration
     event_times.set_event_time("reload_config", duration)
-    logger.info("🙋 Finished adhoc config reload in  %.2f seconds", duration)
+    logger.info("Finished adhoc config reload in  %.2f seconds", duration)
     health.update_core_status(currently_loading_config=False)
 
 
 def podcast_loop() -> None:
     """Main loop, grabs new podcasts every hour."""
-    logger.info("🙋 Started thread: podcast_loop. Grabbing episodes, building rss feeds. Repeating hourly.")
+    logger.info("Started thread: podcast_loop. Grabbing episodes, building rss feeds. Repeating hourly.")
 
     if _ap is None:
         logger.critical("ArchivePodcast object not initialized, podcast_loop dead")
@@ -113,7 +113,7 @@ def podcast_loop() -> None:
         # Calculate time until next run
         seconds_until_next_run = _get_time_until_next_run(current_datetime)
 
-        msg = f"🛌 Sleeping for {int(seconds_until_next_run / 60)} minutes"
+        msg = f"Sleeping for {int(seconds_until_next_run / 60)} minutes"
         logger.info(msg)
         time.sleep(seconds_until_next_run)
         # So regarding the test coverage, the flask_test client really helps here since it stops the test once the

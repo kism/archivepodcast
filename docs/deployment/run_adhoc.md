@@ -17,5 +17,5 @@ By default, it will look for config.json in the usual paths, and the instance pa
 Alternatively you can specify either of these as arguments.
 
 ```bash
-.venv/bin/python -m archivepodcast --config path/to/config.json --instance-path path/to/instance
+.venv/bin/python -m archivepodcast --instance-path path/to/instance
 ```

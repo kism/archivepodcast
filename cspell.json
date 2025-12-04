@@ -16,7 +16,8 @@
     "custom-archivepodcast",
     "custom-readme",
     "custom-javascript",
-    "custom-docker"
+    "custom-docker",
+    "custom-ffmpeg"
   ],
   "dictionaryDefinitions": [
     {
@@ -52,6 +53,11 @@
     {
       "name": "custom-docker",
       "path": "./.cspell/custom-docker.txt",
+      "addWords": true
+    },
+    {
+      "name": "custom-ffmpeg",
+      "path": "./.cspell/custom-ffmpeg.txt",
       "addWords": true
     }
   ],

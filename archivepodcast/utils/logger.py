@@ -1,6 +1,7 @@
 """Logging configuration for archivepodcast."""
 
 import logging
+import os
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -134,6 +135,9 @@ def setup_logger(
 
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
+        if force_simple_logger():
+            logging_conf.simple = True
+            in_logger.propagate = False  # Prevent double logging in serverless envs
 
     # The root logger has no handlers initially in flask, app.logger does though.
     if app:
@@ -251,3 +255,10 @@ def _add_file_handler(in_logger: logging.Logger, log_path: Path | str) -> None:
     file_handler.setFormatter(formatter)
     in_logger.addHandler(file_handler)
     logger.info("Logging to file: %s", log_path)
+
+
+def force_simple_logger() -> bool:
+    """Check if the application is running in a serverless environment."""
+    return (os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None) or (
+        os.getenv("AP_SIMPLE_LOGGING", "").lower() in ["1", "true"]
+    )
