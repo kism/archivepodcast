@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 from collections.abc import Callable
 from pathlib import Path
 
@@ -47,7 +48,6 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
 
     mock_args = argparse.Namespace(
         instance_path="",
-        config=str(tmp_path / "config.json"),
     )
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda self: mock_args)
 
@@ -56,6 +56,7 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
 
     # We get to the intro
     assert "Instance path not provided, using default" in caplog.text
+    assert f"{tmp_path}{os.sep}config.json" in caplog.text
 
     with caplog.at_level(logging.WARNING):
         __main__.main()
