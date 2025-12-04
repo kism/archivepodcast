@@ -84,8 +84,6 @@ An example guide on setting it up start to finish, with all features and saving 
 
 ## Todo
 
-- ~~no rich traceback in lambda~~
-- ~~no manual config path?~~
 - readme again
 - Container Registry
 - header as a table, or divs
