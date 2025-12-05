@@ -28,7 +28,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: network=host
+          driver: docker
 
       # ffmpeg dependency images
 
@@ -39,7 +39,6 @@ jobs:
           file: docker/_dep_ffmpeg_bookworm.Dockerfile
           push: false
           load: true
-          outputs: type=docker,name=${{ env.FFMPEG_BOOKWORM_TAG }}
           tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
           cache-from: type=gha,scope=ffmpeg
           cache-to: type=gha,mode=max,scope=ffmpeg
@@ -54,7 +53,6 @@ jobs:
           file: docker/_dep_ffmpeg_lambda.Dockerfile
           push: false
           load: true
-          outputs: type=docker,name=${{ env.FFMPEG_LAMBDA_TAG }}
           tags: ${{ env.FFMPEG_LAMBDA_TAG }}
           cache-from: type=gha,scope=ffmpeg-lambda
           cache-to: type=gha,mode=max,scope=ffmpeg-lambda
