@@ -65,14 +65,14 @@ jobs:
           load: true
           tags: ${{ env.MAIN_TAG }}
           build-contexts: |
-            archivepodcast:ffmpeg-bookworm=docker-image://archivepodcast:ffmpeg-bookworm
+            ${{ env.FFMPEG_LAMBDA_TAG }}=docker-image://${{ env.FFMPEG_BOOKWORM_TAG }}
           cache-from: type=gha,scope=main
 
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
 
       - name: Run main docker waitress
-        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} waitress --help
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} waitress-serve --help
 
       # docker/pytest.Dockerfile
       - name: Recreate instance directory
