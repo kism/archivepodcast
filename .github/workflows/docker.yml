@@ -86,7 +86,7 @@ jobs:
           load: true
           tags: ${{ env.PYTEST_TAG }}
           build-contexts: |
-            archivepodcast=docker-image://${{ env.MAIN_TAG }}
+            ${{ env.MAIN_TAG }}=docker-image://${{ env.MAIN_TAG }}
           cache-from: type=gha,scope=pytest
 
       - name: Run pytest docker
@@ -108,7 +108,7 @@ jobs:
           load: true
           tags: ${{ env.LAMBDA_TAG }}
           build-contexts: |
-            archivepodcast:ffmpeg-lambda=docker-image://archivepodcast:ffmpeg-lambda
+            ${{ env.FFMPEG_LAMBDA_TAG }}=docker-image://${{ env.FFMPEG_LAMBDA_TAG }}
           cache-from: type=gha,scope=lambda
 
       - name: Run lambda container in background
