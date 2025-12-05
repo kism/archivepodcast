@@ -25,5 +25,5 @@ docker run \
     --name archivepodcast \
     --mount type=bind,source="$(pwd)"/instance,target=/app/instance \
     ghcr.io/kism/archivepodcast:latest \
-    python -m archivepodcast
+    archivepodcast
 ```

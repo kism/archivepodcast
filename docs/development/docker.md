@@ -25,7 +25,7 @@ docker run \
     --name archivepodcast \
     --mount type=bind,source="$(pwd)"/instance,target=/app/instance \
     archivepodcast:latest \
-    python -m archivepodcast
+    archivepodcast
 ```
 
 ## Pytest Container

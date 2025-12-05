@@ -124,8 +124,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --extra test
 
-# Copy application code and install the project
+# Copy application code and project metadata
 COPY archivepodcast archivepodcast
+COPY pyproject.toml README.md ./
+
+# Install the project to ensure the command archivepodcast works
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --frozen --extra test
 
 # --- Final runtime stage ---
 FROM python:3.14-slim-bookworm
@@ -148,6 +154,10 @@ WORKDIR /app
 COPY --from=python-builder /app/.venv /app/.venv
 COPY --from=python-builder /app/archivepodcast /app/archivepodcast
 
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+ENV AP_SIMPLE_LOGGING=1
+
 # Pytest specific
 ADD tests tests
 ADD uv.lock uv.lock
@@ -155,9 +165,4 @@ ADD pyproject.toml pyproject.toml
 RUN mkdir instance
 RUN echo "hello" > instance/config.json
 RUN chmod 000 instance/config.json
-
-# Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
-ENV AP_SIMPLE_LOGGING=1
-
 CMD ["pytest"]
