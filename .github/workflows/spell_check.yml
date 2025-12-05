@@ -5,7 +5,10 @@ on:
     branches:
       - main
       - test
-
+    paths-ignore:
+      - "**/README*"
+      - "docs/**"
+      - ".github/workflows/*publish*.yml"
 jobs:
   spellcheck: # run the action
     runs-on: ubuntu-latest

@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - "**/README*"
       - "docs/**"
+      - ".github/workflows/*publish*.yml"
 
 env:
   PYTEST_TAG: kism/archivepodcast:pytest

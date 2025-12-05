@@ -8,7 +8,8 @@ on:
       - test
     paths-ignore:
       - "**/README*"
-      - "*.md"
+      - "docs/**"
+      - ".github/workflows/*publish*.yml"
 
 jobs:
   check_py:
