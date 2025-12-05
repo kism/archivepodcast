@@ -12,6 +12,8 @@ on:
 
 env:
   LAMBDA_TAG: archivepodcast:lambda
+  PYTEST_TAG: archivepodcast:pytest
+  MAIN_TAG: archivepodcast:main
 
 jobs:
   docker:
@@ -21,26 +23,59 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       # docker/main.Dockerfile
       - name: Create instance directory
         run: mkdir -p instance
 
       - name: Build main docker
-        run: ./scripts/run_docker_main_adhoc.sh
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/main.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.MAIN_TAG }}
+          cache-from: type=gha,scope=main
+          cache-to: type=gha,mode=max,scope=main
+
+      - name: Run main docker
+        run: docker run --rm -v $(pwd)/instance:/opt/instance:ro ${{ env.MAIN_TAG }}
 
       # docker/pytest.Dockerfile
       - name: Recreate instance directory
         run: rm -rf instance && mkdir -p instance
 
-      - name: Run pyest docker
-        run: ./scripts/run_docker_pytest.sh
+      - name: Build pytest docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/pytest.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.PYTEST_TAG }}
+          cache-from: type=gha,scope=pytest
+          cache-to: type=gha,mode=max,scope=pytest
+
+      - name: Run pytest docker
+        run: docker run --rm -v $(pwd)/instance:/opt/instance:ro ${{ env.PYTEST_TAG }}
 
       # docker/lambda.Dockerfile
       - name: Recreate instance directory
         run: rm -rf instance && mkdir -p instance
 
       - name: Build lambda docker
-        run: docker build -f docker/lambda.Dockerfile -t ${{ env.LAMBDA_TAG }} .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/lambda.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.LAMBDA_TAG }}
+          cache-from: type=gha,scope=lambda
+          cache-to: type=gha,mode=max,scope=lambda
 
       - name: Run lambda container in background
         run: |
