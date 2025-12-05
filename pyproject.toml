@@ -29,6 +29,7 @@ dependencies = [
 
 [project.urls]
 repository = "https://github.com/kism/archivepodcast"
+docs = "https://archivepodcast.readthedocs.io/"
 
 [project.optional-dependencies]
 type = [
@@ -90,6 +91,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"archivepodcast/config.py" = [
+    "E501", # KG Some long lines
+]
 "tests/*.py" = [
     # Modules
     "ARG", # KG Unused function args -> fixtures nevertheless are functionally relevant
@@ -108,14 +112,12 @@ ignore = [
 "tests/fixtures/aws.py" = [
     "N803", # KG AWS Just breaks the rules here
 ]
-
 "docs/*.py" = [
     # Modules
     "INP",
     "D",
     "A",
 ]
-
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false

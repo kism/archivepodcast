@@ -14,7 +14,7 @@ def main() -> None:
     ap_logger.setup_logger(app=None)  # Setup logger with defaults defined in config module
 
     logger = ap_logger.get_logger(__name__)
-    log_intro("adhoc", logger)
+    log_intro(logger)
 
     parser = argparse.ArgumentParser(description="Archivepodcast.")
     parser.add_argument(
@@ -29,7 +29,7 @@ def main() -> None:
     instance_path = Path(args.instance_path) if args.instance_path else None
 
     if not instance_path:
-        msg = f"Instance path not provided, using default: {DEFAULT_INSTANCE_PATH}"
+        msg = f"Using default instance path: {DEFAULT_INSTANCE_PATH}"
         logger.info(msg)
         instance_path = DEFAULT_INSTANCE_PATH  # pragma: no cover # This avoids issues in PyTest
         if not instance_path.exists():

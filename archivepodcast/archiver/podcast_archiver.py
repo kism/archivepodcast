@@ -93,9 +93,6 @@ class PodcastArchiver:
         self.podcast_list: list[PodcastConfig] = podcast_list
         self.podcast_rss: dict[str, bytes] = {}
 
-        if self.s3:
-            logger.info("Using s3 as storage backend, bucket: %s", app_config.s3.bucket)
-
         self.load_config(app_config, podcast_list)
 
         # Done, update health

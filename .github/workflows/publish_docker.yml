@@ -8,6 +8,10 @@ on:
       - "v*"
   workflow_dispatch:
 
+env:
+  MAIN_TAG: kism/${{ github.repository_owner }}:latest
+  LAMBDA_TAG: kism/${{ github.repository_owner }}:lambda
+
 jobs:
   publish-ghcr:
     name: "Publish GitHub Container Registry"
@@ -22,10 +26,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push main Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/archivepodcast:latest
-          file: ./Dockerfile
+          file: ./docker/main.Dockerfile
+
+      - name: Build and push lambda Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/archivepodcast:lambda
+          file: ./docker/lambda.Dockerfile

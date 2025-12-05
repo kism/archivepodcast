@@ -124,8 +124,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project
 
-# Copy application code and install the project
+# Copy application code and project metadata
 COPY archivepodcast archivepodcast
+COPY pyproject.toml README.md ./
+
+# Install the project to ensure the command archivepodcast works
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --frozen
 
 # --- Final runtime stage ---
 FROM python:3.14-slim-bookworm

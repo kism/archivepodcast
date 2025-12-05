@@ -1,13 +1,10 @@
 """Actually Download Assets."""
 
 import contextlib
-import shutil
-import sys
 import time
 from pathlib import Path
 
 import aiohttp
-import ffmpeg
 from aiobotocore.session import get_session
 from botocore.exceptions import ClientError as S3ClientError
 
@@ -20,28 +17,10 @@ from archivepodcast.utils.logger import get_logger
 from archivepodcast.utils.s3 import S3File
 from archivepodcast.utils.time import warn_if_too_long
 
-from .constants import CONTENT_TYPES, DOWNLOAD_RETRY_COUNT, FFMPEG_INFO
-from .helpers import delay_download
+from .constants import CONTENT_TYPES, DOWNLOAD_RETRY_COUNT
+from .helpers import convert_to_mp3, delay_download
 
 logger = get_logger(__name__)
-
-
-def check_ffmpeg() -> None:
-    """Check if ffmpeg is installed."""
-    ffmpeg_paths = [
-        Path("/usr/bin/ffmpeg"),
-        Path("/usr/local/bin/ffmpeg"),
-        Path("C:/Program Files/ffmpeg/bin/ffmpeg.exe"),
-        Path("C:/ffmpeg/bin/ffmpeg.exe"),
-    ]
-    found_manually = any(ffmpeg_path.exists() for ffmpeg_path in ffmpeg_paths)
-
-    if not shutil.which("ffmpeg") and not found_manually:
-        logger.error(FFMPEG_INFO)
-        sys.exit(1)
-
-
-check_ffmpeg()
 
 
 class AssetDownloader:
@@ -210,15 +189,7 @@ class AssetDownloader:
             logger.info("♻ Converting episode %s to mp3", title)
             logger.debug("♻ MP3 File Path: %s", mp3_file_path)
 
-            input_wav = ffmpeg.input(filename=wav_file_path)
-            ff = ffmpeg.output(
-                input_wav,
-                filename=mp3_file_path,
-                codec="libmp3lame",
-                aq="4",
-            )  # VBR v4 might be overkill for voice buy I pick it
-
-            ff.run()
+            convert_to_mp3(wav_file_path, mp3_file_path)
 
             logger.info("♻ Done")
 
