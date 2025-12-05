@@ -32,71 +32,31 @@ WORKDIR /build/ffmpeg
 # Configure FFmpeg with audio-only support
 RUN ./configure \
     --disable-everything \
+    --disable-everything \
     --enable-small \
     --disable-autodetect \
     --disable-debug \
     --disable-doc \
     --disable-network \
-    \
-    # Enable core components you want
+    --disable-hwaccels \
+    --disable-devices \
+    --disable-iconv \
     --enable-ffmpeg \
-    --enable-ffprobe \
-    \
-    # Enable protocols (needed to read files)
     --enable-protocol=file \
-    \
-    # Enable audio demuxers
     --enable-demuxer=wav \
     --enable-demuxer=mp3 \
-    --enable-demuxer=ogg \
-    --enable-demuxer=flac \
-    --enable-demuxer=opus \
-    \
-    # Enable audio encoders
-    --enable-encoder=pcm_s16le \
-    --enable-encoder=libmp3lame \
-    --enable-encoder=flac \
-    --enable-encoder=opus \
-    \
-    # Enable audio decoders
     --enable-decoder=pcm_s16le \
+    --enable-decoder=pcm_s16be \
     --enable-decoder=mp3 \
-    --enable-decoder=vorbis \
-    --enable-decoder=flac \
-    --enable-decoder=opus \
-    \
-    # Enable audio muxers
-    --enable-muxer=wav \
+    --enable-decoder=mp3float \
+    --enable-encoder=libmp3lame \
     --enable-muxer=mp3 \
-    --enable-muxer=ogg \
-    --enable-muxer=opus \
-    --enable-muxer=flac \
-    \
-    # External libs
     --enable-libmp3lame \
-    --enable-libopus \
-    --enable-libvorbis \
-    \
-    # Need to keep some core components for ffmpeg to work
     --enable-swresample \
     --enable-avfilter \
-    --disable-swscale \
-    --disable-avdevice \
-    --disable-postproc \
-    \
-    # Enable minimal filters that ffmpeg requires
     --enable-filter=aformat \
     --enable-filter=anull \
-    --enable-filter=atrim \
-    --enable-filter=aresample \
-    --enable-filter=format \
-    --enable-filter=hflip \
-    --enable-filter=null \
-    --enable-filter=transpose \
-    --enable-filter=trim \
-    --enable-filter=vflip \
-    \
-    --disable-iconv
+    --enable-filter=aresample
 
 RUN make -j$(nproc) && make install
 

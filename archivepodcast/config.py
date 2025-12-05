@@ -21,7 +21,7 @@ _LOG_INFO_MESSAGES: dict[str, str] = {
     "frontend_local_adhoc": f"{_SPACER}Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n",
     "backend_s3": f"{_SPACER}Storage backend: S3\n{_SPACER * 2}Podcast assets will be uploaded to S3 and removed locally after upload.\n",
     "backend_local": f"{_SPACER}Storage backend: Local filesystem\n{_SPACER * 2}Podcast assets will be stored in the instance directory.\n",
-    "adhoc_s3_missmatch": f"{_SPACER}You are running adhoc with s3 backend possibly misconfigured",
+    "adhoc_s3_miss_match": f"{_SPACER}You are running adhoc with s3 backend possibly misconfigured",
 }
 
 
@@ -161,24 +161,24 @@ class ArchivePodcastConfig(BaseSettings):
 
     def log_info(self, *, running_adhoc: bool) -> None:
         """Log the current config info."""
-        storagae_backend_is_s3 = self.app.storage_backend == "s3"
+        storage_backend_is_s3 = self.app.storage_backend == "s3"
 
         msg = "Operating mode: Adhoc\n" if running_adhoc else "Operating mode: Webserver\n"
         msg_warn = ""
 
         try:
-            if self.app.inet_path == self.app.s3.cdn_domain and storagae_backend_is_s3:  # Any CDN-only setup
+            if self.app.inet_path == self.app.s3.cdn_domain and storage_backend_is_s3:  # Any CDN-only setup
                 msg += _LOG_INFO_MESSAGES["frontend_cdn"]
             elif running_adhoc:  # Adhoc mode
                 msg += _LOG_INFO_MESSAGES["frontend_local_adhoc"]
-                if storagae_backend_is_s3:  # Adhoc with S3 backend
+                if storage_backend_is_s3:  # Adhoc with S3 backend
                     msg_warn += (
-                        _LOG_INFO_MESSAGES["adhoc_s3_missmatch"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
+                        _LOG_INFO_MESSAGES["adhoc_s3_miss_match"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
                     )
             else:  # Webserver mode
                 msg += _LOG_INFO_MESSAGES["frontend_local"]
 
-            if storagae_backend_is_s3:
+            if storage_backend_is_s3:
                 msg += _LOG_INFO_MESSAGES["backend_s3"]
             else:
                 msg += _LOG_INFO_MESSAGES["backend_local"]

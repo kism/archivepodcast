@@ -78,7 +78,7 @@ def test_log_info_adhoc_with_s3(caplog: pytest.LogCaptureFixture) -> None:
 
     assert _LOG_INFO_MESSAGES["frontend_local_adhoc"].strip() in caplog.text
     assert _LOG_INFO_MESSAGES["backend_s3"].strip() in caplog.text
-    assert _LOG_INFO_MESSAGES["adhoc_s3_missmatch"].strip() in caplog.text
+    assert _LOG_INFO_MESSAGES["adhoc_s3_miss_match"].strip() in caplog.text
     assert str(config.app.inet_path) in caplog.text
     assert str(config.app.s3.cdn_domain) in caplog.text
     assert _LOG_INFO_MESSAGES["frontend_cdn"].strip() not in caplog.text
@@ -98,4 +98,4 @@ def test_log_info_adhoc_with_s3_matching_domains(caplog: pytest.LogCaptureFixtur
     # In adhoc mode with matching domains, it goes to CDN path first
     assert _LOG_INFO_MESSAGES["frontend_cdn"].strip() in caplog.text
     assert _LOG_INFO_MESSAGES["backend_s3"].strip() in caplog.text
-    assert _LOG_INFO_MESSAGES["adhoc_s3_missmatch"].strip() not in caplog.text
+    assert _LOG_INFO_MESSAGES["adhoc_s3_miss_match"].strip() not in caplog.text
