@@ -32,7 +32,6 @@ jobs:
           driver: docker
 
       # ffmpeg dependency images
-
       - name: Build ffmpeg main
         uses: docker/build-push-action@v6
         with:
@@ -43,9 +42,6 @@ jobs:
           tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
           cache-from: type=gha,scope=ffmpeg
 
-      - name: Run docker image ls
-        run: docker image ls
-
       - name: Build ffmpeg lambda
         uses: docker/build-push-action@v6
         with:
@@ -55,9 +51,6 @@ jobs:
           load: true
           tags: ${{ env.FFMPEG_LAMBDA_TAG }}
           cache-from: type=gha,scope=ffmpeg-lambda
-
-      - name: Run docker image ls
-        run: docker image ls
 
       # docker/main.Dockerfile
       - name: Create instance directory
@@ -77,6 +70,9 @@ jobs:
 
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
+
+      - name: Run main docker waitress
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} waitress --help
 
       # docker/pytest.Dockerfile
       - name: Recreate instance directory
@@ -100,6 +96,9 @@ jobs:
       # docker/lambda.Dockerfile
       - name: Recreate instance directory
         run: sudo rm -rf instance && mkdir -p instance
+
+      - name: Copy test config for lambda
+        run: cp scripts/config/config-ci.json instance/config.json
 
       - name: Build lambda docker
         uses: docker/build-push-action@v6
