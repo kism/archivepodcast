@@ -14,6 +14,23 @@ from .utils.logger import LoggingConf, get_logger
 # Modules should all setup logging like this so the log messages include the modules name.
 logger = get_logger(__name__)
 
+_SPACER = "  "
+_LOG_INFO_MESSAGES: dict[str, str] = {
+    "frontend_cdn": _SPACER + "Frontend: To be served via S3 CDN domain.\n",
+    "frontend_local": _SPACER + "Frontend: Served via this webserver.\n",
+    "frontend_local_adhoc": _SPACER
+    + "Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n",
+    "backend_s3": _SPACER
+    + "Storage backend: S3\n"
+    + _SPACER * 2
+    + "Podcast assets will be uploaded to S3 and removed locally after upload.\n",
+    "backend_local": _SPACER
+    + "Storage backend: Local filesystem\n"
+    + _SPACER * 2
+    + "Podcast assets will be stored in the instance directory.\n",
+    "adhoc_s3_missmatch": _SPACER + "You are running adhoc with s3 backend possibly misconfigured",
+}
+
 
 class AppWebPageConfig(BaseModel):
     """App Web Page Config Object."""
@@ -153,46 +170,28 @@ class ArchivePodcastConfig(BaseSettings):
         """Log the current config info."""
         storagae_backend_is_s3 = self.app.storage_backend == "s3"
 
-        spacer = "  "
-        frontend_cdn = spacer + "Frontend: To be served via S3 CDN domain.\n"
-        frontend_local = spacer + "Frontend: Served via this webserver.\n"
-        frontend_local_adhoc = (
-            spacer
-            + "Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n"
-        )
-        backend_s3 = (
-            spacer
-            + "Storage backend: S3\n"
-            + spacer * 2
-            + "Podcast assets will be uploaded to S3 and removed locally after upload.\n"
-        )
-        backend_local = (
-            spacer
-            + "Storage backend: Local filesystem\n"
-            + spacer * 2
-            + "Podcast assets will be stored in the instance directory.\n"
-        )
-        adhoc_s3_missmatch = (
-            spacer
-            + f"You are running adhoc with s3 backend possibly misconfigured {self.app.inet_path} != {self.app.s3.cdn_domain}"
-        )
-
         msg = "Operating mode:\n"
         msg_warn = ""
 
-        if self.app.inet_path == self.app.s3.cdn_domain and storagae_backend_is_s3:  # Any CDN-only setup
-            msg += frontend_cdn
-        elif running_adhoc:  # Adhoc mode
-            msg += frontend_local_adhoc
-            if storagae_backend_is_s3:  # Adhoc with S3 backend
-                msg_warn += adhoc_s3_missmatch
-        else:  # Webserver mode
-            msg += frontend_local
+        try:
+            if self.app.inet_path == self.app.s3.cdn_domain and storagae_backend_is_s3:  # Any CDN-only setup
+                msg += _LOG_INFO_MESSAGES["frontend_cdn"]
+            elif running_adhoc:  # Adhoc mode
+                msg += _LOG_INFO_MESSAGES["frontend_local_adhoc"]
+                if storagae_backend_is_s3:  # Adhoc with S3 backend
+                    msg_warn += (
+                        _LOG_INFO_MESSAGES["adhoc_s3_missmatch"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
+                    )
+            else:  # Webserver mode
+                msg += _LOG_INFO_MESSAGES["frontend_local"]
 
-        if storagae_backend_is_s3:
-            msg += backend_s3
-        else:
-            msg += backend_local
+            if storagae_backend_is_s3:
+                msg += _LOG_INFO_MESSAGES["backend_s3"]
+            else:
+                msg += _LOG_INFO_MESSAGES["backend_local"]
+
+        except KeyError:
+            logger.exception("log_info Missing message key")
 
         logger.info(msg.strip())
         if msg_warn != "":
