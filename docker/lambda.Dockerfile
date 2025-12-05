@@ -1,85 +1,75 @@
 # --- Minimal FFmpeg build stage ---
-FROM debian:bookworm-slim AS ffmpeg-builder
+# Use the same base as Lambda to ensure GLIBC compatibility
+FROM public.ecr.aws/lambda/python:3.14 AS ffmpeg-builder
 
-# Basic build deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+# Install build dependencies
+RUN dnf install -y \
+    gcc \
+    gcc-c++ \
+    make \
     yasm \
-    git \
+    nasm \
     wget \
     tar \
+    gzip \
     pkg-config \
-    automake \
     autoconf \
+    automake \
     libtool \
-    ca-certificates \
-    libmp3lame-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && dnf clean all
 
 WORKDIR /build
 
-# Download FFmpeg
-RUN wget https://ffmpeg.org/releases/ffmpeg-7.0.tar.gz && \
-    tar xzf ffmpeg-7.0.tar.gz && \
-    mv ffmpeg-7.0 ffmpeg
+# Build LAME (libmp3lame) from source
+RUN wget https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz && \
+    tar xzf lame-3.100.tar.gz && \
+    cd lame-3.100 && \
+    ./configure --prefix=/usr/local --enable-shared --disable-static && \
+    make -j$(nproc) && \
+    make install
 
-WORKDIR /build/ffmpeg
+# Download and build FFmpeg
+RUN wget https://ffmpeg.org/releases/ffmpeg-7.1.tar.gz && \
+    tar xzf ffmpeg-7.1.tar.gz
 
-# Configure FFmpeg with audio-only support
-RUN ./configure \
+WORKDIR /build/ffmpeg-7.1
+
+# Configure FFmpeg with minimal audio-only support
+RUN PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure \
+    --prefix=/usr/local \
     --disable-everything \
     --enable-small \
     --disable-autodetect \
     --disable-debug \
     --disable-doc \
     --disable-network \
+    --disable-hwaccels \
+    --disable-devices \
+    --disable-iconv \
     \
-    # Enable core components you want
     --enable-ffmpeg \
-    --enable-ffprobe \
-    \
-    # Enable protocols (needed to read files)
     --enable-protocol=file \
     \
-    # Enable audio demuxers
     --enable-demuxer=wav \
     --enable-demuxer=mp3 \
     \
-    # Enable audio encoders
-    --enable-encoder=pcm_s16le \
+    --enable-decoder=pcm_s16le \
+    --enable-decoder=pcm_s16be \
+    --enable-decoder=mp3 \
+    --enable-decoder=mp3float \
+    \
     --enable-encoder=libmp3lame \
     \
-    # Enable audio decoders
-    --enable-decoder=pcm_s16le \
-    --enable-decoder=mp3 \
-    \
-    # Enable audio muxers
-    --enable-muxer=wav \
     --enable-muxer=mp3 \
     \
-    # External libs
     --enable-libmp3lame \
     \
-    # Need to keep some core components for ffmpeg to work
     --enable-swresample \
     --enable-avfilter \
-    --disable-swscale \
-    --disable-avdevice \
-    --disable-postproc \
     \
-    # Enable minimal filters that ffmpeg requires
     --enable-filter=aformat \
     --enable-filter=anull \
-    --enable-filter=atrim \
-    --enable-filter=aresample \
-    --enable-filter=format \
-    --enable-filter=hflip \
-    --enable-filter=null \
-    --enable-filter=transpose \
-    --enable-filter=trim \
-    --enable-filter=vflip \
-    \
-    --disable-iconv
+    --enable-filter=aresample
 
 RUN make -j$(nproc) && make install
 
@@ -89,10 +79,17 @@ FROM public.ecr.aws/lambda/python:3.14
 
 # Copy FFmpeg binaries from builder
 COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
-COPY --from=ffmpeg-builder /usr/local/bin/ffprobe /usr/local/bin/ffprobe
 
-# Copy FFmpeg shared libraries from builder
-COPY --from=ffmpeg-builder /usr/lib/x86_64-linux-gnu/libmp3lame*.so* /usr/lib64/
+# Copy required shared libraries from builder to /usr/lib64 (standard Lambda location)
+COPY --from=ffmpeg-builder /usr/local/lib/libmp3lame.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libavcodec.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libavformat.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libavutil.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libswresample.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libavfilter.so* /usr/lib64/
+
+# Update library cache (using full path for Lambda base image)
+RUN /sbin/ldconfig
 
 # Install system dependencies required for building Python packages
 RUN dnf install -y \

@@ -26,7 +26,7 @@ check_return() {
 echo "Running code checks locally"
 
 # Prerequisites
-uv sync --all-extras --upgrade
+uv sync --all-extras
 
 echo "Npm version: $(npm --version), Expected: 11"
 npm install
@@ -56,23 +56,23 @@ ty check .
 check_return $?
 
 echo_magenta "cspell"
-npx cspell .
+npm run spell
 check_return $?
 
 echo_magenta "Markdownlint"
-npx markdownlint-cli --ignore node_modules --fix ./**/*.md
+npm run check_markdown
 check_return $?
 
 echo_magenta "Biome format"
-npx @biomejs/biome format --write .
+npm run format
 check_return $?
 
 echo_magenta "Biome lint"
-npx @biomejs/biome lint .
+npm run lint
 check_return $?
 
 echo_magenta "Biome check"
-npx @biomejs/biome check --fix .
+npm run check
 check_return $?
 
 echo_magenta "html-validate"

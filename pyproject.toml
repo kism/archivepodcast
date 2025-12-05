@@ -29,6 +29,7 @@ dependencies = [
 
 [project.urls]
 repository = "https://github.com/kism/archivepodcast"
+docs = "https://archivepodcast.readthedocs.io/"
 
 [project.optional-dependencies]
 type = [
