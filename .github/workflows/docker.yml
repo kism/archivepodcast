@@ -38,8 +38,6 @@ jobs:
           push: false
           load: true
           tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha
 
       - name: Build ffmpeg lambda
         uses: docker/build-push-action@v6
@@ -49,8 +47,6 @@ jobs:
           push: false
           load: true
           tags: ${{ env.FFMPEG_LAMBDA_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha
 
       # docker/main.Dockerfile
       - name: Create instance directory
@@ -66,8 +62,6 @@ jobs:
           tags: ${{ env.MAIN_TAG }}
           build-contexts: |
             ${{ env.FFMPEG_LAMBDA_TAG }}=docker-image://${{ env.FFMPEG_BOOKWORM_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha
 
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
@@ -89,8 +83,6 @@ jobs:
           tags: ${{ env.PYTEST_TAG }}
           build-contexts: |
             ${{ env.MAIN_TAG }}=docker-image://${{ env.MAIN_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha
 
       - name: Run pytest docker
         run: docker run --rm ${{ env.PYTEST_TAG }}
