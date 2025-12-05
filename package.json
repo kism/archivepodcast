@@ -14,7 +14,9 @@
     "test": "vitest run --coverage",
     "coverage": "vitest run --coverage",
     "check": "biome check",
-    "spell": "cspell '**/*.{py,js,css,html,md,json}'",
-    "check_markdown": "markdownlint --ignore node_modules --fix ./**/*.md"
+    "lint": "biome lint .",
+    "spell": "cspell '**/*.{py,js,css,html,md,json,Dockerfile}'",
+    "check_markdown": "markdownlint --ignore node_modules --fix ./**/*.md",
+    "format": "biome format --write ."
   }
 }

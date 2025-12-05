@@ -8,6 +8,12 @@ on:
       - "v*"
   workflow_dispatch:
 
+env:
+  MAIN_TAG: kism/${{ github.repository_owner }}:latest
+  LAMBDA_TAG: kism/${{ github.repository_owner }}:lambda
+  PYTEST_TAG: archivepodcast:pytest
+  FFMPEG_LAMBDA_TAG: archivepodcast:ffmpeg-lambda
+  FFMPEG_BOOKWORM_TAG: archivepodcast:ffmpeg-bookworm
 jobs:
   publish-ghcr:
     name: "Publish GitHub Container Registry"
@@ -15,6 +21,71 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # region ffmpeg
+      - name: Build ffmpeg main
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/_dep_ffmpeg_bookworm.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
+
+      - name: Build ffmpeg lambda
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/_dep_ffmpeg_lambda.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.FFMPEG_LAMBDA_TAG }}
+
+      # region build
+      - name: Build main docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ghcr.io/${{ github.repository_owner }}/archivepodcast:latest
+          file: ./docker/main.Dockerfile
+
+      - name: Build lambda docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ghcr.io/${{ github.repository_owner }}/archivepodcast:lambda
+          file: ./docker/lambda.Dockerfile
+
+      # region run
+      - name: Create instance directory
+        run: mkdir -p instance
+
+      - name: Run main docker
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
+
+      - name: Run main docker waitress
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} waitress-serve --help
+
+      - name: Remove instance directory
+        run: sudo rm -rf instance
+
+      # region test
+      - name: Build pytest docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/pytest.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.PYTEST_TAG }}
+
+      - name: Run pytest docker
+        run: docker run --rm ${{ env.PYTEST_TAG }}
+
+      # region publish
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -22,10 +93,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      - name: Build and push main Docker image
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/archivepodcast:latest
-          file: ./Dockerfile
+          file: ./docker/main.Dockerfile
+
+      - name: Build and push lambda Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/archivepodcast:lambda
+          file: ./docker/lambda.Dockerfile

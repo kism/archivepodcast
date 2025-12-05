@@ -14,6 +14,16 @@ from .utils.logger import LoggingConf, get_logger
 # Modules should all setup logging like this so the log messages include the modules name.
 logger = get_logger(__name__)
 
+_SPACER = "  "
+_LOG_INFO_MESSAGES: dict[str, str] = {
+    "frontend_cdn": f"{_SPACER}Frontend: To be served via S3 CDN domain.\n",
+    "frontend_local": f"{_SPACER}Frontend: Served via this webserver.\n",
+    "frontend_local_adhoc": f"{_SPACER}Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n",
+    "backend_s3": f"{_SPACER}Storage backend: S3\n{_SPACER * 2}Podcast assets will be uploaded to S3 and removed locally after upload.\n",
+    "backend_local": f"{_SPACER}Storage backend: Local filesystem\n{_SPACER * 2}Podcast assets will be stored in the instance directory.\n",
+    "adhoc_s3_miss_match": f"{_SPACER}You are running adhoc with s3 backend possibly misconfigured",
+}
+
 
 class AppWebPageConfig(BaseModel):
     """App Web Page Config Object."""
@@ -123,7 +133,7 @@ class ArchivePodcastConfig(BaseSettings):
         with config_path_json.open("w") as f:
             f.write(self.model_dump_json(indent=2, exclude_none=False))
 
-        logger.info("Config write complete")
+        logger.debug("Config write complete")
 
     @classmethod
     def force_load_config_file(cls, config_path: Path) -> Self:
@@ -135,7 +145,7 @@ class ArchivePodcastConfig(BaseSettings):
             )
             return cls()
 
-        logger.info("Loading config from %s", config_path.absolute())
+        logger.debug("Loading config from %s", config_path.absolute())
         with config_path.open("r") as f:
             config = json.load(f)
 
@@ -148,3 +158,34 @@ class ArchivePodcastConfig(BaseSettings):
                 msg = f"Please fill in the podcast details on entry {i}\n"
                 msg += podcast.model_dump_json()
                 raise ValueError(msg)
+
+    def log_info(self, *, running_adhoc: bool) -> None:
+        """Log the current config info."""
+        storage_backend_is_s3 = self.app.storage_backend == "s3"
+
+        msg = "Operating mode: Adhoc\n" if running_adhoc else "Operating mode: Webserver\n"
+        msg_warn = ""
+
+        try:
+            if self.app.inet_path == self.app.s3.cdn_domain and storage_backend_is_s3:  # Any CDN-only setup
+                msg += _LOG_INFO_MESSAGES["frontend_cdn"]
+            elif running_adhoc:  # Adhoc mode
+                msg += _LOG_INFO_MESSAGES["frontend_local_adhoc"]
+                if storage_backend_is_s3:  # Adhoc with S3 backend
+                    msg_warn += (
+                        _LOG_INFO_MESSAGES["adhoc_s3_miss_match"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
+                    )
+            else:  # Webserver mode
+                msg += _LOG_INFO_MESSAGES["frontend_local"]
+
+            if storage_backend_is_s3:
+                msg += _LOG_INFO_MESSAGES["backend_s3"]
+            else:
+                msg += _LOG_INFO_MESSAGES["backend_local"]
+
+        except KeyError:
+            logger.exception("log_info Missing message key")
+
+        logger.info(msg.strip())
+        if msg_warn != "":
+            logger.warning(msg_warn.strip())

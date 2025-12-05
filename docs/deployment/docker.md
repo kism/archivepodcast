@@ -6,6 +6,8 @@ Instructions for building and running the application using Docker containers.
 
 ## Run
 
+Webserver:
+
 ```bash
 docker run \
     --rm \
@@ -15,13 +17,15 @@ docker run \
     ghcr.io/kism/archivepodcast:latest
 ```
 
+Adhoc:
+
 ```bash
 docker run \
     --rm \
     --name archivepodcast \
     --mount type=bind,source="$(pwd)"/instance,target=/app/instance \
     ghcr.io/kism/archivepodcast:latest \
-    python -m archivepodcast
+    archivepodcast
 ```
 
 ## Build

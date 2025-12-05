@@ -9,6 +9,8 @@ on:
     paths-ignore:
       - "**/README*"
       - "docs/**"
+      - ".github/workflows/*publish*.yml"
+      - ".github/workflows/*docker*.yml"
 
 jobs:
   mypy:

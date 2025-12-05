@@ -17,7 +17,7 @@ from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
-from archivepodcast.utils.log_messages import log_time
+from archivepodcast.utils.log_messages import get_time_str
 from archivepodcast.utils.logger import get_logger
 
 from .config import get_ap_config
@@ -44,7 +44,6 @@ def initialise_archivepodcast() -> None:
     signal.signal(signal.SIGHUP, reload_config)
 
     pid = os.getpid()
-    logger.info("Podcast Archive running! PID: %s", pid)
     logger.debug("Get ram usage in %% kb: ps -p %s -o %%mem,rss", pid)
     logger.debug("Reload with: kill -HUP %s", pid)
 
@@ -100,9 +99,6 @@ def podcast_loop() -> None:
         logger.critical("ArchivePodcast object not initialized, podcast_loop dead")
         return
 
-    if _ap.s3:
-        logger.info("We are in s3 mode, missing episode files will be downloaded, uploaded to s3, and then deleted")
-
     while True:
         _ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
@@ -120,8 +116,7 @@ def podcast_loop() -> None:
         # request has completed, meaning that this infinite loop won't ruin everything
         # that being said, this one log message will never be covered, but I don't care
         current_datetime = datetime.datetime.now(tz=datetime.UTC)
-        logger.info("🌄 Waking up, its %s, looking for new episodes")  # pragma: no cover
-        log_time(logger)  # pragma: no cover
+        logger.info("🌄 Waking up, its %s, looking for new episodes", get_time_str())  # pragma: no cover
 
 
 def _get_time_until_next_run(current_time: datetime.datetime) -> int:
