@@ -119,7 +119,6 @@ ignore = [
     "A",
 ]
 
-
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false
 
