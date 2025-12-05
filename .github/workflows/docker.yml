@@ -11,7 +11,7 @@ on:
       - ".github/workflows/*publish*.yml"
 
 env:
-  LAMBDA_TAG: kism/archivepodcast:lambda
+  LAMBDA_TAG: archivepodcast:lambda
 
 jobs:
   docker:

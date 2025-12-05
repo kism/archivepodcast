@@ -10,6 +10,8 @@ on:
       - "**/README*"
       - "docs/**"
       - ".github/workflows/*publish*.yml"
+      - ".github/workflows/*docker*.yml"
+
 
 jobs:
   check_py:
