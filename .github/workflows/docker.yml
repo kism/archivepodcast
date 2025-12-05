@@ -25,13 +25,22 @@ jobs:
       - name: Build main docker
         run: ./scripts/run_docker_main_adhoc.sh
 
+      - name: Create instance directory
+        run: mkdir -p instance
+
       # docker/pytest.Dockerfile
       - name: Run pyest docker
         run: ./scripts/run_docker_pytest.sh
 
+      - name: Recreate instance directory
+        run: rm -rf instance && mkdir -p instance
+
       # docker/lambda.Dockerfile
       - name: Build lambda docker
         run: docker build -f docker/lambda.Dockerfile -t ${{ env.LAMBDA_TAG }} .
+
+      - name: Recreate instance directory
+        run: rm -rf instance && mkdir -p instance
 
       - name: Run lambda container in background
         run: |
