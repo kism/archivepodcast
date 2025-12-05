@@ -11,8 +11,8 @@ import pytest
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
-from archivepodcast.downloader.helpers import check_ffmpeg, _ffmpeg_convert_check
 from archivepodcast.downloader.downloader import PodcastsDownloader
+from archivepodcast.downloader.helpers import _ffmpeg_convert_check, check_ffmpeg
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from tests.constants import TEST_WAV_FILE
 from tests.models.aiohttp import FakeSession
