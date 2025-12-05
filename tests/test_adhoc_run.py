@@ -63,7 +63,7 @@ def test_archivepodcast_cli_from__main__(
 
     # We get to the intro
     assert "ArchivePodcast version" in caplog.text
-    assert "starting in adhoc mode" in caplog.text
+    assert "Operating mode: Adhoc" in caplog.text
 
 
 def test_archivepodcast_cli_from__main__no_provided_instance_path(
@@ -87,13 +87,14 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
     )
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda self: mock_args)
 
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.DEBUG):
         __main__.main()
 
     # We get to the intro
-    assert "Instance path not provided, using default" in caplog.text
+    assert "Using default instance path" in caplog.text
     assert f"{tmp_path}{os.sep}config.json" in caplog.text
 
+    caplog.clear()
     with caplog.at_level(logging.WARNING):
         __main__.main()
 

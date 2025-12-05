@@ -38,6 +38,12 @@ docker build -f docker/pytest.Dockerfile -t archivepodcast-pytest .
 docker run --rm archivepodcast-pytest:latest
 ```
 
+Check the diff to main:
+
+```bash
+code --diff docker/main.Dockerfile docker/pytest.Dockerfile
+```
+
 ## Lambda Container
 
 ```bash

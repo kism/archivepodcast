@@ -45,13 +45,12 @@ def test_config_valid(
     config = get_test_config(config_file)
 
     with caplog.at_level(logging.DEBUG):
-        PodcastArchiver(
+        ap = PodcastArchiver(
             app_config=config.app,
             podcast_list=config.podcasts,
         )
 
-    assert "Not using s3" not in caplog.text
-    assert "Using s3 as storage backend, bucket: archivepodcast-pytest" in caplog.text
+    assert ap.s3
 
 
 @pytest.mark.asyncio

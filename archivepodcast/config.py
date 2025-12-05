@@ -163,7 +163,7 @@ class ArchivePodcastConfig(BaseSettings):
         """Log the current config info."""
         storagae_backend_is_s3 = self.app.storage_backend == "s3"
 
-        msg = "Operating mode:\n"
+        msg = "Operating mode: Adhoc\n" if running_adhoc else "Operating mode: Webserver\n"
         msg_warn = ""
 
         try:
