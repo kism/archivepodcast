@@ -13,7 +13,9 @@ on:
 env:
   LAMBDA_TAG: archivepodcast:lambda
   PYTEST_TAG: archivepodcast:pytest
-  MAIN_TAG: archivepodcast:main
+  MAIN_TAG: archivepodcast:latest
+  FFMPEG_LAMBDA_TAG: archivepodcast:ffmpeg-lambda
+  FFMPEG_BOOKWORM_TAG: archivepodcast:ffmpeg-bookworm
 
 jobs:
   docker:
@@ -25,6 +27,30 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      # ffmpeg dependency images
+
+      - name: Build ffmpeg
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/_dep_ffmpeg_bookworm.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
+          cache-from: type=gha,scope=ffmpeg
+          cache-to: type=gha,mode=max,scope=ffmpeg
+
+      - name: Build ffmpeg lambda
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/_dep_ffmpeg_lambda.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.FFMPEG_LAMBDA_TAG }}
+          cache-from: type=gha,scope=ffmpeg-lambda
+          cache-to: type=gha,mode=max,scope=ffmpeg-lambda
 
       # docker/main.Dockerfile
       - name: Create instance directory

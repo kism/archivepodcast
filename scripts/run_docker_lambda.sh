@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+docker build -f docker/_dep_ffmpeg_lambda.Dockerfile -t archivepodcast:ffmpeg-lambda .
+
 docker build -f docker/lambda.Dockerfile -t archivepodcast:lambda .
 
 # Enable the self-test mode to verify dependencies during build
