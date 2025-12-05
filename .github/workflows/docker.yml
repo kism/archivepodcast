@@ -46,7 +46,7 @@ jobs:
 
       # docker/pytest.Dockerfile
       - name: Recreate instance directory
-        run: rm -rf instance && mkdir -p instance
+        run: sudo rm -rf instance && mkdir -p instance
 
       - name: Build pytest docker
         uses: docker/build-push-action@v6
@@ -64,7 +64,7 @@ jobs:
 
       # docker/lambda.Dockerfile
       - name: Recreate instance directory
-        run: rm -rf instance && mkdir -p instance
+        run: sudo rm -rf instance && mkdir -p instance
 
       - name: Build lambda docker
         uses: docker/build-push-action@v6
