@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
 
 env:
+  LAMBDA_TAG: archivepodcast:lambda
   PYTEST_TAG: archivepodcast:pytest
   MAIN_TAG: archivepodcast:latest
   FFMPEG_LAMBDA_TAG: archivepodcast:ffmpeg-lambda
@@ -41,7 +42,6 @@ jobs:
           load: true
           tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
           cache-from: type=gha,scope=ffmpeg
-          cache-to: type=gha,mode=max,scope=ffmpeg
 
       - name: Run docker image ls
         run: docker image ls
@@ -55,7 +55,6 @@ jobs:
           load: true
           tags: ${{ env.FFMPEG_LAMBDA_TAG }}
           cache-from: type=gha,scope=ffmpeg-lambda
-          cache-to: type=gha,mode=max,scope=ffmpeg-lambda
 
       - name: Run docker image ls
         run: docker image ls
@@ -75,7 +74,6 @@ jobs:
           build-contexts: |
             archivepodcast:ffmpeg-bookworm=docker-image://archivepodcast:ffmpeg-bookworm
           cache-from: type=gha,scope=main
-          cache-to: type=gha,mode=max,scope=main
 
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
@@ -95,7 +93,66 @@ jobs:
           build-contexts: |
             archivepodcast=docker-image://${{ env.MAIN_TAG }}
           cache-from: type=gha,scope=pytest
-          cache-to: type=gha,mode=max,scope=pytest
 
       - name: Run pytest docker
         run: docker run --rm ${{ env.PYTEST_TAG }}
+
+      # docker/lambda.Dockerfile
+      - name: Recreate instance directory
+        run: sudo rm -rf instance && mkdir -p instance
+
+      - name: Build lambda docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/lambda.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.LAMBDA_TAG }}
+          build-contexts: |
+            archivepodcast:ffmpeg-lambda=docker-image://archivepodcast:ffmpeg-lambda
+          cache-from: type=gha,scope=lambda
+
+      - name: Run lambda container in background
+        run: |
+          docker run -d -p 9000:8080 \
+            -v $(pwd)/instance:/opt/instance:ro \
+            --env AP_SELF_TEST=1 \
+            --name archivepodcast-lambda \
+            ${{ env.LAMBDA_TAG }}
+
+          # Wait for container to be ready
+          echo "Waiting for Lambda container to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:9000/2015-03-31/functions/function/invocations > /dev/null 2>&1; then
+              echo "Lambda container is ready!"
+              break
+            fi
+            echo "Attempt $i/30: Container not ready yet, waiting..."
+            sleep 2
+          done
+
+      - name: Test lambda invocation
+        run: |
+          response=$(curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}' -w "\n%{http_code}" -s)
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+
+          echo "HTTP Status: $http_code"
+          echo "Response Body: $body"
+
+          # Check if the invocation was successful (200 status code)
+          if [ "$http_code" != "200" ]; then
+            echo "Lambda invocation failed with status code: $http_code"
+            exit 1
+          fi
+
+          echo "Lambda invocation successful!"
+
+      - name: Check lambda container logs
+        if: always()
+        run: docker logs archivepodcast-lambda
+
+      - name: Stop lambda container
+        if: always()
+        run: docker stop archivepodcast-lambda
