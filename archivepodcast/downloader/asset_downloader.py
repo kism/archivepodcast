@@ -1,13 +1,10 @@
 """Actually Download Assets."""
 
 import contextlib
-import shutil
-import sys
 import time
 from pathlib import Path
 
 import aiohttp
-import ffmpeg
 from aiobotocore.session import get_session
 from botocore.exceptions import ClientError as S3ClientError
 
@@ -21,8 +18,7 @@ from archivepodcast.utils.s3 import S3File
 from archivepodcast.utils.time import warn_if_too_long
 
 from .constants import CONTENT_TYPES, DOWNLOAD_RETRY_COUNT
-from .helpers import delay_download, convert_to_mp3
-
+from .helpers import convert_to_mp3, delay_download
 
 logger = get_logger(__name__)
 

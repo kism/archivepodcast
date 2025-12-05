@@ -11,7 +11,7 @@ import pytest
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
-from archivepodcast.downloader import asset_downloader
+from archivepodcast.downloader.helpers import check_ffmpeg, _ffmpeg_convert_check
 from archivepodcast.downloader.downloader import PodcastsDownloader
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from tests.constants import TEST_WAV_FILE
@@ -217,9 +217,13 @@ def test_no_ffmpeg(tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch
     monkeypatch.setattr("pathlib.Path.exists", lambda x: False)
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader") and pytest.raises(SystemExit):  # type: ignore[truthy-bool]
-        asset_downloader.check_ffmpeg()
+        check_ffmpeg()
 
     assert "ffmpeg not found" in caplog.text
+
+
+def test_ffmpeg_convert_check(tmp_path: Path) -> None:
+    _ffmpeg_convert_check()
 
 
 @pytest.mark.asyncio
