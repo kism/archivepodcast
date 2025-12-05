@@ -28,10 +28,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            network=host
-            image=moby/buildkit:latest
 
       # ffmpeg dependency images
       - name: Build ffmpeg main
@@ -41,8 +37,8 @@ jobs:
           file: docker/_dep_ffmpeg_bookworm.Dockerfile
           outputs: type=docker
           tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
-          cache-from: type=gha,scope=ffmpeg
-          cache-to: type=gha,scope=ffmpeg,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build ffmpeg lambda
         uses: docker/build-push-action@v6
@@ -51,8 +47,8 @@ jobs:
           file: docker/_dep_ffmpeg_lambda.Dockerfile
           outputs: type=docker
           tags: ${{ env.FFMPEG_LAMBDA_TAG }}
-          cache-from: type=gha,scope=ffmpeg-lambda
-          cache-to: type=gha,scope=ffmpeg-lambda,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # docker/main.Dockerfile
       - name: Create instance directory
@@ -67,8 +63,8 @@ jobs:
           tags: ${{ env.MAIN_TAG }}
           build-contexts: |
             ${{ env.FFMPEG_BOOKWORM_TAG }}=docker-image://${{ env.FFMPEG_BOOKWORM_TAG }}
-          cache-from: type=gha,scope=main
-          cache-to: type=gha,scope=main,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
@@ -89,8 +85,8 @@ jobs:
           tags: ${{ env.PYTEST_TAG }}
           build-contexts: |
             ${{ env.MAIN_TAG }}=docker-image://${{ env.MAIN_TAG }}
-          cache-from: type=gha,scope=pytest
-          cache-to: type=gha,scope=pytest,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run pytest docker
         run: docker run --rm ${{ env.PYTEST_TAG }}
@@ -111,8 +107,8 @@ jobs:
           tags: ${{ env.LAMBDA_TAG }}
           build-contexts: |
             ${{ env.FFMPEG_LAMBDA_TAG }}=docker-image://${{ env.FFMPEG_LAMBDA_TAG }}
-          cache-from: type=gha,scope=lambda
-          cache-to: type=gha,scope=lambda,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run lambda container in background
         run: |
