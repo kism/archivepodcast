@@ -11,6 +11,8 @@ on:
 env:
   MAIN_TAG: kism/${{ github.repository_owner }}:latest
   LAMBDA_TAG: kism/${{ github.repository_owner }}:lambda
+  MAIN_TAG_LOCAL: archivepodcast:latest
+  LAMBDA_TAG_LOCAL: archivepodcast:lambda
   PYTEST_TAG: archivepodcast:pytest
   FFMPEG_LAMBDA_TAG: archivepodcast:ffmpeg-lambda
   FFMPEG_BOOKWORM_TAG: archivepodcast:ffmpeg-bookworm
@@ -47,7 +49,7 @@ jobs:
           context: .
           push: false
           load: true
-          tags: ghcr.io/${{ github.repository_owner }}/archivepodcast:latest
+          tags: ${{ env.MAIN_TAG_LOCAL }}
           file: ./docker/main.Dockerfile
 
       - name: Build lambda docker
@@ -56,7 +58,7 @@ jobs:
           context: .
           push: false
           load: true
-          tags: ghcr.io/${{ github.repository_owner }}/archivepodcast:lambda
+          tags: ${{ env.LAMBDA_TAG_LOCAL }}
           file: ./docker/lambda.Dockerfile
 
       # region run
@@ -64,10 +66,10 @@ jobs:
         run: mkdir -p instance
 
       - name: Run main docker
-        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG_LOCAL }} archivepodcast
 
       - name: Run main docker waitress
-        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} waitress-serve --help
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG_LOCAL }} waitress-serve --help
 
       - name: Remove instance directory
         run: sudo rm -rf instance

@@ -11,6 +11,7 @@ on:
       - "docs/**"
       - ".github/workflows/*publish*.yml"
       - ".github/workflows/*docker*.yml"
+      - "scripts/**"
 
 
 jobs:
@@ -20,6 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/ruff-action@v3
+        with:
+          version-file: pyproject.toml
 
   check_js:
     runs-on: ubuntu-latest
