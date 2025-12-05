@@ -153,18 +153,31 @@ class ArchivePodcastConfig(BaseSettings):
         """Log the current config info."""
         storagae_backend_is_s3 = self.app.storage_backend == "s3"
 
-        frontend_cdn = "Frontend: To be served via S3 CDN domain.\n"
-        frontend_local = "Frontend: Served via this webserver.\n"
+        spacer = "  "
+        frontend_cdn = spacer + "Frontend: To be served via S3 CDN domain.\n"
+        frontend_local = spacer + "Frontend: Served via this webserver.\n"
         frontend_local_adhoc = (
-            "Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n"
+            spacer
+            + "Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n"
         )
-        backend_s3 = "Storage backend: S3\n  Podcast assets will be uploaded to S3 and removed locally after upload.\n"
+        backend_s3 = (
+            spacer
+            + "Storage backend: S3\n"
+            + spacer * 2
+            + "Podcast assets will be uploaded to S3 and removed locally after upload.\n"
+        )
         backend_local = (
-            "Storage backend: Local filesystem\n  Podcast assets will be stored in the instance directory.\n"
+            spacer
+            + "Storage backend: Local filesystem\n"
+            + spacer * 2
+            + "Podcast assets will be stored in the instance directory.\n"
         )
-        adhoc_s3_missmatch = f"You are running adhoc with s3 backend possibly misconfigured {self.app.inet_path} != {self.app.s3.cdn_domain}"
+        adhoc_s3_missmatch = (
+            spacer
+            + f"You are running adhoc with s3 backend possibly misconfigured {self.app.inet_path} != {self.app.s3.cdn_domain}"
+        )
 
-        msg = ""
+        msg = "Operating mode:\n"
         msg_warn = ""
 
         if self.app.inet_path == self.app.s3.cdn_domain and storagae_backend_is_s3:  # Any CDN-only setup
