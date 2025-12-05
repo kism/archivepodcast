@@ -9,6 +9,7 @@ on:
       - "**/README*"
       - "docs/**"
       - ".github/workflows/*publish*.yml"
+  workflow_dispatch:
 
 env:
   LAMBDA_TAG: archivepodcast:lambda
