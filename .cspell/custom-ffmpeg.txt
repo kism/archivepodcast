@@ -21,3 +21,11 @@ vflip
 libflac
 aresample
 libmagic
+nasm
+hwaccels
+libavcodec
+libavutil
+libswresample
+libavfilter
+ldconfig
+libavformat

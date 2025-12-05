@@ -15,3 +15,4 @@ docstrings
 toctree
 aiomonitor
 httpsession
+PYTHONUNBUFFERED
