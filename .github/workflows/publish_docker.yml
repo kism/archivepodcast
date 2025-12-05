@@ -11,7 +11,8 @@ on:
 env:
   MAIN_TAG: kism/${{ github.repository_owner }}:latest
   LAMBDA_TAG: kism/${{ github.repository_owner }}:lambda
-
+  FFMPEG_LAMBDA_TAG: archivepodcast:ffmpeg-lambda
+  FFMPEG_BOOKWORM_TAG: archivepodcast:ffmpeg-bookworm
 jobs:
   publish-ghcr:
     name: "Publish GitHub Container Registry"
@@ -26,8 +27,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build ffmpeg main
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/_dep_ffmpeg_bookworm.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
+
+      - name: Build ffmpeg lambda
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/_dep_ffmpeg_lambda.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.FFMPEG_LAMBDA_TAG }}
+
       - name: Build and push main Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -35,7 +54,7 @@ jobs:
           file: ./docker/main.Dockerfile
 
       - name: Build and push lambda Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true

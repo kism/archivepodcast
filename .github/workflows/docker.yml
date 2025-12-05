@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
 
 env:
+  MAIN_TAG: archivepodcast:latest
   LAMBDA_TAG: archivepodcast:lambda
   PYTEST_TAG: archivepodcast:pytest
-  MAIN_TAG: archivepodcast:latest
   FFMPEG_LAMBDA_TAG: archivepodcast:ffmpeg-lambda
   FFMPEG_BOOKWORM_TAG: archivepodcast:ffmpeg-bookworm
 
