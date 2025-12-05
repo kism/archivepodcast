@@ -1,6 +1,7 @@
 """Lambda Mode for running adhoc as a fun cron job."""
 
 import logging
+import os
 import shutil
 from pathlib import Path
 from typing import Any
