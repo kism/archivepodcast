@@ -66,17 +66,11 @@ jobs:
         run: mkdir -p instance
 
       - name: Build main docker
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/main.Dockerfile
-          push: false
-          load: true
-          tags: ${{ env.MAIN_TAG }}
-          build-contexts: |
-            archivepodcast:ffmpeg-bookworm=docker-image://archivepodcast:ffmpeg-bookworm
-          cache-from: type=gha,scope=main
-          cache-to: type=gha,mode=max,scope=main
+        run: |
+          docker build \
+            -f docker/main.Dockerfile \
+            -t ${{ env.MAIN_TAG }} \
+            .
 
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
@@ -106,17 +100,11 @@ jobs:
         run: sudo rm -rf instance && mkdir -p instance
 
       - name: Build lambda docker
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/lambda.Dockerfile
-          push: false
-          load: true
-          tags: ${{ env.LAMBDA_TAG }}
-          build-contexts: |
-            archivepodcast:ffmpeg-lambda=docker-image://archivepodcast:ffmpeg-lambda
-          cache-from: type=gha,scope=lambda
-          cache-to: type=gha,mode=max,scope=lambda
+        run: |
+          docker build \
+            -f docker/lambda.Dockerfile \
+            -t ${{ env.LAMBDA_TAG }} \
+            .
 
       - name: Run lambda container in background
         run: |
