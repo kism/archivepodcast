@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     ca-certificates \
     libmp3lame-dev \
-    libogg-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
