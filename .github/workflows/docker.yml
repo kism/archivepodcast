@@ -42,7 +42,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=main
 
       - name: Run main docker
-        run: docker run --rm -v $(pwd)/instance:/opt/instance:ro ${{ env.MAIN_TAG }}
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
 
       # docker/pytest.Dockerfile
       - name: Recreate instance directory
@@ -60,7 +60,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=pytest
 
       - name: Run pytest docker
-        run: docker run --rm -v $(pwd)/instance:/opt/instance:ro ${{ env.PYTEST_TAG }}
+        run: docker run --rm ${{ env.PYTEST_TAG }}
 
       # docker/lambda.Dockerfile
       - name: Recreate instance directory
