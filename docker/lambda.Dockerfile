@@ -119,7 +119,8 @@ COPY archivepodcast ${LAMBDA_TASK_ROOT}/archivepodcast
 # Set environment variables
 ENV AP_SIMPLE_LOGGING=1
 ENV PYTHONUNBUFFERED=1
-ENV AP_SELF_TEST=1
+# Used to ensure dependencies are correctly installed during build without resorting to pytest
+# ENV AP_SELF_TEST=1
 
 # Set the Lambda handler
 # This expects a lambda_handler.py file with a handler() function

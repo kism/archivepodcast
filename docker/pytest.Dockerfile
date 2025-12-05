@@ -124,6 +124,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --extra test
 
+# Copy application code and install the project
 COPY archivepodcast archivepodcast
 
 # --- Final runtime stage ---
@@ -146,9 +147,14 @@ WORKDIR /app
 # Copy Python virtual environment from builder
 COPY --from=python-builder /app/.venv /app/.venv
 COPY --from=python-builder /app/archivepodcast /app/archivepodcast
+
+# Pytest specific
 ADD tests tests
 ADD uv.lock uv.lock
 ADD pyproject.toml pyproject.toml
+RUN mkdir instance
+RUN echo "hello" > instance/config.json
+RUN chmod 000 instance/config.json
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"

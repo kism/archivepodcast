@@ -123,7 +123,7 @@ class ArchivePodcastConfig(BaseSettings):
         with config_path_json.open("w") as f:
             f.write(self.model_dump_json(indent=2, exclude_none=False))
 
-        logger.info("Config write complete")
+        logger.debug("Config write complete")
 
     @classmethod
     def force_load_config_file(cls, config_path: Path) -> Self:
@@ -135,7 +135,7 @@ class ArchivePodcastConfig(BaseSettings):
             )
             return cls()
 
-        logger.info("Loading config from %s", config_path.absolute())
+        logger.debug("Loading config from %s", config_path.absolute())
         with config_path.open("r") as f:
             config = json.load(f)
 
@@ -148,3 +148,39 @@ class ArchivePodcastConfig(BaseSettings):
                 msg = f"Please fill in the podcast details on entry {i}\n"
                 msg += podcast.model_dump_json()
                 raise ValueError(msg)
+
+    def log_info(self, *, running_adhoc: bool) -> None:
+        """Log the current config info."""
+        storagae_backend_is_s3 = self.app.storage_backend == "s3"
+
+        frontend_cdn = "Frontend: To be served via S3 CDN domain.\n"
+        frontend_local = "Frontend: Served via this webserver.\n"
+        frontend_local_adhoc = (
+            "Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n"
+        )
+        backend_s3 = "Storage backend: S3\n  Podcast assets will be uploaded to S3 and removed locally after upload.\n"
+        backend_local = (
+            "Storage backend: Local filesystem\n  Podcast assets will be stored in the instance directory.\n"
+        )
+        adhoc_s3_missmatch = f"You are running adhoc with s3 backend possibly misconfigured {self.app.inet_path} != {self.app.s3.cdn_domain}"
+
+        msg = ""
+        msg_warn = ""
+
+        if self.app.inet_path == self.app.s3.cdn_domain and storagae_backend_is_s3:  # Any CDN-only setup
+            msg += frontend_cdn
+        elif running_adhoc:  # Adhoc mode
+            msg += frontend_local_adhoc
+            if storagae_backend_is_s3:  # Adhoc with S3 backend
+                msg_warn += adhoc_s3_missmatch
+        else:  # Webserver mode
+            msg += frontend_local
+
+        if storagae_backend_is_s3:
+            msg += backend_s3
+        else:
+            msg += backend_local
+
+        logger.info(msg.strip())
+        if msg_warn != "":
+            logger.warning(msg_warn.strip())

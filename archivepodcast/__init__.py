@@ -44,10 +44,9 @@ def create_app(instance_path_override: str | None = None) -> Flask:
         raise ValueError(msg)
 
     ap_conf.write_config(Path(app.instance_path) / "config.json")
+    ap_conf.log_info(running_adhoc=False)
 
     ap_logger.setup_logger(app, ap_conf.logging)  # Setup logger with config
-
-    app.logger.info("Instance path is: %s", app.instance_path)
 
     # Flask config, at the root of the config object.
     app.config.from_object(ap_conf.flask)
@@ -72,7 +71,7 @@ def create_app(instance_path_override: str | None = None) -> Flask:
         return podcast_archiver.generate_404()
 
     duration = time.time() - start_time
-    log_intro("webapp", app.logger)
+    log_intro(app.logger)
     event_times.set_event_time("create_app", duration)
     app.logger.info("Starting Web Server: %s", ap_conf.app.inet_path)
 
@@ -91,6 +90,7 @@ def run_ap_adhoc(
 
     ap_conf = get_ap_config(config_path=config_path)
     ap_conf.write_config(config_path)
+    ap_conf.log_info(running_adhoc=True)
 
     ap_logger.setup_logger(app=None, logging_conf=ap_conf.logging)  # Setup logger with config
 

@@ -9,17 +9,15 @@ from archivepodcast.constants import OUR_TIMEZONE
 from archivepodcast.version import __version__
 
 
-def log_time(logger: logging.Logger) -> None:
-    """Log the current time."""
+def get_time_str() -> str:
+    """Get the current time as a formatted string."""
     time = datetime.now(tz=OUR_TIMEZONE)
-    time_str_nice = time.strftime("%Y-%m-%d %H:%M:%S %Z")
-    logger.info("Current time: %s", time_str_nice)
+    return time.strftime("%Y-%m-%d %H:%M:%S %Z")
 
 
-def log_intro(mode: str, logger: logging.Logger) -> None:
+def log_intro(logger: logging.Logger) -> None:
     """Log introductory information."""
-    logger.info("ArchivePodcast version: %s, starting in %s mode.", __version__, mode)
-    log_time(logger)
+    logger.info("ArchivePodcast version: %s. Current time: %s", __version__, get_time_str())
 
 
 def log_aiohttp_exception(
