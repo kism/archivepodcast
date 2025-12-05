@@ -40,6 +40,7 @@ jobs:
           file: docker/_dep_ffmpeg_bookworm.Dockerfile
           push: false
           load: true
+          outputs: type=docker,name=${{ env.FFMPEG_BOOKWORM_TAG }}
           tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
           cache-from: type=gha,scope=ffmpeg
           cache-to: type=gha,mode=max,scope=ffmpeg
@@ -54,6 +55,7 @@ jobs:
           file: docker/_dep_ffmpeg_lambda.Dockerfile
           push: false
           load: true
+          outputs: type=docker,name=${{ env.FFMPEG_LAMBDA_TAG }}
           tags: ${{ env.FFMPEG_LAMBDA_TAG }}
           cache-from: type=gha,scope=ffmpeg-lambda
           cache-to: type=gha,mode=max,scope=ffmpeg-lambda
@@ -66,11 +68,17 @@ jobs:
         run: mkdir -p instance
 
       - name: Build main docker
-        run: |
-          docker build \
-            -f docker/main.Dockerfile \
-            -t ${{ env.MAIN_TAG }} \
-            .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/main.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.MAIN_TAG }}
+          build-contexts: |
+            archivepodcast:ffmpeg-bookworm=docker-image://archivepodcast:ffmpeg-bookworm
+          cache-from: type=gha,scope=main
+          cache-to: type=gha,mode=max,scope=main
 
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG }} archivepodcast
@@ -100,11 +108,17 @@ jobs:
         run: sudo rm -rf instance && mkdir -p instance
 
       - name: Build lambda docker
-        run: |
-          docker build \
-            -f docker/lambda.Dockerfile \
-            -t ${{ env.LAMBDA_TAG }} \
-            .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/lambda.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.LAMBDA_TAG }}
+          build-contexts: |
+            archivepodcast:ffmpeg-lambda=docker-image://archivepodcast:ffmpeg-lambda
+          cache-from: type=gha,scope=lambda
+          cache-to: type=gha,mode=max,scope=lambda
 
       - name: Run lambda container in background
         run: |
