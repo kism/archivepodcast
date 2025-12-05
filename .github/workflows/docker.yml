@@ -41,6 +41,9 @@ jobs:
           cache-from: type=gha,scope=ffmpeg
           cache-to: type=gha,mode=max,scope=ffmpeg
 
+      - name: Run docker image ls
+        run: docker image ls
+
       - name: Build ffmpeg lambda
         uses: docker/build-push-action@v6
         with:
@@ -51,6 +54,9 @@ jobs:
           tags: ${{ env.FFMPEG_LAMBDA_TAG }}
           cache-from: type=gha,scope=ffmpeg-lambda
           cache-to: type=gha,mode=max,scope=ffmpeg-lambda
+
+      - name: Run docker image ls
+        run: docker image ls
 
       # docker/main.Dockerfile
       - name: Create instance directory
@@ -64,8 +70,6 @@ jobs:
           push: false
           load: true
           tags: ${{ env.MAIN_TAG }}
-          build-contexts: |
-            archivepodcast:ffmpeg-bookworm=docker-image://${{ env.FFMPEG_BOOKWORM_TAG }}
           cache-from: type=gha,scope=main
           cache-to: type=gha,mode=max,scope=main
 
@@ -104,8 +108,6 @@ jobs:
           push: false
           load: true
           tags: ${{ env.LAMBDA_TAG }}
-          build-contexts: |
-            archivepodcast:ffmpeg-lambda=docker-image://${{ env.FFMPEG_LAMBDA_TAG }}
           cache-from: type=gha,scope=lambda
           cache-to: type=gha,mode=max,scope=lambda
 
