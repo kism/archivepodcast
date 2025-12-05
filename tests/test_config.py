@@ -1,6 +1,6 @@
 import pytest
 
-from archivepodcast.config import ArchivePodcastConfig
+from archivepodcast.config import ArchivePodcastConfig, _LOG_INFO_MESSAGES
 
 base_config = ArchivePodcastConfig()
 

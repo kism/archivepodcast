@@ -16,19 +16,12 @@ logger = get_logger(__name__)
 
 _SPACER = "  "
 _LOG_INFO_MESSAGES: dict[str, str] = {
-    "frontend_cdn": _SPACER + "Frontend: To be served via S3 CDN domain.\n",
-    "frontend_local": _SPACER + "Frontend: Served via this webserver.\n",
-    "frontend_local_adhoc": _SPACER
-    + "Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n",
-    "backend_s3": _SPACER
-    + "Storage backend: S3\n"
-    + _SPACER * 2
-    + "Podcast assets will be uploaded to S3 and removed locally after upload.\n",
-    "backend_local": _SPACER
-    + "Storage backend: Local filesystem\n"
-    + _SPACER * 2
-    + "Podcast assets will be stored in the instance directory.\n",
-    "adhoc_s3_missmatch": _SPACER + "You are running adhoc with s3 backend possibly misconfigured",
+    "frontend_cdn": f"{_SPACER}Frontend: To be served via S3 CDN domain.\n",
+    "frontend_local": f"{_SPACER}Frontend: Served via this webserver.\n",
+    "frontend_local_adhoc": f"{_SPACER}Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n",
+    "backend_s3": f"{_SPACER}Storage backend: S3\n{_SPACER * 2}Podcast assets will be uploaded to S3 and removed locally after upload.\n",
+    "backend_local": f"{_SPACER}Storage backend: Local filesystem\n{_SPACER * 2}Podcast assets will be stored in the instance directory.\n",
+    "adhoc_s3_missmatch": f"{_SPACER}You are running adhoc with s3 backend possibly misconfigured",
 }
 
 
