@@ -1,0 +1,74 @@
+---
+name: Publish GHCR
+
+# Configures this workflow to run every time a change is pushed to the branch called `release`.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  LAMBDA_TAG: kism/${{ github.repository_owner }}:lambda
+  LAMBDA_TAG_LOCAL: archivepodcast:lambda
+  FFMPEG_LAMBDA_TAG: archivepodcast:ffmpeg-lambda
+jobs:
+  publish-ghcr:
+    name: "Publish GitHub Container Registry"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            echo "has_version=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_version=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Region Login
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::471112518165:role/github-ecr-push
+          aws-region: ap-southeast-2
+
+      - name: Log in to ECR
+        uses: docker/login-action@v3
+        with:
+          registry: "471112518165.dkr.ecr.ap-southeast-2.amazonaws.com/kism/archivepodcast:latest"
+
+      # region ffmpeg
+      - name: Build ffmpeg lambda
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/_dep_ffmpeg_lambda.Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.FFMPEG_LAMBDA_TAG }}
+
+      # region build
+      - name: Build lambda docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.LAMBDA_TAG_LOCAL }}
+          file: ./docker/lambda.Dockerfile
+
+      # region publish
+      - name: Build and push lambda Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ github.repository_owner }}/archivepodcast:lambda
+            ${{ steps.version.outputs.has_version == 'true' && format('{0}/archivepodcast:{1}-lambda', github.repository_owner, steps.version.outputs.version) || '' }}
+          file: ./docker/lambda.Dockerfile
