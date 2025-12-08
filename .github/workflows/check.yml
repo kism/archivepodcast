@@ -1,5 +1,5 @@
 ---
-name: Lint (Ruff, Biome, etc.)
+name: Lint
 
 on:
   push:

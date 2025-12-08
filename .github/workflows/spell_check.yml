@@ -1,4 +1,4 @@
-name: Check Docs (CSpell, markdownlint)
+name: Check Docs
 
 on:
   push:
