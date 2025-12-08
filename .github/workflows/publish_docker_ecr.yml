@@ -1,5 +1,5 @@
 ---
-name: Publish ECR s
+name: Publish ECR
 
 # Configures this workflow to run every time a change is pushed to the branch called `release`.
 on:
@@ -7,6 +7,10 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
 
 env:
   LAMBDA_TAG: kism/${{ github.repository_owner }}:lambda
