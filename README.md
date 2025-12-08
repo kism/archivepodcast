@@ -4,8 +4,8 @@
 [![CheckType](https://github.com/kism/archivepodcast/actions/workflows/check_types.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/check_types.yml)
 [![Test](https://github.com/kism/archivepodcast/actions/workflows/test.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/kism/archivepodcast/graph/badge.svg?token=FPGDA0ODT7)](https://codecov.io/gh/kism/archivepodcast)
-[![Docker](https://github.com/kism/archivepodcast/actions/workflows/publish_docker.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/docker.yml)
-[![SpellCheck](https://github.com/kism/archivepodcast/actions/workflows/spell_check.yml/badge.svg)](https://github.com/kism/archivepodcast/actions/workflows/spell_check.yml)
+![PyPI - Version](https://img.shields.io/pypi/v/archivepodcast)
+![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fkism%2Farchivepodcast%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)
 
 Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them.
 
