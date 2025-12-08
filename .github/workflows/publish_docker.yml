@@ -10,11 +10,8 @@ on:
 
 env:
   MAIN_TAG: kism/${{ github.repository_owner }}:latest
-  LAMBDA_TAG: kism/${{ github.repository_owner }}:lambda
   MAIN_TAG_LOCAL: archivepodcast:latest
-  LAMBDA_TAG_LOCAL: archivepodcast:lambda
   PYTEST_TAG: archivepodcast:pytest
-  FFMPEG_LAMBDA_TAG: archivepodcast:ffmpeg-lambda
   FFMPEG_BOOKWORM_TAG: archivepodcast:ffmpeg-bookworm
 jobs:
   publish-ghcr:
@@ -34,6 +31,14 @@ jobs:
             echo "has_version=false" >> $GITHUB_OUTPUT
           fi
 
+      # Region Login
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       # region ffmpeg
       - name: Build ffmpeg main
         uses: docker/build-push-action@v6
@@ -44,15 +49,6 @@ jobs:
           load: true
           tags: ${{ env.FFMPEG_BOOKWORM_TAG }}
 
-      - name: Build ffmpeg lambda
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/_dep_ffmpeg_lambda.Dockerfile
-          push: false
-          load: true
-          tags: ${{ env.FFMPEG_LAMBDA_TAG }}
-
       # region build
       - name: Build main docker
         uses: docker/build-push-action@v6
@@ -62,15 +58,6 @@ jobs:
           load: true
           tags: ${{ env.MAIN_TAG_LOCAL }}
           file: ./docker/main.Dockerfile
-
-      - name: Build lambda docker
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: false
-          load: true
-          tags: ${{ env.LAMBDA_TAG_LOCAL }}
-          file: ./docker/lambda.Dockerfile
 
       # region run
       - name: Create instance directory
@@ -99,13 +86,6 @@ jobs:
         run: docker run --rm ${{ env.PYTEST_TAG }}
 
       # region publish
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and push main Docker image
         uses: docker/build-push-action@v6
         with:
@@ -115,13 +95,3 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/archivepodcast:latest
             ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}', github.repository_owner, steps.version.outputs.version) || '' }}
           file: ./docker/main.Dockerfile
-
-      - name: Build and push lambda Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/archivepodcast:lambda
-            ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}-lambda', github.repository_owner, steps.version.outputs.version) || '' }}
-          file: ./docker/lambda.Dockerfile
