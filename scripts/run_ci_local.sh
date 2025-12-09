@@ -28,7 +28,7 @@ echo "Running code checks locally"
 # Prerequisites
 uv sync --all-extras
 
-echo "Npm version: $(npm --version), Expected: 11"
+echo "Node version: $(node --version), expected $(cat .nvmrc)"
 npm install
 
 echo_magenta "Pytest"

@@ -9,12 +9,12 @@ on:
   workflow_dispatch:
 
 env:
-  MAIN_TAG: kism/${{ github.repository_owner }}:latest
+  MAIN_TAG: ghcr.io/${{ github.repository }}:latest
   MAIN_TAG_LOCAL: archivepodcast:latest
   DEB_VERSION: bookworm
-  DEB_TAG: kism/${{ github.repository_owner }}:bookworm
+  DEB_TAG: ghcr.io/${{ github.repository }}:bookworm
   AL_VERSION: al2023
-  AL_TAG: kism/${{ github.repository_owner }}:al2023
+  AL_TAG: ghcr.io/${{ github.repository }}:al2023
   AL_TAG_LOCAL: archivepodcast:al2023
   PYTEST_TAG_LOCAL: archivepodcast:pytest
   FFMPEG_DEBIAN_TAG_LOCAL: archivepodcast:ffmpeg-bookworm
