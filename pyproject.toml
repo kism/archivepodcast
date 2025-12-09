@@ -94,6 +94,13 @@ ignore = [
 "archivepodcast/config.py" = [
     "E501", # KG Some long lines
 ]
+"archivepodcast/lambda_handler.py" = [
+    "ANN401", # KG AWS Lambda handler signatures
+    "ARG001", # KG AWS Lambda handler signatures
+    "D103",   # KG AWS Lambda handler signatures
+    "S108",   # KG AWS Lambda needs /tmp usage
+
+]
 "tests/*.py" = [
     # Modules
     "ARG", # KG Unused function args -> fixtures nevertheless are functionally relevant
