@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.14 AS ffmpeg-builder
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 # Install build dependencies
 RUN dnf install -y \
