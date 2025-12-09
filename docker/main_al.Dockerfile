@@ -1,15 +1,28 @@
-FROM archivepodcast:ffmpeg-bookworm AS ffmpeg-builder
+FROM archivepodcast:ffmpeg-al2023 AS ffmpeg-builder
+
+FROM public.ecr.aws/lambda/python:3.14 AS python-source
+
+FROM ghcr.io/astral-sh/uv:latest AS uv-base
 
 # --- Python dependencies stage ---
-FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS python-builder
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS python-builder
 
-# Required for building Python dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies required for building Python packages
+RUN dnf install -y \
     gcc \
-    python3-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    && rm -rf /var/lib/apt/lists/*
+    gcc-c++ \
+    make \
+    libxml2-devel \
+    libxslt-devel \
+    file-libs \
+    && dnf clean all
+
+# Copy Python binaries from Python base image
+COPY --from=python-source /var/lang /var/lang
+ENV PATH="/var/lang/bin:$PATH"
+
+# Install UV for faster package management
+COPY --from=uv-base /uv /uvx /bin/
 
 WORKDIR /app
 
@@ -33,20 +46,28 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
 
 # --- Final runtime stage ---
-FROM python:3.14-slim-bookworm
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
 
 WORKDIR /app
 
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libmagic1 \
-    lame \
+RUN dnf install -y \
+    file-libs \
     libxml2 \
-    libxslt1.1 \
-    && rm -rf /var/lib/apt/lists/*
+    libxslt \
+    && dnf clean all
 
-# Copy FFmpeg from builder
+# Copy FFmpeg and libs from builder
 COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=ffmpeg-builder /usr/local/lib/libmp3lame.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libavcodec.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libavformat.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libavutil.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libswresample.so* /usr/lib64/
+COPY --from=ffmpeg-builder /usr/local/lib/libavfilter.so* /usr/lib64/
+
+# Copy Python binaries from Python base image
+COPY --from=python-source /var/lang /var/lang
+ENV PATH="/var/lang/bin:$PATH"
 
 # Copy Python virtual environment from builder
 COPY --from=python-builder /app/.venv /app/.venv

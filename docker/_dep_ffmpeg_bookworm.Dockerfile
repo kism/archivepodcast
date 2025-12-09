@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS ffmpeg-builder
+FROM debian:bookworm-slim
 
 # Basic build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \

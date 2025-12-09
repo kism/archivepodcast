@@ -16,11 +16,13 @@ def handler(event: Any, context: Any) -> None:  # noqa: ANN401, ARG001, D103
     instance_path = Path("/tmp/instance")  # noqa: S108
 
     if not local_instance_path.exists():
-        logger.error("Instance path does not exist, please add via a layer to %s", str(local_instance_path))
-        return
+        msg = f"Instance path does not exist, please add via a layer to {local_instance_path}"
+        logger.error(msg)
+        raise FileNotFoundError(msg)
     if not (local_instance_path / "config.json").is_file():
-        logger.error("Instance config.json not found in %s", str(local_instance_path))
-        return
+        msg = f"Instance config.json not found in {local_instance_path}"
+        logger.error(msg)
+        raise FileNotFoundError(msg)
 
     shutil.copytree(local_instance_path, instance_path)
     run_ap_adhoc(instance_path=instance_path)
