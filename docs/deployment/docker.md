@@ -27,3 +27,11 @@ docker run \
     ghcr.io/kism/archivepodcast:latest \
     archivepodcast
 ```
+
+## Build
+
+```bash
+DOCKER_BUILDKIT=1 docker build --tag 'archivepodcast' .
+```
+
+Then of course replace `ghcr.io/kism/archivepodcast:latest` with `archivepodcast` in the above `docker run` commands.
