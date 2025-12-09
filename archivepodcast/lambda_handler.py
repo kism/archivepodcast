@@ -6,18 +6,29 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from archivepodcast import run_ap_adhoc
-
 logger = logging.getLogger()
 
+LAMBDA_LIB_PATH = Path("/opt/lib")
+
+try:
+    from archivepodcast import run_ap_adhoc
+    from archivepodcast.utils.log_messages import log_intro
+
+except ImportError:
+    logger.error("Failed to import archivepodcast module")
+    logger.error("Contents of %s: %s", LAMBDA_LIB_PATH, [str(p) for p in LAMBDA_LIB_PATH.iterdir()])
+    raise
+
+
 if "LD_LIBRARY_PATH" in os.environ:
-    os.environ["LD_LIBRARY_PATH"] = f"/opt/lib:{os.environ['LD_LIBRARY_PATH']}"
+    os.environ["LD_LIBRARY_PATH"] = f"{LAMBDA_LIB_PATH}:{os.environ['LD_LIBRARY_PATH']}"
 else:
-    os.environ["LD_LIBRARY_PATH"] = "/opt/lib"
+    os.environ["LD_LIBRARY_PATH"] = str(LAMBDA_LIB_PATH)
 
 
 def handler(event: Any, context: Any) -> None:
     # Copy the RO instance folder to /tmp/instance since it needs to be writable
+    log_intro(logger)
     local_instance_path = Path("/opt/instance")
     instance_path = Path("/tmp/instance")
 

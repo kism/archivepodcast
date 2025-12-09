@@ -99,7 +99,7 @@ ignore = [
     "ARG001", # KG AWS Lambda handler signatures
     "D103",   # KG AWS Lambda handler signatures
     "S108",   # KG AWS Lambda needs /tmp usage
-
+    "TRY400", # KG Logging in lambda a bit different
 ]
 "tests/*.py" = [
     # Modules
@@ -154,10 +154,8 @@ filterwarnings = [
     "ignore::pytest.PytestUnhandledThreadExceptionWarning", # God knows
 ]
 
-
 [tool.coverage.html]
 show_contexts = true
-
 
 [tool.mypy]
 files = ["archivepodcast", "tests"]
@@ -176,7 +174,6 @@ enable_error_code = [
 disable_error_code = ["misc"]
 warn_unreachable = true
 warn_redundant_casts = true
-
 
 [[tool.ty.overrides]]
 # Blame the flask client object
