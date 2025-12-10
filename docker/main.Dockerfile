@@ -37,7 +37,7 @@ FROM python:3.14-slim-bookworm
 
 WORKDIR /app
 
-# Install runtime dependencies only
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic1 \
     libxml2 \
