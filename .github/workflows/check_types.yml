@@ -12,6 +12,7 @@ on:
       - ".github/workflows/*publish*.yml"
       - ".github/workflows/*docker*.yml"
       - "scripts/**"
+      - "docker/**"
 
 jobs:
   mypy:
