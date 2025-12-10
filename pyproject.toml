@@ -41,6 +41,7 @@ type = [
     "botocore-stubs",
     "types-aiobotocore",
     "types-aiobotocore-s3",
+    "aws_lambda_powertools",
 ]
 
 lint = ["ruff"]

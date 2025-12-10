@@ -29,3 +29,5 @@ libswresample
 libavfilter
 ldconfig
 libavformat
+libavdevice
+libswscale

@@ -45,7 +45,7 @@ def _ffmpeg_convert_check() -> None:
     convert_to_mp3(input_path=wav_path, output_path=mp3_path)
 
 
-def check_ffmpeg() -> None:
+def check_ffmpeg(*, convert_check: bool = False) -> None:
     """Check if ffmpeg is installed."""
     ffmpeg_paths = [
         Path("/usr/bin/ffmpeg"),
@@ -59,7 +59,7 @@ def check_ffmpeg() -> None:
         logger.error(FFMPEG_INFO)
         sys.exit(1)
 
-    if AP_SELF_TEST:
+    if AP_SELF_TEST or convert_check:
         _ffmpeg_convert_check()
 
 

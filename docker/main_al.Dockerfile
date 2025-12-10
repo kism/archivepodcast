@@ -56,14 +56,18 @@ RUN dnf install -y \
     libxslt \
     && dnf clean all
 
-# Copy FFmpeg and libs from builder
+# Copy FFmpeg and libs from builder (preserving symlinks)
 COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
-COPY --from=ffmpeg-builder /usr/local/lib/libmp3lame.so* /usr/lib64/
-COPY --from=ffmpeg-builder /usr/local/lib/libavcodec.so* /usr/lib64/
-COPY --from=ffmpeg-builder /usr/local/lib/libavformat.so* /usr/lib64/
-COPY --from=ffmpeg-builder /usr/local/lib/libavutil.so* /usr/lib64/
-COPY --from=ffmpeg-builder /usr/local/lib/libswresample.so* /usr/lib64/
-COPY --from=ffmpeg-builder /usr/local/lib/libavfilter.so* /usr/lib64/
+RUN --mount=type=bind,from=ffmpeg-builder,source=/usr/local/lib,target=/mnt/libs \
+    cp -a /mnt/libs/libmp3lame.so* \
+          /mnt/libs/libavcodec.so* \
+          /mnt/libs/libavformat.so* \
+          /mnt/libs/libavutil.so* \
+          /mnt/libs/libswresample.so* \
+          /mnt/libs/libavfilter.so* \
+          /mnt/libs/libavdevice.so* \
+          /mnt/libs/libswscale.so* \
+          /usr/lib64/
 
 # Copy Python binaries from Python base image
 COPY --from=python-source /var/lang /var/lang

@@ -31,7 +31,6 @@ WORKDIR /build/ffmpeg
 # Configure FFmpeg with audio-only support
 RUN ./configure \
     --disable-everything \
-    --disable-everything \
     --enable-small \
     --disable-autodetect \
     --disable-debug \

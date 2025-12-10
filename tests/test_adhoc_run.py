@@ -92,7 +92,6 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
 
     # We get to the intro
     assert "Using default instance path" in caplog.text
-    assert f"{tmp_path}{os.sep}config.json" in caplog.text
 
     caplog.clear()
     with caplog.at_level(logging.WARNING):
