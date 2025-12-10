@@ -28,9 +28,6 @@ Features:
 
 ## Todo
 
-- ~~shared header html~~
-- ~~fix config write every time~~
-- fix images not having dates
 - docker
   - symlink fix
   - ~~implement self check in ci~~
