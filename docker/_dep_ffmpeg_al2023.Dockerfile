@@ -35,6 +35,8 @@ WORKDIR /build/ffmpeg-7.1
 # Configure FFmpeg with minimal audio-only support
 RUN PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure \
     --prefix=/usr/local \
+    --enable-shared \
+    --disable-static \
     --disable-everything \
     --enable-small \
     --disable-autodetect \

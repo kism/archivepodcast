@@ -28,6 +28,11 @@ Features:
 
 ## Todo
 
+- docker
+  - symlink fix
+  - ~~implement self check in ci~~
+- serverless
+  - config from s3
 - fix readme again
 - Fix font selection for frontend
 - pydantic xml

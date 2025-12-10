@@ -64,7 +64,7 @@ async def test_download_podcast(
     try:
         assert apd_aws._s3
 
-        with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
+        with caplog.at_level(level=logging.DEBUG):
             await apd_aws.download_podcast()
 
         assert "Downloaded rss feed, processing" in caplog.text
@@ -73,9 +73,11 @@ async def test_download_podcast(
     finally:
         # Clean up the session
         await aiohttp_session.close()
+
     assert "Uploading to s3:" in caplog.text
     assert "Removing local file" in caplog.text
-    assert "Uploading podcast cover art to s3" in caplog.text
+    assert "_download_cover_art" in caplog.text
+    assert "Uploading podcast cover art to s3" not in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
     assert "Unhandled s3 error" not in caplog.text
@@ -85,7 +87,7 @@ async def test_download_podcast(
         s3_object_list = await s3_client.list_objects_v2(Bucket=apd_aws._app_config.s3.bucket)
     s3_object_list_str = [path["Key"] for path in s3_object_list.get("Contents", [])]
 
-    assert "content/test/Test-Episode.jpg" in s3_object_list_str
+    assert "content/test/20200101-Test-Episode.jpg" in s3_object_list_str
     assert "content/test/20200101-Test-Episode.mp3" in s3_object_list_str
     assert "content/test/PyTest-Podcast-Archive-S3.jpg" in s3_object_list_str
 

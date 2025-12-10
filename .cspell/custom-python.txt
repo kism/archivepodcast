@@ -16,3 +16,4 @@ toctree
 aiomonitor
 httpsession
 PYTHONUNBUFFERED
+powertools

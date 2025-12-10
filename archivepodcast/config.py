@@ -16,12 +16,12 @@ logger = get_logger(__name__)
 
 _SPACER = "  "
 _LOG_INFO_MESSAGES: dict[str, str] = {
-    "frontend_cdn": f"{_SPACER}Frontend: To be served via S3 CDN domain.\n",
-    "frontend_local": f"{_SPACER}Frontend: Served via this webserver.\n",
-    "frontend_local_adhoc": f"{_SPACER}Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n",
-    "backend_s3": f"{_SPACER}Storage backend: S3\n{_SPACER * 2}Podcast assets will be uploaded to S3 and removed locally after upload.\n",
-    "backend_local": f"{_SPACER}Storage backend: Local filesystem\n{_SPACER * 2}Podcast assets will be stored in the instance directory.\n",
-    "adhoc_s3_miss_match": f"{_SPACER}You are running adhoc with s3 backend possibly misconfigured",
+    "frontend_cdn": f"{_SPACER * 2}Frontend: To be served via S3 CDN domain.\n",
+    "frontend_local": f"{_SPACER * 2}Frontend: Served via this webserver.\n",
+    "frontend_local_adhoc": f"{_SPACER * 2}Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n",
+    "backend_s3": f"{_SPACER * 2}Storage backend: S3\n{_SPACER * 2}Podcast assets will be uploaded to S3 and removed locally after upload.\n",
+    "backend_local": f"{_SPACER * 2}Storage backend: Local filesystem\n{_SPACER * 2}Podcast assets will be stored in the instance directory.\n",
+    "adhoc_s3_miss_match": f"{_SPACER * 2}You are running adhoc with s3 backend possibly misconfigured",
 }
 
 
@@ -101,19 +101,17 @@ class ArchivePodcastConfig(BaseSettings):
         """Write the current settings to a JSON file."""
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        config_data = json.loads(self.model_dump_json())
+        current_config_data = json.loads(self.model_dump_json())
 
-        if not config_path.exists():
-            logger.warning("Writing fresh config file at %s", config_path.absolute())
-            config_path.touch()
-            existing_data = config_data
-        else:
+        if config_path.exists():
             with config_path.open("r") as f:
                 existing_data = json.load(f)
+        else:
+            logger.warning("Writing fresh config file at %s", config_path.absolute())
+            config_path.touch()
+            existing_data = current_config_data
 
-        new_file_content_str = json.dumps(config_data)
-
-        if existing_data != config_data:  # The new object will be valid, so we back up the old one
+        if existing_data != current_config_data:  # The new object will be valid, so we back up the old one
             time_str = datetime.now(tz=UTC).strftime("%Y-%m-%d_%H%M%S")
             config_backup_dir = config_path.parent / "config_backups"
             config_backup_dir.mkdir(parents=True, exist_ok=True)
@@ -125,13 +123,10 @@ class ArchivePodcastConfig(BaseSettings):
             with backup_file.open("w") as f:
                 f.write(json.dumps(existing_data))
 
-        with config_path.open("w") as f:
-            f.write(new_file_content_str)
+        logger.debug("Writing config to %s", config_path.absolute())
 
-        config_path_json = config_path.with_suffix(".json")
-        logger.info("Writing config to %s", config_path_json)
-        with config_path_json.open("w") as f:
-            f.write(self.model_dump_json(indent=2, exclude_none=False))
+        with config_path.open("w") as f:
+            f.write(json.dumps(current_config_data))
 
         logger.debug("Config write complete")
 
@@ -163,7 +158,9 @@ class ArchivePodcastConfig(BaseSettings):
         """Log the current config info."""
         storage_backend_is_s3 = self.app.storage_backend == "s3"
 
-        msg = "Operating mode: Adhoc\n" if running_adhoc else "Operating mode: Webserver\n"
+        msg = "Configuration Summary: >>>\n"
+        msg += f"{_SPACER}Podcast count: {len(self.podcasts)}\n"
+        msg += f"{_SPACER}Operating mode: Adhoc\n" if running_adhoc else f"{_SPACER}Operating mode: Webserver\n"
         msg_warn = ""
 
         try:
