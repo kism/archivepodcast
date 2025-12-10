@@ -28,9 +28,7 @@ Features:
 
 ## Todo
 
-- docker
-  - symlink fix
-  - ~~implement self check in ci~~
+- bump lxml
 - serverless
   - config from s3
 - fix readme again
