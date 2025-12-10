@@ -31,3 +31,6 @@ ldconfig
 libavformat
 libavdevice
 libswscale
+cflags
+ldflags
+lpthread

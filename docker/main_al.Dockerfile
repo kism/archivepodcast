@@ -7,7 +7,7 @@ FROM ghcr.io/astral-sh/uv:latest AS uv-base
 # --- Python dependencies stage ---
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS python-builder
 
-# Install system dependencies required for building Python packages
+# Install system packages required for building Python packages
 RUN dnf install -y \
     gcc \
     gcc-c++ \
@@ -56,18 +56,8 @@ RUN dnf install -y \
     libxslt \
     && dnf clean all
 
-# Copy FFmpeg and libs from builder (preserving symlinks)
-COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
-RUN --mount=type=bind,from=ffmpeg-builder,source=/usr/local/lib,target=/mnt/libs \
-    cp -a /mnt/libs/libmp3lame.so* \
-          /mnt/libs/libavcodec.so* \
-          /mnt/libs/libavformat.so* \
-          /mnt/libs/libavutil.so* \
-          /mnt/libs/libswresample.so* \
-          /mnt/libs/libavfilter.so* \
-          /mnt/libs/libavdevice.so* \
-          /mnt/libs/libswscale.so* \
-          /usr/lib64/
+# Copy FFmpeg from builder
+COPY --from=ffmpeg-builder /build/ffmpeg/ffmpeg /usr/local/bin/ffmpeg
 
 # Copy Python binaries from Python base image
 COPY --from=python-source /var/lang /var/lang
