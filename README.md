@@ -28,13 +28,10 @@ Features:
 
 ## Todo
 
-- docker
-  - symlink fix
-  - ~~implement self check in ci~~
+- bump lxml
 - serverless
   - config from s3
 - fix readme again
-- Fix font selection for frontend
 - pydantic xml
 - self test function to ensure ffmpeg works
 

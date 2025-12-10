@@ -1,35 +1,47 @@
 FROM debian:bookworm-slim
 
-# Basic build deps
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     yasm \
-    git \
+    nasm \
     wget \
     tar \
+    gzip \
     pkg-config \
     automake \
     autoconf \
     libtool \
     ca-certificates \
-    libvorbis-dev \
-    libopus-dev \
-    libflac-dev \
-    libmp3lame-dev \
-    libogg-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 
-# Download FFmpeg
-RUN wget https://ffmpeg.org/releases/ffmpeg-7.0.tar.gz && \
-    tar xzf ffmpeg-7.0.tar.gz && \
-    mv ffmpeg-7.0 ffmpeg
+# Build LAME (libmp3lame) statically from source
+RUN wget https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz && \
+    tar xzf lame-3.100.tar.gz && \
+    cd lame-3.100 && \
+    ./configure --prefix=/build/static --enable-static --disable-shared --disable-frontend && \
+    make -j$(nproc) && \
+    make install
+
+# Download ffmpeg source code
+RUN wget https://ffmpeg.org/releases/ffmpeg-7.1.tar.gz && \
+    tar xzf ffmpeg-7.1.tar.gz && \
+    mv ffmpeg-7.1 ffmpeg
 
 WORKDIR /build/ffmpeg
 
-# Configure FFmpeg with audio-only support
-RUN ./configure \
+# Configure static FFmpeg with minimal audio-only support
+RUN PKG_CONFIG_PATH=/build/static/lib/pkgconfig \
+    ./configure \
+    --prefix=/build/static \
+    --disable-shared \
+    --enable-static \
+    --pkg-config-flags="--static" \
+    --extra-cflags="-I/build/static/include" \
+    --extra-ldflags="-L/build/static/lib" \
+    --extra-libs="-lpthread -lm" \
     --disable-everything \
     --enable-small \
     --disable-autodetect \
@@ -56,4 +68,4 @@ RUN ./configure \
     --enable-filter=anull \
     --enable-filter=aresample
 
-RUN make -j$(nproc) && make install
+RUN make -j$(nproc)

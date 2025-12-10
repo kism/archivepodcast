@@ -11,32 +11,39 @@ RUN dnf install -y \
     tar \
     gzip \
     pkg-config \
-    autoconf \
     automake \
+    autoconf \
     libtool \
+    glibc-static \
     && dnf clean all
 
 WORKDIR /build
 
-# Build LAME (libmp3lame) from source
+# Build LAME (libmp3lame) statically from source
 RUN wget https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz && \
     tar xzf lame-3.100.tar.gz && \
     cd lame-3.100 && \
-    ./configure --prefix=/usr/local --enable-shared --disable-static && \
+    ./configure --prefix=/build/static --enable-static --disable-shared --disable-frontend && \
     make -j$(nproc) && \
     make install
 
-# Download and build FFmpeg
+# Download ffmpeg source code
 RUN wget https://ffmpeg.org/releases/ffmpeg-7.1.tar.gz && \
-    tar xzf ffmpeg-7.1.tar.gz
+    tar xzf ffmpeg-7.1.tar.gz && \
+    mv ffmpeg-7.1 ffmpeg
 
-WORKDIR /build/ffmpeg-7.1
+WORKDIR /build/ffmpeg
 
-# Configure FFmpeg with minimal audio-only support
-RUN PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure \
-    --prefix=/usr/local \
-    --enable-shared \
-    --disable-static \
+# Configure static FFmpeg with minimal audio-only support
+RUN PKG_CONFIG_PATH=/build/static/lib/pkgconfig \
+    ./configure \
+    --prefix=/build/static \
+    --disable-shared \
+    --enable-static \
+    --pkg-config-flags="--static" \
+    --extra-cflags="-I/build/static/include" \
+    --extra-ldflags="-L/build/static/lib" \
+    --extra-libs="-lpthread -lm" \
     --disable-everything \
     --enable-small \
     --disable-autodetect \
@@ -63,4 +70,4 @@ RUN PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure \
     --enable-filter=anull \
     --enable-filter=aresample
 
-RUN make -j$(nproc) && make install
+RUN make -j$(nproc)

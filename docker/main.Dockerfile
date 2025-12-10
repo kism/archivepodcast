@@ -3,7 +3,7 @@ FROM archivepodcast:ffmpeg-bookworm AS ffmpeg-builder
 # --- Python dependencies stage ---
 FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS python-builder
 
-# Required for building Python dependencies
+# Install system packages required for building Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     python3-dev \
@@ -40,13 +40,12 @@ WORKDIR /app
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic1 \
-    lame \
     libxml2 \
     libxslt1.1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy FFmpeg from builder
-COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=ffmpeg-builder /build/ffmpeg/ffmpeg /usr/local/bin/ffmpeg
 
 # Copy Python virtual environment from builder
 COPY --from=python-builder /app/.venv /app/.venv

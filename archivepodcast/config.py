@@ -121,12 +121,12 @@ class ArchivePodcastConfig(BaseSettings):
                 backup_file,
             )
             with backup_file.open("w") as f:
-                f.write(json.dumps(existing_data))
+                f.write(json.dumps(existing_data, indent=4))
 
         logger.debug("Writing config to %s", config_path.absolute())
 
         with config_path.open("w") as f:
-            f.write(json.dumps(current_config_data))
+            f.write(json.dumps(current_config_data, indent=4))
 
         logger.debug("Config write complete")
 
