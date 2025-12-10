@@ -17,8 +17,7 @@ env:
   AL_TAG: ghcr.io/${{ github.repository }}:al2023
   AL_TAG_LOCAL: archivepodcast:al2023
   PYTEST_TAG_LOCAL: archivepodcast:pytest
-  FFMPEG_DEBIAN_TAG_LOCAL: archivepodcast:ffmpeg-bookworm
-  FFMPEG_AL_TAG_LOCAL: archivepodcast:ffmpeg-al2023
+  FFMPEG_TAG_LOCAL: archivepodcast:ffmpeg
 jobs:
   publish-ghcr:
     name: "Publish GitHub Container Registry"
@@ -46,23 +45,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # region ffmpeg
-      - name: Build ffmpeg main
+      - name: Build ffmpeg container
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/_dep_ffmpeg_${{ env.DEB_VERSION }}.Dockerfile
+          file: docker/_dep_ffmpeg.Dockerfile
           push: false
           load: true
-          tags: ${{ env.FFMPEG_DEBIAN_TAG_LOCAL }}
-
-      - name: Build ffmpeg al
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/_dep_ffmpeg_${{ env.AL_VERSION }}.Dockerfile
-          push: false
-          load: true
-          tags: ${{ env.FFMPEG_AL_TAG_LOCAL }}
+          tags: ${{ env.FFMPEG_TAG_LOCAL }}
 
       # region build
       - name: Build main docker

@@ -1,4 +1,4 @@
-FROM archivepodcast:ffmpeg-bookworm AS ffmpeg-builder
+FROM archivepodcast:ffmpeg AS ffmpeg-builder
 
 # --- Python dependencies stage ---
 FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS python-builder

@@ -1,8 +1,11 @@
-FROM debian:bookworm-slim
+# I build Amazon Linux and Debian versions, this has the older glibc so is compatible with both
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+RUN dnf install -y \
+    gcc \
+    gcc-c++ \
+    make \
     yasm \
     nasm \
     wget \
@@ -12,8 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     automake \
     autoconf \
     libtool \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    glibc-static \
+    && dnf clean all
 
 WORKDIR /build
 

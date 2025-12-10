@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-docker build -f docker/_dep_ffmpeg_bookworm.Dockerfile -t archivepodcast:ffmpeg-bookworm .
+docker build -f docker/_dep_ffmpeg.Dockerfile -t archivepodcast:ffmpeg .
 docker build -f docker/main.Dockerfile -t archivepodcast:latest .
 
 docker run \
