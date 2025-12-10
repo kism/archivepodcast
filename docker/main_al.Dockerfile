@@ -50,6 +50,7 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
 
 WORKDIR /app
 
+# Install runtime dependencies
 RUN dnf install -y \
     file-libs \
     libxml2 \
