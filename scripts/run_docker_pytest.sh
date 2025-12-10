@@ -3,11 +3,11 @@
 set -euo pipefail
 
 # AL
-docker build -f docker/_dep_ffmpeg_al2023.Dockerfile -t archivepodcast:ffmpeg-al2023 .
+docker build -f docker/_dep_ffmpeg.Dockerfile -t archivepodcast:ffmpeg .
 docker build -f docker/main_al.Dockerfile -t archivepodcast:al2023 .
 
 # DEBIAN
-docker build -f docker/_dep_ffmpeg_bookworm.Dockerfile -t archivepodcast:ffmpeg-bookworm .
+docker build -f docker/_dep_ffmpeg.Dockerfile -t archivepodcast:ffmpeg .
 docker build -f docker/main.Dockerfile -t archivepodcast:latest .
 
 # PYTEST
@@ -15,7 +15,4 @@ docker build -f docker/pytest.Dockerfile -t archivepodcast:pytest .
 docker run --rm archivepodcast:pytest
 
 # SELF TEST AL
-DOCKER_INSTANCE_DIR=/tmp/ap_docker_instance
-sudo rm -rf "$DOCKER_INSTANCE_DIR"
-mkdir -p "$DOCKER_INSTANCE_DIR"
-docker run --rm --env AP_SELF_TEST=true --mount type=bind,source="$DOCKER_INSTANCE_DIR",target=/app/instance archivepodcast:al2023 archivepodcast
+docker run --rm --env AP_SELF_TEST=true archivepodcast:al2023 sh -c "mkdir -p /app/instance && archivepodcast"

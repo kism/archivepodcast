@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-docker build -f docker/_dep_ffmpeg_al2023.Dockerfile -t archivepodcast:ffmpeg-al2023 .
+docker build -f docker/_dep_ffmpeg.Dockerfile -t archivepodcast:ffmpeg .
 docker build -f docker/main_al.Dockerfile -t archivepodcast:al2023 .
 
 docker run \

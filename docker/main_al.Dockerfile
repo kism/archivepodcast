@@ -1,4 +1,4 @@
-FROM archivepodcast:ffmpeg-al2023 AS ffmpeg-builder
+FROM archivepodcast:ffmpeg AS ffmpeg-builder
 
 FROM public.ecr.aws/lambda/python:3.14 AS python-source
 
