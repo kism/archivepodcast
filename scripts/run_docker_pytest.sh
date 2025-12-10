@@ -2,17 +2,17 @@
 
 set -euo pipefail
 
-# # AL
-# docker build -f docker/_dep_ffmpeg_al2023.Dockerfile -t archivepodcast:ffmpeg-al2023 .
-# docker build -f docker/main_al.Dockerfile -t archivepodcast:al2023 .
+# AL
+docker build -f docker/_dep_ffmpeg_al2023.Dockerfile -t archivepodcast:ffmpeg-al2023 .
+docker build -f docker/main_al.Dockerfile -t archivepodcast:al2023 .
 
-# # DEBIAN
-# docker build -f docker/_dep_ffmpeg_bookworm.Dockerfile -t archivepodcast:ffmpeg-bookworm .
-# docker build -f docker/main.Dockerfile -t archivepodcast:latest .
+# DEBIAN
+docker build -f docker/_dep_ffmpeg_bookworm.Dockerfile -t archivepodcast:ffmpeg-bookworm .
+docker build -f docker/main.Dockerfile -t archivepodcast:latest .
 
-# # PYTEST
-# docker build -f docker/pytest.Dockerfile -t archivepodcast:pytest .
-# docker run --rm archivepodcast:pytest
+# PYTEST
+docker build -f docker/pytest.Dockerfile -t archivepodcast:pytest .
+docker run --rm archivepodcast:pytest
 
 # SELF TEST AL
 DOCKER_INSTANCE_DIR=/tmp/ap_docker_instance
