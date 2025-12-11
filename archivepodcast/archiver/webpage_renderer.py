@@ -187,10 +187,14 @@ class WebpageRenderer:
         if len(webpages) == 1:
             str_webpages = f"{webpages[0].path} to file"
 
+        s3_pages_uploaded = []
+        s3_pages_skipped = []
+
         if self._s3:
-            logger.info("Writing %s locally and to s3", str_webpages)
+            logger.debug("Writing %s locally and to s3", str_webpages)
         else:
-            logger.info("Writing %s locally", str_webpages)
+            logger.debug("Writing %s locally", str_webpages)
+
         for webpage in webpages:
             webpage_path = Path(webpage.path)
             directory_path = app_paths.web_root / webpage_path.parent
@@ -210,7 +214,10 @@ class WebpageRenderer:
                 s3_key = webpage_path.as_posix()
                 if not force_override and s3_file_cache.check_file_exists(s3_key, len(page_content_bytes)):
                     logger.trace("Skipping upload to S3 for %s as it already exists with the same size.", s3_key)
+                    s3_pages_skipped.append(s3_key)
                     continue
+
+                s3_pages_uploaded.append(s3_key)
                 logger.trace("Writing page s3: %s", s3_key)
 
                 session = get_session()
@@ -230,7 +237,14 @@ class WebpageRenderer:
                     except Exception:
                         logger.exception("Unhandled s3 error trying to upload the file: %s", s3_key)
 
-        logger.debug("Done writing %s", str_webpages)
+        msg = f"Wrote {str_webpages}"
+        if self._s3 and len(s3_pages_skipped) == 1:
+            msg += ", skipped upload due to same size."
+        elif self._s3 and len(s3_pages_skipped) > 1:
+            msg += f", skipped {len(s3_pages_skipped)} s3 uploads due to matching size."
+            logger.debug("Skipped s3 uploads: %s", s3_pages_skipped)
+            logger.debug("Uploaded s3 pages: %s", s3_pages_uploaded)
+        logger.info(msg)
 
     async def _load_about_page(self) -> None:
         """Create about page if needed."""

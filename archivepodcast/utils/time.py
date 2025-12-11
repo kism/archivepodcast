@@ -16,4 +16,4 @@ def warn_if_too_long(msg: str, time_diff: timedelta | float, *, large_file: bool
     time_delta = timedelta(seconds=time_diff) if (isinstance(time_diff, (float, int))) else time_diff
 
     if time_delta >= timedelta(seconds=threshold):
-        logger.warning("Operation: %s took longer than expected: %ss", msg, int(time_delta.total_seconds()))
+        logger.warning("%s took longer than expected: %ss", msg, int(time_delta.total_seconds()))

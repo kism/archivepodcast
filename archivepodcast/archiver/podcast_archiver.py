@@ -198,7 +198,10 @@ class PodcastArchiver:
         tree = await self._download_live_podcast(podcast, aiohttp_session) if podcast.live else None
 
         if not podcast.live:
-            logger.info('[%s] "live": false, in config so not fetching new episodes', podcast.name_one_word)
+            logger.info(
+                '[%s] "live": false, in config, not fetching new episodes, will load feed from disk',
+                podcast.name_one_word,
+            )
             health.update_podcast_status(podcast.name_one_word, rss_fetching_live=False)
 
         # If we did download the feed, but it has no episodes, discard it
@@ -259,7 +262,7 @@ class PodcastArchiver:
             if tree_no_episodes(tree):
                 logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
                 return None
-            logger.info("[%s] Loaded rss from file", podcast.name_one_word)
+            logger.debug("[%s] Loaded rss from file", podcast.name_one_word)
         except etree.XMLSyntaxError:
             logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
 
