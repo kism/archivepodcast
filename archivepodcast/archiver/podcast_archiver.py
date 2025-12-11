@@ -226,12 +226,28 @@ class PodcastArchiver:
             logger.info('[%s] "live": false, in config so not fetching new episodes', podcast.name_one_word)
             health.update_podcast_status(podcast.name_one_word, rss_fetching_live=False)
 
-        if tree is None:  # Serving a podcast that we can't currently download?, load it from file
-            with contextlib.suppress(etree.XMLSyntaxError):
-                tree = etree.ElementTree(etree.fromstring(previous_feed))
-
-        if tree_no_episodes(tree):  # If there are no episodes, we can't host it
+        # If we did download the feed, but it has no episodes, discard it
+        if tree_no_episodes(tree):
             tree = None
+
+        # Serving a podcast that we can't currently download?, load it from file
+        if tree is None:
+            if previous_feed != b"":
+                try:
+                    tree = etree.ElementTree(etree.fromstring(previous_feed))
+                    if tree_no_episodes(tree):  # Revert back to none if no episodes
+                        logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
+                        tree = None
+                    else:
+                        logger.info("[%s] Loaded rss from file", podcast.name_one_word)
+                except etree.XMLSyntaxError:
+                    logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
+                    tree = None
+            else:
+                logger.warning(
+                    "[%s] Cannot find local rss feed file to serve unavailable podcast",
+                    podcast.name_one_word,
+                )
 
         if tree is not None:
             await self._update_rss_feed(podcast, tree, previous_feed)

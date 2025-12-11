@@ -69,7 +69,7 @@ def test_grab_podcasts_not_live(
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
     assert '"live": false, in config so not fetching new episodes' in caplog.text
-    assert "Loading rss from file" in caplog.text
+    assert "Loaded rss from file" in caplog.text
     assert "Cannot find rss feed file" not in caplog.text
     assert "Unable to host podcast, something is wrong" not in caplog.text
 
@@ -122,7 +122,7 @@ def test_grab_podcasts_invalid_rss(
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
-    assert "Error parsing rss file:" in caplog.text
+    assert "Syntax error in rss feed file" in caplog.text
 
 
 def test_grab_podcasts_not_live_no_existing_feed(
@@ -139,8 +139,7 @@ def test_grab_podcasts_not_live_no_existing_feed(
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
     assert '"live": false, in config so not fetching new episodes' in caplog.text
-    assert "Loading rss from file:" in caplog.text
-    assert "Cannot find rss feed file" in caplog.text
+    assert "Cannot find local rss feed file to serve unavailable podcast" in caplog.text
     assert "Unable to host podcast: test, something is wrong" in caplog.text
 
 
@@ -159,8 +158,7 @@ def test_grab_podcasts_live(
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
     assert "Wrote rss to disk:" in caplog.text
     assert "Hosted feed: http://localhost:5100/rss/test" in caplog.text
-
-    assert "Loading rss from file" not in caplog.text
+    assert "Loaded rss from file" not in caplog.text
 
     rss = str(apa.get_rss_feed("test"))
 

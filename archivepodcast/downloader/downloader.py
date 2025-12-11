@@ -61,6 +61,12 @@ class PodcastsDownloader(AssetDownloader):
 
         if tree:
             if tree_no_episodes(tree):
+                # Log the whole damn tree
+                logger.critical(
+                    "[%s] Downloaded podcast rss has no episodes, full rss:\n%s",
+                    self._podcast.name_one_word,
+                    etree.tostring(tree),
+                )
                 logger.error(
                     "Downloaded podcast rss %s has no episodes, not writing to disk", self._podcast.name_one_word
                 )
