@@ -122,13 +122,7 @@ def setup_logger(
     logging_conf: LoggingConf | None = None,
     in_logger: logging.Logger | None = None,
 ) -> None:
-    """Configure logging for the application.
-
-    Args:
-        app: The Flask application instance
-        logging_conf: Logging configuration object
-        in_logger: Optional logger instance to configure (mainly for testing)
-    """
+    """Configure logging for the application."""
     if logging_conf is None:
         logging_conf = LoggingConf()
 

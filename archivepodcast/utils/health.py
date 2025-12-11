@@ -224,13 +224,13 @@ class PodcastArchiverHealth:
     def currently_rendering(
         self,
     ) -> bool:
-        """Set currently rendering status."""
+        """Return the currently rendering status."""
         return self._core.currently_rendering
 
     def currently_loading_config(
         self,
     ) -> bool:
-        """Set currently loading config status."""
+        """Return the currently loading config status."""
         return self._core.currently_loading_config
 
     def set_host_info(self, app_config: AppConfig) -> None:
