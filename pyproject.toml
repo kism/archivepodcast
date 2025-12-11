@@ -56,7 +56,6 @@ test = [
     "detect-test-pollution",
     "types-aiobotocore-s3",  # Mock uses typed dict
     "pytest-asyncio",
-    "tomlkit>=0.13",
     "pytest-socket>=0.7.0",
 ]
 
