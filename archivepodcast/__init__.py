@@ -63,8 +63,6 @@ def create_app(instance_path_override: str | None = None) -> Flask:
     with app.app_context():
         podcast_archiver.initialise_archivepodcast()
 
-    app.app_context().push()  # God knows what this does but it fixes everything
-
     @app.errorhandler(404)  # type: ignore[untyped-decorator]
     def invalid_route(e: str) -> Response:
         """404 Handler."""

@@ -11,7 +11,7 @@ from tests.constants import TEST_CONFIGS_LOCATION
 
 @pytest.fixture
 def get_test_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[[str], ArchivePodcastConfig]:
-    """Function returns a function, which is how it needs to be."""
+    """Return a function that loads test configs by name."""
 
     def _get_test_config(config_name: str = "testing_true_valid.json") -> ArchivePodcastConfig:
         """Load all the .json configs into a single dict."""

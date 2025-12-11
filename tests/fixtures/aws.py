@@ -142,7 +142,11 @@ class S3ClientMock:
     async def head_object(self, Bucket: str, Key: str) -> HeadObjectOutputTypeDef:
         wip = _objects.get(Key)
         if wip is not None:
-            return HeadObjectOutputTypeDef(wip)  # type: ignore[no-any-return] # ???
+            body = wip.get("Body", b"")
+            size = len(body) if isinstance(body, (bytes, str)) else 0
+            content_type = wip.get("ContentType", "")
+            result = HeadObjectOutputTypeDef(ContentLength=size, ContentType=content_type)  # type: ignore[typeddict-item]
+            return result
 
         raise S3ClientError(
             operation_name="HeadObject", error_response={"Error": {"Code": "404", "Message": "Not Found"}}

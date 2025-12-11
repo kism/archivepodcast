@@ -73,7 +73,7 @@ def test_archivepodcast_cli_from__main__no_provided_instance_path(
     caplog: pytest.LogCaptureFixture,
     preserve_caplog_handlers: None,
 ) -> None:
-    """TEST: Run CLI from main."""
+    """Test CLI using default instance path."""
     os.environ["AP_SIMPLE_LOGGING"] = "true"
     place_test_config("testing_true_valid.json", tmp_path)
 

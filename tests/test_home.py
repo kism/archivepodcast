@@ -76,7 +76,7 @@ async def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 @pytest.mark.asyncio
 async def test_fonts_exist(client: FlaskClient, apa: PodcastArchiver) -> None:
-    """TEST: /static/fonts/... loads."""
+    """Verify static font files load correctly."""
     podcast_archiver._ap = apa
     await apa.renderer.render_files()
 
