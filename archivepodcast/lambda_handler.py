@@ -19,6 +19,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 LAMBDA_LIB_PATH = Path("/opt/lib")
+LOCAL_RO_INSTANCE_PATH = Path("/opt/instance")
+INSTANCE_PATH = Path("/tmp/instance")
+
 
 try:
     from archivepodcast import run_ap_adhoc
@@ -44,17 +47,15 @@ def handler(event: ALBEvent, context: LambdaContext) -> None:
     logger.info("Event invoked with event: %s", event)
 
     log_intro(logger)
-    local_instance_path = Path("/opt/instance")
-    instance_path = Path("/tmp/instance")
 
-    if not local_instance_path.exists():
-        msg = f"Instance path does not exist, please add via a layer to {local_instance_path}"
+    if not LOCAL_RO_INSTANCE_PATH.exists():
+        msg = f"Instance path does not exist, please add via a layer to {LOCAL_RO_INSTANCE_PATH}"
         logger.error(msg)
         raise FileNotFoundError(msg)
-    if not (local_instance_path / "config.json").is_file():
-        msg = f"Instance config.json not found in {local_instance_path}"
+    if not (LOCAL_RO_INSTANCE_PATH / "config.json").is_file():
+        msg = f"Instance config.json not found in {LOCAL_RO_INSTANCE_PATH}"
         logger.error(msg)
         raise FileNotFoundError(msg)
 
-    shutil.copytree(src=local_instance_path, dst=instance_path, dirs_exist_ok=True)
-    run_ap_adhoc(instance_path=instance_path)
+    shutil.copytree(src=LOCAL_RO_INSTANCE_PATH, dst=INSTANCE_PATH, dirs_exist_ok=True)
+    run_ap_adhoc(instance_path=INSTANCE_PATH)
