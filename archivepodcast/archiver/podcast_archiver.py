@@ -227,7 +227,8 @@ class PodcastArchiver:
             health.update_podcast_status(podcast.name_one_word, rss_fetching_live=False)
 
         if tree is None:  # Serving a podcast that we can't currently download?, load it from file
-            tree = etree.fromstring(rss_bytes)
+            with contextlib.suppress(etree.XMLSyntaxError):
+                tree = etree.ElementTree(etree.fromstring(previous_feed))
 
         if tree_no_episodes(tree):  # If there are no episodes, we can't host it
             tree = None
