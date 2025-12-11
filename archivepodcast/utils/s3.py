@@ -66,11 +66,7 @@ class S3FileCache(BaseModel):
         return [s3_file["Key"] for s3_file in s3_files]
 
     def add_file(self, s3_file: S3File) -> None:
-        """Append a new S3 file to the cache.
-
-        Args:
-            s3_file: S3File object to append
-        """
+        """Append a new S3 file to the cache."""
         self._files.append({"Key": s3_file.key, "Size": s3_file.size})
 
     def check_file_exists(self, key: str, size: int | None = None) -> bool:

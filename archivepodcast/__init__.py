@@ -22,7 +22,7 @@ from .version import __version__
 
 __all__ = ["__version__", "create_app", "run_ap_adhoc"]
 
-# Don't if we are in lambda
+# Don't install rich if we are in lambda
 if not ap_logger.force_simple_logger():
     install()
 
@@ -63,7 +63,7 @@ def create_app(instance_path_override: str | None = None) -> Flask:
     with app.app_context():
         podcast_archiver.initialise_archivepodcast()
 
-    app.app_context().push()  # God knows what does this does but it fixes everything
+    app.app_context().push()  # God knows what this does but it fixes everything
 
     @app.errorhandler(404)  # type: ignore[untyped-decorator]
     def invalid_route(e: str) -> Response:

@@ -56,7 +56,7 @@ class WebpageRenderer:
         logger.debug("WebpageRenderer initialized with web_root: %s", get_app_paths().web_root)
 
     async def render_files(self) -> None:
-        """Actual function to upload static to s3 and copy index.html."""
+        """Upload static files to s3 and copy index.html."""
         app_paths = get_app_paths()
         render_files_start_time = time.time()
         health.update_core_status(currently_rendering=True)

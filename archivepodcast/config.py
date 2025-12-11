@@ -22,7 +22,7 @@ _LOG_INFO_MESSAGES: dict[str, str] = {
     "frontend_local_adhoc": f"{_SPACER * 2}Frontend: Not served, since we are running in adhoc mode. Will be available in the instance directory.\n",
     "backend_s3": f"{_SPACER * 2}Storage backend: S3\n{_SPACER * 2}Podcast assets will be uploaded to S3 and removed locally after upload.\n",
     "backend_local": f"{_SPACER * 2}Storage backend: Local filesystem\n{_SPACER * 2}Podcast assets will be stored in the instance directory.\n",
-    "adhoc_s3_miss_match": f"{_SPACER * 2}You are running adhoc with s3 backend possibly misconfigured",
+    "adhoc_s3_mismatch": f"{_SPACER * 2}You are running adhoc with s3 backend possibly misconfigured",
 }
 
 
@@ -171,7 +171,7 @@ class ArchivePodcastConfig(BaseSettings):
                 msg += _LOG_INFO_MESSAGES["frontend_local_adhoc"]
                 if storage_backend_is_s3:  # Adhoc with S3 backend
                     msg_warn += (
-                        _LOG_INFO_MESSAGES["adhoc_s3_miss_match"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
+                        _LOG_INFO_MESSAGES["adhoc_s3_mismatch"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
                     )
             else:  # Webserver mode
                 msg += _LOG_INFO_MESSAGES["frontend_local"]
