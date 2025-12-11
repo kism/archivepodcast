@@ -12,6 +12,7 @@ import aiohttp
 from lxml import etree
 
 from archivepodcast.config import AppConfig, PodcastConfig
+from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.health import health
 from archivepodcast.utils.log_messages import log_aiohttp_exception
 from archivepodcast.utils.logger import get_logger
@@ -68,7 +69,7 @@ class PodcastsDownloader(AssetDownloader):
                 # Write rss to disk
                 tree.write(
                     str(self._rss_file_path),
-                    encoding="utf-8",
+                    encoding=XML_ENCODING,
                     xml_declaration=True,
                 )
                 logger.debug("[%s] Wrote rss to disk: %s", self._podcast.name_one_word, self._rss_file_path)

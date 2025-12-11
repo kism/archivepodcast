@@ -10,3 +10,4 @@ DEFAULT_INSTANCE_PATH = Path.cwd() / "instance"
 
 AP_SELF_TEST = os.getenv("AP_SELF_TEST", "false").lower() in ("true", "1", "yes")
 JSON_INDENT = 2
+XML_ENCODING = "UTF-8"

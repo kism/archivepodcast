@@ -10,6 +10,7 @@ from aiobotocore.session import get_session
 from lxml import etree
 from pydantic import BaseModel
 
+from archivepodcast.constants import XML_ENCODING
 from archivepodcast.downloader import PodcastsDownloader
 from archivepodcast.downloader.constants import USER_AGENT
 from archivepodcast.instances.config import get_ap_config_s3_client
@@ -255,7 +256,7 @@ class PodcastArchiver:
             {
                 podcast.name_one_word: etree.tostring(
                     tree.getroot(),
-                    encoding="UTF-8",  # Keep this uppercase for the diff to work
+                    encoding=XML_ENCODING,  # Keep this uppercase for the diff to work
                     method="xml",
                     xml_declaration=True,
                 )
