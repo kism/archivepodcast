@@ -1,10 +1,9 @@
 """Logger unit tests."""
 
-from pathlib import Path
-
 import logging
 import random
 from collections.abc import Generator
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
