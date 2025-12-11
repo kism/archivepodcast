@@ -88,7 +88,11 @@ def test_trace_level(logger: CustomLogger, caplog: pytest.LogCaptureFixture) -> 
     assert_no_warnings_in_caplog(caplog)
 
 
-def test_add_file_handler(logger: CustomLogger, tmp_path: Path) -> None:
+def test_add_file_handler(
+    logger: CustomLogger,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     """Test adding a file handler to the logger."""
     log_level = "DEBUG"
 
@@ -96,13 +100,6 @@ def test_add_file_handler(logger: CustomLogger, tmp_path: Path) -> None:
     log_path = tmp_path
     config = LoggingConf(level=log_level, path=log_path)
     with pytest.raises(IsADirectoryError):
-        setup_logger(app=None, logging_conf=config, in_logger=logger)
-
-    # Fail to log to file we don't have permission to write to
-    log_path = tmp_path / "no_permission.log"
-    log_path.touch(0o400)  # Read-only
-    config = LoggingConf(level=log_level, path=log_path)
-    with pytest.raises(PermissionError):
         setup_logger(app=None, logging_conf=config, in_logger=logger)
 
     # Succeed
@@ -114,6 +111,26 @@ def test_add_file_handler(logger: CustomLogger, tmp_path: Path) -> None:
     handlers = [handler for handler in logger.handlers if isinstance(handler, logging.FileHandler)]
     assert len(handlers) == 1
     assert handlers[0].baseFilename == str(log_path)
+
+
+def test_add_file_handler_no_permissions(
+    logger: CustomLogger,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Test adding a file handler to the logger when no permissions."""
+    log_level = "DEBUG"
+    log_path = tmp_path / "no_permission.log"
+
+    # Mock RotatingFileHandler to raise PermissionError
+    def raise_permission_error(*args: object, **kwargs: object) -> None:
+        raise PermissionError
+
+    monkeypatch.setattr("archivepodcast.utils.logger.RotatingFileHandler", raise_permission_error)
+
+    config = LoggingConf(level=log_level, path=log_path)
+    with pytest.raises(PermissionError, match="The user running this does not have access to the file"):
+        setup_logger(app=None, logging_conf=config, in_logger=logger)
 
 
 def test_add_rich_console_handler(logger: CustomLogger, monkeypatch: pytest.MonkeyPatch) -> None:

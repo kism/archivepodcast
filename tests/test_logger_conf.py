@@ -1,9 +1,6 @@
 """Logger unit tests."""
 
 import logging
-import random
-from collections.abc import Generator
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -12,7 +9,6 @@ from archivepodcast.utils.logger import (
     TRACE_LEVEL_NUM,
     LoggingConf,
 )
-from tests.helpers import assert_no_warnings_in_caplog
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture

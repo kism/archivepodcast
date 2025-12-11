@@ -28,8 +28,6 @@ Features:
 
 ## Todo
 
-- logic for not uploading rss if no diff, remove 'previous feed' logic
-- bump lxml, naa still cooked
 - serverless
   - config from s3
 - fix readme again

@@ -207,3 +207,21 @@ def test_grab_podcasts_no_episodes(
 
     # Since it loads the old version from the disk
     assert (apa.get_rss_feed("test")).decode("utf-8") == DUMMY_RSS_STR
+
+
+def test_archiver_webpages(apa: PodcastArchiver) -> None:
+    """Test archiver webpages generation."""
+    pages = apa.renderer.webpages.get_list()
+    assert len(pages) != 0
+
+
+def test_archiver_webpages_header(apa: PodcastArchiver) -> None:
+    """Test archiver webpages generation."""
+    header = apa.renderer.webpages.generate_header("index.html", debug=True)
+    assert "/health" in header
+
+    header = apa.renderer.webpages.generate_header("health.html", debug=True)
+    assert "/health" not in header
+
+    header = apa.renderer.webpages.generate_header("index.html")
+    assert "/health" not in header
