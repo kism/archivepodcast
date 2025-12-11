@@ -240,6 +240,8 @@ class WebpageRenderer:
                 msg += f", skipped {len(s3_pages_skipped)} s3 uploads due to matching size"
                 logger.debug("Skipped s3 uploads: %s", s3_pages_skipped)
                 logger.debug("Uploaded s3 pages: %s", s3_pages_uploaded)
+            elif len(s3_pages_uploaded) == 1:
+                msg += ", uploaded to s3"
             else:
                 msg += ", all pages uploaded to s3"
         logger.info(msg)
@@ -274,7 +276,7 @@ class WebpageRenderer:
             self.webpages.add(output_filename, mime="text/html", content=about_page_str)
             self.about_page_exists = True
             health.update_core_status(about_page_exists=True)
-            logger.info("About page exists!")
+            logger.info("About page exists, rendering and including")
             await self._write_webpages([self.webpages.get_webpage(about_page_filename)])
         else:
             health.update_core_status(about_page_exists=False)
@@ -282,7 +284,7 @@ class WebpageRenderer:
 
     async def _check_s3_files(self) -> None:
         """Function to list files in s3 bucket."""
-        logger.info("Checking state of s3 bucket")
+        logger.debug("Checking state of s3 bucket")
         if not self._s3:
             logger.debug("No s3 client to list files")
             return
@@ -292,18 +294,29 @@ class WebpageRenderer:
         session = get_session()
         s3_config = get_ap_config_s3_client()
 
+        cleanup_actions = 0
+
+        def log_first_message() -> None:
+            nonlocal cleanup_actions
+            if cleanup_actions == 0:
+                logger.warning("Starting cleanup of unexpected S3 objects")
+            cleanup_actions += 1
+
         async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
             contents_str = ""
             if len(contents_list) > 0:
                 for obj in contents_list:
                     contents_str += obj["Key"] + "\n"
                     if obj["Size"] == 0:  # This is for application/x-directory files, but no files should be empty
+                        log_first_message()
                         logger.warning("S3 Object is empty: %s DELETING", obj["Key"])
                         await s3_client.delete_object(Bucket=self._app_config.s3.bucket, Key=obj["Key"])
                     if obj["Key"].startswith("/"):
+                        log_first_message()
                         logger.warning("S3 Path starts with a /, this is not expected: %s DELETING", obj["Key"])
                         await s3_client.delete_object(Bucket=self._app_config.s3.bucket, Key=obj["Key"])
                     if "//" in obj["Key"]:
+                        log_first_message()
                         logger.warning("S3 Path contains a //, this is not expected: %s DELETING", obj["Key"])
                         await s3_client.delete_object(Bucket=self._app_config.s3.bucket, Key=obj["Key"])
                 logger.trace("S3 Bucket Contents >>>\n%s", contents_str.strip())

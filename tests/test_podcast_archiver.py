@@ -33,12 +33,12 @@ async def test_about_page(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture
     """Test about page."""
     about_path = tmp_path / "about.md"
     with about_path.open("w") as f:
-        f.write("About page exists!")
+        f.write("exists")
 
     with caplog.at_level(level=logging.INFO, logger="archivepodcast.archiver"):
         await apa.renderer._load_about_page()
 
-    assert "About page exists!" in caplog.text
+    assert "About page exists" in caplog.text
 
 
 @pytest.mark.asyncio
