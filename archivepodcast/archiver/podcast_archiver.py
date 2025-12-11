@@ -256,7 +256,7 @@ class PodcastArchiver:
             {
                 podcast.name_one_word: etree.tostring(
                     tree.getroot(),
-                    encoding="utf-8",
+                    encoding="UTF-8",
                     method="xml",
                     xml_declaration=True,
                 )
@@ -268,6 +268,17 @@ class PodcastArchiver:
             self._app_config.inet_path,
             podcast.name_one_word,
         )
+
+        logger.critical(
+            "[%s] Feed equal? %s", podcast.name_one_word, previous_feed == self.podcast_rss[podcast.name_one_word]
+        )
+        if previous_feed != self.podcast_rss[podcast.name_one_word]:
+            directory = Path("/tmp/archivepodcast")
+            directory.mkdir(parents=True, exist_ok=True)
+            temp_file_path_previous = directory / f"{podcast.name_one_word}_1_feed.xml"
+            temp_file_path_new = directory / f"{podcast.name_one_word}_2_feed.xml"
+            temp_file_path_previous.write_bytes(previous_feed)
+            temp_file_path_new.write_bytes(self.podcast_rss[podcast.name_one_word])
 
         # Upload to s3 if we are in s3 mode
         if (
@@ -296,6 +307,8 @@ class PodcastArchiver:
                     logger.debug("[%s] Uploaded feed to s3", podcast.name_one_word)
                 except Exception:  # pylint: disable=broad-exception-caught
                     logger.exception("Unhandled s3 error trying to upload the file: %s")
+        else:
+            logger.critical("Not uploading feed to s3, either not in s3 mode or feed unchanged")
         health.update_podcast_status(podcast.name_one_word, rss_available=True)
         logger.trace("Exiting _update_rss_feed")
 
