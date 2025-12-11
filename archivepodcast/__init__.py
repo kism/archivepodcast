@@ -9,6 +9,7 @@ from rich.traceback import install
 
 from .archiver import PodcastArchiver
 from .blueprints import bp_api, bp_content, bp_rss, bp_static, bp_webpages
+from .constants import JSON_INDENT
 from .instances import podcast_archiver
 from .instances.config import get_ap_config
 from .instances.health import health
@@ -109,7 +110,7 @@ def run_ap_adhoc(
     asyncio.run(ap.write_health_s3())
     event_times.set_event_time("/", time.time() - start_time)
 
-    logger.trace(health.get_health().model_dump_json(indent=4))
-    logger.trace(event_times.model_dump_json(indent=4))
+    logger.trace(health.get_health().model_dump_json(indent=JSON_INDENT))
+    logger.trace(event_times.model_dump_json(indent=JSON_INDENT))
     logger.info(get_event_times_str(event_times))
     logger.info("Done!")

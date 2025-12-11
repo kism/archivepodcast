@@ -10,6 +10,7 @@ import markdown
 from aiobotocore.session import get_session
 from jinja2 import Environment, FileSystemLoader
 
+from archivepodcast.constants import JSON_INDENT
 from archivepodcast.instances.config import get_ap_config_s3_client
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_cache import s3_file_cache
@@ -162,9 +163,9 @@ class WebpageRenderer:
         start_time = time.time()
 
         health_json = health_api_response.model_dump()
-        health_json_str = json.dumps(health_json, indent=4)
+        health_json_str = json.dumps(health_json, indent=JSON_INDENT)
 
-        profile_json_str = event_times.model_dump_json(indent=4)
+        profile_json_str = event_times.model_dump_json(indent=JSON_INDENT)
 
         self.webpages.add(path="api/health", mime="application/json", content=health_json_str)
         self.webpages.add(path="api/profile", mime="application/json", content=profile_json_str)
