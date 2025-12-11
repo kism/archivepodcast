@@ -113,7 +113,6 @@ def podcast_loop() -> None:
         # So regarding the test coverage, the flask_test client really helps here since it stops the test once the
         # request has completed, meaning that this infinite loop won't ruin everything
         # that being said, this one log message will never be covered, but I don't care
-        current_datetime = datetime.datetime.now(tz=datetime.UTC)
         logger.info("🌄 Waking up, its %s, looking for new episodes", get_time_str())  # pragma: no cover
 
 
