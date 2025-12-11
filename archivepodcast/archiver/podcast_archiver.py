@@ -297,10 +297,10 @@ class PodcastArchiver:
                     logger.exception("Unhandled s3 error trying to upload the file: %s")
 
         msg = "no feed changes"
-        if need_to_upload_to_s3:
-            msg = "uploaded to s3"
-        elif local_changes_to_feed:
+        if not self.s3 and local_changes_to_feed:
             msg = "feed changed"
+        elif self.s3 and need_to_upload_to_s3:
+            msg = "feed uploaded to s3"
 
         logger.info(
             "[%s] (%s) Hosted feed: %srss/%s",
