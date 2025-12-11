@@ -361,7 +361,7 @@ async def test_file_list_s3(
         file_list = await apa_aws.get_file_list()
         await apa_aws.renderer.render_filelist_html(file_list)
 
-    assert "Done writing filelist.html to file" in caplog.text
+    assert "Wrote filelist.html to file" in caplog.text
 
     response = client_live_s3.get("/filelist.html")
     assert response.status_code == HTTPStatus.OK

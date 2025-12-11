@@ -6,6 +6,7 @@ from http import HTTPStatus
 
 from flask import Blueprint, Response
 
+from archivepodcast.constants import JSON_INDENT
 from archivepodcast.instances.health import health
 from archivepodcast.instances.podcast_archiver import (
     get_ap,
@@ -48,10 +49,10 @@ def api_health() -> Response:
     try:
         health_json = health.get_health().model_dump()
         # Alphabetical json
-        health_json_str = json.dumps(health_json, sort_keys=True, indent=4)
+        health_json_str = json.dumps(health_json, sort_keys=True, indent=JSON_INDENT)
     except Exception:
         logger.exception("Error getting health")
-        health_json_str = json.dumps({"core": {"alive": False}}, sort_keys=True, indent=4)
+        health_json_str = json.dumps({"core": {"alive": False}}, sort_keys=True, indent=JSON_INDENT)
 
     return Response(
         health_json_str,
@@ -64,7 +65,7 @@ def api_health() -> Response:
 @bp.route("/api/profile")  # type: ignore[untyped-decorator]
 def api_profile() -> Response:
     """Get the profiling info as JSON."""
-    profile_json_str = event_times.model_dump_json(indent=4)
+    profile_json_str = event_times.model_dump_json(indent=JSON_INDENT)
 
     return Response(
         profile_json_str,

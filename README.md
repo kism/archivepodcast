@@ -28,7 +28,6 @@ Features:
 
 ## Todo
 
-- bump lxml
 - serverless
   - config from s3
 - fix readme again

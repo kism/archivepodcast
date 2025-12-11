@@ -152,7 +152,7 @@ class AssetDownloader:
                 "[%s] Uploading podcast cover art to s3 not deleting local file to allow overriding",
                 self._podcast.name_one_word,
             )
-            await self._upload_asset_s3(cover_art_destination, extension, remove_original=True)
+            await self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
 
     async def _handle_wav(self, url: str, title: str, extension: str = "", file_date_string: str = "") -> int:
         """Convert podcasts that have wav episodes 😔. Returns new file length."""

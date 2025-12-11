@@ -3,7 +3,6 @@
 import asyncio
 import contextlib
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiohttp
@@ -11,6 +10,7 @@ from aiobotocore.session import get_session
 from lxml import etree
 from pydantic import BaseModel
 
+from archivepodcast.constants import XML_ENCODING
 from archivepodcast.downloader import PodcastsDownloader
 from archivepodcast.downloader.constants import USER_AGENT
 from archivepodcast.instances.config import get_ap_config_s3_client
@@ -104,13 +104,12 @@ class PodcastArchiver:
         self.podcast_list = podcast_list
         self._make_folder_structure()
 
-    # endregion
-
+    # region Getters
     def get_rss_feed(self, feed: str) -> bytes:
         """Return the rss file for a given feed."""
         return self.podcast_rss[feed]
 
-    # region Archive
+    # region Grab
 
     def grab_podcasts(self) -> None:
         """Download and process all configured podcasts.
@@ -189,58 +188,96 @@ class PodcastArchiver:
 
     async def _grab_podcast(self, podcast: PodcastConfig, aiohttp_session: aiohttp.ClientSession) -> None:
         """Function to download a podcast and store the rss."""
-        tree = None
-        previous_feed = b""
+        if podcast.name_one_word == "":  # This is actually the place for this check
+            logger.error("Podcast has no name_one_word set in config, cannot proceed")
+            return
+
+        logger.info("[%s] Processing podcast to archive: %s", podcast.name_one_word, podcast.new_name)
+
+        previous_feed = self._get_previous_feed(podcast)
+        tree = await self._download_live_podcast(podcast, aiohttp_session) if podcast.live else None
+
+        if not podcast.live:
+            logger.info(
+                '[%s] "live": false, in config, not fetching new episodes, will load feed from disk',
+                podcast.name_one_word,
+            )
+            health.update_podcast_status(podcast.name_one_word, rss_fetching_live=False)
+
+        # If we did download the feed, but it has no episodes, discard it
+        if tree_no_episodes(tree):
+            tree = None
+
+        # Load from cache if no tree available
+        if tree is None:
+            tree = self._load_cached_feed(podcast, previous_feed)
+
+        await self._process_podcast_tree(podcast, tree, previous_feed)
+        logger.trace("Exiting _grab_podcast for %s", podcast.name_one_word)
+
+    # region _grab helpers
+    def _get_previous_feed(self, podcast: PodcastConfig) -> bytes:
+        """Get the previous feed from cache or file."""
+        try:
+            return self.podcast_rss[podcast.name_one_word]
+        except KeyError:
+            rss_file_path = get_app_paths().web_root / "rss" / podcast.name_one_word
+            if rss_file_path.is_file():
+                with contextlib.suppress(Exception):
+                    return rss_file_path.read_bytes()
+            return b""
+
+    async def _download_live_podcast(
+        self, podcast: PodcastConfig, aiohttp_session: aiohttp.ClientSession
+    ) -> etree._ElementTree | None:
+        """Download live podcast and update health status."""
         podcasts_downloader = PodcastsDownloader(
             podcast=podcast,
             app_config=self._app_config,
             s3=self.s3,
             aiohttp_session=aiohttp_session,
         )
-        logger.info("[%s] Processing podcast to archive: %s", podcast.name_one_word, podcast.new_name)
 
-        with contextlib.suppress(KeyError):  # Set the previous feed var if it exists
-            previous_feed = self.podcast_rss[podcast.name_one_word]
-
-        rss_file_path = get_app_paths().web_root / "rss" / podcast.name_one_word
-
-        if podcast.name_one_word == "":
-            logger.error("Podcast has no name_one_word set in config, cannot proceed")
-            return
-
-        if podcast.live is True:  # download all the podcasts
-            tree = await podcasts_downloader.download_podcast()
-            if tree:
-                last_fetched = int(time.time())
-                health.update_podcast_status(podcast.name_one_word, rss_fetching_live=True, last_fetched=last_fetched)
-            else:
-                # There should be a previous error message too
-                logger.error("Unable to download podcast: %s", podcast.name_one_word)
-
+        tree = await podcasts_downloader.download_podcast()
+        if tree:
+            last_fetched = int(time.time())
+            health.update_podcast_status(podcast.name_one_word, rss_fetching_live=True, last_fetched=last_fetched)
         else:
-            logger.info('[%s] "live": false, in config so not fetching new episodes', podcast.name_one_word)
-            health.update_podcast_status(podcast.name_one_word, rss_fetching_live=False)
+            logger.error("Unable to download podcast: %s", podcast.name_one_word)
 
-        if tree_no_episodes(tree):  # If there are no episodes, we can't host it
-            tree = None
+        return tree
 
-        if tree is None:  # Serving a podcast that we can't currently download?, load it from file
-            tree = self._load_rss_from_file(podcast, rss_file_path)
+    def _load_cached_feed(self, podcast: PodcastConfig, previous_feed: bytes) -> etree._ElementTree | None:
+        """Load feed from cache when live download is not available."""
+        tree = None
+        if previous_feed == b"":
+            logger.warning(
+                "[%s] Cannot find local rss feed file to serve unavailable podcast",
+                podcast.name_one_word,
+            )
+            return None
 
-        if tree_no_episodes(tree):  # If there are still not episodes, we still can't host it
-            tree = None
+        try:
+            tree = etree.ElementTree(etree.fromstring(previous_feed))
+            if tree_no_episodes(tree):
+                logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
+                return None
+            logger.debug("[%s] Loaded rss from file", podcast.name_one_word)
+        except etree.XMLSyntaxError:
+            logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
 
+        return tree
+
+    async def _process_podcast_tree(
+        self, podcast: PodcastConfig, tree: etree._ElementTree | None, previous_feed: bytes
+    ) -> None:
+        """Process the podcast tree and update RSS feed or handle errors."""
         if tree is not None:
             await self._update_rss_feed(podcast, tree, previous_feed)
             health.update_podcast_episode_info(podcast.name_one_word, tree)
-
         else:
             logger.error("Unable to host podcast: %s, something is wrong", podcast.name_one_word)
             health.update_podcast_status(podcast.name_one_word, rss_available=False)
-
-        del tree
-
-        logger.trace("Exiting _grab_podcast for %s", podcast.name_one_word)
 
     # region RSS Feed Handling
     async def _update_rss_feed(
@@ -254,27 +291,29 @@ class PodcastArchiver:
             {
                 podcast.name_one_word: etree.tostring(
                     tree.getroot(),
-                    encoding="utf-8",
+                    encoding=XML_ENCODING,  # Keep this uppercase for the diff to work
                     method="xml",
                     xml_declaration=True,
                 )
             }
         )
-        logger.info(
-            "[%s] Hosted feed: %srss/%s",
-            podcast.name_one_word,
-            self._app_config.inet_path,
-            podcast.name_one_word,
-        )
+
+        # Check the length of the feed in s3
+        local_changes_to_feed = self.podcast_rss[podcast.name_one_word] != previous_feed
+        need_to_upload_to_s3 = False
+        if self.s3:
+            logger.trace("S3 Check upload")
+            # So this only checks the size,
+            # the generated time of rss feeds shouldn't affect the size due to how the time is formatted
+            # see <pubDate> or <lastBuildDate> in an rss feed that has it
+            if not s3_file_cache.check_file_exists(
+                key="rss/" + podcast.name_one_word,
+                size=len(self.podcast_rss[podcast.name_one_word]),
+            ):
+                need_to_upload_to_s3 = True
 
         # Upload to s3 if we are in s3 mode
-        if (
-            self.s3
-            and previous_feed
-            != self.podcast_rss[
-                podcast.name_one_word
-            ]  # This doesn't work when feed has build dates times on it, patreon for one
-        ):
+        if need_to_upload_to_s3:
             session = get_session()
             s3_config = get_ap_config_s3_client()
 
@@ -294,30 +333,25 @@ class PodcastArchiver:
                     logger.debug("[%s] Uploaded feed to s3", podcast.name_one_word)
                 except Exception:  # pylint: disable=broad-exception-caught
                     logger.exception("Unhandled s3 error trying to upload the file: %s")
+
+        msg = "no feed changes"
+        if not self.s3 and local_changes_to_feed:
+            msg = "feed changed"
+        elif self.s3 and need_to_upload_to_s3:
+            msg = "feed uploaded to s3"
+
+        logger.info(
+            "[%s] (%s) Hosted feed: %srss/%s",
+            podcast.name_one_word,
+            msg,
+            self._app_config.inet_path,
+            podcast.name_one_word,
+        )
+
         health.update_podcast_status(podcast.name_one_word, rss_available=True)
         logger.trace("Exiting _update_rss_feed")
 
-    def _load_rss_from_file(self, podcast: PodcastConfig, rss_file_path: Path) -> etree._ElementTree | None:
-        """Load the rss from file."""
-        tree = None
-        if podcast.live is False:
-            logger.info("[%s] Loading rss from file: %s", podcast.name_one_word, rss_file_path)
-        else:
-            logger.warning("[%s] Loading rss from file: %s", podcast.name_one_word, rss_file_path)
-        if rss_file_path.is_file():
-            try:
-                tree = etree.parse(rss_file_path)
-            except etree.XMLSyntaxError:
-                logger.exception("Error parsing rss file: %s", rss_file_path)
-        elif rss_file_path.is_dir():
-            logger.error("Calculated RSS feed path is a directory, not a file: %s", rss_file_path)
-        else:
-            logger.error("Cannot find rss feed file: %s", rss_file_path)
-
-        return tree
-
     # region Housekeeping
-
     def _make_folder_structure(self) -> None:
         """Ensure that web_root folder structure exists."""
         logger.debug("Checking folder structure")

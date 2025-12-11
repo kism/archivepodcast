@@ -74,7 +74,7 @@ async def test_render_files(
     assert "guide.html" in list_files_str
     assert "about.html" not in list_files_str
 
-    assert "Writing 18 pages to files locally and to s3" in caplog.text
+    assert "pages to files, all pages uploaded to s3" in caplog.text
     assert "Unhandled s3 error" not in caplog.text
 
 

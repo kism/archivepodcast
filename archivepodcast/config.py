@@ -8,6 +8,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from .constants import JSON_INDENT
 from .utils.logger import LoggingConf, get_logger
 
 # Logging should be all done at INFO level or higher as the log level hasn't been set yet
@@ -121,12 +122,12 @@ class ArchivePodcastConfig(BaseSettings):
                 backup_file,
             )
             with backup_file.open("w") as f:
-                f.write(json.dumps(existing_data, indent=4))
+                f.write(json.dumps(existing_data, indent=JSON_INDENT))
 
         logger.debug("Writing config to %s", config_path.absolute())
 
         with config_path.open("w") as f:
-            f.write(json.dumps(current_config_data, indent=4))
+            f.write(json.dumps(current_config_data, indent=JSON_INDENT))
 
         logger.debug("Config write complete")
 

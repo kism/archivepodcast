@@ -14,6 +14,7 @@ from flask import Response, current_app, render_template, send_file
 
 from archivepodcast.archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
+from archivepodcast.constants import JSON_INDENT
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
@@ -72,7 +73,7 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
 
         ap_conf = ArchivePodcastConfig().force_load_config_file(Path(current_app.instance_path) / "config.json")
 
-        logger.critical(ap_conf.model_dump_json(indent=4))
+        logger.critical(ap_conf.model_dump_json(indent=JSON_INDENT))
 
         # Due to application context this cannot be done in a thread
         _ap.load_config(ap_conf.app, ap_conf.podcasts)
