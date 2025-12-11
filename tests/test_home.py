@@ -24,7 +24,7 @@ async def test_home(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 @pytest.mark.asyncio
 async def test_home_index(client: FlaskClient, apa: PodcastArchiver) -> None:
-    """Test the hello API endpoint. This one uses the fixture in conftest.py."""
+    """Verify index.html returns valid HTML response."""
     podcast_archiver._ap = apa
     await apa.renderer.render_files()
 
@@ -41,7 +41,7 @@ async def test_home_index(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 @pytest.mark.asyncio
 async def test_static_js_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
-    """TEST: /static/archivepodcast.js loads."""
+    """Verify static JavaScript files load correctly."""
     podcast_archiver._ap = apa
     await apa.renderer.render_files()
 
@@ -56,7 +56,7 @@ async def test_static_js_exists(client: FlaskClient, apa: PodcastArchiver) -> No
 
 @pytest.mark.asyncio
 async def test_favicon_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
-    """TEST: /static/archivepodcast.js loads."""
+    """Verify favicon.ico loads correctly."""
     podcast_archiver._ap = apa
     await apa.renderer.render_files()
 
@@ -66,7 +66,7 @@ async def test_favicon_exists(client: FlaskClient, apa: PodcastArchiver) -> None
 
 @pytest.mark.asyncio
 async def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
-    """TEST: /static/archivepodcast.js loads."""
+    """Verify guide.html loads correctly."""
     podcast_archiver._ap = apa
     await apa.renderer.render_files()
 
@@ -76,7 +76,7 @@ async def test_guide_exists(client: FlaskClient, apa: PodcastArchiver) -> None:
 
 @pytest.mark.asyncio
 async def test_fonts_exist(client: FlaskClient, apa: PodcastArchiver) -> None:
-    """TEST: /static/fonts/... loads."""
+    """Verify static font files load correctly."""
     podcast_archiver._ap = apa
     await apa.renderer.render_files()
 

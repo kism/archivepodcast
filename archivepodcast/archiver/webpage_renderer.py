@@ -56,7 +56,7 @@ class WebpageRenderer:
         logger.debug("WebpageRenderer initialized with web_root: %s", get_app_paths().web_root)
 
     async def render_files(self) -> None:
-        """Actual function to upload static to s3 and copy index.html."""
+        """Upload static files to s3 and copy index.html."""
         app_paths = get_app_paths()
         render_files_start_time = time.time()
         health.update_core_status(currently_rendering=True)
@@ -127,10 +127,7 @@ class WebpageRenderer:
         event_times.set_event_time("grab_podcasts/Scrape/_render_files", time.time() - render_files_start_time)
 
     async def render_filelist_html(self, ap_file_list: APFileList) -> None:
-        """Function to render filelist.html.
-
-        This is separate from render_files() since it needs to be done after grabbing podcasts.
-        """
+        """Render filelist.html after podcast grabbing completes."""
         app_paths = get_app_paths()
         await self._check_s3_files()
 

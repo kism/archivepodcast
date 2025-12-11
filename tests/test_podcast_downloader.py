@@ -1,4 +1,4 @@
-"""App testing different config behaviours."""
+"""Tests for PodcastsDownloader functionality."""
 
 import logging
 from collections.abc import Callable

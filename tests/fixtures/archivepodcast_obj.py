@@ -44,7 +44,7 @@ def no_render_files(monkeypatch: pytest.MonkeyPatch) -> None:
     """Monkeypatch _render_files to prevent it from running."""
 
     async def dummy_render_files(self: PodcastArchiver) -> None:
-        """Dummy render files function."""
+        """No-op replacement for render_files."""
         return
 
     monkeypatch.setattr("archivepodcast.archiver.PodcastArchiver._render_files", dummy_render_files)

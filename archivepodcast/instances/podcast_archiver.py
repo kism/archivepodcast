@@ -54,10 +54,7 @@ def initialise_archivepodcast() -> None:
 
 
 def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
-    """Handle Sighup.
-
-    This will stall the webapp while this function is running.
-    """
+    """Handle SIGHUP signal to reload configuration."""
     start_time = time.time()
     if not _ap:
         logger.error("ArchivePodcast object not initialized")

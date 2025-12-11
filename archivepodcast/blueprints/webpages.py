@@ -19,10 +19,7 @@ bp = Blueprint("webpages", __name__)
 
 @bp.route("/")  # type: ignore[untyped-decorator]
 def home() -> Response:
-    """Flask Home.
-
-    If you are serving static files with s3 or nginx, ensure that / redirects to /index.html,
-    """
+    """Redirect to /index.html."""
     return Response(
         "Redirecting to /index.html", status=HTTPStatus.TEMPORARY_REDIRECT, headers={"Location": "/index.html"}
     )
@@ -42,13 +39,13 @@ def home_guide() -> Response:
 
 @bp.route("/webplayer.html")  # type: ignore[untyped-decorator]
 def home_web_player() -> Response:
-    """Podcast app guide."""
+    """Serve the web player page."""
     return send_ap_cached_webpage("webplayer.html")
 
 
 @bp.route("/about.html")  # type: ignore[untyped-decorator]
 def home_about() -> Response:
-    """Flask Home, s3 backup compatible."""
+    """Serve the about page."""
     if get_about_page_exists():
         return send_ap_cached_webpage("about.html")
 
