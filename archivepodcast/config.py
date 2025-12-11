@@ -14,6 +14,7 @@ from .utils.logger import LoggingConf, get_logger
 # Modules should all setup logging like this so the log messages include the modules name.
 logger = get_logger(__name__)
 
+_JSON_INDENT = 4
 _SPACER = "  "
 _LOG_INFO_MESSAGES: dict[str, str] = {
     "frontend_cdn": f"{_SPACER * 2}Frontend: To be served via S3 CDN domain.\n",
@@ -121,12 +122,12 @@ class ArchivePodcastConfig(BaseSettings):
                 backup_file,
             )
             with backup_file.open("w") as f:
-                f.write(json.dumps(existing_data, indent=4))
+                f.write(json.dumps(existing_data, indent=_JSON_INDENT))
 
         logger.debug("Writing config to %s", config_path.absolute())
 
         with config_path.open("w") as f:
-            f.write(json.dumps(current_config_data, indent=4))
+            f.write(json.dumps(current_config_data, indent=_JSON_INDENT))
 
         logger.debug("Config write complete")
 
