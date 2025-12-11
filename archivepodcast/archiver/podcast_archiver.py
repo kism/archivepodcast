@@ -104,13 +104,12 @@ class PodcastArchiver:
         self.podcast_list = podcast_list
         self._make_folder_structure()
 
-    # endregion
-
+    # region Getters
     def get_rss_feed(self, feed: str) -> bytes:
         """Return the rss file for a given feed."""
         return self.podcast_rss[feed]
 
-    # region Archive
+    # region Grab
 
     def grab_podcasts(self) -> None:
         """Download and process all configured podcasts.
@@ -193,36 +192,12 @@ class PodcastArchiver:
             logger.error("Podcast has no name_one_word set in config, cannot proceed")
             return
 
-        rss_file_path = get_app_paths().web_root / "rss" / podcast.name_one_word
-
-        tree = None
-        previous_feed = b""
-
-        podcasts_downloader = PodcastsDownloader(
-            podcast=podcast,
-            app_config=self._app_config,
-            s3=self.s3,
-            aiohttp_session=aiohttp_session,
-        )
         logger.info("[%s] Processing podcast to archive: %s", podcast.name_one_word, podcast.new_name)
 
-        try:
-            previous_feed = self.podcast_rss[podcast.name_one_word]
-        except KeyError:  # If nothing in cache, try load from file
-            if rss_file_path.is_file():
-                with contextlib.suppress(Exception):
-                    previous_feed = rss_file_path.read_bytes()
+        previous_feed = self._get_previous_feed(podcast)
+        tree = await self._download_live_podcast(podcast, aiohttp_session) if podcast.live else None
 
-        if podcast.live is True:  # download all the podcasts
-            tree = await podcasts_downloader.download_podcast()
-            if tree:
-                last_fetched = int(time.time())
-                health.update_podcast_status(podcast.name_one_word, rss_fetching_live=True, last_fetched=last_fetched)
-            else:
-                # There should be a previous error message too
-                logger.error("Unable to download podcast: %s", podcast.name_one_word)
-
-        else:
+        if not podcast.live:
             logger.info('[%s] "live": false, in config so not fetching new episodes', podcast.name_one_word)
             health.update_podcast_status(podcast.name_one_word, rss_fetching_live=False)
 
@@ -230,35 +205,76 @@ class PodcastArchiver:
         if tree_no_episodes(tree):
             tree = None
 
-        # Serving a podcast that we can't currently download?, load it from file
+        # Load from cache if no tree available
         if tree is None:
-            if previous_feed != b"":
-                try:
-                    tree = etree.ElementTree(etree.fromstring(previous_feed))
-                    if tree_no_episodes(tree):  # Revert back to none if no episodes
-                        logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
-                        tree = None
-                    else:
-                        logger.info("[%s] Loaded rss from file", podcast.name_one_word)
-                except etree.XMLSyntaxError:
-                    logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
-                    tree = None
-            else:
-                logger.warning(
-                    "[%s] Cannot find local rss feed file to serve unavailable podcast",
-                    podcast.name_one_word,
-                )
+            tree = self._load_cached_feed(podcast, previous_feed)
 
+        await self._process_podcast_tree(podcast, tree, previous_feed)
+        logger.trace("Exiting _grab_podcast for %s", podcast.name_one_word)
+
+    # region _grab helpers
+    def _get_previous_feed(self, podcast: PodcastConfig) -> bytes:
+        """Get the previous feed from cache or file."""
+        try:
+            return self.podcast_rss[podcast.name_one_word]
+        except KeyError:
+            rss_file_path = get_app_paths().web_root / "rss" / podcast.name_one_word
+            if rss_file_path.is_file():
+                with contextlib.suppress(Exception):
+                    return rss_file_path.read_bytes()
+            return b""
+
+    async def _download_live_podcast(
+        self, podcast: PodcastConfig, aiohttp_session: aiohttp.ClientSession
+    ) -> etree._ElementTree | None:
+        """Download live podcast and update health status."""
+        podcasts_downloader = PodcastsDownloader(
+            podcast=podcast,
+            app_config=self._app_config,
+            s3=self.s3,
+            aiohttp_session=aiohttp_session,
+        )
+
+        tree = await podcasts_downloader.download_podcast()
+        if tree:
+            last_fetched = int(time.time())
+            health.update_podcast_status(podcast.name_one_word, rss_fetching_live=True, last_fetched=last_fetched)
+        else:
+            logger.error("Unable to download podcast: %s", podcast.name_one_word)
+
+        return tree
+
+    def _load_cached_feed(self, podcast: PodcastConfig, previous_feed: bytes) -> etree._ElementTree | None:
+        """Load feed from cache when live download is not available."""
+        tree = None
+        if previous_feed == b"":
+            logger.warning(
+                "[%s] Cannot find local rss feed file to serve unavailable podcast",
+                podcast.name_one_word,
+            )
+            return None
+
+        try:
+            tree = etree.ElementTree(etree.fromstring(previous_feed))
+            if tree_no_episodes(tree):
+                logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
+                return None
+            logger.info("[%s] Loaded rss from file", podcast.name_one_word)
+        except etree.XMLSyntaxError:
+            logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
+
+        return tree
+
+    async def _process_podcast_tree(
+        self, podcast: PodcastConfig, tree: etree._ElementTree | None, previous_feed: bytes
+    ) -> None:
+        """Process the podcast tree and update RSS feed or handle errors."""
         if tree is not None:
             await self._update_rss_feed(podcast, tree, previous_feed)
             health.update_podcast_episode_info(podcast.name_one_word, tree)
         else:
             logger.error("Unable to host podcast: %s, something is wrong", podcast.name_one_word)
             health.update_podcast_status(podcast.name_one_word, rss_available=False)
-
-        del tree
-
-        logger.trace("Exiting _grab_podcast for %s", podcast.name_one_word)
 
     # region RSS Feed Handling
     async def _update_rss_feed(
