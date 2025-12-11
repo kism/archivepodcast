@@ -256,38 +256,26 @@ class PodcastArchiver:
             {
                 podcast.name_one_word: etree.tostring(
                     tree.getroot(),
-                    encoding="UTF-8",
+                    encoding="UTF-8",  # Keep this uppercase for the diff to work
                     method="xml",
                     xml_declaration=True,
                 )
             }
         )
-        logger.info(
-            "[%s] Hosted feed: %srss/%s",
-            podcast.name_one_word,
-            self._app_config.inet_path,
-            podcast.name_one_word,
-        )
 
-        logger.critical(
-            "[%s] Feed equal? %s", podcast.name_one_word, previous_feed == self.podcast_rss[podcast.name_one_word]
-        )
-        if previous_feed != self.podcast_rss[podcast.name_one_word]:
-            directory = Path("/tmp/archivepodcast")
-            directory.mkdir(parents=True, exist_ok=True)
-            temp_file_path_previous = directory / f"{podcast.name_one_word}_1_feed.xml"
-            temp_file_path_new = directory / f"{podcast.name_one_word}_2_feed.xml"
-            temp_file_path_previous.write_bytes(previous_feed)
-            temp_file_path_new.write_bytes(self.podcast_rss[podcast.name_one_word])
+        # Check the length of the feed in s3
+        local_changes_to_feed = self.podcast_rss[podcast.name_one_word] != previous_feed
+        need_to_upload_to_s3 = False
+        if self.s3:
+            logger.trace("S3 Check upload")
+            if not s3_file_cache.check_file_exists(
+                key="rss/" + podcast.name_one_word,
+                size=len(self.podcast_rss[podcast.name_one_word]),
+            ):
+                need_to_upload_to_s3 = True
 
         # Upload to s3 if we are in s3 mode
-        if (
-            self.s3
-            and previous_feed
-            != self.podcast_rss[
-                podcast.name_one_word
-            ]  # This doesn't work when feed has build dates times on it, patreon for one
-        ):
+        if need_to_upload_to_s3:
             session = get_session()
             s3_config = get_ap_config_s3_client()
 
@@ -307,8 +295,21 @@ class PodcastArchiver:
                     logger.debug("[%s] Uploaded feed to s3", podcast.name_one_word)
                 except Exception:  # pylint: disable=broad-exception-caught
                     logger.exception("Unhandled s3 error trying to upload the file: %s")
-        else:
-            logger.critical("Not uploading feed to s3, either not in s3 mode or feed unchanged")
+
+        msg = "no feed changes"
+        if need_to_upload_to_s3:
+            msg = "uploaded to s3"
+        elif local_changes_to_feed:
+            msg = "feed changed"
+
+        logger.info(
+            "[%s] (%s) Hosted feed: %srss/%s",
+            podcast.name_one_word,
+            msg,
+            self._app_config.inet_path,
+            podcast.name_one_word,
+        )
+
         health.update_podcast_status(podcast.name_one_word, rss_available=True)
         logger.trace("Exiting _update_rss_feed")
 
