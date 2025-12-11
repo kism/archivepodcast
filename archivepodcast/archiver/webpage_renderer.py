@@ -127,10 +127,7 @@ class WebpageRenderer:
         event_times.set_event_time("grab_podcasts/Scrape/_render_files", time.time() - render_files_start_time)
 
     async def render_filelist_html(self, ap_file_list: APFileList) -> None:
-        """Function to render filelist.html.
-
-        This is separate from render_files() since it needs to be done after grabbing podcasts.
-        """
+        """Render filelist.html after podcast grabbing completes."""
         app_paths = get_app_paths()
         await self._check_s3_files()
 

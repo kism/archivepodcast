@@ -21,7 +21,7 @@ MAX_CACHE_AGE = 120
 
 
 class S3File(BaseModel):
-    """Model representing a S3 file in the cache."""
+    """Model representing an S3 file in the cache."""
 
     key: str
     size: int

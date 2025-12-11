@@ -133,7 +133,7 @@ class ArchivePodcastConfig(BaseSettings):
 
     @classmethod
     def force_load_config_file(cls, config_path: Path) -> Self:
-        """Load the configuration file. File contents takes precedence over env vars."""
+        """Load the configuration file. File contents take precedence over env vars."""
         if not config_path.exists():
             logger.warning(
                 "Config file %s does not exist, loading defaults",
