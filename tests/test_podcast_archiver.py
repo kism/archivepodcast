@@ -68,7 +68,7 @@ def test_grab_podcasts_not_live(
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
-    assert '"live": false, in config so not fetching new episodes' in caplog.text
+    assert '"live": false, in config, not fetching new episodes, will load feed from disk' in caplog.text
     assert "Loaded rss from file" in caplog.text
     assert "Cannot find rss feed file" not in caplog.text
     assert "Unable to host podcast, something is wrong" not in caplog.text
@@ -138,7 +138,7 @@ def test_grab_podcasts_not_live_no_existing_feed(
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
-    assert '"live": false, in config so not fetching new episodes' in caplog.text
+    assert '"live": false, in config, not fetching new episodes, will load feed from disk' in caplog.text
     assert "Cannot find local rss feed file to serve unavailable podcast" in caplog.text
     assert "Unable to host podcast: test, something is wrong" in caplog.text
 

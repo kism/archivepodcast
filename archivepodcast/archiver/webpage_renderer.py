@@ -190,11 +190,6 @@ class WebpageRenderer:
         s3_pages_uploaded = []
         s3_pages_skipped = []
 
-        if self._s3:
-            logger.debug("Writing %s locally and to s3", str_webpages)
-        else:
-            logger.debug("Writing %s locally", str_webpages)
-
         for webpage in webpages:
             webpage_path = Path(webpage.path)
             directory_path = app_paths.web_root / webpage_path.parent
@@ -238,12 +233,15 @@ class WebpageRenderer:
                         logger.exception("Unhandled s3 error trying to upload the file: %s", s3_key)
 
         msg = f"Wrote {str_webpages}"
-        if self._s3 and len(s3_pages_skipped) == 1:
-            msg += ", skipped upload due to same size."
-        elif self._s3 and len(s3_pages_skipped) > 1:
-            msg += f", skipped {len(s3_pages_skipped)} s3 uploads due to matching size."
-            logger.debug("Skipped s3 uploads: %s", s3_pages_skipped)
-            logger.debug("Uploaded s3 pages: %s", s3_pages_uploaded)
+        if self._s3:
+            if len(s3_pages_skipped) == 1:
+                msg += ", skipped upload due to same size"
+            elif len(s3_pages_skipped) > 1:
+                msg += f", skipped {len(s3_pages_skipped)} s3 uploads due to matching size"
+                logger.debug("Skipped s3 uploads: %s", s3_pages_skipped)
+                logger.debug("Uploaded s3 pages: %s", s3_pages_uploaded)
+            else:
+                msg += ", all pages uploaded to s3"
         logger.info(msg)
 
     async def _load_about_page(self) -> None:
