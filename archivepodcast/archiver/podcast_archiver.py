@@ -284,6 +284,9 @@ class PodcastArchiver:
         need_to_upload_to_s3 = False
         if self.s3:
             logger.trace("S3 Check upload")
+            # So this only checks the size,
+            # the generated time of rss feeds shouldn't affect the size due to how the time is formatted
+            # see <pubDate> or <lastBuildDate> in an rss feed that has it
             if not s3_file_cache.check_file_exists(
                 key="rss/" + podcast.name_one_word,
                 size=len(self.podcast_rss[podcast.name_one_word]),
