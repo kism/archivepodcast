@@ -6,6 +6,7 @@ from pathlib import Path
 from flask import Blueprint, Response, current_app, render_template
 from lxml import etree
 
+from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.config import get_ap_config
 from archivepodcast.instances.podcast_archiver import (
     get_about_page_exists,
@@ -49,11 +50,11 @@ def rss(feed: str) -> Response:
             tree = etree.parse(Path(current_app.instance_path) / "web" / "rss" / feed)
             rss = etree.tostring(
                 tree.getroot(),
-                encoding="utf-8",
+                encoding=XML_ENCODING,
                 method="xml",
                 xml_declaration=True,
             )
-            rss_str = rss.decode("utf-8")
+            rss_str = rss.decode(XML_ENCODING)
             logger.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
 
         # The file isn't there due to user error or not being created yet

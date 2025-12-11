@@ -46,7 +46,7 @@ def test_update_podcast_health() -> None:
 
 def test_podcast_health_errors(caplog: pytest.LogCaptureFixture) -> None:
     """Test the podcast section of the health API endpoint."""
-    rss_str = DUMMY_RSS_STR.replace("encoding='utf-8'", "")
+    rss_str = DUMMY_RSS_STR.replace("encoding='UTF-8'", "")
     assert "encoding" not in rss_str
     tree = etree.fromstring(rss_str)
 
@@ -77,7 +77,7 @@ def test_podcast_health_errors(caplog: pytest.LogCaptureFixture) -> None:
 )
 def test_podcast_health_date_formats(caplog: pytest.LogCaptureFixture, date: str) -> None:
     """Test the podcast section of the health API endpoint."""
-    rss_str = DUMMY_RSS_STR.replace("encoding='utf-8'", "")
+    rss_str = DUMMY_RSS_STR.replace("encoding='UTF-8'", "")
     assert "encoding" not in rss_str
     tree = etree.fromstring(rss_str)
 

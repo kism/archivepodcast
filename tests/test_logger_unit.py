@@ -3,6 +3,7 @@
 import logging
 import random
 from collections.abc import Generator
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -85,3 +86,61 @@ def test_trace_level(logger: CustomLogger, caplog: pytest.LogCaptureFixture) -> 
 
     assert "Test trace" in caplog.text
     assert_no_warnings_in_caplog(caplog)
+
+
+def test_add_file_handler(
+    logger: CustomLogger,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Test adding a file handler to the logger."""
+    log_level = "DEBUG"
+
+    # Fail to log to a directory
+    log_path = tmp_path
+    config = LoggingConf(level=log_level, path=log_path)
+    with pytest.raises(IsADirectoryError):
+        setup_logger(app=None, logging_conf=config, in_logger=logger)
+
+    # Succeed
+    log_path = tmp_path / "test_log.log"
+    config = LoggingConf(level=log_level, path=log_path)
+    setup_logger(app=None, logging_conf=config, in_logger=logger)
+
+    # Check that the file handler was added
+    handlers = [handler for handler in logger.handlers if isinstance(handler, logging.FileHandler)]
+    assert len(handlers) == 1
+    assert handlers[0].baseFilename == str(log_path)
+
+
+def test_add_file_handler_no_permissions(
+    logger: CustomLogger,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Test adding a file handler to the logger when no permissions."""
+    log_level = "DEBUG"
+    log_path = tmp_path / "no_permission.log"
+
+    # Mock RotatingFileHandler to raise PermissionError
+    def raise_permission_error(*args: object, **kwargs: object) -> None:
+        raise PermissionError
+
+    monkeypatch.setattr("archivepodcast.utils.logger.RotatingFileHandler", raise_permission_error)
+
+    config = LoggingConf(level=log_level, path=log_path)
+    with pytest.raises(PermissionError, match="The user running this does not have access to the file"):
+        setup_logger(app=None, logging_conf=config, in_logger=logger)
+
+
+def test_add_rich_console_handler(logger: CustomLogger, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test adding a rich console handler to the logger."""
+    monkeypatch.delenv("AP_SIMPLE_LOGGING", raising=False)
+
+    log_level = "INFO"
+    config = LoggingConf(level=log_level, path=None)
+    setup_logger(app=None, logging_conf=config, in_logger=logger)
+
+    handlers = list(logger.handlers)
+    assert any(handler.__class__.__name__ == "RichHandler" for handler in handlers)
+    assert not any(handler.__class__.__name__ == "StreamHandler" for handler in handlers)

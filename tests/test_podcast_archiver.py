@@ -68,8 +68,8 @@ def test_grab_podcasts_not_live(
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
-    assert '"live": false, in config so not fetching new episodes' in caplog.text
-    assert "Loading rss from file" in caplog.text
+    assert '"live": false, in config, not fetching new episodes, will load feed from disk' in caplog.text
+    assert "Loaded rss from file" in caplog.text
     assert "Cannot find rss feed file" not in caplog.text
     assert "Unable to host podcast, something is wrong" not in caplog.text
 
@@ -122,7 +122,7 @@ def test_grab_podcasts_invalid_rss(
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.archiver"):
         apa.grab_podcasts()
 
-    assert "Error parsing rss file:" in caplog.text
+    assert "Syntax error in rss feed file" in caplog.text
 
 
 def test_grab_podcasts_not_live_no_existing_feed(
@@ -138,9 +138,8 @@ def test_grab_podcasts_not_live_no_existing_feed(
         apa.grab_podcasts()
 
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
-    assert '"live": false, in config so not fetching new episodes' in caplog.text
-    assert "Loading rss from file:" in caplog.text
-    assert "Cannot find rss feed file" in caplog.text
+    assert '"live": false, in config, not fetching new episodes, will load feed from disk' in caplog.text
+    assert "Cannot find local rss feed file to serve unavailable podcast" in caplog.text
     assert "Unable to host podcast: test, something is wrong" in caplog.text
 
 
@@ -159,8 +158,7 @@ def test_grab_podcasts_live(
     assert "Processing podcast to archive: PyTest Podcast [Archive]" in caplog.text
     assert "Wrote rss to disk:" in caplog.text
     assert "Hosted feed: http://localhost:5100/rss/test" in caplog.text
-
-    assert "Loading rss from file" not in caplog.text
+    assert "Loaded rss from file" not in caplog.text
 
     rss = str(apa.get_rss_feed("test"))
 
@@ -209,3 +207,21 @@ def test_grab_podcasts_no_episodes(
 
     # Since it loads the old version from the disk
     assert (apa.get_rss_feed("test")).decode("utf-8") == DUMMY_RSS_STR
+
+
+def test_archiver_webpages(apa: PodcastArchiver) -> None:
+    """Test archiver webpages generation."""
+    pages = apa.renderer.webpages.get_list()
+    assert len(pages) != 0
+
+
+def test_archiver_webpages_header(apa: PodcastArchiver) -> None:
+    """Test archiver webpages generation."""
+    header = apa.renderer.webpages.generate_header("index.html", debug=True)
+    assert "/health" in header
+
+    header = apa.renderer.webpages.generate_header("health.html", debug=True)
+    assert "/health" not in header
+
+    header = apa.renderer.webpages.generate_header("index.html")
+    assert "/health" not in header

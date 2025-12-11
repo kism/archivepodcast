@@ -17,3 +17,4 @@ aiomonitor
 httpsession
 PYTHONUNBUFFERED
 powertools
+delenv
