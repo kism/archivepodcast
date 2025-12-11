@@ -18,7 +18,7 @@ def error_on_raise_in_thread(monkeypatch: pytest.MonkeyPatch) -> Generator[None]
             super().__init__(*args, **kwargs)
 
         def run(self) -> None:
-            """Mocked thread.run() method to capture exceptions."""
+            """Wrapper to capture exceptions from threads."""
             try:
                 super().run()
             except BaseException as e:
