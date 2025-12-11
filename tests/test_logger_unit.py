@@ -114,3 +114,16 @@ def test_add_file_handler(logger: CustomLogger, tmp_path: Path) -> None:
     handlers = [handler for handler in logger.handlers if isinstance(handler, logging.FileHandler)]
     assert len(handlers) == 1
     assert handlers[0].baseFilename == str(log_path)
+
+
+def test_add_rich_console_handler(logger: CustomLogger, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test adding a rich console handler to the logger."""
+    monkeypatch.delenv("AP_SIMPLE_LOGGING", raising=False)
+
+    log_level = "INFO"
+    config = LoggingConf(level=log_level, path=None)
+    setup_logger(app=None, logging_conf=config, in_logger=logger)
+
+    handlers = list(logger.handlers)
+    assert any(handler.__class__.__name__ == "RichHandler" for handler in handlers)
+    assert not any(handler.__class__.__name__ == "StreamHandler" for handler in handlers)

@@ -45,3 +45,33 @@ def test_invalid_log_level(caplog: pytest.LogCaptureFixture) -> None:
     assert "Invalid logging level" in caplog.text
     assert conf.level == "INFO"
     caplog.clear()
+
+
+def test_set_level_cli() -> None:
+    """Test setting log level via CLI."""
+
+    conf = LoggingConf(level="TRACE", path=None)
+    conf.setup_verbosity_cli(verbosity=0)
+    assert conf.level == logging.INFO
+
+    conf.setup_verbosity_cli(verbosity=1)
+    assert conf.level == logging.DEBUG
+
+    conf.setup_verbosity_cli(verbosity=2)
+    assert conf.level == TRACE_LEVEL_NUM
+
+    conf.setup_verbosity_cli(verbosity=999)
+    assert conf.level == TRACE_LEVEL_NUM
+
+
+def test_set_path_validator() -> None:
+    """Test the path validator."""
+
+    # None path
+    conf = LoggingConf(level="INFO", path=None)
+
+    conf.set_path(None)
+    assert conf.path is None
+
+    conf.set_path("")
+    assert conf.path is None
