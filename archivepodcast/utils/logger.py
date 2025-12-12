@@ -122,13 +122,7 @@ def setup_logger(
     logging_conf: LoggingConf | None = None,
     in_logger: logging.Logger | None = None,
 ) -> None:
-    """Configure logging for the application.
-
-    Args:
-        app: The Flask application instance
-        logging_conf: Logging configuration object
-        in_logger: Optional logger instance to configure (mainly for testing)
-    """
+    """Configure logging for the application."""
     if logging_conf is None:
         logging_conf = LoggingConf()
 
@@ -225,7 +219,6 @@ def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
             )
         else:
             in_logger.setLevel(log_level)
-            logger.debug("Showing log level: INFO and above")
             logger.debug("Showing log level: DEBUG")
             logger.trace("Showing log level: TRACE")
     else:

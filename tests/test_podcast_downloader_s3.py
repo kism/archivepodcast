@@ -12,6 +12,7 @@ from botocore.exceptions import ClientError
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.downloader.downloader import PodcastsDownloader
+from archivepodcast.instances.health import health
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from tests.fixtures.aws import S3ClientMock
 from tests.models.aiohttp import FakeSession
@@ -76,7 +77,6 @@ async def test_download_podcast(
 
     assert "Uploading to s3:" in caplog.text
     assert "Removing local file" in caplog.text
-    assert "_download_cover_art" in caplog.text
     assert "Uploading podcast cover art to s3" not in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
@@ -93,31 +93,42 @@ async def test_download_podcast(
 
 
 @pytest.mark.asyncio
-async def mock_podcast_source_rss_wav(
-    apd_aws: PodcastsDownloader,
+async def test_download_podcast_wav(
+    apa_aws: PodcastArchiver,
     get_test_config: Callable[[str], ArchivePodcastConfig],
-    mock_podcast_source_rss_valid: MockerFixture,
+    mock_podcast_source_rss_wav: MockerFixture,
     mock_get_session: AWSAioSessionMock,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Test downloading podcast RSS and assets with WAV format."""
-    assert apd_aws._s3
+    """Test downloading podcast with WAV audio format."""
+    # Create the PodcastsDownloader after the mock is in place
+    config = get_test_config("testing_true_valid_s3.json")
+    podcast = apa_aws.podcast_list[0]
+    aiohttp_session = aiohttp.ClientSession()
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
-        await apd_aws.download_podcast()
+    apd_aws = PodcastsDownloader(app_config=config.app, s3=apa_aws.s3, podcast=podcast, aiohttp_session=aiohttp_session)
 
-    assert "Downloaded rss feed, processing" in caplog.text
-    assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
-    assert "Downloaded asset to:" in caplog.text
-    assert "Converting episode" in caplog.text
-    assert "HTTP ERROR:" not in caplog.text
-    assert "Download Failed" not in caplog.text
+    try:
+        assert apd_aws._s3
+
+        with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
+            await apd_aws.download_podcast()
+
+        assert "Downloaded rss feed, processing" in caplog.text
+        assert "Podcast title: PyTest Test RSS feed for ArchivePodcast" in caplog.text
+        assert "Downloaded asset to:" in caplog.text
+        assert "Converting episode" in caplog.text
+        assert "HTTP ERROR:" not in caplog.text
+        assert "Download Failed" not in caplog.text
+    finally:
+        # Clean up the session
+        await aiohttp_session.close()
 
     async with mock_get_session.create_client("s3") as s3_client:
         s3_object_list = await s3_client.list_objects_v2(Bucket=apd_aws._app_config.s3.bucket)
     s3_object_list_str = [path["Key"] for path in s3_object_list.get("Contents", [])]
 
-    assert "content/test/Test-Episode.jpg" in s3_object_list_str
+    assert "content/test/20200101-Test-Episode.jpg" in s3_object_list_str
     assert "content/test/20200101-Test-Episode.mp3" in s3_object_list_str
     assert "content/test/PyTest-Podcast-Archive-S3.jpg" in s3_object_list_str
 
@@ -242,3 +253,38 @@ async def test_check_path_exists_s3_unhandled_exception(
         assert await apd_aws._check_path_exists("content/test") is False
 
     assert "Unhandled s3 Error" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_write_health_s3(
+    apa_aws: PodcastArchiver,
+    mock_get_session: AWSAioSessionMock,
+) -> None:
+    """Test writing health and profile JSON to S3."""
+    # Get the health API response
+    health_api_response = health.get_health()
+
+    # Write health data to S3
+    await apa_aws.renderer.write_health_s3(health_api_response)
+
+    # Verify the webpages were added
+    assert apa_aws.renderer.webpages.get_webpage("api/health") is not None
+    assert apa_aws.renderer.webpages.get_webpage("api/profile") is not None
+
+    # Verify the content
+    health_webpage = apa_aws.renderer.webpages.get_webpage("api/health")
+    profile_webpage = apa_aws.renderer.webpages.get_webpage("api/profile")
+
+    assert health_webpage.mime == "application/json"
+    assert profile_webpage.mime == "application/json"
+    assert health_webpage.content
+    assert profile_webpage.content
+
+    # Verify the files were uploaded to S3
+    async with mock_get_session.create_client("s3") as s3_client:
+        list_files = await s3_client.list_objects_v2(Bucket=apa_aws._app_config.s3.bucket)
+
+    list_files_str = [path["Key"] for path in list_files.get("Contents", [])]
+
+    assert "api/health" in list_files_str
+    assert "api/profile" in list_files_str

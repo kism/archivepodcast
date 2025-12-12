@@ -112,10 +112,7 @@ class PodcastArchiver:
     # region Grab
 
     def grab_podcasts(self) -> None:
-        """Download and process all configured podcasts.
-
-        Updates health metrics and regenerates file listings after processing.
-        """
+        """Download and process all configured podcasts, updating health metrics and file listings."""
         grab_podcasts_start_time = time.time()
         health.update_core_status(last_run=int(grab_podcasts_start_time))
         event_loop = asyncio.new_event_loop()
@@ -371,8 +368,8 @@ class PodcastArchiver:
                 folder.mkdir(parents=True, exist_ok=True)
             except PermissionError as exc:
                 err = (
-                    f"You do not have permission to create folder: {folder}"
-                    "Run this this script as a different user probably, or check permissions of the web_root."
+                    f"You do not have permission to create folder: {folder}. "
+                    "Run this script as a different user probably, or check permissions of the web_root."
                 )
                 logger.exception(err)
                 raise PermissionError(err) from exc

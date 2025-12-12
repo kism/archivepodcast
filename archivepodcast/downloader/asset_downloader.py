@@ -131,7 +131,7 @@ class AssetDownloader:
         if self._s3 and not local_file_found and await self._check_path_exists(cover_art_destination):
             remote_file_found = True
 
-        logger.debug(
+        logger.trace(
             "[%s] _download_cover_art, local_file_found=%s, remote_file_found=%s",
             self._podcast.name_one_word,
             local_file_found,
@@ -148,10 +148,6 @@ class AssetDownloader:
 
         # If we (now) have a file here, upload to s3 if needed
         if self._s3 and (local_file_found or not remote_file_found):
-            logger.debug(
-                "[%s] Uploading podcast cover art to s3 not deleting local file to allow overriding",
-                self._podcast.name_one_word,
-            )
             await self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
 
     async def _handle_wav(self, url: str, title: str, extension: str = "", file_date_string: str = "") -> int:

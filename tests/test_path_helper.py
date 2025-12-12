@@ -19,7 +19,7 @@ def test_get_app_paths_unset(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_get_app_paths_set(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Test that getting app paths without setting raises RuntimeError."""
+    """Test that app paths can be set and retrieved."""
 
     monkeypatch.setattr(
         "archivepodcast.instances.path_helper._app_paths",
