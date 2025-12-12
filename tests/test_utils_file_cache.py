@@ -107,7 +107,7 @@ def test_add_file_adds_new_file(tmp_path: Path) -> None:
     assert new_file in files
     assert len(files) == 2
 
-    # Check dupilcates are not added
+    # Check duplicates are not added
     cache.add_file(new_file)
     files = cache.get_all()
     assert len(files) == 2

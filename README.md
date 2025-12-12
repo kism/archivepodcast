@@ -28,7 +28,7 @@ Features:
 
 ## Todo
 
-- check age of rendered / static pages or use checksum to avoid colisions
+- check age of rendered / static pages or use checksum to avoid collisions
 - serverless
   - config from s3
 - fix readme again
