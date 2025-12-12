@@ -59,14 +59,6 @@ def test_refresh_sorts_files(tmp_path: Path) -> None:
     assert files == [Path("alpha.txt"), Path("beta.txt"), Path("zebra.txt")]
 
 
-def test_get_all_raises_error_when_not_initialized() -> None:
-    """Test that get_all() raises ValueError when cache is not initialized."""
-    cache = LocalFileCache()
-
-    with pytest.raises(ValueError, match=r"File cache is not initialized."):
-        cache.get_all()
-
-
 def test_raises_error_when_not_initialized() -> None:
     """Test that get_all_str() raises ValueError when cache is not initialized."""
     cache = LocalFileCache()
@@ -81,6 +73,9 @@ def test_raises_error_when_not_initialized() -> None:
 
     with pytest.raises(ValueError, match=match_text):
         cache.check_exists(Path("somefile.txt"))
+
+    with pytest.raises(ValueError, match=match_text):
+        cache.add_file(Path("somefile.txt"))
 
 
 def test_check_exists_returns_true_for_cached_file(tmp_path: Path) -> None:
