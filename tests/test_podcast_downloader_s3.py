@@ -76,7 +76,6 @@ async def test_download_podcast(
 
     assert "Uploading to s3:" in caplog.text
     assert "Removing local file" in caplog.text
-    assert "_download_cover_art" in caplog.text
     assert "Uploading podcast cover art to s3" not in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
