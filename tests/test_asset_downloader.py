@@ -90,6 +90,45 @@ async def test_check_path_exists_str_path(
 
 
 @pytest.mark.asyncio
+async def test_check_path_exists_s3_not_in_cache(
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    mock_get_session: AWSAioSessionMock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test _check_path_exists with S3 when file is not in cache or S3."""
+    config_file = "testing_true_valid_s3.json"
+    config = get_test_config(config_file)
+    podcast = config.podcasts[0]
+
+    responses: dict[str, FakeResponseDef] = {}
+    aiohttp_session = FakeSession(responses=responses)
+
+    downloader = AssetDownloader(
+        podcast=podcast,
+        app_config=config.app,
+        s3=True,
+        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]
+    )
+
+    # Create a path that doesn't exist in S3 cache
+    content_dir = get_app_paths().web_root / "content" / podcast.name_one_word
+    test_file = content_dir / "nonexistent.mp3"
+
+    # Ensure the file is not in S3 cache
+    s3_path = test_file.relative_to(get_app_paths().web_root).as_posix()
+    assert not s3_file_cache.check_file_exists(s3_path)
+
+    with caplog.at_level(logging.DEBUG):
+        exists = await downloader._check_path_exists(test_file)
+
+    # File should not exist
+    assert exists is False
+
+    # Should see the debug message that file doesn't exist in S3
+    assert "does not exist 🙅‍ in the s3 bucket" in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_upload_asset_s3_remove_original_false_already_exists(
     get_test_config: Callable[[str], ArchivePodcastConfig],
     mock_get_session: AWSAioSessionMock,
