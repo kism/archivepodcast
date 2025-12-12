@@ -28,10 +28,10 @@ Features:
 
 ## Todo
 
+- check age of rendered / static pages or use checksum to avoid colisions
 - serverless
   - config from s3
 - fix readme again
 - pydantic xml
-- self test function to ensure ffmpeg works
 
-Prod time to beat running adhoc, 56 seconds.
+Prod time to beat running adhoc, 56 seconds, current: 9s
