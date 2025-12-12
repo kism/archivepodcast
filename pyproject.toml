@@ -115,6 +115,7 @@ ignore = [
     "S105",    # KG Hardcoded fake passwords are fine in tests.
     "PLR0913", # KG Tests can have as many arguments as they want.
     "BLE001",  # KG Tests can use BaseException.
+    "PLR2004", # KG Tests can have magic number comparisons.
 ]
 "tests/fixtures/aws.py" = [
     "N803", # KG AWS Just breaks the rules here

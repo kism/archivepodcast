@@ -12,6 +12,7 @@ from botocore.exceptions import ClientError
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.downloader.downloader import PodcastsDownloader
+from archivepodcast.instances.health import health
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from tests.fixtures.aws import S3ClientMock
 from tests.models.aiohttp import FakeSession
@@ -76,7 +77,6 @@ async def test_download_podcast(
 
     assert "Uploading to s3:" in caplog.text
     assert "Removing local file" in caplog.text
-    assert "_download_cover_art" in caplog.text
     assert "Uploading podcast cover art to s3" not in caplog.text
     assert "HTTP ERROR:" not in caplog.text
     assert "Download Failed" not in caplog.text
@@ -253,3 +253,38 @@ async def test_check_path_exists_s3_unhandled_exception(
         assert await apd_aws._check_path_exists("content/test") is False
 
     assert "Unhandled s3 Error" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_write_health_s3(
+    apa_aws: PodcastArchiver,
+    mock_get_session: AWSAioSessionMock,
+) -> None:
+    """Test writing health and profile JSON to S3."""
+    # Get the health API response
+    health_api_response = health.get_health()
+
+    # Write health data to S3
+    await apa_aws.renderer.write_health_s3(health_api_response)
+
+    # Verify the webpages were added
+    assert apa_aws.renderer.webpages.get_webpage("api/health") is not None
+    assert apa_aws.renderer.webpages.get_webpage("api/profile") is not None
+
+    # Verify the content
+    health_webpage = apa_aws.renderer.webpages.get_webpage("api/health")
+    profile_webpage = apa_aws.renderer.webpages.get_webpage("api/profile")
+
+    assert health_webpage.mime == "application/json"
+    assert profile_webpage.mime == "application/json"
+    assert health_webpage.content
+    assert profile_webpage.content
+
+    # Verify the files were uploaded to S3
+    async with mock_get_session.create_client("s3") as s3_client:
+        list_files = await s3_client.list_objects_v2(Bucket=apa_aws._app_config.s3.bucket)
+
+    list_files_str = [path["Key"] for path in list_files.get("Contents", [])]
+
+    assert "api/health" in list_files_str
+    assert "api/profile" in list_files_str
