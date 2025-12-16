@@ -233,7 +233,9 @@ class PodcastArchiver:
             return b""
 
     async def _download_live_podcast(
-        self, podcast: PodcastConfig, aiohttp_session: aiohttp.ClientSession
+        self,
+        podcast: PodcastConfig,
+        aiohttp_session: aiohttp.ClientSession,
     ) -> RssFeed | None:
         """Download live podcast and update health status using RssFeed."""
         podcasts_downloader = PodcastsDownloader(
@@ -245,7 +247,6 @@ class PodcastArchiver:
 
         tree = await podcasts_downloader.download_podcast()
         if tree:
-            # Convert ET.ElementTree to RssFeed
             try:
                 root = tree.getroot()
                 if root is not None:

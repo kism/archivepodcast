@@ -32,22 +32,6 @@ else:
 logger = get_logger(__name__)
 
 
-# These make the name spaces appear nicer in the generated XML
-ET.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
-ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
-ET.register_namespace("podcast", "https://podcastindex.org/namespace/1.0")
-ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
-ET.register_namespace("media", "http://search.yahoo.com/mrss/")
-ET.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
-ET.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
-ET.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
-ET.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
-ET.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
-ET.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
-ET.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
-ET.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
-
-
 class PodcastsDownloader(AssetDownloader):
     """PodcastDownloader object."""
 
