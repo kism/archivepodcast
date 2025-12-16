@@ -1,10 +1,10 @@
 """Helper functions for rss processing."""
 
-from lxml import etree
+import xml.etree.ElementTree as ET
 
 
-def tree_no_episodes(tree: etree._ElementTree | None) -> bool:
+def tree_no_episodes(tree: ET.ElementTree | None) -> bool:
     """Check if the XML tree has no episodes."""
     if tree is None:
         return True
-    return len(tree.xpath("//item")) == 0
+    return len(tree.findall(".//item")) == 0

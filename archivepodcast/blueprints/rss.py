@@ -2,9 +2,9 @@
 
 from http import HTTPStatus
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 from flask import Blueprint, Response, current_app, render_template
-from lxml import etree
 
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.config import get_ap_config
@@ -47,8 +47,8 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = etree.parse(Path(current_app.instance_path) / "web" / "rss" / feed)
-            rss = etree.tostring(
+            tree = ET.parse(Path(current_app.instance_path) / "web" / "rss" / feed)
+            rss = ET.tostring(
                 tree.getroot(),
                 encoding=XML_ENCODING,
                 method="xml",

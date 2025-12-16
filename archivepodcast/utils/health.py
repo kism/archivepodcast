@@ -2,9 +2,9 @@
 
 import contextlib
 import datetime
+import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING, Self
 
-from lxml import etree
 from psutil import Process
 from pydantic import BaseModel
 
@@ -44,7 +44,7 @@ class PodcastHealth(BaseModel):
     healthy_feed: bool = False
     episode_count: int = 0
 
-    def update_episode_info(self, tree: etree._ElementTree | etree._Element | None = None) -> None:
+    def update_episode_info(self, tree: ET.ElementTree | ET.Element | None = None) -> None:
         """Update the latest episode info."""
         logger.trace("Updating podcast episode info")
         new_latest_episode: EpisodeInfo = EpisodeInfo()
@@ -52,25 +52,32 @@ class PodcastHealth(BaseModel):
 
         try:
             if tree is not None:
-                if len(tree.xpath("//item")) == 0:
+                # Get root element if tree is ElementTree
+                root = tree.getroot() if isinstance(tree, ET.ElementTree) else tree
+
+                items = root.findall(".//item")
+                if len(items) == 0:
                     logger.warning("No episodes found in feed")
                     self.latest_episode = new_latest_episode
                     self.episode_count = new_episode_count
                     return
 
-                latest_episode = tree.xpath("//item")[0]
+                latest_episode = items[0]
 
                 # If we have the title, use it
-                with contextlib.suppress(IndexError):
-                    new_latest_episode.title = latest_episode.xpath("title")[0].text
+                with contextlib.suppress(AttributeError):
+                    title_elem = latest_episode.find("title")
+                    if title_elem is not None and title_elem.text:
+                        new_latest_episode.title = title_elem.text
 
                 # If we have the description, use it
                 with contextlib.suppress(IndexError):
-                    new_episode_count = len(tree.xpath("//item"))
+                    new_episode_count = len(items)
 
                 # If we have the pubDate, try to parse it
-                if len(latest_episode.xpath("pubDate")) > 0 and latest_episode.xpath("pubDate")[0].text:
-                    pod_pubdate = str(latest_episode.xpath("pubDate")[0].text) or "1970-01-01 00:00:00"
+                pubdate_elem = latest_episode.find("pubDate")
+                if pubdate_elem is not None and pubdate_elem.text:
+                    pod_pubdate = str(pubdate_elem.text)
                     found_pubdate = False
                     for podcast_date_format in PODCAST_DATE_FORMATS:
                         try:
@@ -206,7 +213,7 @@ class PodcastArchiverHealth:
             if value is not None and hasattr(self._podcasts[podcast], key):
                 setattr(self._podcasts[podcast], key, value)
 
-    def update_podcast_episode_info(self, podcast: str, tree: etree._ElementTree | etree._Element) -> None:
+    def update_podcast_episode_info(self, podcast: str, tree: ET.ElementTree | ET.Element) -> None:
         """Update the podcast episode info."""
         logger.trace("Updating podcast episode info for %s", podcast)
         if podcast not in self._podcasts:
