@@ -9,18 +9,15 @@ authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
 dependencies = [
-    "flask[async]>=3.1,<4",
     "aiobotocore>=2.25.2",
     "aiohttp>=3.13.2",
+    "flask[async]>=3.1,<4",
     "jinja2>=3.1,<4",
-    # dnf install libxml2-devel libxslt-devel
-    # apt install libxml2-dev libxslt-dev
-    "lxml>=5,<5.4", # Revert to this is you get random core dumps
-    # "lxml>=6.0.2", # Fatal Python error: Aborted
     "markdown>=3.10",
     "psutil>=7.1.3",
-    "pydantic>=2.12",
     "pydantic-settings>=2.12",
+    "pydantic-xml>=2.18.0",
+    "pydantic>=2.12",
     "python-magic>=0.4",
     "rich>=14.2.0",
     "typed-ffmpeg>=3.7",
@@ -35,7 +32,6 @@ docs = "https://archivepodcast.readthedocs.io/"
 type = [
     "mypy",
     "ty",
-    "types-lxml",
     "types-psutil",
     "types-Markdown",
     "botocore-stubs",
