@@ -284,10 +284,14 @@ class PodcastArchiver:
         previous_feed: bytes,
     ) -> None:
         """Update the rss feed, in memory and s3."""
+        root = tree.getroot()
+        if root is None:
+            logger.error("[%s] RSS tree has no root element", podcast.name_one_word)
+            return
         self.podcast_rss.update(
             {
                 podcast.name_one_word: ET.tostring(
-                    tree.getroot(),
+                    root,
                     encoding=XML_ENCODING,  # Keep this uppercase for the diff to work
                     method="xml",
                     xml_declaration=True,

@@ -3,7 +3,7 @@
 import contextlib
 import datetime
 import xml.etree.ElementTree as ET
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Any, Self
 
 from psutil import Process
 from pydantic import BaseModel
@@ -44,7 +44,7 @@ class PodcastHealth(BaseModel):
     healthy_feed: bool = False
     episode_count: int = 0
 
-    def update_episode_info(self, tree: ET.ElementTree | ET.Element | None = None) -> None:
+    def update_episode_info(self, tree: "ET.ElementTree[Any] | ET.Element | None" = None) -> None:
         """Update the latest episode info."""
         logger.trace("Updating podcast episode info")
         new_latest_episode: EpisodeInfo = EpisodeInfo()
@@ -54,6 +54,12 @@ class PodcastHealth(BaseModel):
             if tree is not None:
                 # Get root element if tree is ElementTree
                 root = tree.getroot() if isinstance(tree, ET.ElementTree) else tree
+
+                if root is None:
+                    logger.warning("Root element is None")
+                    self.latest_episode = new_latest_episode
+                    self.episode_count = new_episode_count
+                    return
 
                 items = root.findall(".//item")
                 if len(items) == 0:
@@ -213,7 +219,7 @@ class PodcastArchiverHealth:
             if value is not None and hasattr(self._podcasts[podcast], key):
                 setattr(self._podcasts[podcast], key, value)
 
-    def update_podcast_episode_info(self, podcast: str, tree: ET.ElementTree | ET.Element) -> None:
+    def update_podcast_episode_info(self, podcast: str, tree: "ET.ElementTree[Any] | ET.Element") -> None:
         """Update the podcast episode info."""
         logger.trace("Updating podcast episode info for %s", podcast)
         if podcast not in self._podcasts:
