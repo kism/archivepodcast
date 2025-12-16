@@ -7,12 +7,10 @@ import re
 import time
 import xml.etree.ElementTree as ET
 from http import HTTPStatus
-from typing import TYPE_CHECKING
 
 import aiohttp
 
 from archivepodcast.archiver.rss_models import RssFeed
-from archivepodcast.config import AppConfig, PodcastConfig
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.health import health
 from archivepodcast.utils.log_messages import log_aiohttp_exception
@@ -22,12 +20,6 @@ from archivepodcast.utils.time import warn_if_too_long
 from .asset_downloader import AssetDownloader
 from .constants import AUDIO_FORMATS, DOWNLOAD_RETRY_COUNT, IMAGE_FORMATS
 from .helpers import delay_download
-
-if TYPE_CHECKING:
-    from archivepodcast.config import AppConfig, PodcastConfig  # pragma: no cover
-else:
-    AppConfig = object
-    PodcastConfig = object
 
 logger = get_logger(__name__)
 
