@@ -152,7 +152,14 @@ class RssFeed:
         return self._rss is not None and not self._parse_error
 
     def to_bytes(self, *, encoding: str = "UTF-8") -> bytes:
-        """Serialize the feed to XML bytes."""
+        """Serialize the feed to XML bytes.
+
+        Returns the original raw bytes if available (preserving exact formatting),
+        otherwise serializes from the parsed model.
+        """
+        # Prefer original raw bytes to preserve exact formatting when available
+        if self._raw_bytes is not None and self._rss is not None:
+            return self._raw_bytes
         if self._rss is None:
             return b""
         result = self._rss.to_xml(encoding=encoding, xml_declaration=True)

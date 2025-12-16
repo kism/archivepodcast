@@ -1,11 +1,11 @@
 """RSS blueprint for ArchivePodcast."""
 
-import xml.etree.ElementTree as ET
 from http import HTTPStatus
 from pathlib import Path
 
 from flask import Blueprint, Response, current_app, render_template
 
+from archivepodcast.archiver.rss_models import RssFeed
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.config import get_ap_config
 from archivepodcast.instances.podcast_archiver import (
@@ -47,14 +47,15 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = ET.parse(Path(current_app.instance_path) / "web" / "rss" / feed)
-            rss = ET.tostring(
-                tree.getroot(),
-                encoding=XML_ENCODING,
-                method="xml",
-                xml_declaration=True,
-            )
-            rss_str = rss.decode(XML_ENCODING)
+            rss_path = Path(current_app.instance_path) / "web" / "rss" / feed
+            # Read raw bytes and optionally validate with RssFeed
+            rss_bytes = rss_path.read_bytes()
+            # Validate it can be parsed but serve the original bytes
+            try:
+                RssFeed.from_bytes(rss_bytes)
+            except Exception:
+                logger.warning("Feed %s from disk cannot be parsed by RssFeed, serving as-is", feed)
+            rss_str = rss_bytes.decode(XML_ENCODING)
             logger.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
 
         # The file isn't there due to user error or not being created yet

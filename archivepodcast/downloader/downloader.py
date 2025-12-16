@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING
 
 import aiohttp
 
+from archivepodcast.archiver.rss_models import RssFeed
 from archivepodcast.config import AppConfig, PodcastConfig
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.health import health
 from archivepodcast.utils.log_messages import log_aiohttp_exception
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.rss import tree_no_episodes
 from archivepodcast.utils.time import warn_if_too_long
 
 from .asset_downloader import AssetDownloader
@@ -54,33 +54,42 @@ class PodcastsDownloader(AssetDownloader):
     async def download_podcast(
         self,
     ) -> ET.ElementTree | None:
-        """Parse the rss, Download all the assets, this is main."""
+        """Parse the rss, Download all the assets, this is main. Returns ET.ElementTree."""
         self._feed_download_healthy = True
         feed_rss_healthy = True
         tree = await self._download_and_parse_rss()
 
         if tree:
-            if tree_no_episodes(tree):
-                # Log the whole damn tree
-                root = tree.getroot()
-                rss_content = ET.tostring(root, encoding="unicode") if root is not None else "<no root element>"
-                logger.critical(
-                    "[%s] Downloaded podcast rss has no episodes, full rss:\n%s",
-                    self._podcast.name_one_word,
-                    rss_content,
+            # Validate with RssFeed model
+            try:
+                rss_bytes = ET.tostring(
+                    tree.getroot() or ET.Element("rss"), encoding=XML_ENCODING, method="xml", xml_declaration=True
                 )
-                logger.error(
-                    "Downloaded podcast rss %s has no episodes, not writing to disk", self._podcast.name_one_word
-                )
+                feed = RssFeed.from_bytes(rss_bytes)
+                if not feed.has_episodes():
+                    # Log the whole damn tree
+                    root = tree.getroot()
+                    rss_content = ET.tostring(root, encoding="unicode") if root is not None else "<no root element>"
+                    logger.critical(
+                        "[%s] Downloaded podcast rss has no episodes, full rss:\n%s",
+                        self._podcast.name_one_word,
+                        rss_content,
+                    )
+                    logger.error(
+                        "Downloaded podcast rss %s has no episodes, not writing to disk", self._podcast.name_one_word
+                    )
+                    feed_rss_healthy = False
+                else:
+                    # Write rss to disk
+                    tree.write(
+                        str(self._rss_file_path),
+                        encoding=XML_ENCODING,
+                        xml_declaration=True,
+                    )
+                    logger.debug("[%s] Wrote rss to disk: %s", self._podcast.name_one_word, self._rss_file_path)
+            except Exception:
+                logger.exception("[%s] Failed to validate RSS with RssFeed model", self._podcast.name_one_word)
                 feed_rss_healthy = False
-            else:
-                # Write rss to disk
-                tree.write(
-                    str(self._rss_file_path),
-                    encoding=XML_ENCODING,
-                    xml_declaration=True,
-                )
-                logger.debug("[%s] Wrote rss to disk: %s", self._podcast.name_one_word, self._rss_file_path)
         else:
             feed_rss_healthy = False
             logger.error("Unable to download podcast, something is wrong, will try to load from file")
@@ -94,10 +103,10 @@ class PodcastsDownloader(AssetDownloader):
             healthy_download=self._feed_download_healthy,
         )
 
-        return tree
+        return tree if tree and feed_rss_healthy else None
 
     async def _download_and_parse_rss(self) -> ET.ElementTree | None:
-        """Download and parse the podcast RSS feed."""
+        """Download and parse the podcast RSS feed, returning ET.ElementTree."""
         content = None
         for n in range(DOWNLOAD_RETRY_COUNT):
             start_time = time.time()

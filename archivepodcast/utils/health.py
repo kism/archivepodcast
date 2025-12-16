@@ -44,60 +44,32 @@ class PodcastHealth(BaseModel):
     healthy_feed: bool = False
     episode_count: int = 0
 
-    def update_episode_info(self, tree: "ET.ElementTree[Any] | ET.Element | None" = None) -> None:
-        """Update the latest episode info."""
+    def update_episode_info(self, feed: Any = None) -> None:
+        """Update the latest episode info from RssFeed model."""
         logger.trace("Updating podcast episode info")
         new_latest_episode: EpisodeInfo = EpisodeInfo()
         new_episode_count: int = 0
 
         try:
-            if tree is not None:
-                # Get root element if tree is ElementTree
-                root = tree.getroot() if isinstance(tree, ET.ElementTree) else tree
+            if feed is not None:
+                # Handle RssFeed model
+                from archivepodcast.archiver.rss_models import RssFeed
 
-                if root is None:
-                    logger.warning("Root element is None")
-                    self.latest_episode = new_latest_episode
-                    self.episode_count = new_episode_count
-                    return
+                if isinstance(feed, RssFeed):
+                    if feed.rss and feed.rss.channel and feed.rss.channel.items:
+                        items = feed.rss.channel.items
+                        new_episode_count = len(items)
 
-                items = root.findall(".//item")
-                if len(items) == 0:
-                    logger.warning("No episodes found in feed")
-                    self.latest_episode = new_latest_episode
-                    self.episode_count = new_episode_count
-                    return
-
-                latest_episode = items[0]
-
-                # If we have the title, use it
-                with contextlib.suppress(AttributeError):
-                    title_elem = latest_episode.find("title")
-                    if title_elem is not None and title_elem.text:
-                        new_latest_episode.title = title_elem.text
-
-                # If we have the description, use it
-                with contextlib.suppress(IndexError):
-                    new_episode_count = len(items)
-
-                # If we have the pubDate, try to parse it
-                pubdate_elem = latest_episode.find("pubDate")
-                if pubdate_elem is not None and pubdate_elem.text:
-                    pod_pubdate = str(pubdate_elem.text)
-                    found_pubdate = False
-                    for podcast_date_format in PODCAST_DATE_FORMATS:
-                        try:
-                            new_latest_episode.pubdate = int(
-                                datetime.datetime.strptime(pod_pubdate, podcast_date_format)
-                                .replace(tzinfo=datetime.UTC)
-                                .timestamp()
-                            )
-                            found_pubdate = True
-                            break
-                        except ValueError:
-                            pass
-                    if not found_pubdate:
-                        logger.error("Unable to parse pubDate: %s", pod_pubdate)
+                        if new_episode_count > 0:
+                            latest = items[0]
+                            if latest.title:
+                                new_latest_episode.title = latest.title
+                            # Note: EpisodeInfo doesn't have description or pub_date attributes
+                            # Only title and pubdate (int timestamp) are supported
+                    else:
+                        logger.warning("RssFeed has no episodes")
+                else:
+                    logger.warning("Unknown feed type provided to update_episode_info")
         except Exception:  # pragma: no cover # Just to be safe
             logger.exception("Error parsing podcast episode info")  # pragma: no cover # Just to be safe
 
@@ -219,13 +191,13 @@ class PodcastArchiverHealth:
             if value is not None and hasattr(self._podcasts[podcast], key):
                 setattr(self._podcasts[podcast], key, value)
 
-    def update_podcast_episode_info(self, podcast: str, tree: "ET.ElementTree[Any] | ET.Element") -> None:
-        """Update the podcast episode info."""
+    def update_podcast_episode_info(self, podcast: str, feed: Any) -> None:
+        """Update the podcast episode info from RssFeed model."""
         logger.trace("Updating podcast episode info for %s", podcast)
         if podcast not in self._podcasts:
             self._podcasts[podcast] = PodcastHealth()
 
-        self._podcasts[podcast].update_episode_info(tree)
+        self._podcasts[podcast].update_episode_info(feed)
 
     def update_core_status(self, **kwargs: bool | str | int | None) -> None:
         """Update the core."""
