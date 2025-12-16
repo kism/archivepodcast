@@ -1,12 +1,12 @@
 """Test the application health monitoring endpoints."""
 
 import logging
+import xml.etree.ElementTree as ET
 from http import HTTPStatus
 from pathlib import Path
 
 import pytest
 from flask.testing import FlaskClient
-from lxml import etree
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.instances import podcast_archiver
@@ -33,7 +33,7 @@ def test_update_podcast_health() -> None:
     rss_path = Path(TEST_RSS_LOCATION) / "test_valid.rss"
 
     with rss_path.open() as file:
-        tree = etree.parse(file)
+        tree = ET.parse(file)
 
     ap_health = PodcastArchiverHealth()
 
@@ -48,7 +48,7 @@ def test_podcast_health_errors(caplog: pytest.LogCaptureFixture) -> None:
     """Test the podcast section of the health API endpoint."""
     rss_str = DUMMY_RSS_STR.replace("encoding='UTF-8'", "")
     assert "encoding" not in rss_str
-    tree = etree.fromstring(rss_str)
+    tree = ET.fromstring(rss_str)
 
     ap_health = PodcastArchiverHealth()
 
@@ -58,9 +58,7 @@ def test_podcast_health_errors(caplog: pytest.LogCaptureFixture) -> None:
     assert "Error parsing podcast episode info" not in caplog.text  # The dummy rss doesn't have pubDate
     assert ap_health._podcasts["test"].episode_count == 1
 
-    tree = etree.fromstring(
-        "<?xml version='1.0'?><rss><channel><item><pubDate>INVALID</pubDate></item></channel></rss>"
-    )
+    tree = ET.fromstring("<?xml version='1.0'?><rss><channel><item><pubDate>INVALID</pubDate></item></channel></rss>")
 
     with caplog.at_level(logging.ERROR):
         ap_health.update_podcast_episode_info("test", tree)
@@ -79,13 +77,11 @@ def test_podcast_health_date_formats(caplog: pytest.LogCaptureFixture, date: str
     """Test the podcast section of the health API endpoint."""
     rss_str = DUMMY_RSS_STR.replace("encoding='UTF-8'", "")
     assert "encoding" not in rss_str
-    tree = etree.fromstring(rss_str)
+    tree = ET.fromstring(rss_str)
 
     ap_health = PodcastArchiverHealth()
 
-    tree = etree.fromstring(
-        f"<?xml version='1.0'?><rss><channel><item><pubDate>{date}</pubDate></item></channel></rss>"
-    )
+    tree = ET.fromstring(f"<?xml version='1.0'?><rss><channel><item><pubDate>{date}</pubDate></item></channel></rss>")
 
     with caplog.at_level(logging.ERROR):
         ap_health.update_podcast_episode_info("test", tree)

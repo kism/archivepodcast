@@ -1,6 +1,5 @@
 from pathlib import Path
-
-from lxml import etree
+import xml.etree.ElementTree as ET
 
 from archivepodcast.utils.rss import tree_no_episodes
 from tests.constants import DUMMY_RSS_STR
@@ -13,8 +12,8 @@ def test_tree_no_episodes_none() -> None:
 
 def test_tree_no_episodes_with_episodes() -> None:
     """Test tree_no_episodes with episodes present."""
-    tree = etree.fromstring(bytes(DUMMY_RSS_STR, encoding="utf-8"))
-    assert tree_no_episodes(etree.ElementTree(tree)) is False
+    root = ET.fromstring(DUMMY_RSS_STR)
+    assert tree_no_episodes(ET.ElementTree(root)) is False
 
 
 def test_tree_no_episodes_with_episodes_disk(tmp_path: Path) -> None:
@@ -22,7 +21,6 @@ def test_tree_no_episodes_with_episodes_disk(tmp_path: Path) -> None:
     rss_path = tmp_path / "test.rss"
     rss_path.write_text(DUMMY_RSS_STR)
 
-    with rss_path.open() as file:
-        tree = etree.parse(file)
+    tree = ET.parse(rss_path)
 
     assert tree_no_episodes(tree) is False

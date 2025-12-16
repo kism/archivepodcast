@@ -1,8 +1,8 @@
 """RSS blueprint for ArchivePodcast."""
 
+import xml.etree.ElementTree as ET
 from http import HTTPStatus
 from pathlib import Path
-import xml.etree.ElementTree as ET
 
 from flask import Blueprint, Response, current_app, render_template
 
