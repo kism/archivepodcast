@@ -1,13 +1,12 @@
 """Health monitoring for archivepodcast components."""
 
-import contextlib
 import datetime
-import xml.etree.ElementTree as ET
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Self
 
 from psutil import Process
 from pydantic import BaseModel
 
+from archivepodcast.archiver.rss_models import RssFeed
 from archivepodcast.utils.logger import get_logger
 from archivepodcast.version import __version__
 
@@ -44,32 +43,27 @@ class PodcastHealth(BaseModel):
     healthy_feed: bool = False
     episode_count: int = 0
 
-    def update_episode_info(self, feed: Any = None) -> None:
+    def update_episode_info(self, feed: RssFeed | None = None) -> None:
         """Update the latest episode info from RssFeed model."""
         logger.trace("Updating podcast episode info")
         new_latest_episode: EpisodeInfo = EpisodeInfo()
         new_episode_count: int = 0
 
         try:
-            if feed is not None:
-                # Handle RssFeed model
-                from archivepodcast.archiver.rss_models import RssFeed
+            if feed is not None and isinstance(feed, RssFeed):
+                if feed.rss and feed.rss.channel and feed.rss.channel.items:
+                    items = feed.rss.channel.items
+                    new_episode_count = len(items)
 
-                if isinstance(feed, RssFeed):
-                    if feed.rss and feed.rss.channel and feed.rss.channel.items:
-                        items = feed.rss.channel.items
-                        new_episode_count = len(items)
-
-                        if new_episode_count > 0:
-                            latest = items[0]
-                            if latest.title:
-                                new_latest_episode.title = latest.title
-                            # Note: EpisodeInfo doesn't have description or pub_date attributes
-                            # Only title and pubdate (int timestamp) are supported
-                    else:
-                        logger.warning("RssFeed has no episodes")
+                    if new_episode_count > 0:
+                        latest = items[0]
+                        if latest.title:
+                            new_latest_episode.title = latest.title
+                        # Note: EpisodeInfo doesn't have description or pub_date attributes
+                        # Only title and pubdate (int timestamp) are supported
                 else:
-                    logger.warning("Unknown feed type provided to update_episode_info")
+                    logger.warning("RssFeed has no episodes")
+
         except Exception:  # pragma: no cover # Just to be safe
             logger.exception("Error parsing podcast episode info")  # pragma: no cover # Just to be safe
 
@@ -191,7 +185,7 @@ class PodcastArchiverHealth:
             if value is not None and hasattr(self._podcasts[podcast], key):
                 setattr(self._podcasts[podcast], key, value)
 
-    def update_podcast_episode_info(self, podcast: str, feed: Any) -> None:
+    def update_podcast_episode_info(self, podcast: str, feed: RssFeed | None = None) -> None:
         """Update the podcast episode info from RssFeed model."""
         logger.trace("Updating podcast episode info for %s", podcast)
         if podcast not in self._podcasts:

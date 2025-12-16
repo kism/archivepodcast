@@ -81,7 +81,7 @@ def test_podcast_health_date_formats(caplog: pytest.LogCaptureFixture, date: str
     assert "encoding" not in rss_str
 
     feed = RssFeed.from_bytes(
-        f"<?xml version='1.0'?><rss><channel><item><pubDate>{date}</pubDate></item></channel></rss>".encode("utf-8")
+        f"<?xml version='1.0'?><rss><channel><item><pubDate>{date}</pubDate></item></channel></rss>".encode()
     )
 
     ap_health = PodcastArchiverHealth()

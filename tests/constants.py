@@ -13,4 +13,4 @@ null_audio_data = b"\x00" * 5120
 TEST_WAV_FILE = microsoft_wav_header + null_audio_data
 
 
-DUMMY_RSS_STR = "<?xml version='1.0' encoding='UTF-8'?>\n<rss version=\"2.0\"><channel><title>Test</title><item><title>Dummy RSS</title></item></channel></rss>"
+DUMMY_RSS_STR = "<?xml version='1.0' encoding='UTF-8'?>\n<rss version=\"2.0\"><channel><title>Test</title><item><title>Dummy RSS</title></item></channel></rss>"  # noqa: E501
