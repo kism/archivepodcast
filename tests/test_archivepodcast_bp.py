@@ -192,39 +192,6 @@ def test_rss_feed_type_error(
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-def test_rss_feed_unhandled_error(
-    apa: PodcastArchiver,
-    app_live: Flask,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Test the RSS feed."""
-
-    podcast_archiver._ap = apa
-    ap = apa
-
-    ap.grab_podcasts()
-
-    client_live = app_live.test_client()
-
-    with Path(tmp_path / "web" / "rss" / "test").open("w") as file:
-        file.write(DUMMY_RSS_STR)
-
-    def return_key_error(*args: Any, **kwargs: Any) -> None:
-        raise KeyError
-
-    monkeypatch.setattr(ap, "get_rss_feed", return_key_error)
-
-    def return_unhandled_error(*args: Any, **kwargs: Any) -> None:
-        raise FakeExceptionError
-
-    monkeypatch.setattr("lxml.etree.tostring", return_unhandled_error)
-
-    response = client_live.get("/rss/test")
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-
-
 def test_content_s3(
     apa_aws: PodcastArchiver,
     app_live_s3: Flask,

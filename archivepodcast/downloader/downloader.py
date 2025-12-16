@@ -62,8 +62,12 @@ class PodcastsDownloader(AssetDownloader):
         if tree:
             # Validate with RssFeed model
             try:
+                root = tree.getroot()
                 rss_bytes = ET.tostring(
-                    tree.getroot() or ET.Element("rss"), encoding=XML_ENCODING, method="xml", xml_declaration=True
+                    root if root is not None else ET.Element("rss"),
+                    encoding=XML_ENCODING,
+                    method="xml",
+                    xml_declaration=True,
                 )
                 feed = RssFeed.from_bytes(rss_bytes)
                 if not feed.has_episodes():
