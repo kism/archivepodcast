@@ -5,12 +5,21 @@ import contextlib
 import datetime
 import re
 import time
-import xml.etree.ElementTree as ET
 from http import HTTPStatus
 
 import aiohttp
 
-from archivepodcast.archiver.rss_models import RssFeed
+from archivepodcast.archiver.rss_models import (
+    AtomLink,
+    Channel,
+    Enclosure,
+    Image,
+    Item,
+    ItunesImage,
+    ItunesOwner,
+    MediaContent,
+    RssFeed,
+)
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.health import health
 from archivepodcast.utils.log_messages import log_aiohttp_exception
@@ -29,47 +38,30 @@ class PodcastsDownloader(AssetDownloader):
 
     async def download_podcast(
         self,
-    ) -> ET.ElementTree | None:
-        """Parse the rss, Download all the assets, this is main. Returns ET.ElementTree."""
+    ) -> RssFeed | None:
+        """Parse the rss, Download all the assets, this is main. Returns RssFeed."""
         self._feed_download_healthy = True
         feed_rss_healthy = True
-        tree = await self._download_and_parse_rss()
+        feed = await self._download_and_parse_rss()
 
-        if tree:
-            # Validate with RssFeed model
-            try:
-                root = tree.getroot()
-                rss_bytes = ET.tostring(
-                    root if root is not None else ET.Element("rss"),
-                    encoding=XML_ENCODING,
-                    method="xml",
-                    xml_declaration=True,
+        if feed and feed.is_valid:
+            if not feed.has_episodes():
+                # Log the whole feed
+                rss_content = feed.to_bytes().decode(XML_ENCODING)
+                logger.critical(
+                    "[%s] Downloaded podcast rss has no episodes, full rss:\n%s",
+                    self._podcast.name_one_word,
+                    rss_content,
                 )
-                feed = RssFeed.from_bytes(rss_bytes)
-                if not feed.has_episodes():
-                    # Log the whole damn tree
-                    root = tree.getroot()
-                    rss_content = ET.tostring(root, encoding="unicode") if root is not None else "<no root element>"
-                    logger.critical(
-                        "[%s] Downloaded podcast rss has no episodes, full rss:\n%s",
-                        self._podcast.name_one_word,
-                        rss_content,
-                    )
-                    logger.error(
-                        "Downloaded podcast rss %s has no episodes, not writing to disk", self._podcast.name_one_word
-                    )
-                    feed_rss_healthy = False
-                else:
-                    # Write rss to disk
-                    tree.write(
-                        str(self._rss_file_path),
-                        encoding=XML_ENCODING,
-                        xml_declaration=True,
-                    )
-                    logger.debug("[%s] Wrote rss to disk: %s", self._podcast.name_one_word, self._rss_file_path)
-            except Exception:
-                logger.exception("[%s] Failed to validate RSS with RssFeed model", self._podcast.name_one_word)
+                logger.error(
+                    "Downloaded podcast rss %s has no episodes, not writing to disk", self._podcast.name_one_word
+                )
                 feed_rss_healthy = False
+            else:
+                # Write rss to disk
+                rss_bytes = feed.to_bytes(encoding=XML_ENCODING)
+                self._rss_file_path.write_bytes(rss_bytes)
+                logger.debug("[%s] Wrote rss to disk: %s", self._podcast.name_one_word, self._rss_file_path)
         else:
             feed_rss_healthy = False
             logger.error("Unable to download podcast, something is wrong, will try to load from file")
@@ -83,10 +75,10 @@ class PodcastsDownloader(AssetDownloader):
             healthy_download=self._feed_download_healthy,
         )
 
-        return tree if tree and feed_rss_healthy else None
+        return feed if feed and feed_rss_healthy else None
 
-    async def _download_and_parse_rss(self) -> ET.ElementTree | None:
-        """Download and parse the podcast RSS feed, returning ET.ElementTree."""
+    async def _download_and_parse_rss(self) -> RssFeed | None:
+        """Download and parse the podcast RSS feed, returning RssFeed."""
         content = None
         for n in range(DOWNLOAD_RETRY_COUNT):
             start_time = time.time()
@@ -117,24 +109,23 @@ class PodcastsDownloader(AssetDownloader):
 
         logger.debug("[%s] Success fetching podcast RSS", self._podcast.name_one_word)
 
-        try:
-            podcast_rss = ET.fromstring(content)
-        except ET.ParseError:
-            logger.error(  # noqa: TRY400
+        feed = RssFeed.from_bytes(content)
+        if not feed.is_valid:
+            logger.error(
                 "[%s] Downloaded podcast rss (length %d) is not valid XML, cannot process podcast feed",
                 self._podcast.name_one_word,
                 len(content),
             )
             self._feed_download_healthy = False
             return None
+
         logger.debug("[%s] Downloaded rss feed, processing", self._podcast.name_one_word)
-        logger.trace(str(podcast_rss))
+        logger.trace(str(feed.rss))
 
-        xml_first_child = podcast_rss[0]
-        await self._process_podcast_rss(xml_first_child)
-        podcast_rss[0] = xml_first_child
+        if feed.rss and feed.rss.channel:
+            await self._process_podcast_rss(feed.rss.channel)
 
-        return ET.ElementTree(podcast_rss)
+        return feed
 
     async def _fetch_podcast_rss(self) -> tuple[bytes | None, HTTPStatus | None]:
         """Fetch the podcast RSS feed."""
@@ -151,97 +142,86 @@ class PodcastsDownloader(AssetDownloader):
 
     # region RSS Hell
 
-    async def _process_podcast_rss(self, xml_first_child: ET.Element) -> None:
-        """Process the podcast rss and update it with new values."""
-        for channel in xml_first_child:
-            await self._process_channel_tag(channel)
+    async def _process_podcast_rss(self, channel: Channel) -> None:
+        """Process the podcast rss channel and update it with new values."""
+        # Update channel-level properties
+        await self._process_channel(channel)
 
-    async def _process_channel_tag(self, channel: ET.Element) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
-        """Process individual channel tags in the podcast rss."""
-        match channel.tag:
-            case "link":
-                self._handle_link_tag(channel)
-            case "title":
-                self._handle_title_tag(channel)
-            case "description":
-                self._handle_description_tag(channel)
-            case "{http://www.w3.org/2005/Atom}link":
-                self._handle_atom_link_tag(channel)
-            case "{http://www.itunes.com/dtds/podcast-1.0.dtd}owner":
-                self._handle_itunes_owner_tag(channel)
-            case "{http://www.itunes.com/dtds/podcast-1.0.dtd}author":
-                self._handle_itunes_author_tag(channel)
-            case "{http://www.itunes.com/dtds/podcast-1.0.dtd}new-feed-url":
-                self._handle_itunes_new_feed_url_tag(channel)
-            case "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                await self._handle_itunes_image_tag(channel)
-            case "image":
-                await self._handle_image_tag(channel)
-            case "item":
-                await self._handle_item_tag(channel)
-            case _:
-                logger.trace(
-                    "[%s] Unhandled root-level XML tag %s, (under channel.tag) leaving as-is",
-                    self._podcast.name_one_word,
-                    channel.tag,
-                )
+    async def _process_channel(self, channel: Channel) -> None:
+        """Process channel properties and update with new values."""
+        # Update basic channel properties
+        self._handle_link(channel)
+        self._handle_title(channel)
+        self._handle_description(channel)
 
-    def _handle_link_tag(self, channel: ET.Element) -> None:
-        """Handle the link tag in the podcast rss."""
-        logger.trace("[%s] Podcast link: %s", self._podcast.name_one_word, str(channel.text))
-        channel.text = self._app_config.inet_path.encoded_string()
+        # Update Atom link
+        if channel.atom_link:
+            self._handle_atom_link(channel.atom_link)
 
-    def _handle_title_tag(self, channel: ET.Element) -> None:
-        """Handle the title tag in the podcast rss."""
-        logger.debug("[%s] Source Podcast title: %s", self._podcast.name_one_word, str(channel.text))
+        # Update iTunes properties
+        if channel.itunes_owner:
+            self._handle_itunes_owner(channel.itunes_owner)
+        if channel.itunes_author:
+            channel.itunes_author = self._podcast.new_name if self._podcast.new_name else channel.itunes_author
+        if channel.itunes_new_feed_url:
+            channel.itunes_new_feed_url = (
+                self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
+            )
+
+        # Update iTunes image
+        if channel.itunes_image:
+            await self._handle_itunes_image(channel.itunes_image)
+
+        # Update standard image
+        if channel.image:
+            await self._handle_image(channel.image)
+
+        # Process all items/episodes
+        for item in channel.items:
+            await self._handle_item(item)
+
+    def _handle_link(self, channel: Channel) -> None:
+        """Handle the link property in the podcast channel."""
+        logger.trace("[%s] Podcast link: %s", self._podcast.name_one_word, str(channel.link))
+        channel.link = self._app_config.inet_path.encoded_string()
+
+    def _handle_title(self, channel: Channel) -> None:
+        """Handle the title property in the podcast channel."""
+        logger.debug("[%s] Source Podcast title: %s", self._podcast.name_one_word, str(channel.title))
         if self._podcast.new_name != "":
-            channel.text = self._podcast.new_name
+            channel.title = self._podcast.new_name
 
-    def _handle_description_tag(self, channel: ET.Element) -> None:
-        """Handle the description tag in the podcast rss."""
-        logger.trace("[%s] Podcast description: %s", self._podcast.name_one_word, str(channel.text))
-        channel.text = self._podcast.description
+    def _handle_description(self, channel: Channel) -> None:
+        """Handle the description property in the podcast channel."""
+        logger.trace("[%s] Podcast description: %s", self._podcast.name_one_word, str(channel.description))
+        channel.description = self._podcast.description
 
-    def _handle_atom_link_tag(self, channel: ET.Element) -> None:
-        """Handle the Atom link tag in the podcast rss."""
-        logger.trace("[%s] Atom link: %s", self._podcast.name_one_word, str(channel.attrib["href"]))
-        channel.attrib["href"] = self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
-        channel.text = " "
+    def _handle_atom_link(self, atom_link: AtomLink) -> None:
+        """Handle the Atom link in the podcast channel."""
+        logger.trace("[%s] Atom link: %s", self._podcast.name_one_word, str(atom_link.href))
+        atom_link.href = self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
 
-    def _handle_itunes_owner_tag(self, channel: ET.Element) -> None:
-        """Handle the iTunes owner tag in the podcast rss."""
-        logger.trace("[%s] iTunes owner: %s", self._podcast.name_one_word, str(channel.text))
-        for child in channel:
-            if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}name":
-                if self._podcast.new_name == "":
-                    self._podcast.new_name = child.text or ""
-                child.text = self._podcast.new_name
-            if child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}email":
-                if self._podcast.contact_email == "":
-                    self._podcast.contact_email = child.text or ""
-                child.text = self._podcast.contact_email
+    def _handle_itunes_owner(self, owner: ItunesOwner) -> None:
+        """Handle the iTunes owner in the podcast channel."""
+        logger.trace("[%s] iTunes owner: %s / %s", self._podcast.name_one_word, owner.name, owner.email)
+        if self._podcast.new_name == "" and owner.name:
+            self._podcast.new_name = owner.name
+        owner.name = self._podcast.new_name
 
-    def _handle_itunes_author_tag(self, channel: ET.Element) -> None:
-        """Handle the iTunes author tag in the podcast rss."""
-        logger.trace("[%s] iTunes author: %s", self._podcast.name_one_word, str(channel.text))
-        if self._podcast.new_name != "":
-            channel.text = self._podcast.new_name
+        if self._podcast.contact_email == "" and owner.email:
+            self._podcast.contact_email = owner.email
+        owner.email = self._podcast.contact_email
 
-    def _handle_itunes_new_feed_url_tag(self, channel: ET.Element) -> None:
-        """Handle the iTunes new-feed-url tag in the podcast rss."""
-        logger.trace("[%s] iTunes new-feed-url: %s", self._podcast.name_one_word, str(channel.text))
-        channel.text = self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
-
-    async def _handle_itunes_image_tag(self, channel: ET.Element) -> None:
-        """Handle the iTunes image tag in the podcast rss."""
-        logger.trace("[%s] iTunes image: %s", self._podcast.name_one_word, str(channel.attrib["href"]))
+    async def _handle_itunes_image(self, itunes_image: ItunesImage) -> None:
+        """Handle the iTunes image in the podcast channel."""
+        logger.trace("[%s] iTunes image: %s", self._podcast.name_one_word, str(itunes_image.href))
         title = self._cleanup_file_name(self._podcast.new_name)
-        url = channel.attrib.get("href", "")
+        url = itunes_image.href
         logger.trace("[%s] Image URL: %s", self._podcast.name_one_word, url)
         for filetype in IMAGE_FORMATS:
             if filetype in url:
                 await self._download_cover_art(url, title, filetype)
-                channel.attrib["href"] = (
+                itunes_image.href = (
                     self._app_config.inet_path.encoded_string()
                     + "content/"
                     + self._podcast.name_one_word
@@ -249,65 +229,63 @@ class PodcastsDownloader(AssetDownloader):
                     + title
                     + filetype
                 )
-        channel.text = " "
 
-    async def _handle_image_tag(self, channel: ET.Element) -> None:
-        """Handle the image tag in the podcast rss."""
-        for child in channel:
-            logger.trace("[%s] image > XML tag: %s", self._podcast.name_one_word, child.tag)
-            if child.tag == "title":
-                logger.trace("[%s] Image title: %s", self._podcast.name_one_word, str(child.text))
-                child.text = self._podcast.new_name
-            elif child.tag == "link":
-                child.text = self._app_config.inet_path.encoded_string()
-            elif child.tag == "url":
-                title = self._cleanup_file_name(self._podcast.new_name)
-                url = child.text or ""
-                for filetype in IMAGE_FORMATS:
-                    if filetype in url:
-                        await self._download_asset(url, title, filetype)
-                        child.text = (
-                            self._app_config.inet_path.encoded_string()
-                            + "content/"
-                            + self._podcast.name_one_word
-                            + "/"
-                            + title
-                            + filetype
-                        )
-        channel.text = " "
+    async def _handle_image(self, image: Image) -> None:
+        """Handle the image element in the podcast channel."""
+        logger.trace("[%s] Image title: %s", self._podcast.name_one_word, str(image.title))
+        image.title = self._podcast.new_name
+        image.link = self._app_config.inet_path.encoded_string()
 
-    async def _handle_item_tag(self, channel: ET.Element) -> None:
-        """Handle the item tag in the podcast rss."""
-        file_date_string = self._get_file_date_string(channel)
-        title = ""
-        for child in channel:
-            if child.tag == "title":
-                title = str(child.text)
-                logger.trace("Episode title: %s", title)
+        if image.url:
+            title = self._cleanup_file_name(self._podcast.new_name)
+            url = image.url
+            for filetype in IMAGE_FORMATS:
+                if filetype in url:
+                    await self._download_asset(url, title, filetype)
+                    image.url = (
+                        self._app_config.inet_path.encoded_string()
+                        + "content/"
+                        + self._podcast.name_one_word
+                        + "/"
+                        + title
+                        + filetype
+                    )
 
-        for child in channel:
-            if child.tag == "enclosure" or "{http://search.yahoo.com/mrss/}content" in str(child.tag):
-                await self._handle_enclosure_tag(child, title, file_date_string)
-            elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
-                await self._handle_episode_image_tag(child, title, file_date_string)
+    async def _handle_item(self, item: Item) -> None:
+        """Handle an item/episode in the podcast feed."""
+        file_date_string = self._get_file_date_string(item)
+        title = item.title or ""
+        logger.trace("Episode title: %s", title)
 
-    async def _handle_enclosure_tag(self, child: ET.Element, title: str, file_date_string: str) -> None:
-        """Handle the enclosure tag in the podcast rss."""
-        logger.trace("Enclosure, URL: %s", child.attrib.get("url", ""))
+        # Handle enclosure (audio file)
+        if item.enclosure:
+            await self._handle_enclosure(item.enclosure, title, file_date_string)
+
+        # Handle media:content (alternative to enclosure)
+        if item.media_content:
+            await self._handle_media_content(item.media_content, title, file_date_string)
+
+        # Handle episode image
+        if item.itunes_image:
+            await self._handle_episode_image(item.itunes_image, title, file_date_string)
+
+    async def _handle_enclosure(self, enclosure: Enclosure, title: str, file_date_string: str) -> None:
+        """Handle the enclosure element in an episode."""
+        logger.trace("Enclosure, URL: %s", enclosure.url)
         title = self._cleanup_file_name(title)
-        url = child.attrib.get("url", "")
-        child.attrib["url"] = ""
+        url = enclosure.url
+        enclosure.url = ""
         for audio_format in AUDIO_FORMATS:
             new_audio_format = audio_format
             if audio_format in url:
                 if audio_format == ".wav":
                     new_length = await self._handle_wav(url, title, audio_format, file_date_string)
                     new_audio_format = ".mp3"
-                    child.attrib["type"] = "audio/mpeg"
-                    child.attrib["length"] = str(new_length)
+                    enclosure.type = "audio/mpeg"
+                    enclosure.length = str(new_length)
                 else:
                     await self._download_asset(url, title, audio_format, file_date_string)
-                child.attrib["url"] = (
+                enclosure.url = (
                     self._app_config.inet_path.encoded_string()
                     + "content/"
                     + self._podcast.name_one_word
@@ -318,19 +296,47 @@ class PodcastsDownloader(AssetDownloader):
                     + new_audio_format
                 )
 
-    async def _handle_episode_image_tag(
+    async def _handle_media_content(self, media_content: MediaContent, title: str, file_date_string: str) -> None:
+        """Handle the media:content element in an episode."""
+        # Media content is similar to enclosure, reuse same logic
+        logger.trace("Media content, URL: %s", media_content.url)
+        title = self._cleanup_file_name(title)
+        url = media_content.url
+        media_content.url = ""
+        for audio_format in AUDIO_FORMATS:
+            new_audio_format = audio_format
+            if audio_format in url:
+                if audio_format == ".wav":
+                    new_length = await self._handle_wav(url, title, audio_format, file_date_string)
+                    new_audio_format = ".mp3"
+                    media_content.type = "audio/mpeg"
+                    media_content.length = str(new_length)
+                else:
+                    await self._download_asset(url, title, audio_format, file_date_string)
+                media_content.url = (
+                    self._app_config.inet_path.encoded_string()
+                    + "content/"
+                    + self._podcast.name_one_word
+                    + "/"
+                    + file_date_string
+                    + "-"
+                    + title
+                    + new_audio_format
+                )
+
+    async def _handle_episode_image(
         self,
-        child: ET.Element,
+        itunes_image: ItunesImage,
         title: str,
         file_date_string: str,
     ) -> None:
-        """Handle the episode image tag in the podcast rss."""
+        """Handle the episode image in an episode."""
         title = self._cleanup_file_name(title)
-        url = child.attrib.get("href", "")
+        url = itunes_image.href
         for filetype in IMAGE_FORMATS:
             if filetype in url:
                 await self._download_asset(url, title, filetype, file_date_string)
-                child.attrib["href"] = (
+                itunes_image.href = (
                     self._app_config.inet_path.encoded_string()
                     + "content/"
                     + self._podcast.name_one_word
@@ -378,16 +384,15 @@ class PodcastsDownloader(AssetDownloader):
         logger.trace("[%s] Clean Filename: '%s'", self._podcast.name_one_word, file_name)
         return file_name
 
-    def _get_file_date_string(self, channel: ET.Element) -> str:
-        """Get the file date string from the channel."""
+    def _get_file_date_string(self, item: Item) -> str:
+        """Get the file date string from the item."""
         file_date_string = "00000000"
-        for child in channel:
-            if child.tag == "pubDate":
-                original_date = str(child.text)
-                file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
-                with contextlib.suppress(ValueError):
-                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
-                with contextlib.suppress(ValueError):
-                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
-                file_date_string = file_date.strftime("%Y%m%d")
+        if item.pub_date:
+            original_date = item.pub_date
+            file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+            with contextlib.suppress(ValueError):
+                file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
+            with contextlib.suppress(ValueError):
+                file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
+            file_date_string = file_date.strftime("%Y%m%d")
         return file_date_string

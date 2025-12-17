@@ -3,7 +3,6 @@
 import asyncio
 import contextlib
 import time
-import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
 
 import aiohttp
@@ -245,20 +244,11 @@ class PodcastArchiver:
             aiohttp_session=aiohttp_session,
         )
 
-        tree = await podcasts_downloader.download_podcast()
-        if tree:
-            try:
-                root = tree.getroot()
-                if root is not None:
-                    rss_bytes = ET.tostring(root, encoding=XML_ENCODING, method="xml", xml_declaration=True)
-                    feed = RssFeed.from_bytes(rss_bytes)
-                    last_fetched = int(time.time())
-                    health.update_podcast_status(
-                        podcast.name_one_word, rss_fetching_live=True, last_fetched=last_fetched
-                    )
-                    return feed
-            except Exception:
-                logger.exception("Failed to convert downloaded podcast to RssFeed: %s", podcast.name_one_word)
+        feed = await podcasts_downloader.download_podcast()
+        if feed:
+            last_fetched = int(time.time())
+            health.update_podcast_status(podcast.name_one_word, rss_fetching_live=True, last_fetched=last_fetched)
+            return feed
 
         logger.error("Unable to download podcast: %s", podcast.name_one_word)
         return None

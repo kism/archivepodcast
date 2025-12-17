@@ -51,6 +51,16 @@ class Image(BaseXmlModel, tag="image"):
     link: str | None = element(default=None)
 
 
+class MediaContent(BaseXmlModel, tag="content", nsmap={"media": NSMAP["media"]}, ns="media"):
+    """Media RSS content element."""
+
+    model_config = ConfigDict(extra="allow")
+
+    url: str = attr(default="")
+    length: str | None = attr(default=None)
+    type: str | None = attr(default=None)
+
+
 class Item(BaseXmlModel, tag="item"):
     """RSS item/episode element."""
 
@@ -62,6 +72,8 @@ class Item(BaseXmlModel, tag="item"):
     pub_date: str | None = element(tag="pubDate", default=None)
     guid: str | None = element(default=None)
     enclosure: Enclosure | None = element(default=None)
+    media_content: MediaContent | None = element(default=None)
+    itunes_image: ItunesImage | None = element(default=None)
 
 
 class AtomLink(BaseXmlModel, tag="link", nsmap={"atom": NSMAP["atom"]}, ns="atom"):
@@ -74,6 +86,15 @@ class AtomLink(BaseXmlModel, tag="link", nsmap={"atom": NSMAP["atom"]}, ns="atom
     type: str | None = attr(default=None)
 
 
+class ItunesOwner(BaseXmlModel, tag="owner", nsmap={"itunes": NSMAP["itunes"]}, ns="itunes"):
+    """iTunes owner element."""
+
+    model_config = ConfigDict(extra="allow")
+
+    name: str | None = element(tag="name", ns="itunes", default=None)
+    email: str | None = element(tag="email", ns="itunes", default=None)
+
+
 class Channel(BaseXmlModel, tag="channel"):
     """RSS channel element."""
 
@@ -84,6 +105,11 @@ class Channel(BaseXmlModel, tag="channel"):
     description: str | None = element(default=None)
     language: str | None = element(default=None)
     image: Image | None = element(default=None)
+    atom_link: AtomLink | None = element(default=None)
+    itunes_image: ItunesImage | None = element(default=None)
+    itunes_owner: ItunesOwner | None = element(default=None)
+    itunes_author: str | None = element(tag="author", ns="itunes", default=None)
+    itunes_new_feed_url: str | None = element(tag="new-feed-url", ns="itunes", default=None)
     items: list[Item] = element(tag="item", default_factory=list)
 
 
@@ -127,7 +153,12 @@ class RssFeed:
         elif raw_bytes is not None:
             try:
                 self._rss = Rss.from_xml(raw_bytes)
-            except Exception:  # Catch all XML/validation errors (xml, pydantic, etc.)
+            except Exception as e:  # Catch all XML/validation errors (xml, pydantic, etc.)
+                # Temporary debug logging
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.critical("RSS PARSE ERROR: %s", e, exc_info=True)
                 self._rss = None
                 self._parse_error = True
 

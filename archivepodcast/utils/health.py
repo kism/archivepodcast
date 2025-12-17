@@ -51,7 +51,23 @@ class PodcastHealth(BaseModel):
 
         try:
             if feed is not None and isinstance(feed, RssFeed):
-                if feed.rss and feed.rss.channel and feed.rss.channel.items:
+                # Debug: Check raw bytes for items
+                if hasattr(feed, "_raw_bytes") and feed._raw_bytes:
+                    raw_str = feed._raw_bytes.decode("utf-8", errors="ignore")[:2000]
+                    has_items_in_raw = "<item" in raw_str
+                    logger.critical("RAW BYTES has <item: %s", has_items_in_raw)
+                    if has_items_in_raw:
+                        # Show a snippet of the first item
+                        item_start = raw_str.find("<item")
+                        item_snippet = raw_str[item_start : item_start + 500] if item_start != -1 else "not found"
+                        logger.critical("FIRST ITEM SNIPPET: %s", item_snippet)
+
+                if (
+                    feed.rss
+                    and feed.rss.channel
+                    and hasattr(feed.rss.channel, "items")
+                    and len(feed.rss.channel.items) > 0
+                ):
                     items = feed.rss.channel.items
                     new_episode_count = len(items)
 
