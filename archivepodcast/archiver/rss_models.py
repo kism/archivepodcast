@@ -3,6 +3,7 @@
 from typing import Self
 
 from pydantic import ConfigDict
+from pydantic.config import ExtraValues
 from pydantic_xml import BaseXmlModel, attr, element
 
 # Namespace definitions for RSS feeds
@@ -22,11 +23,13 @@ NSMAP = {
     "feedburner": "http://rssnamespace.org/feedburner/ext/1.0",
 }
 
+_EXTRA_MODE: ExtraValues = "forbid"
+
 
 class Enclosure(BaseXmlModel, tag="enclosure"):
     """RSS enclosure element for media files."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     url: str = attr(default="")
     length: str | None = attr(default=None)
@@ -36,7 +39,7 @@ class Enclosure(BaseXmlModel, tag="enclosure"):
 class ItunesImage(BaseXmlModel, tag="image", nsmap={"itunes": NSMAP["itunes"]}, ns="itunes"):
     """iTunes image element."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     href: str = attr(default="")
 
@@ -44,7 +47,7 @@ class ItunesImage(BaseXmlModel, tag="image", nsmap={"itunes": NSMAP["itunes"]}, 
 class Image(BaseXmlModel, tag="image"):
     """RSS image element."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     url: str | None = element(default=None)
     title: str | None = element(default=None)
@@ -54,7 +57,7 @@ class Image(BaseXmlModel, tag="image"):
 class MediaContent(BaseXmlModel, tag="content", nsmap={"media": NSMAP["media"]}, ns="media"):
     """Media RSS content element."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     url: str = attr(default="")
     length: str | None = attr(default=None)
@@ -64,7 +67,7 @@ class MediaContent(BaseXmlModel, tag="content", nsmap={"media": NSMAP["media"]},
 class Item(BaseXmlModel, tag="item"):
     """RSS item/episode element."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     title: str | None = element(default=None)
     link: str | None = element(default=None)
@@ -79,7 +82,7 @@ class Item(BaseXmlModel, tag="item"):
 class AtomLink(BaseXmlModel, tag="link", nsmap={"atom": NSMAP["atom"]}, ns="atom"):
     """Atom link element."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     href: str = attr(default="")
     rel: str | None = attr(default=None)
@@ -89,7 +92,7 @@ class AtomLink(BaseXmlModel, tag="link", nsmap={"atom": NSMAP["atom"]}, ns="atom
 class ItunesOwner(BaseXmlModel, tag="owner", nsmap={"itunes": NSMAP["itunes"]}, ns="itunes"):
     """iTunes owner element."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     name: str | None = element(tag="name", ns="itunes", default=None)
     email: str | None = element(tag="email", ns="itunes", default=None)
@@ -98,7 +101,7 @@ class ItunesOwner(BaseXmlModel, tag="owner", nsmap={"itunes": NSMAP["itunes"]}, 
 class Channel(BaseXmlModel, tag="channel"):
     """RSS channel element."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     title: str | None = element(default=None)
     link: str | None = element(default=None)
@@ -116,7 +119,7 @@ class Channel(BaseXmlModel, tag="channel"):
 class Rss(BaseXmlModel, tag="rss", nsmap=NSMAP):
     """RSS root element."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     version: str = attr(default="2.0")
     channel: Channel | None = element(default=None)
