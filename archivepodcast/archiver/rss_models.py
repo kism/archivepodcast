@@ -23,13 +23,9 @@ NSMAP = {
     "feedburner": "http://rssnamespace.org/feedburner/ext/1.0",
 }
 
-_EXTRA_MODE: ExtraValues = "forbid"
-
 
 class Enclosure(BaseXmlModel, tag="enclosure"):
     """RSS enclosure element for media files."""
-
-    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     url: str = attr(default="")
     length: str | None = attr(default=None)
@@ -39,15 +35,11 @@ class Enclosure(BaseXmlModel, tag="enclosure"):
 class ItunesImage(BaseXmlModel, tag="image", nsmap={"itunes": NSMAP["itunes"]}, ns="itunes"):
     """iTunes image element."""
 
-    model_config = ConfigDict(extra=_EXTRA_MODE)
-
     href: str = attr(default="")
 
 
 class Image(BaseXmlModel, tag="image"):
     """RSS image element."""
-
-    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     url: str | None = element(default=None)
     title: str | None = element(default=None)
@@ -57,69 +49,95 @@ class Image(BaseXmlModel, tag="image"):
 class MediaContent(BaseXmlModel, tag="content", nsmap={"media": NSMAP["media"]}, ns="media"):
     """Media RSS content element."""
 
-    model_config = ConfigDict(extra=_EXTRA_MODE)
-
     url: str = attr(default="")
     length: str | None = attr(default=None)
     type: str | None = attr(default=None)
 
 
-class Item(BaseXmlModel, tag="item"):
-    """RSS item/episode element."""
+class Guid(BaseXmlModel, tag="guid"):
+    """RSS guid element with optional isPermaLink attribute."""
 
-    model_config = ConfigDict(extra=_EXTRA_MODE)
+    value: str = ""
+    is_perma_link: str | None = attr(name="isPermaLink", default=None)
+
+
+class Item(BaseXmlModel, tag="item", nsmap=NSMAP):
+    """RSS item/episode element."""
 
     title: str | None = element(default=None)
     link: str | None = element(default=None)
     description: str | None = element(default=None)
+    author: str | None = element(default=None)
     pub_date: str | None = element(tag="pubDate", default=None)
-    guid: str | None = element(default=None)
+    guid: Guid | None = element(default=None)
     enclosure: Enclosure | None = element(default=None)
     media_content: MediaContent | None = element(default=None)
     itunes_image: ItunesImage | None = element(default=None)
+    itunes_title: str | None = element(tag="title", ns="itunes", default=None)
+    itunes_episode_type: str | None = element(tag="episodeType", ns="itunes", default=None)
+    itunes_season: str | None = element(tag="season", ns="itunes", default=None)
+    itunes_episode: str | None = element(tag="episode", ns="itunes", default=None)
+    itunes_author: str | None = element(tag="author", ns="itunes", default=None)
+    itunes_summary: str | None = element(tag="summary", ns="itunes", default=None)
+    itunes_subtitle: str | None = element(tag="subtitle", ns="itunes", default=None)
+    itunes_duration: str | None = element(tag="duration", ns="itunes", default=None)
+    itunes_explicit: str | None = element(tag="explicit", ns="itunes", default=None)
+    content_encoded: str | None = element(tag="encoded", ns="content", default=None)
 
 
 class AtomLink(BaseXmlModel, tag="link", nsmap={"atom": NSMAP["atom"]}, ns="atom"):
     """Atom link element."""
 
-    model_config = ConfigDict(extra=_EXTRA_MODE)
-
     href: str = attr(default="")
     rel: str | None = attr(default=None)
     type: str | None = attr(default=None)
+    title: str | None = attr(default=None)
 
 
 class ItunesOwner(BaseXmlModel, tag="owner", nsmap={"itunes": NSMAP["itunes"]}, ns="itunes"):
     """iTunes owner element."""
 
-    model_config = ConfigDict(extra=_EXTRA_MODE)
-
     name: str | None = element(tag="name", ns="itunes", default=None)
     email: str | None = element(tag="email", ns="itunes", default=None)
 
 
-class Channel(BaseXmlModel, tag="channel"):
-    """RSS channel element."""
+class ItunesCategory(BaseXmlModel, tag="category", nsmap={"itunes": NSMAP["itunes"]}, ns="itunes"):
+    """iTunes category element with optional nested subcategory."""
 
-    model_config = ConfigDict(extra=_EXTRA_MODE)
+    text: str | None = attr(default=None)
+    subcategory: "ItunesCategory | None" = element(tag="category", ns="itunes", default=None)
+
+
+class Channel(BaseXmlModel, tag="channel", nsmap=NSMAP):
+    """RSS channel element."""
 
     title: str | None = element(default=None)
     link: str | None = element(default=None)
     description: str | None = element(default=None)
+    copyright: str | None = element(default=None)
     language: str | None = element(default=None)
+    pub_date: str | None = element(tag="pubDate", default=None)
+    last_build_date: str | None = element(tag="lastBuildDate", default=None)
+    generator: str | None = element(default=None)
     image: Image | None = element(default=None)
     atom_link: AtomLink | None = element(default=None)
     itunes_image: ItunesImage | None = element(default=None)
     itunes_owner: ItunesOwner | None = element(default=None)
     itunes_author: str | None = element(tag="author", ns="itunes", default=None)
+    itunes_summary: str | None = element(tag="summary", ns="itunes", default=None)
+    itunes_subtitle: str | None = element(tag="subtitle", ns="itunes", default=None)
+    itunes_explicit: str | None = element(tag="explicit", ns="itunes", default=None)
+    itunes_type: str | None = element(tag="type", ns="itunes", default=None)
+    itunes_block: str | None = element(tag="block", ns="itunes", default=None)
     itunes_new_feed_url: str | None = element(tag="new-feed-url", ns="itunes", default=None)
+    itunes_categories: list[ItunesCategory] = element(tag="category", ns="itunes", default_factory=list)
+    content_encoded: str | None = element(tag="encoded", ns="content", default=None)
+    googleplay_block: str | None = element(tag="block", ns="googleplay", default=None)
     items: list[Item] = element(tag="item", default_factory=list)
 
 
 class Rss(BaseXmlModel, tag="rss", nsmap=NSMAP):
     """RSS root element."""
-
-    model_config = ConfigDict(extra=_EXTRA_MODE)
 
     version: str = attr(default="2.0")
     channel: Channel | None = element(default=None)
