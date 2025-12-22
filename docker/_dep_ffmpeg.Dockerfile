@@ -20,20 +20,21 @@ RUN dnf install -y \
 
 WORKDIR /build
 
-# Build LAME (libmp3lame) statically from source
+# Download lame source code
 RUN wget https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz && \
-    tar xzf lame-3.100.tar.gz
-
-WORKDIR /build/lame-3.100
-
-RUN ./configure --prefix=/build/static --enable-static --disable-shared --disable-frontend && \
-    make -j$(nproc) && \
-    make install
+    tar xzf lame-3.100.tar.gz && \
+    mv lame-3.100 lame
 
 # Download ffmpeg source code
 RUN wget https://ffmpeg.org/releases/ffmpeg-7.1.tar.gz && \
     tar xzf ffmpeg-7.1.tar.gz && \
     mv ffmpeg-7.1 ffmpeg
+
+WORKDIR /build/lame
+
+RUN ./configure --prefix=/build/static --enable-static --disable-shared --disable-frontend && \
+    make -j$(nproc) && \
+    make install
 
 WORKDIR /build/ffmpeg
 

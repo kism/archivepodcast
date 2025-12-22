@@ -4,6 +4,8 @@ FROM ghcr.io/astral-sh/uv:0.9 AS uv-base
 
 FROM archivepodcast
 
+USER 1001:1001
+
 COPY --from=uv-base /uv /uvx /bin/
 
 # Enable bytecode compilation
@@ -30,8 +32,6 @@ WORKDIR /app
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 ENV AP_SIMPLE_LOGGING=1
-
-USER 1001:1001
 
 # Pytest specific
 COPY tests tests
