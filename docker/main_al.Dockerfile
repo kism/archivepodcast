@@ -38,11 +38,12 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Copy application code and project metadata
 COPY archivepodcast archivepodcast
-COPY pyproject.toml README.md ./
 
 # Install the project to ensure the command archivepodcast works
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=README.md,target=README.md \
     uv sync --frozen
 
 # --- Final runtime stage ---
@@ -55,7 +56,12 @@ RUN dnf install -y \
     file-libs \
     libxml2 \
     libxslt \
+    shadow-utils \
     && dnf clean all
+
+# Setup a non-root user
+RUN groupadd --system --gid 999 ap \
+ && useradd --system --gid 999 --uid 999 --create-home ap
 
 # Copy FFmpeg from builder
 COPY --from=ffmpeg-builder /build/ffmpeg/ffmpeg /usr/local/bin/ffmpeg
@@ -65,16 +71,15 @@ COPY --from=python-source /var/lang /var/lang
 ENV PATH="/var/lang/bin:$PATH"
 
 # Copy Python virtual environment from builder
-COPY --from=python-builder /app/.venv /app/.venv
-COPY --from=python-builder /app/archivepodcast /app/archivepodcast
+COPY --chown=ap:ap --from=python-builder /app /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 ENV AP_SIMPLE_LOGGING=1
 
-EXPOSE 5100
+USER ap:ap
 
-USER 1001:1001
+EXPOSE 5100
 
 CMD [ "waitress-serve", "--listen", "0.0.0.0:5100", "--trusted-proxy", "*", "--trusted-proxy-headers", "x-forwarded-for x-forwarded-proto x-forwarded-port", "--log-untrusted-proxy-headers", "--clear-untrusted-proxy-headers", "--threads", "4", "--call", "archivepodcast:create_app" ]
 

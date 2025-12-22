@@ -11,8 +11,8 @@ on:
 env:
   MAIN_TAG: ghcr.io/${{ github.repository }}:latest
   MAIN_TAG_LOCAL: archivepodcast:latest
-  DEB_VERSION: bookworm
-  DEB_TAG: ghcr.io/${{ github.repository }}:bookworm
+  DEB_VERSION: trixie
+  DEB_TAG: ghcr.io/${{ github.repository }}:trixie
   AL_VERSION: al2023
   AL_TAG: ghcr.io/${{ github.repository }}:al2023
   AL_TAG_LOCAL: archivepodcast:al2023
