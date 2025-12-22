@@ -1,6 +1,6 @@
 # --- Minimal FFmpeg build stage ---
 
-FROM ghcr.io/astral-sh/uv AS uv-base
+FROM ghcr.io/astral-sh/uv:0.9 AS uv-base
 
 FROM archivepodcast
 
@@ -31,10 +31,12 @@ WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH"
 ENV AP_SIMPLE_LOGGING=1
 
+USER 1001:1001
+
 # Pytest specific
-ADD tests tests
-ADD uv.lock uv.lock
-ADD pyproject.toml pyproject.toml
+COPY tests tests
+COPY uv.lock uv.lock
+COPY pyproject.toml pyproject.toml
 RUN mkdir instance
 RUN echo "hello" > instance/config.json
 RUN chmod 000 instance/config.json

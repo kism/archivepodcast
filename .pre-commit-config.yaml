@@ -4,6 +4,6 @@ repos:
       - id: ruff-format
         name: ruff format
         description: Run ruff format on Python files using local installation
-        entry: .venv/bin/ruff format || true
+        entry: .venv/bin/ruff format
         language: system
         types: [python]

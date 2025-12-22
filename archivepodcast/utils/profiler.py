@@ -30,6 +30,7 @@ class EventLastTime(BaseModel):
         """Add time to the event tree."""
         if isinstance(duration, int):
             duration = 999999999.0  # Always use float for durations
+
         if isinstance(duration, float):
             duration = datetime.timedelta(seconds=duration)
 

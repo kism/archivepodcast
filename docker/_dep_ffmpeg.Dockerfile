@@ -22,9 +22,11 @@ WORKDIR /build
 
 # Build LAME (libmp3lame) statically from source
 RUN wget https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz && \
-    tar xzf lame-3.100.tar.gz && \
-    cd lame-3.100 && \
-    ./configure --prefix=/build/static --enable-static --disable-shared --disable-frontend && \
+    tar xzf lame-3.100.tar.gz
+
+WORKDIR /build/lame-3.100
+
+RUN ./configure --prefix=/build/static --enable-static --disable-shared --disable-frontend && \
     make -j$(nproc) && \
     make install
 
