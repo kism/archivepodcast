@@ -139,9 +139,17 @@ indent-style = "space"
 docstring-code-format = true
 docstring-code-line-length = 40
 
+[tool.coverage.run]
+source = ["archivepodcast"]
+context = "test"
+
+
+[tool.coverage.report]
+show_missing = false
+sort = "-Cover"
+
 [tool.pytest.ini_options]
 addopts = [
-    "--cov-context=test",
     "--cov=archivepodcast",
     "--cov-report=term",
     "--cov-report=html",
