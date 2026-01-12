@@ -216,8 +216,9 @@ def test_no_ffmpeg(tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch
 
     monkeypatch.setattr("pathlib.Path.exists", lambda x: False)
 
-    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader") and pytest.raises(SystemExit):  # type: ignore[truthy-bool]
-        check_ffmpeg()
+    with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
+        with pytest.raises(SystemExit):
+            check_ffmpeg()
 
     assert "ffmpeg not found" in caplog.text
 

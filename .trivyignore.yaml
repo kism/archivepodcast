@@ -1,0 +1,17 @@
+---
+misconfigurations:
+  - id: AVD-DS-0001
+    statement: "No speficic tag for locally built archivepodcast image."
+    paths:
+      - "docker/pytest.Dockerfile"
+
+  - id: AVD-DS-0002
+    statement: "No user needs to be specified for containers used for dependency building"
+    paths:
+      - "docker/_dep*.Dockerfile"
+
+  - id: AVD-DS-0026
+    statement: "No healthcheck since this is an adhoc container."
+    paths:
+      - "docker/pytest.Dockerfile"
+      - "docker/_dep*.Dockerfile"
