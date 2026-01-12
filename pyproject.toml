@@ -80,11 +80,10 @@ line-length = 120
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
-    "DJ",      # KG Django not required
-    "FAST",    # KG FastAPI not required
-    "AIRFLOW", # KG Airflow not required
-    "NPY",     # KG Numpy not required
-    "PD",      # KG Pandas not required
+    "DJ",   # KG Django not required
+    "FAST", # KG FastAPI not required
+    "NPY",  # KG Numpy not required
+    "PD",   # KG Pandas not required
 
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
