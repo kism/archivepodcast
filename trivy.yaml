@@ -1,0 +1,14 @@
+---
+# https://trivy.dev/docs/latest/references/configuration/config-file/
+timeout: 1m
+format: table
+exit-code: 1
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+misconfiguration:
+  scanners:
+   - dockerfile

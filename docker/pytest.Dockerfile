@@ -1,8 +1,10 @@
-# --- Minimal FFmpeg build stage ---
+# --- Pytest specific stage ---
 
-FROM ghcr.io/astral-sh/uv AS uv-base
+FROM ghcr.io/astral-sh/uv:0.9 AS uv-base
 
 FROM archivepodcast
+
+USER root
 
 COPY --from=uv-base /uv /uvx /bin/
 
@@ -16,14 +18,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --extra test
 
-# Copy application code and project metadata
-COPY archivepodcast archivepodcast
-COPY pyproject.toml README.md ./
-
-# Install the project to ensure the command archivepodcast works
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    uv sync --frozen --extra test
+# Copy application code
+COPY --chown=ap:ap archivepodcast archivepodcast
 
 WORKDIR /app
 
@@ -32,10 +28,16 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV AP_SIMPLE_LOGGING=1
 
 # Pytest specific
-ADD tests tests
-ADD uv.lock uv.lock
-ADD pyproject.toml pyproject.toml
-RUN mkdir instance
+COPY --chown=ap:ap tests tests
+COPY --chown=ap:ap uv.lock uv.lock
+COPY --chown=ap:ap pyproject.toml pyproject.toml
+RUN mkdir -p instance
+RUN chmod 700 instance
+RUN chown ap:ap instance
 RUN echo "hello" > instance/config.json
 RUN chmod 000 instance/config.json
-CMD ["pytest"]
+
+# User and permissions
+USER ap:ap
+
+CMD ["pytest", "--no-cov", "-o", "cache_dir=/tmp/.pytest_cache"]

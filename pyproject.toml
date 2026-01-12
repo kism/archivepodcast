@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.5.9"
+version = "1.5.10.dev1"
 description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -80,7 +80,10 @@ line-length = 120
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
-    "DJ", # KG Django not required
+    "DJ",   # KG Django not required
+    "FAST", # KG FastAPI not required
+    "NPY",  # KG Numpy not required
+    "PD",   # KG Pandas not required
 
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
@@ -88,6 +91,7 @@ ignore = [
     "S311",   # KG I'll assume no real crypto will be done.
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
+    "SIM117", # KG Honestly easier to read this way
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -139,9 +143,17 @@ indent-style = "space"
 docstring-code-format = true
 docstring-code-line-length = 40
 
+[tool.coverage.run]
+source = ["archivepodcast"]
+context = "test"
+
+
+[tool.coverage.report]
+show_missing = false
+sort = "-Cover"
+
 [tool.pytest.ini_options]
 addopts = [
-    "--cov-context=test",
     "--cov=archivepodcast",
     "--cov-report=term",
     "--cov-report=html",
@@ -175,6 +187,14 @@ enable_error_code = [
 disable_error_code = ["misc"]
 warn_unreachable = true
 warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+module = "archivepodcast.blueprints.*"
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = "archivepodcast"
+disallow_untyped_decorators = false
 
 [[tool.ty.overrides]]
 # Blame the flask client object
