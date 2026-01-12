@@ -18,7 +18,7 @@ def test_instance_path_check(
 ) -> None:
     """Ensure instance path is specified when using dictionary config."""
 
-    with pytest.raises(ValueError, match="Flask TESTING mode requires instance_path to be a tmp_path"):  # noqa: SIM117
+    with pytest.raises(ValueError, match="Flask TESTING mode requires instance_path to be a tmp_path"):
         with caplog.at_level("INFO"):
             create_app()
 
