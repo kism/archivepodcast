@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 bp = Blueprint("api", __name__)
 
 
-@bp.route("/api/reload")  # type: ignore[untyped-decorator]
+@bp.route("/api/reload")
 def api_reload() -> Response:
     """Reload the config."""
     ap = get_ap()
@@ -43,7 +43,7 @@ def api_reload() -> Response:
     )
 
 
-@bp.route("/api/health")  # type: ignore[untyped-decorator]
+@bp.route("/api/health")
 def api_health() -> Response:
     """Health check."""
     try:
@@ -62,7 +62,7 @@ def api_health() -> Response:
     )
 
 
-@bp.route("/api/profile")  # type: ignore[untyped-decorator]
+@bp.route("/api/profile")
 def api_profile() -> Response:
     """Get the profiling info as JSON."""
     profile_json_str = event_times.model_dump_json(indent=JSON_INDENT)

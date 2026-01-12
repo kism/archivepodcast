@@ -185,6 +185,14 @@ disable_error_code = ["misc"]
 warn_unreachable = true
 warn_redundant_casts = true
 
+[[tool.mypy.overrides]]
+module = "archivepodcast.blueprints.*"
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = "archivepodcast"
+disallow_untyped_decorators = false
+
 [[tool.ty.overrides]]
 # Blame the flask client object
 include = ["tests/**"]
