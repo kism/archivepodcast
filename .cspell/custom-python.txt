@@ -18,3 +18,4 @@ httpsession
 PYTHONUNBUFFERED
 powertools
 delenv
+ignorefile

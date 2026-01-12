@@ -31,7 +31,7 @@ jobs:
           github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
 
       - name: Install libxml2
-        run: sudo apt-get install -y libxml2-dev libxslt-dev
+        run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt-dev
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
