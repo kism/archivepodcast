@@ -28,15 +28,14 @@ echo "Running code checks locally"
 # Prerequisites
 uv sync --all-extras
 
-echo "Node version: $(node --version), expected $(cat .nvmrc)"
-npm install
+bun install
 
 echo_magenta "Pytest"
 pytest -q --show-capture=no >/dev/null
 check_return $?
 
 echo_magenta "Vitest"
-npx vitest run --coverage >/dev/null
+bun run test >/dev/null
 check_return $?
 
 echo_magenta "Ruff format"
@@ -56,28 +55,28 @@ ty check .
 check_return $?
 
 echo_magenta "cspell"
-npm run spell
+bun run spell
 check_return $?
 
 echo_magenta "Markdownlint"
-npm run check_markdown
+bun run check_markdown
 check_return $?
 
 echo_magenta "Biome format"
-npm run format
+bun run format
 check_return $?
 
 echo_magenta "Biome lint"
-npm run lint
+bun run lint
 check_return $?
 
 echo_magenta "Biome check"
-npm run check
+bun run check
 check_return $?
 
 echo_magenta "html-validate"
 mkdir -p instance/web/rss/
 cp -f scripts/config/rss-ci.rss instance/web/rss/test
 .venv/bin/python -m archivepodcast --config scripts/config/config-ci.json >/dev/null 2>&1
-npx html-validate instance/web/*.html
+bun run html-validate instance/web/*.html
 check_return $?

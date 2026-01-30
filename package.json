@@ -11,12 +11,13 @@
     "vitest": "^4.0.9"
   },
   "scripts": {
-    "test": "vitest run --coverage",
-    "coverage": "vitest run --coverage",
+    "test": "vitest run",
+    "test:coverage": "node --run vitest run --coverage",
+    "coverage": "node --run vitest run --coverage",
     "check": "biome check",
     "lint": "biome lint .",
-    "spell": "cspell '**/*.{py,js,css,html,md,json,Dockerfile}'",
-    "check_markdown": "markdownlint --ignore node_modules --fix ./**/*.md",
+    "spell": "bunx cspell '**/*.{py,js,css,html,md,json,Dockerfile}'",
+    "check_markdown": "bunx markdownlint --ignore node_modules --fix ./**/*.md",
     "format": "biome format --write ."
   }
 }

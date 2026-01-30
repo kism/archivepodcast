@@ -1,3 +1,4 @@
 biomejs
 Vitest
 nvmrc
+bunx
