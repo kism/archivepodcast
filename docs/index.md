@@ -5,12 +5,6 @@ Flask Webapp that will archive a podcast from a RSS feed. It will download the e
 <https://github.com/kism/archivepodcast>
 
 ```{toctree}
-:maxdepth: 1
-:caption: Repository readme
-readme
-```
-
-```{toctree}
 :maxdepth: 2
 :caption: Configuration
 configuration
