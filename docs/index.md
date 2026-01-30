@@ -31,5 +31,10 @@ deployment/run_adhoc
 :maxdepth: 2
 :caption: Develop
 
-development
+development/development
+development/code_quality
+development/docker
+development/lambda
+development/pytest
+development/vitest
 ```

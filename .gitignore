@@ -1,4 +1,6 @@
 # This app
+# docs
+docs_out
 
 # Cloudflare workers
 wrangler.toml
