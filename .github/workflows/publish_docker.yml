@@ -77,7 +77,9 @@ jobs:
 
       # region run
       - name: Create instance directory
-        run: mkdir -p instance
+        run: |
+          mkdir -p instance
+          chmod 777 instance
 
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance --env AP_SELF_TEST=true ${{ env.MAIN_TAG_LOCAL }} archivepodcast

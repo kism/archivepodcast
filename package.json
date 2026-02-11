@@ -1,22 +1,23 @@
 {
   "devDependencies": {
-    "@biomejs/biome": "^2.3.5",
-    "@cspell/dict-en-au": "^1.1.12",
-    "@vitest/coverage-v8": "^4.0.9",
-    "@vitest/ui": "^4.0.9",
-    "cspell": "^9.3.2",
-    "happy-dom": "^20.0.10",
-    "html-validate": "^10.3.1",
+    "@biomejs/biome": "^2.3.13",
+    "@cspell/dict-en-au": "^1.1.14",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "cspell": "^9.6.2",
+    "happy-dom": "^20.4.0",
+    "html-validate": "^10.7.0",
     "markdownlint-cli": "^0.46.0",
-    "vitest": "^4.0.9"
+    "vitest": "^4.0.18"
   },
   "scripts": {
-    "test": "vitest run --coverage",
-    "coverage": "vitest run --coverage",
+    "test": "vitest run",
+    "test:coverage": "node --run vitest run --coverage",
+    "coverage": "node --run vitest run --coverage",
     "check": "biome check",
     "lint": "biome lint .",
-    "spell": "cspell '**/*.{py,js,css,html,md,json,Dockerfile}'",
-    "check_markdown": "markdownlint --ignore node_modules --fix ./**/*.md",
+    "spell": "bunx cspell '**/*.{py,js,css,html,md,json,Dockerfile}'",
+    "check_markdown": "bunx markdownlint --ignore node_modules --fix ./**/*.md",
     "format": "biome format --write ."
   }
 }
