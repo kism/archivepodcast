@@ -24,7 +24,13 @@ async def delay_download(attempt: int) -> None:
 def convert_to_mp3(input_path: Path, output_path: Path) -> None:
     """Convert an audio file to MP3 using ffmpeg."""
     ff_input = ffmpeg.input(filename=input_path)
-    ff = ffmpeg.output(ff_input, filename=output_path, codec="libmp3lame", aq=4)
+    ff = ffmpeg.output(
+        ff_input,
+        filename=output_path,
+        codec="libmp3lame",
+        aq=4,
+        extra_options={"loglevel": "warning", "hide_banner": None},
+    )
     ff.run(overwrite_output=True)
 
 
