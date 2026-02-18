@@ -25,6 +25,7 @@ dependencies = [
     "rich>=14.2.0",
     "typed-ffmpeg>=3.7",
     "waitress>=3.0",
+    "anyio>=4.12.1",
 ]
 
 [project.urls]
@@ -92,7 +93,6 @@ ignore = [
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
     "SIM117", # KG Honestly easier to read this way
-    "ASYNC240", # KG Replacing pathlib is out of scope for now
 ]
 
 [tool.ruff.lint.per-file-ignores]
