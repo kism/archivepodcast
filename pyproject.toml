@@ -92,7 +92,7 @@ ignore = [
     "S311",   # KG I'll assume no real crypto will be done.
     "ISC001", # KG conflict in the formatter
     "COM812", # KG conflict in the formatter
-    "SIM117", # KG Honestly easier to read this way
+    "SIM117", # KG Honestly easier to read with thing and thing as with: with:
 ]
 
 [tool.ruff.lint.per-file-ignores]
