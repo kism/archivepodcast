@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 import aiohttp
 import magic
 import pytest
+from anyio import Path as AsyncPath
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.config import ArchivePodcastConfig
@@ -37,7 +38,7 @@ async def test_init(
     aiohttp_session = FakeSession(responses={})
 
     with caplog.at_level(TRACE_LEVEL_NUM):
-        PodcastsDownloader(app_config=config.app, s3=False, podcast=podcast, aiohttp_session=aiohttp_session)  # type: ignore[arg-type]
+        PodcastsDownloader(app_config=config.app, s3=False, podcast=podcast, aiohttp_session=aiohttp_session)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
     assert "Initialising AssetDownloader for podcast" in caplog.text
 
@@ -134,7 +135,7 @@ async def test_download_podcast_wav_wav_exists(
 
     test_podcast_content_dir = Path(tmp_path) / "web" / "content" / "test"
 
-    Path(test_podcast_content_dir).mkdir(parents=True, exist_ok=True)
+    await AsyncPath(test_podcast_content_dir).mkdir(parents=True, exist_ok=True)
 
     episode_file_name = "20200101-Test-Episode"
     tmp_wav_path = Path(test_podcast_content_dir) / f"{episode_file_name}.wav"

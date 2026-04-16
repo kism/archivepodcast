@@ -84,7 +84,7 @@ def apd(
     podcast = apa.podcast_list[0]
     aiohttp_session = FakeSession(responses={})
 
-    return PodcastsDownloader(app_config=config.app, s3=False, podcast=podcast, aiohttp_session=aiohttp_session)  # type: ignore[arg-type]
+    return PodcastsDownloader(app_config=config.app, s3=False, podcast=podcast, aiohttp_session=aiohttp_session)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
 
 @pytest.fixture
@@ -99,4 +99,4 @@ def apd_aws(
     podcast = apa_aws.podcast_list[0]
     aiohttp_session = FakeSession(responses={})
 
-    return PodcastsDownloader(app_config=config.app, s3=apa_aws.s3, podcast=podcast, aiohttp_session=aiohttp_session)  # type: ignore[arg-type]
+    return PodcastsDownloader(app_config=config.app, s3=apa_aws.s3, podcast=podcast, aiohttp_session=aiohttp_session)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]

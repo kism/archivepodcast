@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import magic
 import markdown
 from aiobotocore.session import get_session
+from anyio import Path as AsyncPath
 from jinja2 import Environment, FileSystemLoader
 
 from archivepodcast.constants import JSON_INDENT
@@ -247,12 +248,12 @@ class WebpageRenderer:
         """Create about page if needed."""
         app_paths = get_app_paths()
         about_page_md_filename = "about.md"
-        about_page_md_expected_path: Path = app_paths.instance_path / about_page_md_filename
+        about_page_md_expected_path: AsyncPath = AsyncPath(app_paths.instance_path / about_page_md_filename)
         about_page_filename = "about.html"
 
-        if about_page_md_expected_path.exists():  # Check if about.html exists, affects index.html so it's first.
-            with about_page_md_expected_path.open(encoding="utf-8") as about_page:
-                about_page_md_rendered = markdown.markdown(about_page.read(), extensions=["tables"])
+        if await about_page_md_expected_path.exists():  # Check if about.html exists, affects index.html so it's first.
+            async with await about_page_md_expected_path.open(encoding="utf-8") as about_page:
+                about_page_md_rendered = markdown.markdown(await about_page.read(), extensions=["tables"])
 
             env = Environment(loader=FileSystemLoader(app_paths.template_directory), autoescape=True)
 
