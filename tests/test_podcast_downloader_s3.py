@@ -42,7 +42,7 @@ def test_init(
 
     aiohttp_session = FakeSession(responses={})
     with caplog.at_level(TRACE_LEVEL_NUM):
-        PodcastsDownloader(app_config=config.app, s3=True, podcast=podcast, aiohttp_session=aiohttp_session)  # type: ignore[arg-type]
+        PodcastsDownloader(app_config=config.app, s3=True, podcast=podcast, aiohttp_session=aiohttp_session)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
     assert "Initialising AssetDownloader for podcast" in caplog.text
 

@@ -39,7 +39,7 @@ async def test_download_asset_already_exists(
         podcast=podcast,
         app_config=config.app,
         s3=False,
-        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]
+        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
     )
 
     # Create the file
@@ -75,7 +75,7 @@ async def test_check_path_exists_str_path(
         podcast=podcast,
         app_config=config.app,
         s3=False,
-        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]
+        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
     )
 
     # Create the file
@@ -107,7 +107,7 @@ async def test_check_path_exists_s3_not_in_cache(
         podcast=podcast,
         app_config=config.app,
         s3=True,
-        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]
+        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
     )
 
     # Create a path that doesn't exist in S3 cache
@@ -146,7 +146,7 @@ async def test_upload_asset_s3_remove_original_false_already_exists(
         podcast=podcast,
         app_config=config.app,
         s3=True,
-        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]
+        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
     )
 
     # Create the file
@@ -184,7 +184,7 @@ async def test_upload_asset_s3_remove_original_false_upload_and_keep(
         podcast=podcast,
         app_config=config.app,
         s3=True,
-        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]
+        aiohttp_session=aiohttp_session,  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
     )
 
     # Create the file

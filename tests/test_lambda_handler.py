@@ -25,7 +25,7 @@ def test_run_lambda(
     monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", _ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", _test_instance_path)
 
-    handler(None, None)  # type: ignore[arg-type]
+    handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
 
 def test_run_lambda_no_ro_instance(
@@ -38,7 +38,7 @@ def test_run_lambda_no_ro_instance(
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", tmp_path / "instance")
 
     with pytest.raises(FileNotFoundError, match="Instance path does not exist"):
-        handler(None, None)  # type: ignore[arg-type]
+        handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
 
 def test_run_lambda_no_config(
@@ -54,7 +54,7 @@ def test_run_lambda_no_config(
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", tmp_path / "instance")
 
     with pytest.raises(FileNotFoundError, match=r"Instance config.json not found"):
-        handler(None, None)  # type: ignore[arg-type]
+        handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
 
 def test_run_lambda_copies_instance_folder(
@@ -78,7 +78,7 @@ def test_run_lambda_copies_instance_folder(
     monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", _ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", _test_instance_path)
 
-    handler(None, None)  # type: ignore[arg-type]
+    handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
     # Verify files were copied
     assert (_test_instance_path / "config.json").exists()
@@ -108,7 +108,7 @@ def test_run_lambda_calls_run_ap_adhoc(
     mock_run_ap_adhoc = Mock()
     monkeypatch.setattr("archivepodcast.lambda_handler.run_ap_adhoc", mock_run_ap_adhoc)
 
-    handler(None, None)  # type: ignore[arg-type]
+    handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
     # Verify run_ap_adhoc was called with the correct path
     mock_run_ap_adhoc.assert_called_once_with(instance_path=_test_instance_path)
@@ -140,7 +140,7 @@ def test_run_lambda_existing_instance_overwrites(
     monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", _ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", _test_instance_path)
 
-    handler(None, None)  # type: ignore[arg-type]
+    handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
     # Verify new file was copied
     assert (_test_instance_path / "new_file.txt").exists()
@@ -172,7 +172,7 @@ def test_run_lambda_logs_event(
     mock_event = {"test": "event", "data": "value"}
 
     with caplog.at_level("INFO"):
-        handler(mock_event, None)  # type: ignore[arg-type]
+        handler(mock_event, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
     # Verify event was logged
     assert any("Event invoked with event:" in record.message for record in caplog.records)

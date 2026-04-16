@@ -43,7 +43,7 @@ class FakeResponse:
     def raise_for_status(self) -> None:
         if self.status >= HTTPStatus.BAD_REQUEST:
             raise aiohttp.ClientResponseError(
-                request_info=None,  # type: ignore[arg-type]
+                request_info=None,  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
                 history=(),
                 status=self.status,
             )
