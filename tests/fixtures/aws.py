@@ -145,7 +145,7 @@ class S3ClientMock:
             body = wip.get("Body", b"")
             size = len(body) if isinstance(body, (bytes, str)) else 0
             content_type = wip.get("ContentType", "")
-            result: HeadObjectOutputTypeDef = {  # type: ignore[typeddict-item]
+            result: HeadObjectOutputTypeDef = {  # type: ignore[typeddict-item] # ty:ignore[missing-typed-dict-key]
                 "ContentLength": size,
                 "ContentType": content_type,
             }

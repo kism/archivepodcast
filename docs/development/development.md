@@ -19,3 +19,8 @@ Run adhoc
 ```bash
 python -m archivepodcast
 ```
+
+# Out of scope
+
+- uvloop, no performance upgrade found
+- authentication, nope

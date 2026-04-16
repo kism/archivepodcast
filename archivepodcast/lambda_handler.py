@@ -20,7 +20,7 @@ logger.setLevel(logging.INFO)
 
 # Configure logger to only show messages without level/timestamp/request ID
 for log_handler in logger.handlers:
-    log_handler.setFormatter(logging.Formatter("%(message)s"))
+    log_handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
 
 LAMBDA_LIB_PATH = Path("/opt/lib")
 LOCAL_RO_INSTANCE_PATH = Path("/opt/instance")

@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import ffmpeg
+from anyio import Path as AsyncPath
 
 from archivepodcast.constants import AP_SELF_TEST
 from archivepodcast.utils.logger import get_logger
@@ -21,12 +22,12 @@ async def delay_download(attempt: int) -> None:
     await asyncio.sleep(random.uniform(0.1, 1) + (0.5 * attempt))
 
 
-def convert_to_mp3(input_path: Path, output_path: Path) -> None:
+def convert_to_mp3(input_path: Path | AsyncPath, output_path: Path | AsyncPath) -> None:
     """Convert an audio file to MP3 using ffmpeg."""
-    ff_input = ffmpeg.input(filename=input_path)
+    ff_input = ffmpeg.input(filename=Path(input_path))
     ff = ffmpeg.output(
         ff_input,
-        filename=output_path,
+        filename=Path(output_path),
         codec="libmp3lame",
         aq=4,
         extra_options={"loglevel": "warning", "hide_banner": None},

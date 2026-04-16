@@ -6,6 +6,7 @@ from pathlib import Path
 
 import aiohttp
 from aiobotocore.session import get_session
+from anyio import Path as AsyncPath
 from botocore.exceptions import ClientError as S3ClientError
 
 from archivepodcast.config import AppConfig, PodcastConfig
@@ -159,15 +160,15 @@ class AssetDownloader:
             spacer = "-"
 
         content_dir = get_app_paths().web_root / "content" / self._podcast.name_one_word
-        wav_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.wav"
-        mp3_file_path: Path = content_dir / f"{file_date_string}{spacer}{title}.mp3"
+        wav_file_path: AsyncPath = AsyncPath(content_dir / f"{file_date_string}{spacer}{title}.wav")
+        mp3_file_path: AsyncPath = AsyncPath(content_dir / f"{file_date_string}{spacer}{title}.mp3")
 
         # If we need do download and convert a wav there is a small chance
         # the user has had ffmpeg issues, remove existing files to play it safe
-        if wav_file_path.exists():
+        if await wav_file_path.exists():
             with contextlib.suppress(Exception):
-                wav_file_path.unlink()
-                mp3_file_path.unlink()
+                await wav_file_path.unlink()
+                await mp3_file_path.unlink()
 
         # If the asset hasn't already been downloaded and converted
         if not await self._check_path_exists(mp3_file_path):
@@ -187,8 +188,8 @@ class AssetDownloader:
 
             # Remove wav since we are done with it
             logger.info("♻ Removing wav version of %s", title)
-            if wav_file_path.exists():
-                wav_file_path.unlink()
+            if await wav_file_path.exists():
+                await wav_file_path.unlink()
             logger.info("♻ Done")
 
             if self._s3:
@@ -214,7 +215,7 @@ class AssetDownloader:
             new_length = response["ContentLength"]
             msg = f"Length of converted wav file {s3_key}: {new_length} bytes, stored in s3"
         else:
-            new_length = mp3_file_path.stat().st_size
+            new_length = (await mp3_file_path.stat()).st_size
             msg = f"Length of converted wav file: {mp3_file_path} {new_length} bytes, stored locally"
 
         logger.trace("[%s] %s", self._podcast.name_one_word, msg)
@@ -223,7 +224,9 @@ class AssetDownloader:
 
     # region S3 Upload
 
-    async def _upload_asset_s3(self, file_path: Path, extension: str, *, remove_original: bool = True) -> None:
+    async def _upload_asset_s3(
+        self, file_path: Path | AsyncPath, extension: str, *, remove_original: bool = True
+    ) -> None:
         """Upload asset to s3."""
         if not self._s3:
             logger.error("[%s] s3 client not found, cannot upload", self._podcast.name_one_word)
@@ -275,7 +278,7 @@ class AssetDownloader:
             if remove_original:
                 logger.info("[%s] Removing local file: %s", self._podcast.name_one_word, file_path)
                 try:
-                    Path(file_path).unlink()
+                    await AsyncPath(file_path).unlink()
                 except FileNotFoundError:  # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
                     msg = f"Could not remove the local file, the source file was not found: {file_path}"
                     logger.exception("[%s] %s", self._podcast.name_one_word, msg)
@@ -303,7 +306,7 @@ class AssetDownloader:
 
         return file_exists
 
-    async def _check_path_exists(self, file_path: Path | str) -> bool:
+    async def _check_path_exists(self, file_path: Path | AsyncPath | str) -> bool:
         """Check the path, s3 or local."""
         file_exists = False
 
