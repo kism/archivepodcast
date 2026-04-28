@@ -3,7 +3,17 @@
 import logging
 import os
 import shutil
+import sys
 from pathlib import Path
+
+# ffmpeg_core (typed-ffmpeg dependency) tries to create a cache dir next to its own package
+# files at import time, which fails on Lambda's read-only /opt/python filesystem.
+# It supports PyInstaller's _MEIPASS mechanism to redirect to a writable path, so we set
+# those attributes before any code path that triggers the lazy import of ffmpeg_core.common.cache.
+if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    sys.frozen = True  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]
+    sys._MEIPASS = "/tmp"  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]  # noqa: SLF001
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
