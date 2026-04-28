@@ -230,7 +230,7 @@ wheels = [
 
 [[package]]
 name = "archivepodcast"
-version = "1.5.13.dev1"
+version = "1.5.13"
 source = { editable = "." }
 dependencies = [
     { name = "aiobotocore" },
