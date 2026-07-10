@@ -10,7 +10,6 @@ from archivepodcast.utils.logger import (
     TRACE_LEVEL_NUM,
     CustomLogger,
     LoggingConf,
-    _set_log_level,
     get_logger,
     setup_logger,
 )
@@ -70,15 +69,15 @@ def test_handler_console_added(logger: logging.Logger) -> None:
     ],
 )
 def test_set_log_level(log_level_in: str | int, log_level_expected: int, logger: logging.Logger) -> None:
-    """Test if _set_log_level results in correct log_level."""
-    _set_log_level(logger, log_level_in)
+    """Test if setup_logger results in correct log_level."""
+    setup_logger(app=None, logging_conf=LoggingConf(level=log_level_in), in_logger=logger)
     assert logger.getEffectiveLevel() == log_level_expected
 
 
 def test_trace_level(logger: CustomLogger, caplog: pytest.LogCaptureFixture) -> None:
     """Test trace level."""
 
-    _set_log_level(logger, "TRACE")
+    setup_logger(app=None, logging_conf=LoggingConf(level="TRACE"), in_logger=logger)
 
     assert logger.getEffectiveLevel() == TRACE_LEVEL_NUM
 

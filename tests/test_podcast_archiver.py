@@ -213,7 +213,7 @@ def test_grab_podcasts_no_episodes(
 
 def test_archiver_webpages(apa: PodcastArchiver) -> None:
     """Test archiver webpages generation."""
-    pages = apa.renderer.webpages.get_list()
+    pages = apa.renderer.webpages.get_all_pages()
     assert len(pages) != 0
 
 

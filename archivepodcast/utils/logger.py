@@ -144,7 +144,7 @@ def setup_logger(
     ):
         _add_console_handler(logging_conf, in_logger)
 
-    _set_log_level(in_logger, logging_conf.level)
+    in_logger.setLevel(logging_conf.level)  # Level is validated by the LoggingConf model
 
     # If we are logging to a file
     if not _has_file_handler(in_logger) and logging_conf.path is not None:
@@ -199,32 +199,10 @@ def _add_console_handler(
 
 
 def _get_log_level_int(level: str | int) -> int:
-    """Get the log level as an int."""
+    """Get the log level as an int, level is validated by the LoggingConf model."""
     if isinstance(level, int):
         return level
-
-    level = level.upper()
-    if level == "TRACE":
-        return TRACE_LEVEL_NUM
-    return getattr(logging, level, logging.INFO)
-
-
-def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
-    """Set the log level of the logger."""
-    if isinstance(log_level, str):
-        log_level = log_level.upper()
-        if log_level not in LOG_LEVELS:
-            in_logger.setLevel("INFO")
-            logger.warning(
-                "❗ Invalid logging level: %s, defaulting to INFO",
-                log_level,
-            )
-        else:
-            in_logger.setLevel(log_level)
-            logger.debug("Showing log level: DEBUG")
-            logger.trace("Showing log level: TRACE")
-    else:
-        in_logger.setLevel(log_level)
+    return TRACE_LEVEL_NUM if level == "TRACE" else getattr(logging, level, logging.INFO)
 
 
 def _add_file_handler(in_logger: logging.Logger, log_path: Path | str) -> None:

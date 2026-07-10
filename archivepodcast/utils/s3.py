@@ -1,5 +1,6 @@
 """Helper utilities for archivepodcast."""
 
+import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -9,6 +10,7 @@ from pydantic import BaseModel
 from archivepodcast.instances.config import get_ap_config_s3_client
 
 from .logger import get_logger
+from .time import warn_if_too_long
 
 logger = get_logger(__name__)
 
@@ -25,6 +27,16 @@ class S3File(BaseModel):
 
     key: str
     size: int
+
+
+async def s3_put(bucket: str, key: str, body: bytes, content_type: str, *, large_file: bool = False) -> None:
+    """Upload an object to s3."""
+    s3_config = get_ap_config_s3_client()
+    session = get_session()
+    start_time = time.time()
+    async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+        await s3_client.put_object(Bucket=bucket, Key=key, Body=body, ContentType=content_type)
+    warn_if_too_long(f"upload {key} to s3", time.time() - start_time, large_file=large_file)
 
 
 class S3FileCache(BaseModel):
@@ -71,13 +83,4 @@ class S3FileCache(BaseModel):
 
     def check_file_exists(self, key: str, size: int | None = None) -> bool:
         """Check if a file exists in the cache."""
-        matching_file: ObjectTypeDef | None = None
-        for file in self._files:
-            if file["Key"] == key:
-                matching_file = file
-                break
-
-        if size is not None:
-            return any(file["Key"] == key and file["Size"] == size for file in self._files)
-
-        return matching_file is not None
+        return any(file["Key"] == key and (size is None or file["Size"] == size) for file in self._files)

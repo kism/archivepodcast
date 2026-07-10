@@ -6,21 +6,19 @@ import time
 from typing import TYPE_CHECKING
 
 import aiohttp
-from aiobotocore.session import get_session
 from lxml import etree
 from pydantic import BaseModel
 
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.downloader import PodcastsDownloader
 from archivepodcast.downloader.constants import USER_AGENT
-from archivepodcast.instances.config import get_ap_config_s3_client
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_cache import local_file_cache, s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.logger import get_logger
 from archivepodcast.utils.rss import tree_no_episodes
-from archivepodcast.utils.time import warn_if_too_long
+from archivepodcast.utils.s3 import s3_put
 
 from .webpage_renderer import WebpageRenderer
 
@@ -62,31 +60,28 @@ class APFileList(BaseModel):
     files: list[str]
 
 
-class AIOHttpClientSessionHelper:
-    """Helper class to manage a single aiohttp ClientSession."""
-
-    session: aiohttp.ClientSession | None = None
-
-    def get_session(self) -> aiohttp.ClientSession:
-        """Get or create the aiohttp ClientSession."""
-        if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession(
-                # timeout, 5 minutes, why not
-                timeout=aiohttp.ClientTimeout(),
-                # tcp connector, 100 is default connection limit, force_close seems to fix some issues
-                connector=aiohttp.TCPConnector(),
-                raise_for_status=True,
-                headers={"User-Agent": USER_AGENT},
-            )
-        return self.session
-
-    async def close_session(self) -> None:
-        """Close the aiohttp ClientSession."""
-        if self.session is not None and not self.session.closed:
-            await self.session.close()
+_aiohttp_session: aiohttp.ClientSession | None = None
 
 
-aiohttp_client_helper = AIOHttpClientSessionHelper()
+def _get_aiohttp_session() -> aiohttp.ClientSession:
+    """Get or create the aiohttp ClientSession."""
+    global _aiohttp_session  # noqa: PLW0603
+    if _aiohttp_session is None or _aiohttp_session.closed:
+        _aiohttp_session = aiohttp.ClientSession(
+            # timeout, 5 minutes, why not
+            timeout=aiohttp.ClientTimeout(),
+            # tcp connector, 100 is default connection limit, force_close seems to fix some issues
+            connector=aiohttp.TCPConnector(),
+            raise_for_status=True,
+            headers={"User-Agent": USER_AGENT},
+        )
+    return _aiohttp_session
+
+
+async def _close_aiohttp_session() -> None:
+    """Close the aiohttp ClientSession."""
+    if _aiohttp_session is not None and not _aiohttp_session.closed:
+        await _aiohttp_session.close()
 
 
 class PodcastArchiver:
@@ -175,7 +170,7 @@ class PodcastArchiver:
         ap_file_list = event_loop.run_until_complete(self.get_file_list())
 
         # Create Task List
-        cleanup_tasks = [self.renderer.render_filelist_html(ap_file_list), aiohttp_client_helper.close_session()]
+        cleanup_tasks = [self.renderer.render_filelist_html(ap_file_list), _close_aiohttp_session()]
 
         # Run Tasks
         event_loop.run_until_complete(asyncio.gather(*cleanup_tasks))
@@ -191,7 +186,7 @@ class PodcastArchiver:
         logger.trace("Starting _grab_podcast_with_metrics for podcast: %s", podcast.name_one_word)
         podcast_grab_start_time = time.time()
 
-        aiohttp_session = aiohttp_client_helper.get_session()
+        aiohttp_session = _get_aiohttp_session()
 
         try:
             await self._grab_podcast(podcast, aiohttp_session=aiohttp_session)
@@ -310,25 +305,17 @@ class PodcastArchiver:
 
         # Upload to s3 if we are in s3 mode
         if need_to_upload_to_s3:
-            session = get_session()
-            s3_config = get_ap_config_s3_client()
-
-            async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
-                try:
-                    # Upload the file
-                    start_time = time.time()
-                    logger.trace("Uploading feed %s to s3...", podcast.name_one_word)
-                    await s3_client.put_object(
-                        Body=self.podcast_rss[podcast.name_one_word],
-                        Bucket=self._app_config.s3.bucket,
-                        Key="rss/" + podcast.name_one_word,
-                        ContentType="application/rss+xml",
-                    )
-                    warn_if_too_long(f"upload feed {podcast.name_one_word} to s3", time.time() - start_time)
-
-                    logger.debug("[%s] Uploaded feed to s3", podcast.name_one_word)
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.exception("Unhandled s3 error trying to upload the file: %s")
+            try:
+                logger.trace("Uploading feed %s to s3...", podcast.name_one_word)
+                await s3_put(
+                    self._app_config.s3.bucket,
+                    "rss/" + podcast.name_one_word,
+                    self.podcast_rss[podcast.name_one_word],
+                    "application/rss+xml",
+                )
+                logger.debug("[%s] Uploaded feed to s3", podcast.name_one_word)
+            except Exception:
+                logger.exception("Unhandled s3 error trying to upload the file: %s", podcast.name_one_word)
 
         msg = "no feed changes"
         if not self.s3 and local_changes_to_feed:

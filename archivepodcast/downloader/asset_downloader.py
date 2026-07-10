@@ -15,7 +15,7 @@ from archivepodcast.instances.path_cache import local_file_cache, s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.utils.log_messages import log_aiohttp_exception
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.s3 import S3File
+from archivepodcast.utils.s3 import S3File, s3_put
 from archivepodcast.utils.time import warn_if_too_long
 
 from .constants import CONTENT_TYPES, DOWNLOAD_RETRY_COUNT
@@ -287,29 +287,16 @@ class AssetDownloader:
 
     async def _put_asset_s3(self, file_path: Path, s3_path: str, content_type: str, *, remove_original: bool) -> None:
         """Upload the file to s3, cache it, and optionally remove the local copy."""
-        session = get_session()
-        ap_s3_config = get_ap_config_s3_client()
-        async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
-            if remove_original:
-                logger.info("[%s] Uploading to s3: %s", self._podcast.name_one_word, s3_path)
-            else:
-                logger.debug("[%s] Uploading to s3: %s", self._podcast.name_one_word, s3_path)
+        if remove_original:
+            logger.info("[%s] Uploading to s3: %s", self._podcast.name_one_word, s3_path)
+        else:
+            logger.debug("[%s] Uploading to s3: %s", self._podcast.name_one_word, s3_path)
 
-            start_time = time.time()
-            await s3_client.put_object(
-                Bucket=self._app_config.s3.bucket,
-                Key=s3_path,
-                Body=await AsyncPath(file_path).read_bytes(),
-                ContentType=content_type,
-            )
-            warn_if_too_long(
-                f"[{self._podcast.name_one_word}] upload asset to s3: {s3_path}",
-                time.time() - start_time,
-                large_file=True,
-            )
-            logger.trace("[%s] Uploaded asset to s3: %s", self._podcast.name_one_word, s3_path)
+        body = await AsyncPath(file_path).read_bytes()
+        await s3_put(self._app_config.s3.bucket, s3_path, body, content_type, large_file=True)
+        logger.trace("[%s] Uploaded asset to s3: %s", self._podcast.name_one_word, s3_path)
 
-        s3_file_cache.add_file(S3File(key=s3_path, size=(await AsyncPath(file_path).stat()).st_size))
+        s3_file_cache.add_file(S3File(key=s3_path, size=len(body)))
 
         if remove_original:
             logger.info("[%s] Removing local file: %s", self._podcast.name_one_word, file_path)

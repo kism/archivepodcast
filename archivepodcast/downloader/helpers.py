@@ -6,6 +6,7 @@ import datetime
 import random
 import shutil
 import sys
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -33,12 +34,9 @@ def get_file_date_string(channel: etree._Element) -> str:
     file_date_string = "00000000"
     for child in channel:
         if child.tag == "pubDate":
-            original_date = str(child.text)
             file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
             with contextlib.suppress(ValueError):
-                file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
-            with contextlib.suppress(ValueError):
-                file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
+                file_date = parsedate_to_datetime(str(child.text))
             file_date_string = file_date.strftime("%Y%m%d")
     return file_date_string
 

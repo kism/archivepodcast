@@ -18,7 +18,7 @@ from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.time import warn_if_too_long
+from archivepodcast.utils.s3 import s3_put
 
 from .webpages import Webpage, Webpages
 
@@ -84,12 +84,7 @@ class WebpageRenderer:
             item_mime = magic.from_file(str(item), mime=True)
             logger.trace("Registering static item: %s, mime: %s", item, item_mime)
 
-            if item_mime.startswith("text"):
-                with item.open() as static_item:
-                    self.webpages.add(path=static_path, mime=item_mime, content=static_item.read())
-            else:
-                with item.open("rb") as static_item:
-                    self.webpages.add(path=static_path, mime=item_mime, content=static_item.read())
+            self.webpages.add(path=static_path, mime=item_mime, content=item.read_bytes())
 
         # Templates
         env = Environment(loader=FileSystemLoader(str(app_paths.template_directory)), autoescape=True)
@@ -213,22 +208,11 @@ class WebpageRenderer:
                 s3_pages_uploaded.append(s3_key)
                 logger.trace("Writing page s3: %s", s3_key)
 
-                session = get_session()
-                s3_config = get_ap_config_s3_client()
-
-                async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
-                    try:
-                        start_time = time.time()
-                        await s3_client.put_object(
-                            Body=page_content_bytes,
-                            Bucket=self._app_config.s3.bucket,
-                            Key=s3_key,
-                            ContentType=webpage.mime,
-                        )
-                        warn_if_too_long(f"upload page: {s3_key} to s3", time.time() - start_time)
-                        logger.trace(f"Uploaded page to s3: {s3_key}")
-                    except Exception:
-                        logger.exception("Unhandled s3 error trying to upload the file: %s", s3_key)
+                try:
+                    await s3_put(self._app_config.s3.bucket, s3_key, page_content_bytes, webpage.mime)
+                    logger.trace("Uploaded page to s3: %s", s3_key)
+                except Exception:
+                    logger.exception("Unhandled s3 error trying to upload the file: %s", s3_key)
 
         msg = f"Wrote {str_webpages}"
         if self._s3:

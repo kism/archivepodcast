@@ -126,7 +126,6 @@ class PodcastsDownloader(AssetDownloader):
             )
             self._feed_download_healthy = False
             return None
-        podcast_rss = etree.fromstring(content)
         logger.debug("[%s] Downloaded rss feed, processing", self._podcast.name_one_word)
         logger.trace(str(podcast_rss))
 

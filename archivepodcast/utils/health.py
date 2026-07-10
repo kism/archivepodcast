@@ -2,9 +2,11 @@
 
 import contextlib
 import datetime
+import os
+from email.utils import parsedate_to_datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
-from psutil import Process
 from pydantic import BaseModel
 
 from archivepodcast.constants import PROGRAM_VERSION
@@ -20,11 +22,6 @@ else:
     AppConfig = object
 
 logger = get_logger(__name__)
-
-PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
-
-
-PROCESS = Process()
 
 
 class EpisodeInfo(BaseModel):
@@ -82,21 +79,14 @@ class PodcastHealth(BaseModel):
 
         # If we have the pubDate, try to parse it
         if len(latest_episode.xpath("pubDate")) > 0 and latest_episode.xpath("pubDate")[0].text:
-            pod_pubdate = str(latest_episode.xpath("pubDate")[0].text) or "1970-01-01 00:00:00"
-            found_pubdate = False
-            for podcast_date_format in PODCAST_DATE_FORMATS:
-                try:
-                    new_latest_episode.pubdate = int(
-                        datetime.datetime.strptime(pod_pubdate, podcast_date_format)
-                        .replace(tzinfo=datetime.UTC)
-                        .timestamp()
-                    )
-                    found_pubdate = True
-                    break
-                except ValueError:
-                    pass
-            if not found_pubdate:
-                logger.error("Unable to parse pubDate: %s", pod_pubdate)
+            pod_pubdate = str(latest_episode.xpath("pubDate")[0].text)
+            try:
+                parsed_pubdate = parsedate_to_datetime(pod_pubdate)
+                if parsed_pubdate.tzinfo is None:
+                    parsed_pubdate = parsed_pubdate.replace(tzinfo=datetime.UTC)
+                new_latest_episode.pubdate = int(parsed_pubdate.timestamp())
+            except ValueError:
+                logger.error("Unable to parse pubDate: %s", pod_pubdate)  # noqa: TRY400 # No need for a traceback
 
         return new_latest_episode, new_episode_count
 
@@ -180,8 +170,10 @@ class PodcastArchiverHealth:
 
     def get_health(self) -> PodcastArchiverHealthAPI:
         """Return the health."""
-        if PROCESS is not None:
-            self._core.memory_mb = PROCESS.memory_info().rss / (1024 * 1024)
+        # ponytail: linux-only /proc read, bring back psutil if this ever needs windows/macos
+        with contextlib.suppress(OSError):
+            resident_pages = int(Path("/proc/self/statm").read_text(encoding="utf-8").split()[1])
+            self._core.memory_mb = resident_pages * os.sysconf("SC_PAGESIZE") / (1024 * 1024)
 
         return PodcastArchiverHealthAPI(
             core=self._core,
