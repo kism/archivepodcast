@@ -9,7 +9,7 @@ OUR_TIMEZONE = datetime.now().astimezone().tzinfo or UTC
 APP_DIRECTORY = Path(__file__).parent
 DEFAULT_INSTANCE_PATH = Path.cwd() / "instance"
 
-AP_SELF_TEST = os.getenv("AP_SELF_TEST", "false").lower() in ("true", "1", "yes")
+AP_SELF_TEST = os.getenv("AP_SELF_TEST", "false").lower() in {"true", "1", "yes"}
 JSON_INDENT = 2
 XML_ENCODING = "UTF-8"
 
@@ -24,9 +24,9 @@ except PackageNotFoundError:  # pragma: no cover
 
 def _get_version_str() -> str:
     """Get a string representation of the version, including branch and commit hash."""
-    _repo_root = Path(__file__).parent.parent
-    git_head_log = _repo_root / ".git" / "logs" / "HEAD"
-    git_head = _repo_root / ".git" / "HEAD"
+    repo_root = Path(__file__).parent.parent
+    git_head_log = repo_root / ".git" / "logs" / "HEAD"
+    git_head = repo_root / ".git" / "HEAD"
     last_commit = ""
     current_branch = ""
 

@@ -33,6 +33,28 @@ else:
 logger = get_logger(__name__)
 
 
+def _load_cached_feed(podcast: PodcastConfig, previous_feed: bytes) -> etree._ElementTree | None:
+    """Load feed from cache when live download is not available."""
+    tree = None
+    if previous_feed == b"":
+        logger.warning(
+            "[%s] Cannot find local rss feed file to serve unavailable podcast",
+            podcast.name_one_word,
+        )
+        return None
+
+    try:
+        tree = etree.ElementTree(etree.fromstring(previous_feed))
+        if tree_no_episodes(tree):
+            logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
+            return None
+        logger.debug("[%s] Loaded rss from file", podcast.name_one_word)
+    except etree.XMLSyntaxError:
+        logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
+
+    return tree
+
+
 class APFileList(BaseModel):
     """Podcast file list response model."""
 
@@ -153,9 +175,7 @@ class PodcastArchiver:
         ap_file_list = event_loop.run_until_complete(self.get_file_list())
 
         # Create Task List
-        cleanup_tasks = []
-        cleanup_tasks.append(self.renderer.render_filelist_html(ap_file_list))
-        cleanup_tasks.append(aiohttp_client_helper.close_session())
+        cleanup_tasks = [self.renderer.render_filelist_html(ap_file_list), aiohttp_client_helper.close_session()]
 
         # Run Tasks
         event_loop.run_until_complete(asyncio.gather(*cleanup_tasks))
@@ -207,7 +227,7 @@ class PodcastArchiver:
 
         # Load from cache if no tree available
         if tree is None:
-            tree = self._load_cached_feed(podcast, previous_feed)
+            tree = _load_cached_feed(podcast, previous_feed)
 
         await self._process_podcast_tree(podcast, tree, previous_feed)
         logger.trace("Exiting _grab_podcast for %s", podcast.name_one_word)
@@ -241,27 +261,6 @@ class PodcastArchiver:
             health.update_podcast_status(podcast.name_one_word, rss_fetching_live=True, last_fetched=last_fetched)
         else:
             logger.error("Unable to download podcast: %s", podcast.name_one_word)
-
-        return tree
-
-    def _load_cached_feed(self, podcast: PodcastConfig, previous_feed: bytes) -> etree._ElementTree | None:
-        """Load feed from cache when live download is not available."""
-        tree = None
-        if previous_feed == b"":
-            logger.warning(
-                "[%s] Cannot find local rss feed file to serve unavailable podcast",
-                podcast.name_one_word,
-            )
-            return None
-
-        try:
-            tree = etree.ElementTree(etree.fromstring(previous_feed))
-            if tree_no_episodes(tree):
-                logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
-                return None
-            logger.debug("[%s] Loaded rss from file", podcast.name_one_word)
-        except etree.XMLSyntaxError:
-            logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
 
         return tree
 

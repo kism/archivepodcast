@@ -193,7 +193,7 @@ class PodcastsDownloader(AssetDownloader):
 
     def _handle_title_tag(self, channel: etree._Element) -> None:
         """Handle the title tag in the podcast rss."""
-        logger.debug("[%s] Source Podcast title: %s", self._podcast.name_one_word, str(channel.text))
+        logger.debug("[%s] Source Podcast title: %s", self._podcast.name_one_word, channel.text)
         if self._podcast.new_name != "":
             channel.text = self._podcast.new_name
 

@@ -107,7 +107,7 @@ class ArchivePodcastConfig(BaseSettings):
         current_config_data = json.loads(self.model_dump_json())
 
         if config_path.exists():
-            with config_path.open("r") as f:
+            with config_path.open(mode="r", encoding="utf-8") as f:
                 existing_data = json.load(f)
         else:
             logger.warning("Writing fresh config file at %s", config_path.absolute())
@@ -128,7 +128,7 @@ class ArchivePodcastConfig(BaseSettings):
 
         logger.debug("Writing config to %s", config_path.absolute())
 
-        with config_path.open("w") as f:
+        with config_path.open(mode="w", encoding="utf-8") as f:
             f.write(json.dumps(current_config_data, indent=JSON_INDENT))
 
         logger.debug("Config write complete")
@@ -144,7 +144,7 @@ class ArchivePodcastConfig(BaseSettings):
             return cls()
 
         logger.debug("Loading config from %s", config_path.absolute())
-        with config_path.open("r") as f:
+        with config_path.open(mode="r", encoding="utf-8") as f:
             config = json.load(f)
 
         return cls(**config)

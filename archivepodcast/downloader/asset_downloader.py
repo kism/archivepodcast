@@ -27,6 +27,26 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
+def _append_to_local_paths_cache(file_path: Path) -> None:
+    file_path = Path(file_path).relative_to(get_app_paths().web_root)
+
+    if not local_file_cache.check_exists(file_path):
+        local_file_cache.add_file(file_path)
+
+
+def _check_local_path_exists(file_path: Path) -> bool:
+    """Check if the file exists locally."""
+    file_exists = file_path.is_file()
+
+    if file_exists:
+        _append_to_local_paths_cache(file_path)
+        logger.trace("File: %s exists locally", file_path)
+    else:
+        logger.trace("File: %s does not exist locally", file_path)
+
+    return file_exists
+
+
 class AssetDownloader:
     """Asset Downloader object."""
 
@@ -113,7 +133,7 @@ class AssetDownloader:
         logger.debug("[%s] Success, downloaded to %s", self._podcast.name_one_word, file_path)
 
         if not self._s3:
-            self._append_to_local_paths_cache(file_path)
+            _append_to_local_paths_cache(file_path)
 
     async def _download_cover_art(
         self,
@@ -126,7 +146,7 @@ class AssetDownloader:
         cover_art_destination = content_dir / f"{title}{extension}"
 
         remote_file_found = False
-        local_file_found = self._check_local_path_exists(cover_art_destination)
+        local_file_found = _check_local_path_exists(cover_art_destination)
 
         # If we are using s3
         #    we haven't found the local file
@@ -297,18 +317,6 @@ class AssetDownloader:
 
     # region Helpers
 
-    def _check_local_path_exists(self, file_path: Path) -> bool:
-        """Check if the file exists locally."""
-        file_exists = file_path.is_file()
-
-        if file_exists:
-            self._append_to_local_paths_cache(file_path)
-            logger.trace("File: %s exists locally", file_path)
-        else:
-            logger.trace("File: %s does not exist locally", file_path)
-
-        return file_exists
-
     async def _check_path_exists(self, file_path: Path | AsyncPath | str) -> bool:
         """Check the path, s3 or local."""
         file_exists = False
@@ -357,12 +365,6 @@ class AssetDownloader:
         else:
             if not isinstance(file_path, Path):
                 file_path = Path(file_path)
-            file_exists = self._check_local_path_exists(file_path)
+            file_exists = _check_local_path_exists(file_path)
 
         return file_exists
-
-    def _append_to_local_paths_cache(self, file_path: Path) -> None:
-        file_path = Path(file_path).relative_to(get_app_paths().web_root)
-
-        if not local_file_cache.check_exists(file_path):
-            local_file_cache.add_file(file_path)
