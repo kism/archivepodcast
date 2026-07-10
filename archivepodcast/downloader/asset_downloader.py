@@ -94,23 +94,26 @@ class AssetDownloader:
         """Download the asset from the url."""
         logger.debug("[%s] Downloading: %s", self._podcast.name_one_word, url)
 
+        async def _stream_to_file() -> None:
+            """Download the asset from the url to the file path."""
+            logger.trace("[%s] Downloading asset from URL: %s", self._podcast.name_one_word, url)
+            start_time = time.time()
+            async with self._aiohttp_session.get(url) as response:
+                response.raise_for_status()
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                with file_path.open("wb") as asset_file:
+                    while True:
+                        chunk = await response.content.read(8192)
+                        if not chunk:
+                            break
+                        asset_file.write(chunk)
+
+            warn_if_too_long(f"download asset: {file_path}", time.time() - start_time, large_file=True)
+
         async def _attempt_download() -> bool:
             """Attempt to download the asset."""
             try:
-                logger.trace("[%s] Downloading asset from URL: %s", self._podcast.name_one_word, url)
-                start_time = time.time()
-                async with self._aiohttp_session.get(url) as response:
-                    response.raise_for_status()
-                    file_path.parent.mkdir(parents=True, exist_ok=True)
-                    with file_path.open("wb") as asset_file:
-                        while True:
-                            chunk = await response.content.read(8192)
-                            if not chunk:
-                                break
-                            asset_file.write(chunk)
-
-                warn_if_too_long(f"download asset: {file_path}", time.time() - start_time, large_file=True)
-
+                await _stream_to_file()
             except aiohttp.ClientError as e:
                 self._feed_download_healthy = False
                 log_aiohttp_exception(self._podcast.name_one_word, url, e, logger)
@@ -177,7 +180,6 @@ class AssetDownloader:
     async def _handle_wav(self, url: str, title: str, extension: str = "", file_date_string: str = "") -> int:
         """Convert podcasts that have wav episodes 😔. Returns new file length."""
         logger.trace("[%s] Handling wav file: %s", self._podcast.name_one_word, title)
-        new_length = None
         spacer = ""  # This logic can be removed since WAVs will always have a date
         if file_date_string != "":
             spacer = "-"
@@ -273,39 +275,7 @@ class AssetDownloader:
                 return
 
         try:
-            # Upload the file
-            session = get_session()
-            ap_s3_config = get_ap_config_s3_client()
-            async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
-                if remove_original:
-                    logger.info("[%s] Uploading to s3: %s", self._podcast.name_one_word, s3_path)
-                else:
-                    logger.debug("[%s] Uploading to s3: %s", self._podcast.name_one_word, s3_path)
-
-                start_time = time.time()
-                await s3_client.put_object(
-                    Bucket=self._app_config.s3.bucket,
-                    Key=s3_path,
-                    Body=file_path.read_bytes(),
-                    ContentType=content_type,
-                )
-                warn_if_too_long(
-                    f"[{self._podcast.name_one_word}] upload asset to s3: {s3_path}",
-                    time.time() - start_time,
-                    large_file=True,
-                )
-                logger.trace("[%s] Uploaded asset to s3: %s", self._podcast.name_one_word, s3_path)
-
-            s3_file_cache.add_file(S3File(key=s3_path, size=file_path.stat().st_size))
-
-            if remove_original:
-                logger.info("[%s] Removing local file: %s", self._podcast.name_one_word, file_path)
-                try:
-                    await AsyncPath(file_path).unlink()
-                except FileNotFoundError:  # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
-                    msg = f"Could not remove the local file, the source file was not found: {file_path}"
-                    logger.exception("[%s] %s", self._podcast.name_one_word, msg)
-
+            await self._put_asset_s3(file_path, s3_path, content_type, remove_original=remove_original)
         except FileNotFoundError:
             self._feed_download_healthy = False
             logger.exception(
@@ -314,6 +284,40 @@ class AssetDownloader:
         except Exception:
             self._feed_download_healthy = False
             logger.exception("[%s] Unhandled s3 error: %s", self._podcast.name_one_word, file_path)
+
+    async def _put_asset_s3(self, file_path: Path, s3_path: str, content_type: str, *, remove_original: bool) -> None:
+        """Upload the file to s3, cache it, and optionally remove the local copy."""
+        session = get_session()
+        ap_s3_config = get_ap_config_s3_client()
+        async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
+            if remove_original:
+                logger.info("[%s] Uploading to s3: %s", self._podcast.name_one_word, s3_path)
+            else:
+                logger.debug("[%s] Uploading to s3: %s", self._podcast.name_one_word, s3_path)
+
+            start_time = time.time()
+            await s3_client.put_object(
+                Bucket=self._app_config.s3.bucket,
+                Key=s3_path,
+                Body=await AsyncPath(file_path).read_bytes(),
+                ContentType=content_type,
+            )
+            warn_if_too_long(
+                f"[{self._podcast.name_one_word}] upload asset to s3: {s3_path}",
+                time.time() - start_time,
+                large_file=True,
+            )
+            logger.trace("[%s] Uploaded asset to s3: %s", self._podcast.name_one_word, s3_path)
+
+        s3_file_cache.add_file(S3File(key=s3_path, size=(await AsyncPath(file_path).stat()).st_size))
+
+        if remove_original:
+            logger.info("[%s] Removing local file: %s", self._podcast.name_one_word, file_path)
+            try:
+                await AsyncPath(file_path).unlink()
+            except FileNotFoundError:  # Some weirdness when in debug mode, otherwise i'd use contextlib.suppress
+                msg = f"Could not remove the local file, the source file was not found: {file_path}"
+                logger.exception("[%s] %s", self._podcast.name_one_word, msg)
 
     # region Helpers
 

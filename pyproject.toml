@@ -102,6 +102,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"archivepodcast/__init__.py" = [
+    "RUF067", # KG Flask app factory convention, create_app lives in __init__
+]
 "archivepodcast/config.py" = [
     "E501", # KG Some long lines
 ]

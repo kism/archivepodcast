@@ -166,23 +166,21 @@ class ArchivePodcastConfig(BaseSettings):
         msg += f"{_SPACER}Operating mode: Adhoc\n" if running_adhoc else f"{_SPACER}Operating mode: Webserver\n"
         msg_warn = ""
 
+        if self.app.inet_path == self.app.s3.cdn_domain and storage_backend_is_s3:  # Any CDN-only setup
+            frontend_msg_key = "frontend_cdn"
+        elif running_adhoc:  # Adhoc mode
+            frontend_msg_key = "frontend_local_adhoc"
+        else:  # Webserver mode
+            frontend_msg_key = "frontend_local"
+
+        backend_msg_key = "backend_s3" if storage_backend_is_s3 else "backend_local"
+
         try:
-            if self.app.inet_path == self.app.s3.cdn_domain and storage_backend_is_s3:  # Any CDN-only setup
-                msg += _LOG_INFO_MESSAGES["frontend_cdn"]
-            elif running_adhoc:  # Adhoc mode
-                msg += _LOG_INFO_MESSAGES["frontend_local_adhoc"]
-                if storage_backend_is_s3:  # Adhoc with S3 backend
-                    msg_warn += (
-                        _LOG_INFO_MESSAGES["adhoc_s3_mismatch"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
-                    )
-            else:  # Webserver mode
-                msg += _LOG_INFO_MESSAGES["frontend_local"]
-
-            if storage_backend_is_s3:
-                msg += _LOG_INFO_MESSAGES["backend_s3"]
-            else:
-                msg += _LOG_INFO_MESSAGES["backend_local"]
-
+            msg += _LOG_INFO_MESSAGES[frontend_msg_key] + _LOG_INFO_MESSAGES[backend_msg_key]
+            if frontend_msg_key == "frontend_local_adhoc" and storage_backend_is_s3:  # Adhoc with S3 backend
+                msg_warn += (
+                    _LOG_INFO_MESSAGES["adhoc_s3_mismatch"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
+                )
         except KeyError:
             logger.exception("log_info Missing message key")
 
