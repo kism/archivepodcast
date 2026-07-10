@@ -210,8 +210,7 @@ def test_rss_feed_unhandled_error(
 
     client_live = app_live.test_client()
 
-    with Path(tmp_path / "web" / "rss" / "test").open("w") as file:
-        file.write(DUMMY_RSS_STR)
+    Path(tmp_path / "web" / "rss" / "test").write_text(DUMMY_RSS_STR)
 
     def return_key_error(*args: Any, **kwargs: Any) -> None:
         raise KeyError

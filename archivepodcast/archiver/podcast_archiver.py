@@ -131,10 +131,10 @@ class PodcastArchiver:
         event_times.set_event_time("grab_podcasts/Update file cache", time.time() - grab_podcasts_start_time)
 
         # Part 2: Download and process all podcasts
-        ## Event Loop
+        # Event Loop
         podcast_start_time = time.time()
 
-        ## Create Task List
+        # Create Task List
         podcast_tasks = []
         for podcast in self.podcast_list:
             task = self._grab_podcast_with_metrics(podcast)
@@ -142,22 +142,22 @@ class PodcastArchiver:
 
         podcast_tasks.append(self.renderer.render_files())
 
-        ## Run Tasks
+        # Run Tasks
         event_loop.run_until_complete(asyncio.gather(*podcast_tasks))
         event_times.set_event_time("grab_podcasts/Scrape", time.time() - podcast_start_time)
 
         # Part 3: Render files and cleanup
-        ## Event Loop
+        # Event Loop
         cleanup_start_time = time.time()
 
         ap_file_list = event_loop.run_until_complete(self.get_file_list())
 
-        ## Create Task List
+        # Create Task List
         cleanup_tasks = []
         cleanup_tasks.append(self.renderer.render_filelist_html(ap_file_list))
         cleanup_tasks.append(aiohttp_client_helper.close_session())
 
-        ## Run Tasks
+        # Run Tasks
         event_loop.run_until_complete(asyncio.gather(*cleanup_tasks))
         event_loop.close()
         event_times.set_event_time("grab_podcasts/Post Scrape", time.time() - cleanup_start_time)

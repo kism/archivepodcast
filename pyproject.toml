@@ -77,6 +77,8 @@ target-version = "py314"
 line-length = 120
 
 [tool.ruff.lint]
+extend-select = ["ANN", "PYI"]
+preview = true
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
@@ -84,6 +86,7 @@ ignore = [
     "FAST", # KG FastAPI not required
     "NPY",  # KG Numpy not required
     "PD",   # KG Pandas not required
+    "CPY",  # KG Pandas not required
 
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
@@ -120,6 +123,10 @@ ignore = [
     "PLR0913", # KG Tests can have as many arguments as they want.
     "BLE001",  # KG Tests can use BaseException.
     "PLR2004", # KG Tests can have magic number comparisons.
+    "PLC2701", # KG Importing private fine in tests
+    "RUF029",  # KG Unused async fine in tests
+    "PLR0917", # KG Many positional arguments fine in tests
+    "DOC402",  # KG Unreqired docstrings fine
 ]
 "tests/fixtures/aws.py" = [
     "N803", # KG AWS Just breaks the rules here
@@ -169,6 +176,10 @@ filterwarnings = [
 
 [tool.coverage.html]
 show_contexts = true
+
+[tool.ty.rules]
+missing-type-argument = "error"
+possibly-unresolved-reference = "warn"
 
 [[tool.ty.overrides]]
 # Blame the flask client object
