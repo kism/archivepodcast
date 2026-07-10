@@ -52,45 +52,53 @@ class PodcastHealth(BaseModel):
         new_episode_count: int = 0
 
         try:
-            if tree is not None:
-                if len(tree.xpath("//item")) == 0:
-                    logger.warning("No episodes found in feed")
-                    self.latest_episode = new_latest_episode
-                    self.episode_count = new_episode_count
-                    return
-
-                latest_episode = tree.xpath("//item")[0]
-
-                # If we have the title, use it
-                with contextlib.suppress(IndexError):
-                    new_latest_episode.title = latest_episode.xpath("title")[0].text
-
-                # If we have the description, use it
-                with contextlib.suppress(IndexError):
-                    new_episode_count = len(tree.xpath("//item"))
-
-                # If we have the pubDate, try to parse it
-                if len(latest_episode.xpath("pubDate")) > 0 and latest_episode.xpath("pubDate")[0].text:
-                    pod_pubdate = str(latest_episode.xpath("pubDate")[0].text) or "1970-01-01 00:00:00"
-                    found_pubdate = False
-                    for podcast_date_format in PODCAST_DATE_FORMATS:
-                        try:
-                            new_latest_episode.pubdate = int(
-                                datetime.datetime.strptime(pod_pubdate, podcast_date_format)
-                                .replace(tzinfo=datetime.UTC)
-                                .timestamp()
-                            )
-                            found_pubdate = True
-                            break
-                        except ValueError:
-                            pass
-                    if not found_pubdate:
-                        logger.error("Unable to parse pubDate: %s", pod_pubdate)
+            new_latest_episode, new_episode_count = self._parse_episode_info(tree)
         except Exception:  # pragma: no cover # Just to be safe
             logger.exception("Error parsing podcast episode info")  # pragma: no cover # Just to be safe
 
         self.latest_episode = new_latest_episode
         self.episode_count = new_episode_count
+
+    @staticmethod
+    def _parse_episode_info(tree: etree._ElementTree | etree._Element | None) -> tuple[EpisodeInfo, int]:
+        """Parse the latest episode info and episode count from a feed tree."""
+        new_latest_episode: EpisodeInfo = EpisodeInfo()
+        new_episode_count: int = 0
+
+        if tree is None:
+            return new_latest_episode, new_episode_count
+
+        items = tree.xpath("//item")
+        if len(items) == 0:
+            logger.warning("No episodes found in feed")
+            return new_latest_episode, new_episode_count
+
+        latest_episode = items[0]
+        new_episode_count = len(items)
+
+        # If we have the title, use it
+        with contextlib.suppress(IndexError):
+            new_latest_episode.title = latest_episode.xpath("title")[0].text
+
+        # If we have the pubDate, try to parse it
+        if len(latest_episode.xpath("pubDate")) > 0 and latest_episode.xpath("pubDate")[0].text:
+            pod_pubdate = str(latest_episode.xpath("pubDate")[0].text) or "1970-01-01 00:00:00"
+            found_pubdate = False
+            for podcast_date_format in PODCAST_DATE_FORMATS:
+                try:
+                    new_latest_episode.pubdate = int(
+                        datetime.datetime.strptime(pod_pubdate, podcast_date_format)
+                        .replace(tzinfo=datetime.UTC)
+                        .timestamp()
+                    )
+                    found_pubdate = True
+                    break
+                except ValueError:
+                    pass
+            if not found_pubdate:
+                logger.error("Unable to parse pubDate: %s", pod_pubdate)
+
+        return new_latest_episode, new_episode_count
 
 
 class WebpageHealth(BaseModel):
