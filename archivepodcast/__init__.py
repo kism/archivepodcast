@@ -18,9 +18,8 @@ from .instances.profiler import event_times
 from .utils import logger as ap_logger
 from .utils.log_messages import log_intro
 from .utils.profiler import get_event_times_str
-from .version import __version__
 
-__all__ = ["__version__", "create_app", "run_ap_adhoc"]
+__all__ = ["create_app", "run_ap_adhoc"]
 
 # Don't install rich if we are in lambda
 if not ap_logger.force_simple_logger():

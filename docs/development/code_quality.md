@@ -11,10 +11,6 @@ ruff check . --fix
 ### Python Type Checking
 
 ```bash
-mypy .
-```
-
-```bash
 ty check .
 ```
 

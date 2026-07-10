@@ -92,7 +92,7 @@ TRACE_LEVEL_NUM = 5
 
 
 class CustomLogger(logging.Logger):
-    """Custom logger to appease mypy."""
+    """Custom logger to appease ty."""
 
     def trace(self, message: object, *args: Any, **kws: Any) -> None:  # noqa: ANN401
         """Create logger level for trace."""

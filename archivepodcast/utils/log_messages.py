@@ -2,11 +2,12 @@
 
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from aiohttp import ClientError
+from archivepodcast.constants import OUR_TIMEZONE, PROGRAM_VERSION
 
-from archivepodcast.constants import OUR_TIMEZONE
-from archivepodcast.version import __version__
+if TYPE_CHECKING:
+    from aiohttp import ClientError
 
 
 def get_time_str() -> str:
@@ -17,7 +18,7 @@ def get_time_str() -> str:
 
 def log_intro(logger: logging.Logger) -> None:
     """Log introductory information."""
-    logger.info("ArchivePodcast version: %s. Current time: %s", __version__, get_time_str())
+    logger.info("ArchivePodcast version: %s. Current time: %s", PROGRAM_VERSION, get_time_str())
 
 
 def log_aiohttp_exception(

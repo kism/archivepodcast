@@ -8,8 +8,8 @@ from lxml import etree
 from psutil import Process
 from pydantic import BaseModel
 
+from archivepodcast.constants import PROGRAM_VERSION
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.version import __version__
 
 if TYPE_CHECKING:
     from archivepodcast.archiver import PodcastArchiver  # pragma: no cover
@@ -166,7 +166,7 @@ class PodcastArchiverHealth:
         self._podcasts: dict[str, PodcastHealth] = {}
         self._templates: dict[str, WebpageHealth] = {}
         self._assets: dict[str, str] = {}
-        self._version: str = __version__
+        self._version: str = PROGRAM_VERSION
         self._host_info: HostingInfo = HostingInfo()
 
     def get_health(self) -> PodcastArchiverHealthAPI:
