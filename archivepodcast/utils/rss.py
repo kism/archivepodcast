@@ -1,6 +1,9 @@
 """Helper functions for rss processing."""
 
-from lxml import etree
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from lxml import etree
 
 
 def tree_no_episodes(tree: etree._ElementTree | None) -> bool:

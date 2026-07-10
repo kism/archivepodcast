@@ -1,12 +1,13 @@
 """Log messages for ArchivePodcast."""
 
-import logging
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from archivepodcast.constants import OUR_TIMEZONE, PROGRAM_VERSION
 
 if TYPE_CHECKING:
+    import logging
+
     from aiohttp import ClientError
 
 

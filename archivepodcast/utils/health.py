@@ -4,7 +4,6 @@ import contextlib
 import datetime
 from typing import TYPE_CHECKING, Self
 
-from lxml import etree
 from psutil import Process
 from pydantic import BaseModel
 
@@ -12,6 +11,8 @@ from archivepodcast.constants import PROGRAM_VERSION
 from archivepodcast.utils.logger import get_logger
 
 if TYPE_CHECKING:
+    from lxml import etree
+
     from archivepodcast.archiver import PodcastArchiver  # pragma: no cover
     from archivepodcast.config import AppConfig  # pragma: no cover
 else:

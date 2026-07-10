@@ -8,7 +8,7 @@ import threading
 import time
 from http import HTTPStatus
 from pathlib import Path
-from types import FrameType
+from typing import TYPE_CHECKING
 
 from flask import Response, current_app, render_template, send_file
 
@@ -22,6 +22,9 @@ from archivepodcast.utils.log_messages import get_time_str
 from archivepodcast.utils.logger import get_logger
 
 from .config import get_ap_config
+
+if TYPE_CHECKING:
+    from types import FrameType
 
 logger = get_logger(__name__)
 

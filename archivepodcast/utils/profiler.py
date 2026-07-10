@@ -10,7 +10,7 @@ class EventLastTime(BaseModel):
 
     name: str
     duration: datetime.timedelta | None = None
-    children: list["EventLastTime"] = Field(default_factory=list, exclude_if=lambda v: len(v) == 0)
+    children: list[EventLastTime] = Field(default_factory=list, exclude_if=lambda v: len(v) == 0)
 
     @field_serializer("duration")
     def serialize_duration(self, value: datetime.timedelta | None) -> float | None:

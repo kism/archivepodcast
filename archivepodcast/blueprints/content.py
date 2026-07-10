@@ -2,13 +2,16 @@
 
 from http import HTTPStatus
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flask import Blueprint, Response, current_app, redirect, send_from_directory
-from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 from archivepodcast.instances.config import get_ap_config
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.utils.logger import get_logger
+
+if TYPE_CHECKING:
+    from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 logger = get_logger(__name__)
 bp = Blueprint("content", __name__)

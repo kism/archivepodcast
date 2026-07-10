@@ -1,8 +1,11 @@
 """Instance of application paths helper."""
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from archivepodcast.utils.paths_helper import AppPathsHelper
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _app_paths: AppPathsHelper | None = None
 

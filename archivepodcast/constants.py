@@ -2,9 +2,6 @@
 
 import os
 from datetime import UTC, datetime
-from pathlib import Path
-
-from datetime import datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 

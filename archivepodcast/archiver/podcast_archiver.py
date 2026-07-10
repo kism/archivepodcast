@@ -166,7 +166,7 @@ class PodcastArchiver:
         total_duration = time.time() - grab_podcasts_start_time
         event_times.set_event_time("grab_podcasts", total_duration)
 
-    async def _grab_podcast_with_metrics(self, podcast: "PodcastConfig") -> None:
+    async def _grab_podcast_with_metrics(self, podcast: PodcastConfig) -> None:
         """Wrapper to handle metrics and error handling for individual podcast processing."""
         logger.trace("Starting _grab_podcast_with_metrics for podcast: %s", podcast.name_one_word)
         podcast_grab_start_time = time.time()

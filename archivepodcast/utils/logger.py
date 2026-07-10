@@ -5,14 +5,16 @@ import os
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Self, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
-from flask import Flask
 from pydantic import BaseModel, field_validator, model_validator
 from rich.console import Console
 from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 from rich.theme import Theme
+
+if TYPE_CHECKING:
+    from flask import Flask
 
 DESIRED_LEVEL_NAME_LEN = 5
 DESIRED_NAME_LEN = 16

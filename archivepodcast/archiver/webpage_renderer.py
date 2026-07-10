@@ -17,7 +17,6 @@ from archivepodcast.instances.health import health
 from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
-from archivepodcast.utils.health import PodcastArchiverHealthAPI
 from archivepodcast.utils.logger import get_logger
 from archivepodcast.utils.time import warn_if_too_long
 
@@ -26,6 +25,7 @@ from .webpages import Webpage, Webpages
 if TYPE_CHECKING:
     from archivepodcast.archiver.podcast_archiver import APFileList  # pragma: no cover
     from archivepodcast.config import AppConfig, PodcastConfig  # pragma: no cover
+    from archivepodcast.utils.health import PodcastArchiverHealthAPI
 else:
     AppConfig = object
     PodcastConfig = object

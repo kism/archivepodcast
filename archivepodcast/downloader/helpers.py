@@ -5,14 +5,17 @@ import random
 import shutil
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import ffmpeg
-from anyio import Path as AsyncPath
 
 from archivepodcast.constants import AP_SELF_TEST
 from archivepodcast.utils.logger import get_logger
 
 from .constants import FFMPEG_INFO
+
+if TYPE_CHECKING:
+    from anyio import Path as AsyncPath
 
 logger = get_logger(__name__)
 

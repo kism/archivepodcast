@@ -3,13 +3,13 @@
 import contextlib
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import aiohttp
 from aiobotocore.session import get_session
 from anyio import Path as AsyncPath
 from botocore.exceptions import ClientError as S3ClientError
 
-from archivepodcast.config import AppConfig, PodcastConfig
 from archivepodcast.instances.config import get_ap_config_s3_client
 from archivepodcast.instances.path_cache import local_file_cache, s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
@@ -20,6 +20,9 @@ from archivepodcast.utils.time import warn_if_too_long
 
 from .constants import CONTENT_TYPES, DOWNLOAD_RETRY_COUNT
 from .helpers import convert_to_mp3, delay_download
+
+if TYPE_CHECKING:
+    from archivepodcast.config import AppConfig, PodcastConfig
 
 logger = get_logger(__name__)
 

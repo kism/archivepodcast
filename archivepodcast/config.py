@@ -2,14 +2,16 @@
 
 import json
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Literal, Self
+from typing import TYPE_CHECKING, Literal, Self
 
 from pydantic import BaseModel, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .constants import JSON_INDENT
 from .utils.logger import LoggingConf, get_logger
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # Logging should be all done at INFO level or higher as the log level hasn't been set yet
 # Modules should all setup logging like this so the log messages include the modules name.

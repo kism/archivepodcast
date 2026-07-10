@@ -1,11 +1,15 @@
 """Instances for ArchivePodcast application."""
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.utils.logger import get_logger
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from archivepodcast.config import ArchivePodcastConfig
 
 logger = get_logger(__name__)
 
