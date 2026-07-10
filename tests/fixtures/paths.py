@@ -1,9 +1,12 @@
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from archivepodcast.utils.paths_helper import AppPathsHelper
 from tests.constants import FLASK_ROOT_PATH
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture(autouse=True)

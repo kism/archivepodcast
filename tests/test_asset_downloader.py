@@ -1,13 +1,10 @@
 """Tests for AssetDownloader functionality."""
 
 import logging
-from collections.abc import Callable
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
-from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.downloader.asset_downloader import AssetDownloader
 from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
@@ -16,6 +13,10 @@ from archivepodcast.utils.s3 import S3File
 from tests.models.aiohttp import FakeResponseDef, FakeSession
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from archivepodcast.config import ArchivePodcastConfig
     from tests.fixtures.aws import AWSAioSessionMock
 else:
     AWSAioSessionMock = object

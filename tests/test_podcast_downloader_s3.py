@@ -1,7 +1,6 @@
 """Tests for S3-specific PodcastsDownloader functionality."""
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -9,8 +8,6 @@ import aiohttp
 import pytest
 from botocore.exceptions import ClientError
 
-from archivepodcast.archiver.podcast_archiver import PodcastArchiver
-from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.downloader.downloader import PodcastsDownloader
 from archivepodcast.instances.health import health
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
@@ -20,9 +17,13 @@ from tests.models.aiohttp import FakeSession
 from . import FakeExceptionError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture  # pragma: no cover
     from types_aiobotocore_s3.type_defs import ObjectTypeDef  # pragma: no cover
 
+    from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+    from archivepodcast.config import ArchivePodcastConfig
     from tests.fixtures.aws import AWSAioSessionMock
 else:
     ObjectTypeDef = object

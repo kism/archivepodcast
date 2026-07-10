@@ -4,13 +4,17 @@ import contextlib
 import random
 import shutil
 import string
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from archivepodcast import create_app
-from archivepodcast.config import ArchivePodcastConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from archivepodcast.config import ArchivePodcastConfig
 
 
 def test_instance_path_check(

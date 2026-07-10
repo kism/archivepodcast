@@ -3,14 +3,13 @@
 import logging
 from typing import TYPE_CHECKING
 
-import pytest
-
 from archivepodcast.utils.logger import (
     TRACE_LEVEL_NUM,
     LoggingConf,
 )
 
 if TYPE_CHECKING:
+    import pytest
     from pytest_mock import MockerFixture
 else:
     MockerFixture = object

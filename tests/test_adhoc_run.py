@@ -1,19 +1,21 @@
 import argparse
 import logging
 import os
-from collections.abc import Callable
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flask import Flask
 
 from archivepodcast import __main__
 from archivepodcast.utils import logger as ap_logger
-from archivepodcast.utils.logger import LoggingConf
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from flask import Flask
     from pytest_mock import MockerFixture
+
+    from archivepodcast.utils.logger import LoggingConf
 else:
     MockerFixture = object  # pragma: no cover
 

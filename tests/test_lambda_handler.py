@@ -1,10 +1,13 @@
-from collections.abc import Callable
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
 
 from archivepodcast.lambda_handler import handler
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
 
 
 def test_run_lambda(

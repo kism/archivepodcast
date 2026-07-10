@@ -1,5 +1,4 @@
 import os
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from logging import getLogger
 from typing import TYPE_CHECKING, Self
@@ -19,6 +18,8 @@ from archivepodcast.utils.s3 import S3File
 logger = getLogger(__name__)
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from aiobotocore.paginate import AioPageIterator  # pragma: no cover
     from pytest_mock import MockerFixture  # pragma: no cover
     from types_aiobotocore_s3 import S3Client  # pragma: no cover
@@ -46,7 +47,7 @@ class PaginatorMock:
         self._objects = objects
 
     def paginate(self, **kwargs: object) -> AsyncGenerator[ListObjectsV2OutputTypeDef]:
-        async def generator() -> AsyncGenerator[ListObjectsV2OutputTypeDef, None]:
+        async def generator() -> AsyncGenerator[ListObjectsV2OutputTypeDef]:
             contents: list[ObjectTypeDef] = []
             for key, obj in list(self._objects.items()):
                 body = obj.get("Body", b"")
@@ -167,7 +168,7 @@ class S3ClientMock:
 
 class AWSAioSessionMock:
     @asynccontextmanager
-    async def create_client(self, service_name: str, **kwargs: object) -> AsyncGenerator[S3ClientMock, None]:
+    async def create_client(self, service_name: str, **kwargs: object) -> AsyncGenerator[S3ClientMock]:
         yield S3ClientMock()
 
     async def send(self, *args: object, **kwargs: object) -> None:

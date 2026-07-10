@@ -1,12 +1,16 @@
 """Test the application home page and static content endpoints."""
 
 from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import pytest
-from flask.testing import FlaskClient
 
-from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.instances import podcast_archiver
+
+if TYPE_CHECKING:
+    from flask.testing import FlaskClient
+
+    from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 
 
 @pytest.mark.asyncio

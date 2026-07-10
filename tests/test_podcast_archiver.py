@@ -1,20 +1,22 @@
 """Tests for PodcastArchiver functionality."""
 
 import logging
-from collections.abc import Callable, Coroutine
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.instances.path_helper import get_app_paths
 from tests.constants import DUMMY_RSS_STR
 
 from . import FakeExceptionError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
+
     from pytest_mock import MockerFixture
+
+    from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 else:
     MockerFixture = object
 

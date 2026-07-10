@@ -1,9 +1,12 @@
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lxml import etree
 
 from archivepodcast.utils.rss import tree_no_episodes
 from tests.constants import DUMMY_RSS_STR
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_tree_no_episodes_none() -> None:

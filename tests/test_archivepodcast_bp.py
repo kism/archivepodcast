@@ -3,26 +3,28 @@
 import datetime
 import logging
 import signal
-from collections.abc import Callable
 from datetime import UTC
 from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from flask import Flask
-from flask.testing import FlaskClient
-from pytest_mock import MockerFixture
 
-from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.archiver.webpages import Webpages
-from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.instances import podcast_archiver
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.podcast_archiver import _get_time_until_next_run
 from tests.constants import DUMMY_RSS_STR
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flask import Flask
+    from flask.testing import FlaskClient
+    from pytest_mock import MockerFixture
+
+    from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+    from archivepodcast.config import ArchivePodcastConfig
     from tests.fixtures.aws import AWSAioSessionMock
 else:
     AWSAioSessionMock = object

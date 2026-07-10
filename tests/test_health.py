@@ -3,15 +3,19 @@
 import logging
 from http import HTTPStatus
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-from flask.testing import FlaskClient
 from lxml import etree
 
-from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.instances import podcast_archiver
 from archivepodcast.utils.health import PodcastArchiverHealth
 from tests.constants import DUMMY_RSS_STR, TEST_RSS_LOCATION
+
+if TYPE_CHECKING:
+    from flask.testing import FlaskClient
+
+    from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 
 
 def test_health_api(client: FlaskClient, apa: PodcastArchiver) -> None:

@@ -58,7 +58,7 @@ def rss(feed: str) -> Response:
             logger.warning('❗ Feed "%s" not live, sending cached version from disk', feed)
 
         # The file isn't there due to user error or not being created yet
-        except (FileNotFoundError, OSError):
+        except FileNotFoundError, OSError:
             return_code = HTTPStatus.NOT_FOUND
             return Response(
                 render_template(

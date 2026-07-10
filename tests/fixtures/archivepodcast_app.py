@@ -1,17 +1,19 @@
-from collections.abc import Callable
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flask import Flask
-from flask.testing import FlaskClient
 
 from archivepodcast import create_app
-from archivepodcast.config import ArchivePodcastConfig
 from tests.constants import DUMMY_RSS_STR
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from flask import Flask
+    from flask.testing import FlaskClient
     from pytest_mock import MockerFixture
+
+    from archivepodcast.config import ArchivePodcastConfig
 else:
     MockerFixture = object
 

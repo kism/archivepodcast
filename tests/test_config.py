@@ -1,7 +1,11 @@
-import pytest
+from typing import TYPE_CHECKING
+
 from pydantic import HttpUrl
 
 from archivepodcast.config import _LOG_INFO_MESSAGES, ArchivePodcastConfig
+
+if TYPE_CHECKING:
+    import pytest
 
 base_config = ArchivePodcastConfig()
 

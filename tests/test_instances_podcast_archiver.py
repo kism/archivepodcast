@@ -2,11 +2,14 @@
 
 import logging
 from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import pytest
-from flask import Flask
 
 from archivepodcast.instances import podcast_archiver
+
+if TYPE_CHECKING:
+    from flask import Flask
 
 
 def test_reload_config_when_ap_is_none(
