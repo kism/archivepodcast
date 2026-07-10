@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 else:
     AWSAioSessionMock = object
 
-from . import FakeExceptionError
+from tests import FakeExceptionError
 
 
 def test_app_paths(

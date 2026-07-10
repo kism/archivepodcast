@@ -8,10 +8,9 @@ import pytest
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
+from tests import FakeExceptionError
 from tests.constants import DUMMY_RSS_STR
 from tests.fixtures.aws import S3ClientMock
-
-from . import FakeExceptionError
 
 if TYPE_CHECKING:
     from collections.abc import Callable

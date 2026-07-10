@@ -11,10 +11,9 @@ from botocore.exceptions import ClientError
 from archivepodcast.downloader.downloader import PodcastsDownloader
 from archivepodcast.instances.health import health
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
+from tests import FakeExceptionError
 from tests.fixtures.aws import S3ClientMock
 from tests.models.aiohttp import FakeSession
-
-from . import FakeExceptionError
 
 if TYPE_CHECKING:
     from collections.abc import Callable

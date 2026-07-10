@@ -116,7 +116,7 @@ ignore = [
 "archivepodcast/utils/profiler.py" = [
     "PLR6301", # KG Pydantic
 ]
-"tests/*.py" = [
+"tests/**/*.py" = [
     # Modules
     "ARG", # KG Unused function args -> fixtures nevertheless are functionally relevant
     "FBT", # KG Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()

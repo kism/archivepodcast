@@ -7,9 +7,8 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from archivepodcast.instances.path_helper import get_app_paths
+from tests import FakeExceptionError
 from tests.constants import DUMMY_RSS_STR
-
-from . import FakeExceptionError
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine
