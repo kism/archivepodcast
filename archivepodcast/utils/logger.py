@@ -255,4 +255,4 @@ def running_in_serverless_environment() -> bool:
 
 def force_simple_logger() -> bool:
     """Check if the application is running in a serverless environment."""
-    return running_in_serverless_environment() or (os.getenv("AP_SIMPLE_LOGGING", "").lower() in ["1", "true"])
+    return running_in_serverless_environment() or (os.getenv("AP_SIMPLE_LOGGING", "").lower() in {"1", "true"})

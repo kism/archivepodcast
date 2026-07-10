@@ -89,12 +89,16 @@ ignore = [
     "CPY",  # KG Pandas not required
 
     # Specific rules
-    "TD002",  # KG Verbose TODO, only I work on this project
-    "TD003",  # KG Verbose TODO, only I work on this project
-    "S311",   # KG I'll assume no real crypto will be done.
-    "ISC001", # KG conflict in the formatter
-    "COM812", # KG conflict in the formatter
-    "SIM117", # KG Honestly easier to read with thing and thing as with: with:
+    "TD002",   # KG Verbose TODO, only I work on this project
+    "TD003",   # KG Verbose TODO, only I work on this project
+    "S311",    # KG I'll assume no real crypto will be done.
+    "ISC001",  # KG conflict in the formatter
+    "COM812",  # KG conflict in the formatter
+    "SIM117",  # KG Honestly easier to read with thing and thing as with: with:
+    "DOC201",  # KG Unrequired docstrings fine
+    "DOC402",  # KG Unreqired docstrings fine
+    "DOC501",  # KG Unreqired docstrings fine
+    "PLC1901", # KG I like comparing to empty strings
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -107,6 +111,9 @@ ignore = [
     "D103",   # KG AWS Lambda handler signatures
     "S108",   # KG AWS Lambda needs /tmp usage
     "TRY400", # KG Logging in lambda a bit different
+]
+"archivepodcast/utils/profiler.py" = [
+    "PLR6301", # KG Pydantic
 ]
 "tests/*.py" = [
     # Modules
@@ -127,6 +134,9 @@ ignore = [
     "RUF029",  # KG Unused async fine in tests
     "PLR0917", # KG Many positional arguments fine in tests
     "DOC402",  # KG Unreqired docstrings fine
+    "DOC201",  # KG Unrequired docstrings fine
+    "PLR6301", # KG Fakes/mocks must match instance method signatures
+    "RUF067",  # KG Shared test exception lives in __init__
 ]
 "tests/fixtures/aws.py" = [
     "N803", # KG AWS Just breaks the rules here

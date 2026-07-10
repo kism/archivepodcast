@@ -1,6 +1,8 @@
 """Helpers for downloader module."""
 
 import asyncio
+import contextlib
+import datetime
 import random
 import shutil
 import sys
@@ -16,6 +18,7 @@ from .constants import FFMPEG_INFO
 
 if TYPE_CHECKING:
     from anyio import Path as AsyncPath
+    from lxml import etree
 
 logger = get_logger(__name__)
 
@@ -23,6 +26,21 @@ logger = get_logger(__name__)
 async def delay_download(attempt: int) -> None:
     """Sleep for an exponential backoff period based on the attempt number."""
     await asyncio.sleep(random.uniform(0.1, 1) + (0.5 * attempt))
+
+
+def get_file_date_string(channel: etree._Element) -> str:
+    """Get the file date string from the channel."""
+    file_date_string = "00000000"
+    for child in channel:
+        if child.tag == "pubDate":
+            original_date = str(child.text)
+            file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+            with contextlib.suppress(ValueError):
+                file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
+            with contextlib.suppress(ValueError):
+                file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
+            file_date_string = file_date.strftime("%Y%m%d")
+    return file_date_string
 
 
 def convert_to_mp3(input_path: Path | AsyncPath, output_path: Path | AsyncPath) -> None:

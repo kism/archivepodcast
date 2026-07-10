@@ -1,8 +1,6 @@
 """Download and process podcast feeds and media files."""
 # and return xml that can be served to download them
 
-import contextlib
-import datetime
 import re
 import time
 from http import HTTPStatus
@@ -19,7 +17,7 @@ from archivepodcast.utils.time import warn_if_too_long
 
 from .asset_downloader import AssetDownloader
 from .constants import AUDIO_FORMATS, DOWNLOAD_RETRY_COUNT, IMAGE_FORMATS
-from .helpers import delay_download
+from .helpers import delay_download, get_file_date_string
 
 logger = get_logger(__name__)
 
@@ -280,7 +278,7 @@ class PodcastsDownloader(AssetDownloader):
 
     async def _handle_item_tag(self, channel: etree._Element) -> None:
         """Handle the item tag in the podcast rss."""
-        file_date_string = self._get_file_date_string(channel)
+        file_date_string = get_file_date_string(channel)
         title = ""
         for child in channel:
             if child.tag == "title":
@@ -379,17 +377,3 @@ class PodcastsDownloader(AssetDownloader):
 
         logger.trace("[%s] Clean Filename: '%s'", self._podcast.name_one_word, file_name)
         return file_name
-
-    def _get_file_date_string(self, channel: etree._Element) -> str:
-        """Get the file date string from the channel."""
-        file_date_string = "00000000"
-        for child in channel:
-            if child.tag == "pubDate":
-                original_date = str(child.text)
-                file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
-                with contextlib.suppress(ValueError):
-                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %Z")  # noqa: DTZ007 This is how some feeds format their time
-                with contextlib.suppress(ValueError):
-                    file_date = datetime.datetime.strptime(original_date, "%a, %d %b %Y %H:%M:%S %z")
-                file_date_string = file_date.strftime("%Y%m%d")
-        return file_date_string
