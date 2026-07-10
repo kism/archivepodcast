@@ -6,12 +6,10 @@ import datetime
 import re
 import time
 from http import HTTPStatus
-from typing import TYPE_CHECKING
 
 import aiohttp
 from lxml import etree
 
-from archivepodcast.config import AppConfig, PodcastConfig
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.health import health
 from archivepodcast.utils.log_messages import log_aiohttp_exception
