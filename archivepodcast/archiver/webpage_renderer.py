@@ -56,7 +56,7 @@ class WebpageRenderer:
 
         logger.debug("WebpageRenderer initialized with web_root: %s", get_app_paths().web_root)
 
-    async def render_files(self) -> None:
+    async def render_files(self) -> None:  # ruff:ignore[too-many-locals]
         """Upload static files to s3 and copy index.html."""
         app_paths = get_app_paths()
         render_files_start_time = time.time()
