@@ -13,12 +13,12 @@ from archivepodcast.utils.health import PodcastArchiverHealth
 from tests.constants import DUMMY_RSS_STR, TEST_RSS_LOCATION
 
 if TYPE_CHECKING:
-    from flask.testing import FlaskClient
+    from fastapi.testclient import TestClient
 
     from archivepodcast.archiver.podcast_archiver import PodcastArchiver
 
 
-def test_health_api(client: FlaskClient, apa: PodcastArchiver) -> None:
+def test_health_api(client: TestClient, apa: PodcastArchiver) -> None:
     """Verify health API returns OK status when system is healthy."""
 
     podcast_archiver._ap = apa
@@ -27,9 +27,9 @@ def test_health_api(client: FlaskClient, apa: PodcastArchiver) -> None:
     # TEST: HTTP OK
     assert response.status_code == HTTPStatus.OK
     # TEST: Content type
-    assert response.content_type == "application/json; charset=utf-8"
+    assert response.headers["content-type"] == "application/json; charset=utf-8"
 
-    assert response.get_json()["core"]["alive"]
+    assert response.json()["core"]["alive"]
 
 
 def test_update_podcast_health() -> None:

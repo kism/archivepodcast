@@ -1,4 +1,4 @@
-"""Tests to ensure that the flask app doesn't pollute test environments."""
+"""Tests to ensure that the app doesn't pollute test environments."""
 
 import contextlib
 import random

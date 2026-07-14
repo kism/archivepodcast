@@ -1,8 +1,8 @@
 from pathlib import Path
 
-FLASK_ROOT_PATH = Path.cwd()
-TEST_CONFIGS_LOCATION = FLASK_ROOT_PATH / "tests" / "configs"
-TEST_RSS_LOCATION = FLASK_ROOT_PATH / "tests" / "rss"
+APP_ROOT_PATH = Path.cwd()
+TEST_CONFIGS_LOCATION = APP_ROOT_PATH / "tests" / "configs"
+TEST_RSS_LOCATION = APP_ROOT_PATH / "tests" / "rss"
 
 # Test WAV File
 # This is easier than: ffmpeg.input("anullsrc", f="lavfi", t=10).output(filename=tmp_wav_path, codec="pcm_s16le").run()

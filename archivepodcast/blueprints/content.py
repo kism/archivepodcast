@@ -1,24 +1,22 @@
-"""Blueprint for Content Serving and RSS Feeds."""
+"""Routes for serving archived podcast content."""
 
 from http import HTTPStatus
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-from flask import Blueprint, Response, current_app, redirect, send_from_directory
+from fastapi import APIRouter, Response
+from fastapi.responses import FileResponse, RedirectResponse
 
 from archivepodcast.instances.config import get_ap_config
 from archivepodcast.instances.path_helper import get_app_paths
+from archivepodcast.instances.podcast_archiver import generate_404
 from archivepodcast.utils.logger import get_logger
 
-if TYPE_CHECKING:
-    from werkzeug.wrappers.response import Response as WerkzeugResponse
-
 logger = get_logger(__name__)
-bp = Blueprint("content", __name__)
+bp = APIRouter(include_in_schema=False)
 
 
-@bp.route("/content/<path:path>")
-def send_content(path: str) -> Response | WerkzeugResponse:
+@bp.get("/content/{path:path}")
+def send_content(path: str) -> Response:
     """Serve Content."""
     ap_conf = get_ap_config()
 
@@ -27,7 +25,11 @@ def send_content(path: str) -> Response | WerkzeugResponse:
         web_root = Path(get_app_paths().web_root)
         relative_path = str(path_obj).replace(str(web_root), "")  # The easiest way to get the "relative" path
         new_path = ap_conf.app.s3.cdn_domain.encoded_string() + "content/" + relative_path
-        return redirect(location=new_path, code=HTTPStatus.TEMPORARY_REDIRECT)
+        return RedirectResponse(new_path, status_code=HTTPStatus.TEMPORARY_REDIRECT)
 
-    web_dir = Path(current_app.instance_path) / "web" / "content"
-    return send_from_directory(str(web_dir), path)
+    web_dir = (get_app_paths().instance_path / "web" / "content").resolve()
+    file_path = (web_dir / path).resolve()
+    if not file_path.is_relative_to(web_dir) or not file_path.is_file():
+        return generate_404()
+
+    return FileResponse(file_path)

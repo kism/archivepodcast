@@ -113,13 +113,13 @@ class HostingInfo(BaseModel):
     @classmethod
     def load_from_config(cls, app_config: AppConfig) -> Self:
         """Load HostType from AppConfig."""
-        frontend_host_type = "Flask"
+        frontend_host_type = "FastAPI"
         if app_config.storage_backend == "s3" and app_config.inet_path == app_config.s3.cdn_domain:
             frontend_host_type = "s3"
 
         backend_host_type = "s3"
         if app_config.storage_backend == "local":
-            backend_host_type = "Flask"
+            backend_host_type = "FastAPI"
 
         backend = Host(
             host_type=backend_host_type,

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
+from fastapi.testclient import TestClient
 
 from archivepodcast.archiver.webpages import Webpages
 from archivepodcast.instances import podcast_archiver
@@ -19,8 +20,7 @@ from tests.constants import DUMMY_RSS_STR
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flask import Flask
-    from flask.testing import FlaskClient
+    from fastapi import FastAPI
     from pytest_mock import MockerFixture
 
     from archivepodcast.archiver.podcast_archiver import PodcastArchiver
@@ -34,8 +34,8 @@ from tests import FakeExceptionError
 
 def test_app_paths(
     apa: PodcastArchiver,
-    client_live: FlaskClient,
-    client_live_s3: FlaskClient,
+    client_live: TestClient,
+    client_live_s3: TestClient,
     tmp_path: Path,
 ) -> None:
     """Verify all expected application paths return correct responses."""
@@ -73,7 +73,7 @@ def test_app_paths(
 
 def test_app_paths_not_generated(
     apa: PodcastArchiver,
-    client_live: FlaskClient,
+    client_live: TestClient,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -110,7 +110,7 @@ def test_app_paths_not_generated(
 @pytest.mark.asyncio
 async def test_app_path_about(
     apa: PodcastArchiver,
-    client_live: FlaskClient,
+    client_live: TestClient,
     tmp_path: Path,
 ) -> None:
     """Test the about page."""
@@ -134,7 +134,7 @@ async def test_app_path_about(
 
 def test_rss_feed(
     apa: PodcastArchiver,
-    app_live: Flask,
+    app_live: FastAPI,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -144,11 +144,11 @@ def test_rss_feed(
     apa.podcast_list[0].live = True
     apa.grab_podcasts()
 
-    client_live = app_live.test_client()
+    client_live = TestClient(app_live, follow_redirects=False)
 
     response = client_live.get("/rss/test")
     assert response.status_code == HTTPStatus.OK
-    assert response.content_type == "application/rss+xml; charset=utf-8"
+    assert response.headers["content-type"] == "application/rss+xml; charset=utf-8"
 
     response = client_live.get("/rss/non_existent_feed")
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -162,7 +162,7 @@ def test_rss_feed(
     with caplog.at_level(logging.WARNING):
         response = client_live.get("/rss/test_from_file")
 
-    response_str = response.data.decode("utf-8")
+    response_str = response.content.decode("utf-8")
     assert response_str == DUMMY_RSS_STR
     assert response.status_code == HTTPStatus.OK
     assert "not live, sending cached version from disk" in caplog.text
@@ -173,7 +173,7 @@ def test_rss_feed(
 
 def test_rss_feed_type_error(
     apa: PodcastArchiver,
-    app_live: Flask,
+    app_live: FastAPI,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
@@ -183,7 +183,7 @@ def test_rss_feed_type_error(
     podcast_archiver._ap = apa
     ap = apa
 
-    client_live = app_live.test_client()
+    client_live = TestClient(app_live, follow_redirects=False)
 
     def return_type_error(*args: Any, **kwargs: Any) -> None:
         raise TypeError
@@ -196,7 +196,7 @@ def test_rss_feed_type_error(
 
 def test_rss_feed_unhandled_error(
     apa: PodcastArchiver,
-    app_live: Flask,
+    app_live: FastAPI,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
@@ -208,7 +208,7 @@ def test_rss_feed_unhandled_error(
 
     ap.grab_podcasts()
 
-    client_live = app_live.test_client()
+    client_live = TestClient(app_live, follow_redirects=False)
 
     Path(tmp_path / "web" / "rss" / "test").write_text(data=DUMMY_RSS_STR, encoding="utf-8")
 
@@ -228,7 +228,7 @@ def test_rss_feed_unhandled_error(
 
 def test_content_s3(
     apa_aws: PodcastArchiver,
-    app_live_s3: Flask,
+    app_live_s3: FastAPI,
     monkeypatch: pytest.MonkeyPatch,
     mock_get_session: MockerFixture,
 ) -> None:
@@ -240,14 +240,14 @@ def test_content_s3(
 
     ap.grab_podcasts()
 
-    client_live = app_live_s3.test_client()
+    client_live = TestClient(app_live_s3, follow_redirects=False)
 
     response = client_live.get("/content/test/20200101-Test-Episode.mp3")
     assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
 
 
 def test_reload_config(
-    app: Flask,
+    app: FastAPI,
     apa: PodcastArchiver,
     tmp_path: Path,
     get_test_config: Callable[[str], ArchivePodcastConfig],
@@ -259,7 +259,7 @@ def test_reload_config(
 
     get_test_config("testing_true_valid.json")
 
-    with caplog.at_level(logging.DEBUG), app.app_context():
+    with caplog.at_level(logging.DEBUG):
         podcast_archiver.reload_config(signal.SIGHUP)
 
     assert "Finished adhoc config reload" in caplog.text
@@ -303,7 +303,7 @@ def test_time_until_next_run(time: datetime.datetime, expected_seconds: int) -> 
 
 
 @pytest.mark.asyncio
-async def test_file_list(apa: PodcastArchiver, client_live: Flask, tmp_path: Path) -> None:
+async def test_file_list(apa: PodcastArchiver, client_live: TestClient, tmp_path: Path) -> None:
     """Test that files are listed."""
 
     podcast_archiver._ap = apa
@@ -324,14 +324,14 @@ async def test_file_list(apa: PodcastArchiver, client_live: Flask, tmp_path: Pat
     response = client_live.get("/filelist.html")
 
     assert response.status_code == HTTPStatus.OK
-    assert "/index.html" in response.data.decode("utf-8")
-    assert str(content_path) in response.data.decode("utf-8")
+    assert "/index.html" in response.content.decode("utf-8")
+    assert str(content_path) in response.content.decode("utf-8")
 
 
 @pytest.mark.asyncio
 async def test_file_list_s3(
     apa_aws: PodcastArchiver,
-    client_live_s3: Flask,
+    client_live_s3: TestClient,
     mock_get_session: AWSAioSessionMock,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
@@ -367,7 +367,7 @@ async def test_file_list_s3(
     response = client_live_s3.get("/filelist.html")
     assert response.status_code == HTTPStatus.OK
 
-    response_html = response.data.decode("utf-8")
+    response_html = response.content.decode("utf-8")
 
     # S3 file list should include content files but not locally rendered HTML files
     assert content_s3_path in response_html  # Content
@@ -375,7 +375,7 @@ async def test_file_list_s3(
 
 def test_api_reload(
     apa: PodcastArchiver,
-    client_live: Flask,
+    client_live: TestClient,
     place_test_config: Callable[[str, Path], None],
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
@@ -392,7 +392,7 @@ def test_api_reload(
     assert "Podcast has no name_one_word set in config, cannot proceed" not in caplog.text
 
 
-def test_api_reload_no_debug(apa: PodcastArchiver, client_live: Flask, caplog: pytest.LogCaptureFixture) -> None:
+def test_api_reload_no_debug(apa: PodcastArchiver, client_live: TestClient, caplog: pytest.LogCaptureFixture) -> None:
     """Test the reload API endpoint."""
 
     podcast_archiver._ap = apa

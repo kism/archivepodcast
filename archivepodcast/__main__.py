@@ -11,7 +11,7 @@ from .utils.log_messages import log_intro
 
 def main() -> None:
     """Main function for CLI."""
-    ap_logger.setup_logger(app=None)  # Setup logger with defaults defined in config module
+    ap_logger.setup_logger()  # Setup logger with defaults defined in config module
 
     logger = ap_logger.get_logger(__name__)
     log_intro(logger)

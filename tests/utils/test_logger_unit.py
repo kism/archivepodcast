@@ -32,7 +32,7 @@ def logger() -> Generator[CustomLogger]:
     logger_raw = logging.getLogger(f"TEST_LOGGER_{random_str}")
     assert len(logger_raw.handlers) == 0  # Check the logger has no handlers
 
-    setup_logger(None, in_logger=logger_raw)
+    setup_logger(in_logger=logger_raw)
     logger = get_logger(logger_raw.name)
 
     yield logger
@@ -50,11 +50,11 @@ def test_handler_console_added(logger: logging.Logger) -> None:
     # TEST: Only one handler (console), should exist when no logging path provided
     config = LoggingConf(level=log_level, path=None)
 
-    setup_logger(app=None, logging_conf=config, in_logger=logger)
+    setup_logger(logging_conf=config, in_logger=logger)
     assert len(logger.handlers) == 1
 
     # TEST: If a console handler exists, another one shouldn't be created
-    setup_logger(app=None, logging_conf=config, in_logger=logger)
+    setup_logger(logging_conf=config, in_logger=logger)
     assert len(logger.handlers) == 1
 
 
@@ -70,14 +70,14 @@ def test_handler_console_added(logger: logging.Logger) -> None:
 )
 def test_set_log_level(log_level_in: str | int, log_level_expected: int, logger: logging.Logger) -> None:
     """Test if setup_logger results in correct log_level."""
-    setup_logger(app=None, logging_conf=LoggingConf(level=log_level_in), in_logger=logger)
+    setup_logger(logging_conf=LoggingConf(level=log_level_in), in_logger=logger)
     assert logger.getEffectiveLevel() == log_level_expected
 
 
 def test_trace_level(logger: CustomLogger, caplog: pytest.LogCaptureFixture) -> None:
     """Test trace level."""
 
-    setup_logger(app=None, logging_conf=LoggingConf(level="TRACE"), in_logger=logger)
+    setup_logger(logging_conf=LoggingConf(level="TRACE"), in_logger=logger)
 
     assert logger.getEffectiveLevel() == TRACE_LEVEL_NUM
 
@@ -100,12 +100,12 @@ def test_add_file_handler(
     log_path = tmp_path
     config = LoggingConf(level=log_level, path=log_path)
     with pytest.raises(IsADirectoryError):
-        setup_logger(app=None, logging_conf=config, in_logger=logger)
+        setup_logger(logging_conf=config, in_logger=logger)
 
     # Succeed
     log_path = tmp_path / "test_log.log"
     config = LoggingConf(level=log_level, path=log_path)
-    setup_logger(app=None, logging_conf=config, in_logger=logger)
+    setup_logger(logging_conf=config, in_logger=logger)
 
     # Check that the file handler was added
     handlers = [handler for handler in logger.handlers if isinstance(handler, logging.FileHandler)]
@@ -130,7 +130,7 @@ def test_add_file_handler_no_permissions(
 
     config = LoggingConf(level=log_level, path=log_path)
     with pytest.raises(PermissionError, match="The user running this does not have access to the file"):
-        setup_logger(app=None, logging_conf=config, in_logger=logger)
+        setup_logger(logging_conf=config, in_logger=logger)
 
 
 def test_add_rich_console_handler(logger: CustomLogger, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -139,7 +139,7 @@ def test_add_rich_console_handler(logger: CustomLogger, monkeypatch: pytest.Monk
 
     log_level = "INFO"
     config = LoggingConf(level=log_level, path=None)
-    setup_logger(app=None, logging_conf=config, in_logger=logger)
+    setup_logger(logging_conf=config, in_logger=logger)
 
     handlers = list(logger.handlers)
     assert any(handler.__class__.__name__ == "RichHandler" for handler in handlers)

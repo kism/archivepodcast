@@ -78,9 +78,10 @@ class PodcastConfig(BaseModel):
 
 
 class FlaskConfig(BaseModel):
-    """Flask Config Object."""
+    """Webapp config, keeps the historical 'flask' config key so existing config.json files stay valid."""
 
     TESTING: bool = False
+    DEBUG: bool = False
 
 
 class ArchivePodcastConfig(BaseSettings):

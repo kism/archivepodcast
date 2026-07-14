@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from flask import Flask
     from pytest_mock import MockerFixture
 
     from archivepodcast.utils.logger import LoggingConf
@@ -26,7 +25,6 @@ def preserve_caplog_handlers(monkeypatch: pytest.MonkeyPatch) -> None:
     original_setup_logger = ap_logger.setup_logger
 
     def setup_logger_preserve_caplog(
-        app: Flask | None,
         logging_conf: LoggingConf | None = None,
         in_logger: logging.Logger | None = None,
     ) -> None:
@@ -34,7 +32,7 @@ def preserve_caplog_handlers(monkeypatch: pytest.MonkeyPatch) -> None:
         # Save pytest's caplog handlers
         caplog_handlers = list(root_logger.handlers)
         # Call original setup
-        original_setup_logger(app, logging_conf, in_logger)
+        original_setup_logger(logging_conf, in_logger)
         # Re-add caplog handlers
         for handler in caplog_handlers:
             if handler not in root_logger.handlers:

@@ -1,24 +1,25 @@
-"""RSS blueprint for ArchivePodcast."""
+"""RSS routes for ArchivePodcast."""
 
 from http import HTTPStatus
-from pathlib import Path
 
-from flask import Blueprint, Response, current_app, render_template
+from fastapi import APIRouter, Response
 from lxml import etree
 
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.config import get_ap_config
+from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.podcast_archiver import (
     get_about_page_exists,
     get_ap,
+    render_error,
 )
 from archivepodcast.utils.logger import get_logger
 
 logger = get_logger(__name__)
-bp = Blueprint("rss", __name__)
+bp = APIRouter(tags=["rss"])
 
 
-@bp.route("/rss/<string:feed>", methods=["GET"])
+@bp.get("/rss/{feed}", responses={HTTPStatus.OK: {"content": {"application/rss+xml": {}}}})
 def rss(feed: str) -> Response:
     """Send RSS Feed."""
     ap = get_ap()
@@ -26,17 +27,13 @@ def rss(feed: str) -> Response:
     ap_conf = get_ap_config()
 
     def error_response(return_code: HTTPStatus, error_text: str) -> Response:
-        return Response(
-            render_template(
-                "error.html.j2",
-                error_code=str(return_code),
-                error_text=error_text,
-                about_page=get_about_page_exists(),
-                app_config=ap_conf.app,
-                podcasts=ap_conf.podcasts,
-                header=ap.renderer.webpages.generate_header("error.html"),
-            ),
-            status=return_code,
+        return render_error(
+            return_code,
+            error_text=error_text,
+            about_page=get_about_page_exists(),
+            app_config=ap_conf.app,
+            podcasts=ap_conf.podcasts,
+            header=ap.renderer.webpages.generate_header("error.html"),
         )
 
     logger.debug("Sending rss feed: %s", feed)
@@ -47,7 +44,7 @@ def rss(feed: str) -> Response:
 
     except KeyError:
         try:
-            tree = etree.parse(Path(current_app.instance_path) / "web" / "rss" / feed)
+            tree = etree.parse(get_app_paths().instance_path / "web" / "rss" / feed)
             rss_str = etree.tostring(
                 tree.getroot(),
                 encoding=XML_ENCODING,
@@ -63,4 +60,4 @@ def rss(feed: str) -> Response:
         except:  # noqa: E722 Bare except since this is a catch all to prevent app crash
             return error_response(HTTPStatus.INTERNAL_SERVER_ERROR, "Feed not loadable, Internal Server Error")
 
-    return Response(rss_str, mimetype="application/rss+xml; charset=utf-8", status=HTTPStatus.OK)
+    return Response(rss_str, media_type="application/rss+xml; charset=utf-8", status_code=HTTPStatus.OK)

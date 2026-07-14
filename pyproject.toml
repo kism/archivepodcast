@@ -4,12 +4,12 @@
 [project]
 name = "archivepodcast"
 version = "1.5.14.dev1"
-description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
+description = "FastAPI webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
-    "flask[async]>=3.1,<4",
+    "fastapi>=0.115",
     "aiobotocore>=2.25.2",
     "aiohttp>=3.13.2",
     "jinja2>=3.1,<4",
@@ -23,7 +23,7 @@ dependencies = [
     "python-magic>=0.4",
     "rich>=14.2.0",
     "typed-ffmpeg>=3.7",
-    "waitress>=3.0",
+    "uvicorn>=0.35",
     "anyio>=4.12.1",
 ]
 
@@ -55,6 +55,7 @@ test = [
     "types-aiobotocore-s3",  # Mock uses typed dict
     "pytest-asyncio",
     "pytest-socket>=0.7.0",
+    "httpx",
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
@@ -81,7 +82,6 @@ select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
     "DJ",   # KG Django not required
-    "FAST", # KG FastAPI not required
     "NPY",  # KG Numpy not required
     "PD",   # KG Pandas not required
     "CPY",  # KG Pandas not required
@@ -101,7 +101,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "archivepodcast/__init__.py" = [
-    "RUF067", # KG Flask app factory convention, create_app lives in __init__
+    "RUF067", # KG App factory convention, create_app lives in __init__
 ]
 "archivepodcast/config.py" = [
     "E501", # KG Some long lines

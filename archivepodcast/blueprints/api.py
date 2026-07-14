@@ -1,10 +1,10 @@
-"""API blueprints for ArchivePodcast."""
+"""API routes for ArchivePodcast."""
 
 import json
 import signal
 from http import HTTPStatus
 
-from flask import Blueprint, Response
+from fastapi import APIRouter, Response
 
 from archivepodcast.constants import JSON_INDENT
 from archivepodcast.instances.health import health
@@ -13,13 +13,15 @@ from archivepodcast.instances.podcast_archiver import (
     reload_config,
 )
 from archivepodcast.instances.profiler import event_times
+from archivepodcast.utils.health import PodcastArchiverHealthAPI
 from archivepodcast.utils.logger import get_logger
+from archivepodcast.utils.profiler import EventLastTime
 
 logger = get_logger(__name__)
-bp = Blueprint("api", __name__)
+bp = APIRouter(tags=["api"])
 
 
-@bp.route("/api/reload")
+@bp.get("/api/reload")
 def api_reload() -> Response:
     """Reload the config."""
     ap = get_ap()
@@ -30,20 +32,20 @@ def api_reload() -> Response:
     if not ap.debug:
         return Response(
             json.dumps(msg_forbidden),
-            content_type="application/json; charset=utf-8",
-            status=HTTPStatus.FORBIDDEN,
+            media_type="application/json; charset=utf-8",
+            status_code=HTTPStatus.FORBIDDEN,
         )
 
     reload_config(signal.SIGHUP)
 
     return Response(
         json.dumps(msg_success),
-        content_type="application/json; charset=utf-8",
-        status=HTTPStatus.OK,
+        media_type="application/json; charset=utf-8",
+        status_code=HTTPStatus.OK,
     )
 
 
-@bp.route("/api/health")
+@bp.get("/api/health", response_model=PodcastArchiverHealthAPI)
 def api_health() -> Response:
     """Health check."""
     try:
@@ -56,20 +58,18 @@ def api_health() -> Response:
 
     return Response(
         health_json_str,
-        mimetype="application/json",
-        content_type="application/json; charset=utf-8",
-        status=HTTPStatus.OK,
+        media_type="application/json; charset=utf-8",
+        status_code=HTTPStatus.OK,
     )
 
 
-@bp.route("/api/profile")
+@bp.get("/api/profile", response_model=EventLastTime)
 def api_profile() -> Response:
     """Get the profiling info as JSON."""
     profile_json_str = event_times.model_dump_json(indent=JSON_INDENT)
 
     return Response(
         profile_json_str,
-        mimetype="application/json",
-        content_type="application/json; charset=utf-8",
-        status=HTTPStatus.OK,
+        media_type="application/json; charset=utf-8",
+        status_code=HTTPStatus.OK,
     )

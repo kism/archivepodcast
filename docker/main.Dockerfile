@@ -63,6 +63,6 @@ USER ap:ap
 
 EXPOSE 5100
 
-CMD [ "waitress-serve", "--listen", "0.0.0.0:5100", "--trusted-proxy", "*", "--trusted-proxy-headers", "x-forwarded-for x-forwarded-proto x-forwarded-port", "--log-untrusted-proxy-headers", "--clear-untrusted-proxy-headers", "--threads", "4", "--call", "archivepodcast:create_app" ]
+CMD [ "uvicorn", "--factory", "archivepodcast:create_app", "--host", "0.0.0.0", "--port", "5100", "--proxy-headers", "--forwarded-allow-ips", "*" ]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -f http://localhost:5100/api/health || exit 1
