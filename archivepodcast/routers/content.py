@@ -12,10 +12,10 @@ from archivepodcast.instances.podcast_archiver import generate_404
 from archivepodcast.utils.logger import get_logger
 
 logger = get_logger(__name__)
-bp = APIRouter(include_in_schema=False)
+router = APIRouter(include_in_schema=False)
 
 
-@bp.get("/content/{path:path}")
+@router.get("/content/{path:path}")
 def send_content(path: str) -> Response:
     """Serve Content."""
     ap_conf = get_ap_config()

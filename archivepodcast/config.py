@@ -4,7 +4,7 @@ import json
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Literal, Self
 
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import AliasChoices, BaseModel, Field, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .constants import JSON_INDENT
@@ -77,11 +77,12 @@ class PodcastConfig(BaseModel):
     contact_email: str = ""
 
 
-class FlaskConfig(BaseModel):
-    """Webapp config, keeps the historical 'flask' config key so existing config.json files stay valid."""
+class WebappConfig(BaseModel):
+    """Webapp Config Object."""
 
-    TESTING: bool = False
-    DEBUG: bool = False
+    # The aliases accept the uppercase keys from flask-era config files, migrated on first write_config.
+    testing: bool = Field(default=False, validation_alias=AliasChoices("testing", "TESTING"))
+    debug: bool = Field(default=False, validation_alias=AliasChoices("debug", "DEBUG"))
 
 
 class ArchivePodcastConfig(BaseSettings):
@@ -99,7 +100,7 @@ class ArchivePodcastConfig(BaseSettings):
     app: AppConfig = AppConfig()
     podcasts: list[PodcastConfig] = [PodcastConfig()]
     logging: LoggingConf = LoggingConf()
-    flask: FlaskConfig = FlaskConfig()
+    webapp: WebappConfig = WebappConfig()
 
     def write_config(self, config_path: Path) -> None:
         """Write the current settings to a JSON file."""
@@ -147,6 +148,9 @@ class ArchivePodcastConfig(BaseSettings):
         logger.debug("Loading config from %s", config_path.absolute())
         with config_path.open(mode="r", encoding="utf-8") as f:
             config = json.load(f)
+
+        if "flask" in config and "webapp" not in config:  # Migrate flask-era config files
+            config["webapp"] = config.pop("flask")
 
         return cls(**config)
 

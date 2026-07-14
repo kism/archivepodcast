@@ -18,10 +18,10 @@ from archivepodcast.utils.logger import get_logger
 from archivepodcast.utils.profiler import EventLastTime
 
 logger = get_logger(__name__)
-bp = APIRouter(tags=["api"])
+router = APIRouter(tags=["api"])
 
 
-@bp.get("/api/reload")
+@router.get("/api/reload")
 def api_reload() -> Response:
     """Reload the config."""
     ap = get_ap()
@@ -45,7 +45,7 @@ def api_reload() -> Response:
     )
 
 
-@bp.get("/api/health", response_model=PodcastArchiverHealthAPI)
+@router.get("/api/health", response_model=PodcastArchiverHealthAPI)
 def api_health() -> Response:
     """Health check."""
     try:
@@ -63,7 +63,7 @@ def api_health() -> Response:
     )
 
 
-@bp.get("/api/profile", response_model=EventLastTime)
+@router.get("/api/profile", response_model=EventLastTime)
 def api_profile() -> Response:
     """Get the profiling info as JSON."""
     profile_json_str = event_times.model_dump_json(indent=JSON_INDENT)

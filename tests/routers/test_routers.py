@@ -1,4 +1,4 @@
-"""Test the application blueprint endpoints."""
+"""Test the application router endpoints."""
 
 import datetime
 import logging

@@ -100,9 +100,8 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask stuff:
+# Instance directory (user config, downloaded podcasts)
 instance/
-.webassets-cache
 
 # Scrapy stuff:
 .scrapy

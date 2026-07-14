@@ -14,7 +14,7 @@ Run as a development server
 uvicorn --factory archivepodcast:create_app --port 5100 --reload
 ```
 
-The Swagger UI is available at `/docs`. To enable `/api/reload`, set `"DEBUG": true` in the `flask` section of config.json. Note that config reload via SIGHUP only works in single-process mode; `--reload` and `--workers` supervisors intercept SIGHUP.
+The Swagger UI is available at `/docs`. To enable `/api/reload`, set `"debug": true` in the `webapp` section of config.json. Note that config reload via SIGHUP only works in single-process mode; `--reload` and `--workers` supervisors intercept SIGHUP.
 
 Run adhoc
 

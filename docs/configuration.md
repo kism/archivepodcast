@@ -39,8 +39,9 @@ Here is an example with a podcast defined:
     "path": null,
     "simple": false
   },
-  "flask": {
-    "TESTING": false
+  "webapp": {
+    "testing": false,
+    "debug": false
   }
 }
 ```

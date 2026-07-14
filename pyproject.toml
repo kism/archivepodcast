@@ -193,7 +193,7 @@ missing-type-argument = "error"
 possibly-unresolved-reference = "warn"
 
 [[tool.ty.overrides]]
-# Blame the flask client object
+# Tests poke at private attributes of mocks/fixtures
 include = ["tests/**"]
 [tool.ty.overrides.rules]
 "unresolved-attribute" = "ignore"
@@ -201,7 +201,7 @@ include = ["tests/**"]
 [[tool.ty.overrides]]
 # Not sure what ty is upset about here
 include = [
-    "archivepodcast/blueprints/rss.py",
+    "archivepodcast/routers/rss.py",
     "archivepodcast/archiver/podcast_archiver.py",
 ]
 [tool.ty.overrides.rules]

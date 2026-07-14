@@ -13,7 +13,7 @@
   "logging": {
     "level": "INVALID"
   },
-  "flask": {
-    "TESTING": true
+  "webapp": {
+    "testing": true
   }
 }

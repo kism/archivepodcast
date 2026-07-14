@@ -58,7 +58,7 @@ def app_live_s3(
 @pytest.fixture
 def client(app: FastAPI) -> Generator[TestClient]:
     """This returns a test client for the default app()."""
-    # The context manager runs the lifespan; follow_redirects=False matches the old Flask client semantics.
+    # The context manager runs the lifespan; follow_redirects=False so 307 redirect assertions see the redirect itself.
     with TestClient(app, follow_redirects=False) as client:
         yield client
 

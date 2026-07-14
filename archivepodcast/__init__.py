@@ -14,13 +14,13 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
 from .archiver import PodcastArchiver
-from .blueprints import bp_api, bp_content, bp_rss, bp_static, bp_webpages
 from .constants import DEFAULT_INSTANCE_PATH, JSON_INDENT, PROGRAM_VERSION
 from .instances import podcast_archiver
 from .instances.config import get_ap_config
 from .instances.health import health
 from .instances.path_helper import get_app_paths
 from .instances.profiler import event_times
+from .routers import api_router, content_router, rss_router, static_router, webpages_router
 from .utils import logger as ap_logger
 from .utils.log_messages import log_intro
 from .utils.profiler import get_event_times_str
@@ -43,8 +43,8 @@ def create_app(instance_path_override: str | None = None) -> FastAPI:
 
     ap_conf = get_ap_config(instance_path / "config.json")
 
-    if ap_conf.flask.TESTING and not str(instance_path).startswith("/tmp"):  # noqa: S108
-        msg = "Flask TESTING mode requires instance_path to be a tmp_path."
+    if ap_conf.webapp.testing and not str(instance_path).startswith("/tmp"):  # noqa: S108
+        msg = "TESTING mode requires instance_path to be a tmp_path."
         raise ValueError(msg)
 
     ap_conf.write_config(instance_path / "config.json")
@@ -59,12 +59,12 @@ def create_app(instance_path_override: str | None = None) -> FastAPI:
 
     app = FastAPI(title="ArchivePodcast", version=PROGRAM_VERSION, lifespan=lifespan)
 
-    for bp in (bp_api, bp_content, bp_rss, bp_static, bp_webpages):
-        # Flask served HEAD on every GET route (podcast clients HEAD media files), FastAPI doesn't by default.
-        for route in bp.routes:
+    for router in (api_router, content_router, rss_router, static_router, webpages_router):
+        # Podcast clients send HEAD requests for media files; FastAPI doesn't add HEAD to GET routes by default.
+        for route in router.routes:
             if isinstance(route, APIRoute) and route.methods and "GET" in route.methods:
                 route.methods.add("HEAD")
-        app.include_router(bp)
+        app.include_router(router)
 
     @app.exception_handler(404)
     def invalid_route(request: Request, e: Exception) -> Response:

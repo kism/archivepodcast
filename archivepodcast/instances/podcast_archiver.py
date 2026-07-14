@@ -49,7 +49,7 @@ def initialise_archivepodcast() -> None:
     _ap = PodcastArchiver(
         app_config=ap_conf.app,
         podcast_list=ap_conf.podcasts,
-        debug=ap_conf.flask.DEBUG,
+        debug=ap_conf.webapp.debug,
     )
 
     if threading.current_thread() is threading.main_thread():

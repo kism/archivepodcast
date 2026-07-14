@@ -79,7 +79,7 @@ class WebpageRenderer:
 
         for item in static_items_to_copy:
             item_relative_path = str(item.relative_to(app_paths.static_directory))
-            # Store static files with static/ prefix to match blueprint expectations
+            # Store static files with static/ prefix to match router expectations
             static_path = f"static/{item_relative_path}"
             item_mime = magic.from_file(str(item), mime=True)
             logger.trace("Registering static item: %s, mime: %s", item, item_mime)

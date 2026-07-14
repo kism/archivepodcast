@@ -16,10 +16,10 @@ from archivepodcast.instances.podcast_archiver import (
 from archivepodcast.utils.logger import get_logger
 
 logger = get_logger(__name__)
-bp = APIRouter(tags=["rss"])
+router = APIRouter(tags=["rss"])
 
 
-@bp.get("/rss/{feed}", responses={HTTPStatus.OK: {"content": {"application/rss+xml": {}}}})
+@router.get("/rss/{feed}", responses={HTTPStatus.OK: {"content": {"application/rss+xml": {}}}})
 def rss(feed: str) -> Response:
     """Send RSS Feed."""
     ap = get_ap()
