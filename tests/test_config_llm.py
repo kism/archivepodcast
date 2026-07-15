@@ -1,9 +1,12 @@
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from archivepodcast.config import AppS3Config, ArchivePodcastConfig
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 base_config = ArchivePodcastConfig()
 

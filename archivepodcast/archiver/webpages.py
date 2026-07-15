@@ -10,14 +10,6 @@ class Webpage:
 
     def __init__(self, path: str, mime: str, content: str | bytes) -> None:
         """Initialise the Webpages object."""
-        # Mime types that magic doesn't always get right
-        if path.endswith(".js"):
-            mime = "text/javascript"
-        elif path.endswith(".css"):
-            mime = "text/css"
-        elif path.endswith(".woff2"):
-            mime = "font/woff2"
-
         self.path: str = path
         self.mime: str = mime
         self.content: str | bytes = content
@@ -41,16 +33,6 @@ class Webpages:
     def __len__(self) -> int:
         """Return the length of the webpages."""
         return len(self._webpages)
-
-    def get_list(self) -> dict[str, str]:
-        """Return the items of the webpages."""
-        item_list = self._webpages.items()
-
-        return_value = {}
-        for _, value in item_list:
-            return_value[value.path] = value.mime
-
-        return return_value
 
     def add(self, path: str, mime: str, content: str | bytes) -> None:
         """Add a webpage."""
@@ -107,7 +89,7 @@ return false;
             else:
                 header += ' | <div class="active">Health</div>'
             header += reload_a_tag.replace("\n", "")
-            header += ' | <a href="/console" target="_blank">Flask Console</a>'
+            header += ' | <a href="/docs" target="_blank">API Docs</a>'
             header += ' | <a id="debug_status" style="color: #ff0000">DEBUG ENABLED</a>'
 
         header += "<hr></header>"

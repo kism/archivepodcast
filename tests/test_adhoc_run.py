@@ -1,19 +1,20 @@
 import argparse
 import logging
 import os
-from collections.abc import Callable
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flask import Flask
 
 from archivepodcast import __main__
 from archivepodcast.utils import logger as ap_logger
-from archivepodcast.utils.logger import LoggingConf
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
     from pytest_mock import MockerFixture
+
+    from archivepodcast.utils.logger import LoggingConf
 else:
     MockerFixture = object  # pragma: no cover
 
@@ -24,7 +25,6 @@ def preserve_caplog_handlers(monkeypatch: pytest.MonkeyPatch) -> None:
     original_setup_logger = ap_logger.setup_logger
 
     def setup_logger_preserve_caplog(
-        app: Flask | None,
         logging_conf: LoggingConf | None = None,
         in_logger: logging.Logger | None = None,
     ) -> None:
@@ -32,7 +32,7 @@ def preserve_caplog_handlers(monkeypatch: pytest.MonkeyPatch) -> None:
         # Save pytest's caplog handlers
         caplog_handlers = list(root_logger.handlers)
         # Call original setup
-        original_setup_logger(app, logging_conf, in_logger)
+        original_setup_logger(logging_conf, in_logger)
         # Re-add caplog handlers
         for handler in caplog_handlers:
             if handler not in root_logger.handlers:
@@ -62,7 +62,7 @@ def test_archivepodcast_cli_from__main__(
         __main__.main()
 
     # We get to the intro
-    assert "ArchivePodcast version" in caplog.text
+    assert "ArchivePodcast v" in caplog.text
     assert "Operating mode: Adhoc" in caplog.text
 
 

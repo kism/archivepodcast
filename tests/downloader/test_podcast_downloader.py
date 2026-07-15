@@ -1,7 +1,6 @@
 """Tests for PodcastsDownloader functionality."""
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -10,8 +9,6 @@ import magic
 import pytest
 from anyio import Path as AsyncPath
 
-from archivepodcast.archiver.podcast_archiver import PodcastArchiver
-from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.downloader.downloader import PodcastsDownloader
 from archivepodcast.downloader.helpers import _ffmpeg_convert_check, check_ffmpeg
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
@@ -19,7 +16,12 @@ from tests.constants import TEST_WAV_FILE
 from tests.models.aiohttp import FakeSession
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture  # pragma: no cover
+
+    from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+    from archivepodcast.config import ArchivePodcastConfig
 else:
     MockerFixture = object
 

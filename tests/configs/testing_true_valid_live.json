@@ -17,7 +17,7 @@
     }
   ],
   "logging": {},
-  "flask": {
-    "TESTING": true
+  "webapp": {
+    "testing": true
   }
 }

@@ -1,89 +1,37 @@
 """Profiler Utility."""
 
-import datetime
+from typing import Any
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel
 
 
 class EventLastTime(BaseModel):
-    """Event Last Time Model."""
+    """Flat record of each event's last duration in seconds, keyed by path."""
 
-    name: str
-    duration: datetime.timedelta | None = None
-    children: list["EventLastTime"] = Field(default_factory=list, exclude_if=lambda v: len(v) == 0)
+    times: dict[str, float] = {}
 
-    @field_serializer("duration")
-    def serialize_duration(self, value: datetime.timedelta | None) -> float | None:
-        """Serialize duration to total seconds."""
-        if value is None:
-            return None
-        return value.total_seconds()
-
-    @field_serializer("name")
-    def serialize_name(self, value: str) -> str:
-        """Serialize name."""
-        if value.strip() == "/":
-            return "root"
-        return value
-
-    def set_event_time(self, path: str, duration: datetime.timedelta | float) -> None:
-        """Add time to the event tree."""
-        if isinstance(duration, int):
-            duration = 999999999.0  # Always use float for durations
-
-        if isinstance(duration, float):
-            duration = datetime.timedelta(seconds=duration)
-
-        path = path.strip("/")
-        if not path:
-            # Root node - update self
-            self.duration = duration
-            return
-
-        parts = path.split("/", 1)
-        if len(parts) == 1:
-            # Leaf node - check if it already exists
-
-            for child in self.children:
-                if child.name == parts[0]:
-                    child.duration = duration
-                    return
-            # Not found, create new leaf node
-            self.children.append(EventLastTime(name=parts[0], duration=duration))
-        else:
-            # Intermediate node
-            child_name, rest_of_path = parts
-            # Find or create the child
-
-            for child in self.children:
-                if child.name == child_name:
-                    child.set_event_time(rest_of_path, duration)
-                    return
-            # Child not found, create it
-            new_child = EventLastTime(name=child_name)
-            new_child.set_event_time(rest_of_path, duration)
-            self.children.append(new_child)
-
-
-def _get_times_recursive(event: EventLastTime, indent: int = 0) -> str:
-    """Get the event times recursively for printing."""
-    if event.name == "/":
-        event.name = "root"
-    msg = " " * indent + f"{event.name}: "
-    if event.duration is not None:
-        msg += f"{event.duration.total_seconds():.2f}s\n"
-    else:
-        msg += "No duration\n"
-    if event.children is not None:
-        for child in event.children:
-            msg += _get_times_recursive(child, indent + 2)
-    return msg
+    def set_event_time(self, path: str, duration: float) -> None:
+        """Record the last duration of an event."""
+        self.times[path.strip("/") or "root"] = duration
 
 
 def get_event_times_str(event_times: EventLastTime) -> str:
-    """Print the event times to the logger."""
+    """Format the event times for logging, indented as a tree."""
+    root: dict[str, Any] = {"duration": event_times.times.get("root"), "children": {}}
+    for path, duration in event_times.times.items():  # insertion order = completion order
+        if path == "root":
+            continue
+        node = root
+        for part in path.split("/"):
+            node = node["children"].setdefault(part, {"duration": None, "children": {}})
+        node["duration"] = duration
+
+    def render(name: str, node: dict[str, Any], indent: int) -> list[str]:
+        duration_str = f"{node['duration']:.2f}s" if node["duration"] is not None else "No duration"
+        lines = [f"{' ' * indent}{name}: {duration_str}"]
+        for child_name, child in node["children"].items():
+            lines += render(child_name, child, indent + 2)
+        return lines
+
     msg = "Event times, async so anything can be held up by anything else in a pool >>>\n"
-    msg += _get_times_recursive(event_times, indent=1)
-    if msg.split("\n")[-1] == "":
-        msg = "\n".join(msg.split("\n")[:-1])
-    return msg
+    return msg + "\n".join(render("root", root, 1))

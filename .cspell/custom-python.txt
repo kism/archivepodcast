@@ -19,3 +19,5 @@ PYTHONUNBUFFERED
 powertools
 delenv
 ignorefile
+MEIPASS
+literalinclude

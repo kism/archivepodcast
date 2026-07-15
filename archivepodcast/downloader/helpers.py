@@ -1,18 +1,26 @@
 """Helpers for downloader module."""
 
 import asyncio
+import contextlib
+import datetime
 import random
 import shutil
 import sys
+from email.utils import parsedate_to_datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import ffmpeg
-from anyio import Path as AsyncPath
 
 from archivepodcast.constants import AP_SELF_TEST
 from archivepodcast.utils.logger import get_logger
 
 from .constants import FFMPEG_INFO
+
+if TYPE_CHECKING:
+    import xml.etree.ElementTree as ET
+
+    from anyio import Path as AsyncPath
 
 logger = get_logger(__name__)
 
@@ -20,6 +28,25 @@ logger = get_logger(__name__)
 async def delay_download(attempt: int) -> None:
     """Sleep for an exponential backoff period based on the attempt number."""
     await asyncio.sleep(random.uniform(0.1, 1) + (0.5 * attempt))
+
+
+def tree_no_episodes(tree: ET.ElementTree[ET.Element] | None) -> bool:
+    """Check if the XML tree has no episodes."""
+    if tree is None:
+        return True
+    return len(tree.findall(".//item")) == 0
+
+
+def get_file_date_string(channel: ET.Element) -> str:
+    """Get the file date string from the channel."""
+    file_date_string = "00000000"
+    for child in channel:
+        if child.tag == "pubDate":
+            file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+            with contextlib.suppress(ValueError):
+                file_date = parsedate_to_datetime(str(child.text))
+            file_date_string = file_date.strftime("%Y%m%d")
+    return file_date_string
 
 
 def convert_to_mp3(input_path: Path | AsyncPath, output_path: Path | AsyncPath) -> None:

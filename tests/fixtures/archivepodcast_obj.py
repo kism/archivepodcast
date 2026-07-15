@@ -1,18 +1,19 @@
 import asyncio
-from collections.abc import Callable
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
-from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.downloader.downloader import PodcastsDownloader
 from tests.models.aiohttp import FakeSession
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
     from pytest_mock import MockerFixture
 
+    from archivepodcast.config import ArchivePodcastConfig
     from tests.fixtures.aws import AWSAioSessionMock
 else:
     MockerFixture = object

@@ -4,19 +4,19 @@ import argparse
 from pathlib import Path
 
 from . import run_ap_adhoc
-from .constants import DEFAULT_INSTANCE_PATH
+from .constants import DEFAULT_INSTANCE_PATH, PROGRAM_NAME_WITH_FULL_VERSION
 from .utils import logger as ap_logger
 from .utils.log_messages import log_intro
 
 
 def main() -> None:
     """Main function for CLI."""
-    ap_logger.setup_logger(app=None)  # Setup logger with defaults defined in config module
+    ap_logger.setup_logger()  # Setup logger with defaults defined in config module
 
     logger = ap_logger.get_logger(__name__)
     log_intro(logger)
 
-    parser = argparse.ArgumentParser(description="Archivepodcast.")
+    parser = argparse.ArgumentParser(description=PROGRAM_NAME_WITH_FULL_VERSION)
     parser.add_argument(
         "--instance-path",
         type=str,

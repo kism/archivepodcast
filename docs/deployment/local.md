@@ -13,7 +13,7 @@ cd /opt
 git clone https://github.com/kism/archivepodcast.git
 cd archivepodcast
 uv sync --no-default-groups
-adduser archivepodcast --shell=/bin/false --no-create-home
+adduser apuser --shell=/bin/false --no-create-home
 mkdir /var/log/archivepodcast/
 chown apuser:apuser /var/log/archivepodcast
 chown -R apuser:apuser /opt/archivepodcast
@@ -25,37 +25,13 @@ Run the program once manually to create the default config.json and then fill it
 
 ```bash
 cd /opt/archivepodcast
-sudo -u apuser .venv/bin/waitress-serve --port=5100 --call 'archivepodcast:create_app'
+sudo -u apuser .venv/bin/uvicorn --factory 'archivepodcast:create_app' --port 5100
 ```
 
 Edit: `/opt/archivepodcast/instance/config.json` to your liking.
 
-```json
-{
-  "app": {
-    "inet_path": "https://mycooldomain.org/",
-    "storage_backend": "local",
-    "web_page": {
-      "title": "Podcast Archive",
-      "description": "My Cool  Podcast Archive",
-      "contact": "email@example.com"
-    }
-  },
-  "podcasts": [
-    {
-      "url": "https://feeds.megaphone.fm/replyall",
-      "new_name": "Reply All [Archive]",
-      "name_one_word": "replyall",
-      "description": "",
-      "live": true,
-      "contact_email": "archivepodcast@localhost"
-    }
-  ],
-  "logging": {
-    "level": "INFO",
-    "path": ""
-  }
-}
+```{literalinclude} ../_generated/example_config_local.json
+:language: json
 ```
 
 ## Service Configuration
@@ -70,7 +46,7 @@ After=network.target
 [Service]
 User=apuser
 WorkingDirectory=/opt/archivepodcast
-ExecStart=/opt/archivepodcast/.venv/bin/waitress-serve --port=5100 --call 'archivepodcast:create_app'
+ExecStart=/opt/archivepodcast/.venv/bin/uvicorn --factory 'archivepodcast:create_app' --port 5100
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 

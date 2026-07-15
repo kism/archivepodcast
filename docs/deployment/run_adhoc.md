@@ -1,6 +1,6 @@
 # Run ad-hoc
 
-When you run the flask app, it will stay running and check for new episodes every hour, alternately you can run the app as a once-off.
+When you run the web app, it will stay running and check for new episodes every hour, alternately you can run the app as a once-off.
 
 - Fetches new episodes
 - Generates webpages to instance folder

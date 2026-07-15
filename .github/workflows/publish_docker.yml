@@ -84,14 +84,14 @@ jobs:
       - name: Run main docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance --env AP_SELF_TEST=true ${{ env.MAIN_TAG_LOCAL }} archivepodcast
 
-      - name: Run main docker waitress
-        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG_LOCAL }} waitress-serve --help
+      - name: Run main docker uvicorn
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.MAIN_TAG_LOCAL }} uvicorn --version
 
       - name: Run al docker
         run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance --env AP_SELF_TEST=true ${{ env.AL_TAG_LOCAL }} archivepodcast
 
-      - name: Run al docker waitress
-        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.AL_TAG_LOCAL }} waitress-serve --help
+      - name: Run al docker uvicorn
+        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance ${{ env.AL_TAG_LOCAL }} uvicorn --version
 
       - name: Remove instance directory
         run: sudo rm -rf instance

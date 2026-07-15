@@ -1,8 +1,10 @@
 import threading
-from collections.abc import Generator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @pytest.fixture(autouse=True)

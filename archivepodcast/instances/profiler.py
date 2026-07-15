@@ -2,4 +2,4 @@
 
 from archivepodcast.utils.profiler import EventLastTime
 
-event_times = EventLastTime(name="/")
+event_times = EventLastTime()

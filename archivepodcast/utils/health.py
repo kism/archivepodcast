@@ -2,16 +2,19 @@
 
 import contextlib
 import datetime
+import os
+from email.utils import parsedate_to_datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
-from lxml import etree
-from psutil import Process
 from pydantic import BaseModel
 
+from archivepodcast.constants import PROGRAM_VERSION
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.version import __version__
 
 if TYPE_CHECKING:
+    import xml.etree.ElementTree as ET
+
     from archivepodcast.archiver import PodcastArchiver  # pragma: no cover
     from archivepodcast.config import AppConfig  # pragma: no cover
 else:
@@ -19,11 +22,6 @@ else:
     AppConfig = object
 
 logger = get_logger(__name__)
-
-PODCAST_DATE_FORMATS = ["%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S GMT"]
-
-
-PROCESS = Process()
 
 
 class EpisodeInfo(BaseModel):
@@ -44,52 +42,54 @@ class PodcastHealth(BaseModel):
     healthy_feed: bool = False
     episode_count: int = 0
 
-    def update_episode_info(self, tree: etree._ElementTree | etree._Element | None = None) -> None:
+    def update_episode_info(self, tree: ET.ElementTree[ET.Element] | ET.Element | None = None) -> None:
         """Update the latest episode info."""
         logger.trace("Updating podcast episode info")
         new_latest_episode: EpisodeInfo = EpisodeInfo()
         new_episode_count: int = 0
 
         try:
-            if tree is not None:
-                if len(tree.xpath("//item")) == 0:
-                    logger.warning("No episodes found in feed")
-                    self.latest_episode = new_latest_episode
-                    self.episode_count = new_episode_count
-                    return
-
-                latest_episode = tree.xpath("//item")[0]
-
-                # If we have the title, use it
-                with contextlib.suppress(IndexError):
-                    new_latest_episode.title = latest_episode.xpath("title")[0].text
-
-                # If we have the description, use it
-                with contextlib.suppress(IndexError):
-                    new_episode_count = len(tree.xpath("//item"))
-
-                # If we have the pubDate, try to parse it
-                if len(latest_episode.xpath("pubDate")) > 0 and latest_episode.xpath("pubDate")[0].text:
-                    pod_pubdate = str(latest_episode.xpath("pubDate")[0].text) or "1970-01-01 00:00:00"
-                    found_pubdate = False
-                    for podcast_date_format in PODCAST_DATE_FORMATS:
-                        try:
-                            new_latest_episode.pubdate = int(
-                                datetime.datetime.strptime(pod_pubdate, podcast_date_format)
-                                .replace(tzinfo=datetime.UTC)
-                                .timestamp()
-                            )
-                            found_pubdate = True
-                            break
-                        except ValueError:
-                            pass
-                    if not found_pubdate:
-                        logger.error("Unable to parse pubDate: %s", pod_pubdate)
+            new_latest_episode, new_episode_count = self._parse_episode_info(tree)
         except Exception:  # pragma: no cover # Just to be safe
             logger.exception("Error parsing podcast episode info")  # pragma: no cover # Just to be safe
 
         self.latest_episode = new_latest_episode
         self.episode_count = new_episode_count
+
+    @staticmethod
+    def _parse_episode_info(tree: ET.ElementTree[ET.Element] | ET.Element | None) -> tuple[EpisodeInfo, int]:
+        """Parse the latest episode info and episode count from a feed tree."""
+        new_latest_episode: EpisodeInfo = EpisodeInfo()
+        new_episode_count: int = 0
+
+        if tree is None:
+            return new_latest_episode, new_episode_count
+
+        items = tree.findall(".//item")
+        if len(items) == 0:
+            logger.warning("No episodes found in feed")
+            return new_latest_episode, new_episode_count
+
+        latest_episode = items[0]
+        new_episode_count = len(items)
+
+        # If we have the title, use it
+        title = latest_episode.findtext("title")
+        if title is not None:
+            new_latest_episode.title = title
+
+        # If we have the pubDate, try to parse it
+        if latest_episode.findtext("pubDate"):
+            pod_pubdate = str(latest_episode.findtext("pubDate"))
+            try:
+                parsed_pubdate = parsedate_to_datetime(pod_pubdate)
+                if parsed_pubdate.tzinfo is None:
+                    parsed_pubdate = parsed_pubdate.replace(tzinfo=datetime.UTC)
+                new_latest_episode.pubdate = int(parsed_pubdate.timestamp())
+            except ValueError:
+                logger.error("Unable to parse pubDate: %s", pod_pubdate)  # noqa: TRY400 # No need for a traceback
+
+        return new_latest_episode, new_episode_count
 
 
 class WebpageHealth(BaseModel):
@@ -114,13 +114,13 @@ class HostingInfo(BaseModel):
     @classmethod
     def load_from_config(cls, app_config: AppConfig) -> Self:
         """Load HostType from AppConfig."""
-        frontend_host_type = "Flask"
+        frontend_host_type = "FastAPI"
         if app_config.storage_backend == "s3" and app_config.inet_path == app_config.s3.cdn_domain:
             frontend_host_type = "s3"
 
         backend_host_type = "s3"
         if app_config.storage_backend == "local":
-            backend_host_type = "Flask"
+            backend_host_type = "FastAPI"
 
         backend = Host(
             host_type=backend_host_type,
@@ -166,13 +166,15 @@ class PodcastArchiverHealth:
         self._podcasts: dict[str, PodcastHealth] = {}
         self._templates: dict[str, WebpageHealth] = {}
         self._assets: dict[str, str] = {}
-        self._version: str = __version__
+        self._version: str = PROGRAM_VERSION
         self._host_info: HostingInfo = HostingInfo()
 
     def get_health(self) -> PodcastArchiverHealthAPI:
         """Return the health."""
-        if PROCESS is not None:
-            self._core.memory_mb = PROCESS.memory_info().rss / (1024 * 1024)
+        # ponytail: linux-only /proc read, bring back psutil if this ever needs windows/macos
+        with contextlib.suppress(OSError):
+            resident_pages = int(Path("/proc/self/statm").read_text(encoding="utf-8").split()[1])
+            self._core.memory_mb = resident_pages * os.sysconf("SC_PAGESIZE") / (1024 * 1024)
 
         return PodcastArchiverHealthAPI(
             core=self._core,
@@ -206,7 +208,7 @@ class PodcastArchiverHealth:
             if value is not None and hasattr(self._podcasts[podcast], key):
                 setattr(self._podcasts[podcast], key, value)
 
-    def update_podcast_episode_info(self, podcast: str, tree: etree._ElementTree | etree._Element) -> None:
+    def update_podcast_episode_info(self, podcast: str, tree: ET.ElementTree[ET.Element] | ET.Element) -> None:
         """Update the podcast episode info."""
         logger.trace("Updating podcast episode info for %s", podcast)
         if podcast not in self._podcasts:
@@ -220,18 +222,6 @@ class PodcastArchiverHealth:
         for key, value in kwargs.items():
             if value is not None and key in valid_attrs:
                 setattr(self._core, key, value)
-
-    def currently_rendering(
-        self,
-    ) -> bool:
-        """Return the currently rendering status."""
-        return self._core.currently_rendering
-
-    def currently_loading_config(
-        self,
-    ) -> bool:
-        """Return the currently loading config status."""
-        return self._core.currently_loading_config
 
     def set_host_info(self, app_config: AppConfig) -> None:
         """Set the hosting info from AppConfig."""

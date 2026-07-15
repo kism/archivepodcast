@@ -1,6 +1,6 @@
 import logging
 
-import pytest
+import pytest  # noqa: TC002 Don't put pytest into type checking block
 
 from archivepodcast.utils.time import _WARN_THRESHOLD, warn_if_too_long
 

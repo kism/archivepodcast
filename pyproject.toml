@@ -3,41 +3,32 @@
 
 [project]
 name = "archivepodcast"
-version = "1.5.13.dev1"
-description = "Flask webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
+version = "1.5.14rc1"
+description = "FastAPI webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.14,<3.15"
 dependencies = [
-    "flask[async]>=3.1,<4",
+    "fastapi>=0.115",
     "aiobotocore>=2.25.2",
     "aiohttp>=3.13.2",
     "jinja2>=3.1,<4",
-    # dnf install libxml2-devel libxslt-devel
-    # apt install libxml2-dev libxslt-dev
-    "lxml>=5,<5.4", # Revert to this is you get random core dumps
-    # "lxml>=6.0.2", # Fatal Python error: Aborted
     "markdown>=3.10",
-    "psutil>=7.1.3",
     "pydantic>=2.12",
     "pydantic-settings>=2.12",
-    "python-magic>=0.4",
     "rich>=14.2.0",
     "typed-ffmpeg>=3.7",
-    "waitress>=3.0",
+    "uvicorn>=0.35",
     "anyio>=4.12.1",
 ]
 
 [project.urls]
-repository = "https://github.com/kism/archivepodcast"
+Repository = "https://github.com/kism/archivepodcast"
 docs = "https://archivepodcast.readthedocs.io/"
 
 [project.optional-dependencies]
 type = [
-    "mypy",
     "ty",
-    "types-lxml",
-    "types-psutil",
     "types-Markdown",
     "botocore-stubs",
     "types-aiobotocore",
@@ -50,20 +41,23 @@ lint = ["ruff"]
 profile = ["aiomonitor"]
 
 test = [
-    "pytest>=9.0",
+    "pytest>=9.1",
+    "coverage==7.15.0,!=7.15.1", # Not the broken version
     "pytest-cov",
     "pytest-mock",
     "pytest-random-order",
     "detect-test-pollution",
-    "types-aiobotocore-s3",  # Mock uses typed dict
+    "types-aiobotocore-s3",      # Mock uses typed dict
     "pytest-asyncio",
     "pytest-socket>=0.7.0",
+    "httpx2",
+    "python-magic>=0.4",         # Tests verify downloaded/converted file content by magic bytes
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
 
 [build-system]
-requires = ["uv_build>=0.9.15,<0.10.0"]
+requires = ["uv_build>=0.10.0,<0.11.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
@@ -74,28 +68,39 @@ archivepodcast = "archivepodcast.__main__:main"
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
-target-version = "py312"
+target-version = "py314"
 line-length = 120
 
 [tool.ruff.lint]
+extend-select = ["ANN", "PYI"]
+preview = true
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
-    "DJ",   # KG Django not required
-    "FAST", # KG FastAPI not required
-    "NPY",  # KG Numpy not required
-    "PD",   # KG Pandas not required
+    "DJ",  # KG Django not required
+    "NPY", # KG Numpy not required
+    "PD",  # KG Pandas not required
+    "CPY", # KG Pandas not required
 
     # Specific rules
-    "TD002",  # KG Verbose TODO, only I work on this project
-    "TD003",  # KG Verbose TODO, only I work on this project
-    "S311",   # KG I'll assume no real crypto will be done.
-    "ISC001", # KG conflict in the formatter
-    "COM812", # KG conflict in the formatter
-    "SIM117", # KG Honestly easier to read with thing and thing as with: with:
+    "TD002",   # KG Verbose TODO, only I work on this project
+    "TD003",   # KG Verbose TODO, only I work on this project
+    "S311",    # KG I'll assume no real crypto will be done.
+    "ISC001",  # KG conflict in the formatter
+    "COM812",  # KG conflict in the formatter
+    "SIM117",  # KG Honestly easier to read with thing and thing as with: with:
+    "DOC201",  # KG Unrequired docstrings fine
+    "DOC402",  # KG Unreqired docstrings fine
+    "DOC501",  # KG Unreqired docstrings fine
+    "PLC1901", # KG I like comparing to empty strings
+    "S405",    # KG stdlib etree import, feeds are trusted-ish and defusedxml is dead
+    "S314",    # KG stdlib etree parsing, same reasoning
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"archivepodcast/__init__.py" = [
+    "RUF067", # KG App factory convention, create_app lives in __init__
+]
 "archivepodcast/config.py" = [
     "E501", # KG Some long lines
 ]
@@ -106,7 +111,7 @@ ignore = [
     "S108",   # KG AWS Lambda needs /tmp usage
     "TRY400", # KG Logging in lambda a bit different
 ]
-"tests/*.py" = [
+"tests/**/*.py" = [
     # Modules
     "ARG", # KG Unused function args -> fixtures nevertheless are functionally relevant
     "FBT", # KG Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
@@ -121,6 +126,13 @@ ignore = [
     "PLR0913", # KG Tests can have as many arguments as they want.
     "BLE001",  # KG Tests can use BaseException.
     "PLR2004", # KG Tests can have magic number comparisons.
+    "PLC2701", # KG Importing private fine in tests
+    "RUF029",  # KG Unused async fine in tests
+    "PLR0917", # KG Many positional arguments fine in tests
+    "DOC402",  # KG Unreqired docstrings fine
+    "DOC201",  # KG Unrequired docstrings fine
+    "PLR6301", # KG Fakes/mocks must match instance method signatures
+    "RUF067",  # KG Shared test exception lives in __init__
 ]
 "tests/fixtures/aws.py" = [
     "N803", # KG AWS Just breaks the rules here
@@ -130,6 +142,8 @@ ignore = [
     "INP",
     "D",
     "A",
+
+    "S106", # Fake secrets
 ]
 
 [tool.ruff.lint.flake8-pytest-style]
@@ -163,51 +177,10 @@ addopts = [
     "--asyncio-mode=auto",
 ]
 testpaths = ["tests"]
-filterwarnings = [
-    "ignore::DeprecationWarning:boto.*",
-    "ignore::pytest.PytestUnhandledThreadExceptionWarning", # God knows
-]
 
 [tool.coverage.html]
 show_contexts = true
 
-[tool.mypy]
-files = ["archivepodcast", "tests"]
-namespace_packages = false # God knows why this makes mypy take forever
-show_error_codes = true
-strict = true
-enable_error_code = [
-    "ignore-without-code",
-    "redundant-expr",
-    "truthy-bool",
-    "type-arg",
-    "unused-awaitable",
-    "possibly-undefined",
-    "redundant-self",
-]
-disable_error_code = ["misc"]
-warn_unreachable = true
-warn_redundant_casts = true
-
-[[tool.mypy.overrides]]
-module = "archivepodcast.blueprints.*"
-disallow_untyped_decorators = false
-
-[[tool.mypy.overrides]]
-module = "archivepodcast"
-disallow_untyped_decorators = false
-
-[[tool.ty.overrides]]
-# Blame the flask client object
-include = ["tests/**"]
-[tool.ty.overrides.rules]
-"unresolved-attribute" = "ignore"
-
-[[tool.ty.overrides]]
-# Not sure what ty is upset about here
-include = [
-    "archivepodcast/blueprints/rss.py",
-    "archivepodcast/archiver/podcast_archiver.py",
-]
-[tool.ty.overrides.rules]
-"invalid-argument-type" = "ignore"
+[tool.ty.rules]
+missing-type-argument = "error"
+possibly-unresolved-reference = "warn"

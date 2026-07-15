@@ -33,13 +33,6 @@ def test_refresh_populates_cache(tmp_path: Path) -> None:
     for file in test_files:
         assert file.relative_to(web_root) in files
 
-    # Test that get_all_str() returns correct string paths
-    files_str = cache.get_all_str()
-    assert isinstance(files_str, list)
-    assert all(isinstance(f, str) for f in files_str)
-    for file in test_files:
-        assert str(file.relative_to(web_root)) in files_str
-
 
 def test_refresh_sorts_files(tmp_path: Path) -> None:
     """Test that refresh() sorts the files alphabetically."""
@@ -60,13 +53,10 @@ def test_refresh_sorts_files(tmp_path: Path) -> None:
 
 
 def test_raises_error_when_not_initialized() -> None:
-    """Test that get_all_str() raises ValueError when cache is not initialized."""
+    """Test that get_all() raises ValueError when cache is not initialized."""
     cache = LocalFileCache()
 
     match_text = r"File cache is not initialized. Call refresh\(\) first."
-
-    with pytest.raises(ValueError, match=match_text):
-        cache.get_all_str()
 
     with pytest.raises(ValueError, match=match_text):
         cache.get_all()

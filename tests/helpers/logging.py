@@ -1,6 +1,8 @@
 import logging
+from typing import TYPE_CHECKING
 
-import pytest
+if TYPE_CHECKING:
+    import pytest
 
 
 def assert_no_warnings_in_caplog(caplog: pytest.LogCaptureFixture) -> None:
