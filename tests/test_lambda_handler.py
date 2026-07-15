@@ -17,15 +17,15 @@ def test_run_lambda(
 ) -> None:
     """Test the lambda handler function with a mock event and context."""
 
-    rotest_instance_path = tmp_path / "instance_ro"
+    ro_test_instance_path = tmp_path / "instance_ro"
     test_instance_path = tmp_path / "instance"
 
-    rotest_instance_path.mkdir()
+    ro_test_instance_path.mkdir()
     test_instance_path.mkdir()
 
-    place_test_config("testing_true_valid.json", rotest_instance_path)
+    place_test_config("testing_true_valid.json", ro_test_instance_path)
 
-    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", rotest_instance_path)
+    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", test_instance_path)
 
     handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
@@ -50,10 +50,10 @@ def test_run_lambda_no_config(
 ) -> None:
     """Test the lambda handler function when the config.json file is missing."""
 
-    rotest_instance_path = tmp_path / "instance_ro"
-    rotest_instance_path.mkdir()
+    ro_test_instance_path = tmp_path / "instance_ro"
+    ro_test_instance_path.mkdir()
 
-    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", rotest_instance_path)
+    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", tmp_path / "instance")
 
     with pytest.raises(FileNotFoundError, match=r"Instance config.json not found"):
@@ -67,18 +67,18 @@ def test_run_lambda_copies_instance_folder(
 ) -> None:
     """Test that the lambda handler copies the RO instance folder to the writable location."""
 
-    rotest_instance_path = tmp_path / "instance_ro"
+    ro_test_instance_path = tmp_path / "instance_ro"
     test_instance_path = tmp_path / "instance"
 
-    rotest_instance_path.mkdir()
+    ro_test_instance_path.mkdir()
     test_instance_path.mkdir()
 
     # Create additional files to verify they get copied
-    (place_test_config("testing_true_valid.json", rotest_instance_path))
-    test_file = rotest_instance_path / "test_file.txt"
+    (place_test_config("testing_true_valid.json", ro_test_instance_path))
+    test_file = ro_test_instance_path / "test_file.txt"
     test_file.write_text("test content")
 
-    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", rotest_instance_path)
+    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", test_instance_path)
 
     handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
@@ -96,15 +96,15 @@ def test_run_lambda_calls_run_ap_adhoc(
 ) -> None:
     """Test that the lambda handler calls run_ap_adhoc with the correct instance path."""
 
-    rotest_instance_path = tmp_path / "instance_ro"
+    ro_test_instance_path = tmp_path / "instance_ro"
     test_instance_path = tmp_path / "instance"
 
-    rotest_instance_path.mkdir()
+    ro_test_instance_path.mkdir()
     test_instance_path.mkdir()
 
-    place_test_config("testing_true_valid.json", rotest_instance_path)
+    place_test_config("testing_true_valid.json", ro_test_instance_path)
 
-    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", rotest_instance_path)
+    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", test_instance_path)
 
     # Mock run_ap_adhoc to verify it's called correctly
@@ -124,23 +124,23 @@ def test_run_lambda_existing_instance_overwrites(
 ) -> None:
     """Test that handler overwrites existing instance folder content."""
 
-    rotest_instance_path = tmp_path / "instance_ro"
+    ro_test_instance_path = tmp_path / "instance_ro"
     test_instance_path = tmp_path / "instance"
 
-    rotest_instance_path.mkdir()
+    ro_test_instance_path.mkdir()
     test_instance_path.mkdir()
 
-    place_test_config("testing_true_valid.json", rotest_instance_path)
+    place_test_config("testing_true_valid.json", ro_test_instance_path)
 
     # Create an old file in the instance path
     old_file = test_instance_path / "old_file.txt"
     old_file.write_text("old content")
 
     # Create a new file in the RO path
-    new_file = rotest_instance_path / "new_file.txt"
+    new_file = ro_test_instance_path / "new_file.txt"
     new_file.write_text("new content")
 
-    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", rotest_instance_path)
+    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", test_instance_path)
 
     handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
@@ -161,15 +161,15 @@ def test_run_lambda_logs_event(
 ) -> None:
     """Test that the lambda handler logs the incoming event."""
 
-    rotest_instance_path = tmp_path / "instance_ro"
+    ro_test_instance_path = tmp_path / "instance_ro"
     test_instance_path = tmp_path / "instance"
 
-    rotest_instance_path.mkdir()
+    ro_test_instance_path.mkdir()
     test_instance_path.mkdir()
 
-    place_test_config("testing_true_valid.json", rotest_instance_path)
+    place_test_config("testing_true_valid.json", ro_test_instance_path)
 
-    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", rotest_instance_path)
+    monkeypatch.setattr("archivepodcast.lambda_handler.LOCAL_RO_INSTANCE_PATH", ro_test_instance_path)
     monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", test_instance_path)
 
     mock_event = {"test": "event", "data": "value"}

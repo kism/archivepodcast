@@ -29,7 +29,7 @@ def test_instance_path_check(
     assert "Writing config to" not in caplog.text
 
 
-def test_config_validatetest_instance_path(get_test_config: Callable[[str], ArchivePodcastConfig]) -> None:
+def test_config_validate_test_instance_path(get_test_config: Callable[[str], ArchivePodcastConfig]) -> None:
     """Verify that tmp_path is required in testing mode."""
     repo_instance_path = Path.cwd() / "instance"
     incorrect_instance_root = repo_instance_path / "_TEST"
