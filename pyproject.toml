@@ -48,6 +48,7 @@ profile = ["aiomonitor"]
 
 test = [
     "pytest>=9.0",
+    "coverage==7.15.0,!=7.15.1", # Not the broken version
     "pytest-cov",
     "pytest-mock",
     "pytest-random-order",
@@ -55,7 +56,7 @@ test = [
     "types-aiobotocore-s3",  # Mock uses typed dict
     "pytest-asyncio",
     "pytest-socket>=0.7.0",
-    "httpx",
+    "httpx2",
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
