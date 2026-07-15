@@ -90,8 +90,8 @@ ignore = [
     "COM812",  # KG conflict in the formatter
     "SIM117",  # KG Honestly easier to read with thing and thing as with: with:
     "DOC201",  # KG Unrequired docstrings fine
-    "DOC402",  # KG Unreqired docstrings fine
-    "DOC501",  # KG Unreqired docstrings fine
+    "DOC402",  # KG Unrequired docstrings fine
+    "DOC501",  # KG Unrequired docstrings fine
     "PLC1901", # KG I like comparing to empty strings
     "S405",    # KG stdlib etree import, feeds are trusted-ish and defusedxml is dead
     "S314",    # KG stdlib etree parsing, same reasoning
@@ -129,7 +129,7 @@ ignore = [
     "PLC2701", # KG Importing private fine in tests
     "RUF029",  # KG Unused async fine in tests
     "PLR0917", # KG Many positional arguments fine in tests
-    "DOC402",  # KG Unreqired docstrings fine
+    "DOC402",  # KG Unrequired docstrings fine
     "DOC201",  # KG Unrequired docstrings fine
     "PLR6301", # KG Fakes/mocks must match instance method signatures
     "RUF067",  # KG Shared test exception lives in __init__
