@@ -1,6 +1,9 @@
 """Module for local file caching functionality."""
 
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class LocalFileCache:
@@ -21,10 +24,6 @@ class LocalFileCache:
             msg = "File cache is not initialized. Call refresh() first."
             raise ValueError(msg)
         return self._files
-
-    def get_all_str(self) -> list[str]:
-        """Get all cached file paths as strings."""
-        return [str(path) for path in self.get_all()]
 
     def check_exists(self, file_path: Path) -> bool:
         """Check if a file path exists in the cache."""

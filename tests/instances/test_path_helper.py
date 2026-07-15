@@ -1,8 +1,11 @@
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from archivepodcast.instances.path_helper import get_app_paths
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_get_app_paths_unset(monkeypatch: pytest.MonkeyPatch) -> None:

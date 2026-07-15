@@ -2,14 +2,16 @@
 
 import json
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Literal, Self
+from typing import TYPE_CHECKING, Literal, Self
 
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import AliasChoices, BaseModel, Field, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .constants import JSON_INDENT
 from .utils.logger import LoggingConf, get_logger
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # Logging should be all done at INFO level or higher as the log level hasn't been set yet
 # Modules should all setup logging like this so the log messages include the modules name.
@@ -75,10 +77,12 @@ class PodcastConfig(BaseModel):
     contact_email: str = ""
 
 
-class FlaskConfig(BaseModel):
-    """Flask Config Object."""
+class WebappConfig(BaseModel):
+    """Webapp Config Object."""
 
-    TESTING: bool = False
+    # The aliases accept the uppercase keys from flask-era config files, migrated on first write_config.
+    testing: bool = Field(default=False, validation_alias=AliasChoices("testing", "TESTING"))
+    debug: bool = Field(default=False, validation_alias=AliasChoices("debug", "DEBUG"))
 
 
 class ArchivePodcastConfig(BaseSettings):
@@ -96,7 +100,7 @@ class ArchivePodcastConfig(BaseSettings):
     app: AppConfig = AppConfig()
     podcasts: list[PodcastConfig] = [PodcastConfig()]
     logging: LoggingConf = LoggingConf()
-    flask: FlaskConfig = FlaskConfig()
+    webapp: WebappConfig = WebappConfig()
 
     def write_config(self, config_path: Path) -> None:
         """Write the current settings to a JSON file."""
@@ -105,7 +109,7 @@ class ArchivePodcastConfig(BaseSettings):
         current_config_data = json.loads(self.model_dump_json())
 
         if config_path.exists():
-            with config_path.open("r") as f:
+            with config_path.open(mode="r", encoding="utf-8") as f:
                 existing_data = json.load(f)
         else:
             logger.warning("Writing fresh config file at %s", config_path.absolute())
@@ -126,7 +130,7 @@ class ArchivePodcastConfig(BaseSettings):
 
         logger.debug("Writing config to %s", config_path.absolute())
 
-        with config_path.open("w") as f:
+        with config_path.open(mode="w", encoding="utf-8") as f:
             f.write(json.dumps(current_config_data, indent=JSON_INDENT))
 
         logger.debug("Config write complete")
@@ -142,8 +146,11 @@ class ArchivePodcastConfig(BaseSettings):
             return cls()
 
         logger.debug("Loading config from %s", config_path.absolute())
-        with config_path.open("r") as f:
+        with config_path.open(mode="r", encoding="utf-8") as f:
             config = json.load(f)
+
+        if "flask" in config and "webapp" not in config:  # Migrate flask-era config files
+            config["webapp"] = config.pop("flask")
 
         return cls(**config)
 
@@ -164,23 +171,21 @@ class ArchivePodcastConfig(BaseSettings):
         msg += f"{_SPACER}Operating mode: Adhoc\n" if running_adhoc else f"{_SPACER}Operating mode: Webserver\n"
         msg_warn = ""
 
+        if self.app.inet_path == self.app.s3.cdn_domain and storage_backend_is_s3:  # Any CDN-only setup
+            frontend_msg_key = "frontend_cdn"
+        elif running_adhoc:  # Adhoc mode
+            frontend_msg_key = "frontend_local_adhoc"
+        else:  # Webserver mode
+            frontend_msg_key = "frontend_local"
+
+        backend_msg_key = "backend_s3" if storage_backend_is_s3 else "backend_local"
+
         try:
-            if self.app.inet_path == self.app.s3.cdn_domain and storage_backend_is_s3:  # Any CDN-only setup
-                msg += _LOG_INFO_MESSAGES["frontend_cdn"]
-            elif running_adhoc:  # Adhoc mode
-                msg += _LOG_INFO_MESSAGES["frontend_local_adhoc"]
-                if storage_backend_is_s3:  # Adhoc with S3 backend
-                    msg_warn += (
-                        _LOG_INFO_MESSAGES["adhoc_s3_mismatch"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
-                    )
-            else:  # Webserver mode
-                msg += _LOG_INFO_MESSAGES["frontend_local"]
-
-            if storage_backend_is_s3:
-                msg += _LOG_INFO_MESSAGES["backend_s3"]
-            else:
-                msg += _LOG_INFO_MESSAGES["backend_local"]
-
+            msg += _LOG_INFO_MESSAGES[frontend_msg_key] + _LOG_INFO_MESSAGES[backend_msg_key]
+            if frontend_msg_key == "frontend_local_adhoc" and storage_backend_is_s3:  # Adhoc with S3 backend
+                msg_warn += (
+                    _LOG_INFO_MESSAGES["adhoc_s3_mismatch"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
+                )
         except KeyError:
             logger.exception("log_info Missing message key")
 

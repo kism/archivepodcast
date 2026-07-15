@@ -1,4 +1,4 @@
-"""Blueprint and helpers for the ArchivePodcast app."""
+"""Response helpers and archiver lifecycle for the ArchivePodcast app."""
 
 import asyncio
 import datetime
@@ -7,12 +7,12 @@ import signal
 import threading
 import time
 from http import HTTPStatus
-from pathlib import Path
-from types import FrameType
+from typing import TYPE_CHECKING, Any
 
-from flask import Response, current_app, render_template, send_file
+from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from archivepodcast.archiver import PodcastArchiver
+from archivepodcast.archiver.webpage_renderer import TEMPLATE_ENV
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.constants import JSON_INDENT
 from archivepodcast.instances.health import health
@@ -23,9 +23,18 @@ from archivepodcast.utils.logger import get_logger
 
 from .config import get_ap_config
 
+if TYPE_CHECKING:
+    from types import FrameType
+
 logger = get_logger(__name__)
 
 _ap: PodcastArchiver | None = None
+
+
+def render_error(status: HTTPStatus, **context: Any) -> HTMLResponse:  # noqa: ANN401
+    """Render the error template as a response."""
+    render = TEMPLATE_ENV.get_template("error.html.j2").render(error_code=str(status), **context)
+    return HTMLResponse(render, status_code=status)
 
 
 def initialise_archivepodcast() -> None:
@@ -34,15 +43,18 @@ def initialise_archivepodcast() -> None:
     ap_conf = get_ap_config()
 
     start_time = time.time()
-    get_app_paths(root_path=Path.cwd(), instance_path=Path(current_app.instance_path))
 
     _ap = PodcastArchiver(
         app_config=ap_conf.app,
         podcast_list=ap_conf.podcasts,
-        debug=current_app.debug,
+        debug=ap_conf.webapp.debug,
     )
 
-    signal.signal(signal.SIGHUP, reload_config)
+    if threading.current_thread() is threading.main_thread():
+        signal.signal(signal.SIGHUP, reload_config)
+    else:
+        # TestClient runs the lifespan in a worker thread, where signal.signal raises ValueError
+        logger.warning("Not in main thread, skipping SIGHUP handler registration")
 
     pid = os.getpid()
     logger.debug("Get ram usage in %% kb: ps -p %s -o %%mem,rss", pid)
@@ -65,17 +77,15 @@ def reload_config(signal_num: int, handler: FrameType | None = None) -> None:
 
     logger.info("Got SIGHUP, Reloading Config")
 
+    instance_path = get_app_paths().instance_path
     try:
-        logger.critical(current_app.instance_path)
+        ap_conf = ArchivePodcastConfig().force_load_config_file(instance_path / "config.json")
 
-        ap_conf = ArchivePodcastConfig().force_load_config_file(Path(current_app.instance_path) / "config.json")
+        logger.critical("%s\n%s", instance_path, ap_conf.model_dump_json(indent=JSON_INDENT))
 
-        logger.critical(ap_conf.model_dump_json(indent=JSON_INDENT))
-
-        # Due to application context this cannot be done in a thread
         _ap.load_config(ap_conf.app, ap_conf.podcasts)
 
-        # This is the slow part of the reload, no app context required so we can give run it in a thread.
+        # This is the slow part of the reload, so we run it in a thread.
         logger.info("Ad-Hoc grabbing podcasts in a thread")
         threading.Thread(target=_ap.grab_podcasts, daemon=True).start()
 
@@ -110,7 +120,7 @@ def podcast_loop() -> None:
         msg = f"Sleeping for {int(seconds_until_next_run / 60)} minutes"
         logger.info(msg)
         time.sleep(seconds_until_next_run)
-        # So regarding the test coverage, the flask_test client really helps here since it stops the test once the
+        # So regarding the test coverage, the test client really helps here since it stops the test once the
         # request has completed, meaning that this infinite loop won't ruin everything
         # that being said, this one log message will never be covered, but I don't care
         logger.info("🌄 Waking up, its %s, looking for new episodes", get_time_str())  # pragma: no cover
@@ -131,18 +141,22 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
 def send_ap_cached_webpage(webpage_name: str) -> Response:
     """Send a cached webpage."""
     if not _ap:
-        return generate_not_initialized_error()
+        return render_ap_error(HTTPStatus.INTERNAL_SERVER_ERROR, "Archive Podcast not initialized")
 
     try:
         webpage = _ap.renderer.webpages.get_webpage(webpage_name)
     except KeyError:
-        webpage_parts = webpage_name.split("/")
-        static_path = Path(current_app.instance_path) / "web" / "/".join(webpage_parts)
-        if static_path.is_file():
+        web_root = get_app_paths().instance_path / "web"
+        static_path = (web_root / webpage_name).resolve()
+        if static_path.is_relative_to(web_root.resolve()) and static_path.is_file():
             logger.warning("Webpage not in cache serving from disk: %s", static_path)
-            return send_file(static_path)
+            return FileResponse(static_path)
 
-        return generate_not_generated_error(webpage_name)
+        logger.error("Requested page: %s not generated", webpage_name)  # noqa: TRY400 # Cache miss, no traceback needed
+        return render_ap_error(
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+            f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
+        )
 
     cache_control = "public, max-age=180"
     if "woff2" in webpage_name:
@@ -150,49 +164,31 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
 
     return Response(
         webpage.content,
-        mimetype=webpage.mime,
-        status=HTTPStatus.OK,
+        media_type=webpage.mime,
+        status_code=HTTPStatus.OK,
         headers={"Cache-Control": cache_control},
     )
 
 
-def generate_not_initialized_error() -> Response:
-    """Generate a not initialized 500 error."""
-    logger.error("ArchivePodcast object not initialized")
-    default_header = '<header><a href="index.html">Home</a><hr></header>'
-
+def render_ap_error(status: HTTPStatus, error_text: str) -> Response:
+    """Render an error page, falling back if the archiver isn't initialised."""
     ap_conf = get_ap_config()
 
-    return Response(
-        render_template(
-            "error.html.j2",
-            error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
+    if not _ap:
+        logger.error("ArchivePodcast object not initialized")
+        return render_error(
+            HTTPStatus.INTERNAL_SERVER_ERROR,
             error_text="Archive Podcast not initialized",
             app_config=ap_conf.app,
-            header=default_header,
-        ),
-        status=HTTPStatus.INTERNAL_SERVER_ERROR,
-    )
+            header='<header><a href="index.html">Home</a><hr></header>',
+        )
 
-
-def generate_not_generated_error(webpage_name: str) -> Response:
-    """Generate a 500 error."""
-    if not _ap:
-        return generate_not_initialized_error()
-
-    ap_conf = get_ap_config()
-
-    logger.error("Requested page: %s not generated", webpage_name)
-    return Response(
-        render_template(
-            "error.html.j2",
-            error_code=str(HTTPStatus.INTERNAL_SERVER_ERROR),
-            error_text=f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
-            about_page=get_about_page_exists(),
-            app_config=ap_conf.app,
-            header=_ap.renderer.webpages.generate_header("error.html"),
-        ),
-        status=HTTPStatus.INTERNAL_SERVER_ERROR,
+    return render_error(
+        status,
+        error_text=error_text,
+        about_page=get_about_page_exists(),
+        app_config=ap_conf.app,
+        header=_ap.renderer.webpages.generate_header("error.html"),
     )
 
 
@@ -207,21 +203,7 @@ def get_about_page_exists() -> bool:
 
 def generate_404() -> Response:
     """We use the 404 template in a couple places."""
-    if not _ap:
-        return generate_not_initialized_error()
-
-    ap_conf = get_ap_config()
-
-    returncode = HTTPStatus.NOT_FOUND
-    render = render_template(
-        "error.html.j2",
-        error_code=str(returncode),
-        error_text="Page not found, how did you even?",
-        about_page=get_about_page_exists(),
-        app_config=ap_conf.app,
-        header=_ap.renderer.webpages.generate_header("error.html"),
-    )
-    return Response(render, status=returncode)
+    return render_ap_error(HTTPStatus.NOT_FOUND, "Page not found, how did you even?")
 
 
 def get_ap() -> PodcastArchiver:

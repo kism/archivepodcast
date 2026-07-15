@@ -1,16 +1,20 @@
-"""Tests to ensure that the flask app doesn't pollute test environments."""
+"""Tests to ensure that the app doesn't pollute test environments."""
 
 import contextlib
 import random
 import shutil
 import string
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from archivepodcast import create_app
-from archivepodcast.config import ArchivePodcastConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from archivepodcast.config import ArchivePodcastConfig
 
 
 def test_instance_path_check(
@@ -18,7 +22,7 @@ def test_instance_path_check(
 ) -> None:
     """Ensure instance path is specified when using dictionary config."""
 
-    with pytest.raises(ValueError, match="Flask TESTING mode requires instance_path to be a tmp_path"):
+    with pytest.raises(ValueError, match="TESTING mode requires instance_path to be a tmp_path"):
         with caplog.at_level("INFO"):
             create_app()
 
@@ -38,10 +42,10 @@ def test_config_validate_test_instance_path(get_test_config: Callable[[str], Arc
         incorrect_instance_root.mkdir()
         incorrect_instance_path.mkdir()
 
-    with pytest.raises(ValueError, match="Flask TESTING mode requires instance_path to be a tmp_path") as exc_info:
+    with pytest.raises(ValueError, match="TESTING mode requires instance_path to be a tmp_path") as exc_info:
         create_app()
 
     assert isinstance(exc_info.type, type(ValueError))
-    assert "Flask TESTING mode requires instance_path to be a tmp_path" in str(exc_info.getrepr())
+    assert "TESTING mode requires instance_path to be a tmp_path" in str(exc_info.getrepr())
 
     shutil.rmtree(incorrect_instance_root)

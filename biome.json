@@ -8,5 +8,19 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 120
-  }
+  },
+  "overrides": [
+    {
+      "includes": [".vscode/**"],
+      "json": {
+        "parser": {
+          "allowComments": true,
+          "allowTrailingCommas": true
+        },
+        "formatter": {
+          "trailingCommas": "none"
+        }
+      }
+    }
+  ]
 }

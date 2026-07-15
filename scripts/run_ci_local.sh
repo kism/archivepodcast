@@ -46,10 +46,6 @@ echo_magenta "Ruff check"
 ruff check . --fix
 check_return $?
 
-echo_magenta "Mypy"
-mypy
-check_return $?
-
 echo_magenta "ty"
 ty check .
 check_return $?

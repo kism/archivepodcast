@@ -11,3 +11,5 @@ devel
 libmp3lame
 AP
 slugified
+statm
+sysconf

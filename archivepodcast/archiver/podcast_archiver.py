@@ -3,24 +3,22 @@
 import asyncio
 import contextlib
 import time
+import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
 
 import aiohttp
-from aiobotocore.session import get_session
-from lxml import etree
 from pydantic import BaseModel
 
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.downloader import PodcastsDownloader
 from archivepodcast.downloader.constants import USER_AGENT
-from archivepodcast.instances.config import get_ap_config_s3_client
+from archivepodcast.downloader.helpers import tree_no_episodes
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_cache import local_file_cache, s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.rss import tree_no_episodes
-from archivepodcast.utils.time import warn_if_too_long
+from archivepodcast.utils.s3 import s3_put
 
 from .webpage_renderer import WebpageRenderer
 
@@ -33,6 +31,30 @@ else:
 logger = get_logger(__name__)
 
 
+def _load_cached_feed(podcast: PodcastConfig, previous_feed: bytes) -> ET.ElementTree[ET.Element] | None:
+    """Load feed from cache when live download is not available."""
+    if previous_feed == b"":
+        logger.warning(
+            "[%s] Cannot find local rss feed file to serve unavailable podcast",
+            podcast.name_one_word,
+        )
+        return None
+
+    try:
+        root = ET.fromstring(previous_feed)
+        tree: ET.ElementTree[ET.Element] = ET.ElementTree(root)
+    except ET.ParseError:
+        logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
+        return None
+
+    if tree_no_episodes(tree):
+        logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
+        return None
+    logger.debug("[%s] Loaded rss from file", podcast.name_one_word)
+
+    return tree
+
+
 class APFileList(BaseModel):
     """Podcast file list response model."""
 
@@ -40,31 +62,28 @@ class APFileList(BaseModel):
     files: list[str]
 
 
-class AIOHttpClientSessionHelper:
-    """Helper class to manage a single aiohttp ClientSession."""
-
-    session: aiohttp.ClientSession | None = None
-
-    def get_session(self) -> aiohttp.ClientSession:
-        """Get or create the aiohttp ClientSession."""
-        if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession(
-                # timeout, 5 minutes, why not
-                timeout=aiohttp.ClientTimeout(),
-                # tcp connector, 100 is default connection limit, force_close seems to fix some issues
-                connector=aiohttp.TCPConnector(),
-                raise_for_status=True,
-                headers={"User-Agent": USER_AGENT},
-            )
-        return self.session
-
-    async def close_session(self) -> None:
-        """Close the aiohttp ClientSession."""
-        if self.session is not None and not self.session.closed:
-            await self.session.close()
+_aiohttp_session: aiohttp.ClientSession | None = None
 
 
-aiohttp_client_helper = AIOHttpClientSessionHelper()
+def _get_aiohttp_session() -> aiohttp.ClientSession:
+    """Get or create the aiohttp ClientSession."""
+    global _aiohttp_session  # noqa: PLW0603
+    if _aiohttp_session is None or _aiohttp_session.closed:
+        _aiohttp_session = aiohttp.ClientSession(
+            # timeout, 5 minutes, why not
+            timeout=aiohttp.ClientTimeout(),
+            # tcp connector, 100 is default connection limit, force_close seems to fix some issues
+            connector=aiohttp.TCPConnector(),
+            raise_for_status=True,
+            headers={"User-Agent": USER_AGENT},
+        )
+    return _aiohttp_session
+
+
+async def _close_aiohttp_session() -> None:
+    """Close the aiohttp ClientSession."""
+    if _aiohttp_session is not None and not _aiohttp_session.closed:
+        await _aiohttp_session.close()
 
 
 class PodcastArchiver:
@@ -131,10 +150,10 @@ class PodcastArchiver:
         event_times.set_event_time("grab_podcasts/Update file cache", time.time() - grab_podcasts_start_time)
 
         # Part 2: Download and process all podcasts
-        ## Event Loop
+        # Event Loop
         podcast_start_time = time.time()
 
-        ## Create Task List
+        # Create Task List
         podcast_tasks = []
         for podcast in self.podcast_list:
             task = self._grab_podcast_with_metrics(podcast)
@@ -142,22 +161,20 @@ class PodcastArchiver:
 
         podcast_tasks.append(self.renderer.render_files())
 
-        ## Run Tasks
+        # Run Tasks
         event_loop.run_until_complete(asyncio.gather(*podcast_tasks))
         event_times.set_event_time("grab_podcasts/Scrape", time.time() - podcast_start_time)
 
         # Part 3: Render files and cleanup
-        ## Event Loop
+        # Event Loop
         cleanup_start_time = time.time()
 
         ap_file_list = event_loop.run_until_complete(self.get_file_list())
 
-        ## Create Task List
-        cleanup_tasks = []
-        cleanup_tasks.append(self.renderer.render_filelist_html(ap_file_list))
-        cleanup_tasks.append(aiohttp_client_helper.close_session())
+        # Create Task List
+        cleanup_tasks = [self.renderer.render_filelist_html(ap_file_list), _close_aiohttp_session()]
 
-        ## Run Tasks
+        # Run Tasks
         event_loop.run_until_complete(asyncio.gather(*cleanup_tasks))
         event_loop.close()
         event_times.set_event_time("grab_podcasts/Post Scrape", time.time() - cleanup_start_time)
@@ -166,12 +183,12 @@ class PodcastArchiver:
         total_duration = time.time() - grab_podcasts_start_time
         event_times.set_event_time("grab_podcasts", total_duration)
 
-    async def _grab_podcast_with_metrics(self, podcast: "PodcastConfig") -> None:
+    async def _grab_podcast_with_metrics(self, podcast: PodcastConfig) -> None:
         """Wrapper to handle metrics and error handling for individual podcast processing."""
         logger.trace("Starting _grab_podcast_with_metrics for podcast: %s", podcast.name_one_word)
         podcast_grab_start_time = time.time()
 
-        aiohttp_session = aiohttp_client_helper.get_session()
+        aiohttp_session = _get_aiohttp_session()
 
         try:
             await self._grab_podcast(podcast, aiohttp_session=aiohttp_session)
@@ -207,7 +224,7 @@ class PodcastArchiver:
 
         # Load from cache if no tree available
         if tree is None:
-            tree = self._load_cached_feed(podcast, previous_feed)
+            tree = _load_cached_feed(podcast, previous_feed)
 
         await self._process_podcast_tree(podcast, tree, previous_feed)
         logger.trace("Exiting _grab_podcast for %s", podcast.name_one_word)
@@ -226,7 +243,7 @@ class PodcastArchiver:
 
     async def _download_live_podcast(
         self, podcast: PodcastConfig, aiohttp_session: aiohttp.ClientSession
-    ) -> etree._ElementTree | None:
+    ) -> ET.ElementTree[ET.Element] | None:
         """Download live podcast and update health status."""
         podcasts_downloader = PodcastsDownloader(
             podcast=podcast,
@@ -244,29 +261,8 @@ class PodcastArchiver:
 
         return tree
 
-    def _load_cached_feed(self, podcast: PodcastConfig, previous_feed: bytes) -> etree._ElementTree | None:
-        """Load feed from cache when live download is not available."""
-        tree = None
-        if previous_feed == b"":
-            logger.warning(
-                "[%s] Cannot find local rss feed file to serve unavailable podcast",
-                podcast.name_one_word,
-            )
-            return None
-
-        try:
-            tree = etree.ElementTree(etree.fromstring(previous_feed))
-            if tree_no_episodes(tree):
-                logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
-                return None
-            logger.debug("[%s] Loaded rss from file", podcast.name_one_word)
-        except etree.XMLSyntaxError:
-            logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
-
-        return tree
-
     async def _process_podcast_tree(
-        self, podcast: PodcastConfig, tree: etree._ElementTree | None, previous_feed: bytes
+        self, podcast: PodcastConfig, tree: ET.ElementTree[ET.Element] | None, previous_feed: bytes
     ) -> None:
         """Process the podcast tree and update RSS feed or handle errors."""
         if tree is not None:
@@ -280,13 +276,13 @@ class PodcastArchiver:
     async def _update_rss_feed(
         self,
         podcast: PodcastConfig,
-        tree: etree._ElementTree,
+        tree: ET.ElementTree[ET.Element],
         previous_feed: bytes,
     ) -> None:
         """Update the rss feed, in memory and s3."""
         self.podcast_rss.update(
             {
-                podcast.name_one_word: etree.tostring(
+                podcast.name_one_word: ET.tostring(
                     tree.getroot(),
                     encoding=XML_ENCODING,  # Keep this uppercase for the diff to work
                     method="xml",
@@ -311,25 +307,17 @@ class PodcastArchiver:
 
         # Upload to s3 if we are in s3 mode
         if need_to_upload_to_s3:
-            session = get_session()
-            s3_config = get_ap_config_s3_client()
-
-            async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
-                try:
-                    # Upload the file
-                    start_time = time.time()
-                    logger.trace("Uploading feed %s to s3...", podcast.name_one_word)
-                    await s3_client.put_object(
-                        Body=self.podcast_rss[podcast.name_one_word],
-                        Bucket=self._app_config.s3.bucket,
-                        Key="rss/" + podcast.name_one_word,
-                        ContentType="application/rss+xml",
-                    )
-                    warn_if_too_long(f"upload feed {podcast.name_one_word} to s3", time.time() - start_time)
-
-                    logger.debug("[%s] Uploaded feed to s3", podcast.name_one_word)
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.exception("Unhandled s3 error trying to upload the file: %s")
+            try:
+                logger.trace("Uploading feed %s to s3...", podcast.name_one_word)
+                await s3_put(
+                    self._app_config.s3.bucket,
+                    "rss/" + podcast.name_one_word,
+                    self.podcast_rss[podcast.name_one_word],
+                    "application/rss+xml",
+                )
+                logger.debug("[%s] Uploaded feed to s3", podcast.name_one_word)
+            except Exception:
+                logger.exception("Unhandled s3 error trying to upload the file: %s", podcast.name_one_word)
 
         msg = "no feed changes"
         if not self.s3 and local_changes_to_feed:
@@ -391,9 +379,9 @@ class PodcastArchiver:
         base_url = self._app_config.s3.cdn_domain if self.s3 else self._app_config.inet_path
 
         file_list = (
-            await s3_file_cache.get_all_list_str(self._app_config.s3.bucket)
+            [s3_file["Key"] for s3_file in await s3_file_cache.get_all(self._app_config.s3.bucket)]
             if self.s3
-            else local_file_cache.get_all_str()
+            else [str(path) for path in local_file_cache.get_all()]
         )
 
         return APFileList(base_url=base_url.encoded_string(), files=file_list)

@@ -1,24 +1,26 @@
-from collections.abc import Callable
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flask import Flask
-from flask.testing import FlaskClient
+from fastapi.testclient import TestClient
 
 from archivepodcast import create_app
-from archivepodcast.config import ArchivePodcastConfig
 from tests.constants import DUMMY_RSS_STR
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
+    from pathlib import Path
+
+    from fastapi import FastAPI
     from pytest_mock import MockerFixture
+
+    from archivepodcast.config import ArchivePodcastConfig
 else:
     MockerFixture = object
 
 
 @pytest.fixture
-def app(tmp_path: Path, get_test_config: Callable[[str], ArchivePodcastConfig]) -> Flask:
-    """This fixture uses the default config within the flask app."""
+def app(tmp_path: Path, get_test_config: Callable[[str], ArchivePodcastConfig]) -> FastAPI:
+    """This fixture uses the default config within the app."""
 
     # Create a dummy RSS file since this app instance is not live and requires an existing rss feed.
     (tmp_path / "web" / "rss").mkdir(parents=True)
@@ -34,8 +36,8 @@ def app_live(
     get_test_config: Callable[[str], ArchivePodcastConfig],
     no_threading_start: MockerFixture,
     mock_podcast_source_rss_valid: MockerFixture,
-) -> Flask:
-    """This fixture uses the default config within the flask app."""
+) -> FastAPI:
+    """This fixture uses the default config within the app."""
     get_test_config("testing_true_valid_live.json")
 
     return create_app(instance_path_override=str(tmp_path))
@@ -47,25 +49,29 @@ def app_live_s3(
     get_test_config: Callable[[str], ArchivePodcastConfig],
     no_threading_start: MockerFixture,
     mock_podcast_source_rss_valid: MockerFixture,
-) -> Flask:
-    """This fixture uses the default config within the flask app."""
+) -> FastAPI:
+    """This fixture uses the default config within the app."""
 
     return create_app(instance_path_override=str(tmp_path))
 
 
 @pytest.fixture
-def client(app: Flask) -> FlaskClient:
+def client(app: FastAPI) -> Generator[TestClient]:
     """This returns a test client for the default app()."""
-    return app.test_client()
+    # The context manager runs the lifespan; follow_redirects=False so 307 redirect assertions see the redirect itself.
+    with TestClient(app, follow_redirects=False) as client:
+        yield client
 
 
 @pytest.fixture
-def client_live(app_live: Flask) -> FlaskClient:
+def client_live(app_live: FastAPI) -> Generator[TestClient]:
     """This returns a test client for the default app()."""
-    return app_live.test_client()
+    with TestClient(app_live, follow_redirects=False) as client:
+        yield client
 
 
 @pytest.fixture
-def client_live_s3(app_live_s3: Flask) -> FlaskClient:
+def client_live_s3(app_live_s3: FastAPI) -> Generator[TestClient]:
     """This returns a test client for the default app()."""
-    return app_live_s3.test_client()
+    with TestClient(app_live_s3, follow_redirects=False) as client:
+        yield client

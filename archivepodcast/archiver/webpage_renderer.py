@@ -1,36 +1,38 @@
 """Module to render static webpages for ArchivePodcast."""
 
 import json
+import mimetypes
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import magic
 import markdown
 from aiobotocore.session import get_session
 from anyio import Path as AsyncPath
 from jinja2 import Environment, FileSystemLoader
 
-from archivepodcast.constants import JSON_INDENT
+from archivepodcast.constants import APP_DIRECTORY, JSON_INDENT
 from archivepodcast.instances.config import get_ap_config_s3_client
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
-from archivepodcast.utils.health import PodcastArchiverHealthAPI
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.time import warn_if_too_long
+from archivepodcast.utils.s3 import s3_put
 
 from .webpages import Webpage, Webpages
 
 if TYPE_CHECKING:
     from archivepodcast.archiver.podcast_archiver import APFileList  # pragma: no cover
     from archivepodcast.config import AppConfig, PodcastConfig  # pragma: no cover
+    from archivepodcast.utils.health import PodcastArchiverHealthAPI
 else:
     AppConfig = object
     PodcastConfig = object
     APFileList = object
 logger = get_logger(__name__)
+
+TEMPLATE_ENV = Environment(loader=FileSystemLoader(str(APP_DIRECTORY / "templates")), autoescape=True)
 
 
 class WebpageRenderer:
@@ -79,20 +81,14 @@ class WebpageRenderer:
 
         for item in static_items_to_copy:
             item_relative_path = str(item.relative_to(app_paths.static_directory))
-            # Store static files with static/ prefix to match blueprint expectations
+            # Store static files with static/ prefix to match router expectations
             static_path = f"static/{item_relative_path}"
-            item_mime = magic.from_file(str(item), mime=True)
+            item_mime = mimetypes.guess_type(item.name)[0] or "application/octet-stream"
             logger.trace("Registering static item: %s, mime: %s", item, item_mime)
 
-            if item_mime.startswith("text"):
-                with item.open() as static_item:
-                    self.webpages.add(path=static_path, mime=item_mime, content=static_item.read())
-            else:
-                with item.open("rb") as static_item:
-                    self.webpages.add(path=static_path, mime=item_mime, content=static_item.read())
+            self.webpages.add(path=static_path, mime=item_mime, content=item.read_bytes())
 
         # Templates
-        env = Environment(loader=FileSystemLoader(str(app_paths.template_directory)), autoescape=True)
         templates_to_render = [
             "guide.html.j2",
             "index.html.j2",
@@ -107,7 +103,7 @@ class WebpageRenderer:
             output_path = app_paths.web_root / output_filename
             logger.debug("Rendering template: %s to %s", template_path, output_path)
 
-            template = env.get_template(template_path)
+            template = TEMPLATE_ENV.get_template(template_path)
             current_time = int(time.time())
             rendered_output = template.render(
                 app_config=self._app_config,
@@ -129,15 +125,12 @@ class WebpageRenderer:
 
     async def render_filelist_html(self, ap_file_list: APFileList) -> None:
         """Render filelist.html after podcast grabbing completes."""
-        app_paths = get_app_paths()
         await self._check_s3_files()
-
-        env = Environment(loader=FileSystemLoader(app_paths.template_directory), autoescape=True)
 
         template_filename = "filelist.html.j2"
         output_filename = template_filename.replace(".j2", "")
 
-        template = env.get_template(template_filename)
+        template = TEMPLATE_ENV.get_template(template_filename)
 
         current_time = int(time.time())
 
@@ -213,22 +206,11 @@ class WebpageRenderer:
                 s3_pages_uploaded.append(s3_key)
                 logger.trace("Writing page s3: %s", s3_key)
 
-                session = get_session()
-                s3_config = get_ap_config_s3_client()
-
-                async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
-                    try:
-                        start_time = time.time()
-                        await s3_client.put_object(
-                            Body=page_content_bytes,
-                            Bucket=self._app_config.s3.bucket,
-                            Key=s3_key,
-                            ContentType=webpage.mime,
-                        )
-                        warn_if_too_long(f"upload page: {s3_key} to s3", time.time() - start_time)
-                        logger.trace(f"Uploaded page to s3: {s3_key}")
-                    except Exception:
-                        logger.exception("Unhandled s3 error trying to upload the file: %s", s3_key)
+                try:
+                    await s3_put(self._app_config.s3.bucket, s3_key, page_content_bytes, webpage.mime)
+                    logger.trace("Uploaded page to s3: %s", s3_key)
+                except Exception:
+                    logger.exception("Unhandled s3 error trying to upload the file: %s", s3_key)
 
         msg = f"Wrote {str_webpages}"
         if self._s3:
@@ -255,12 +237,10 @@ class WebpageRenderer:
             async with await about_page_md_expected_path.open(encoding="utf-8") as about_page:
                 about_page_md_rendered = markdown.markdown(await about_page.read(), extensions=["tables"])
 
-            env = Environment(loader=FileSystemLoader(app_paths.template_directory), autoescape=True)
-
             template_filename = "about.html.j2"
             output_filename = template_filename.replace(".j2", "")
 
-            template = env.get_template(template_filename)
+            template = TEMPLATE_ENV.get_template(template_filename)
 
             self.webpages.add(output_filename, mime="text/html", content="generating...")
 

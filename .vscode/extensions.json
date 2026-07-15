@@ -7,6 +7,6 @@
     "biomejs.biome",
     "vitest.explorer",
     "davidanson.vscode-markdownlint",
-    "matangover.mypy"
+    "astral-sh.ty"
   ]
 }

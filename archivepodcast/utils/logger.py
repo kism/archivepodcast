@@ -7,7 +7,6 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Self, cast
 
-from flask import Flask
 from pydantic import BaseModel, field_validator, model_validator
 from rich.console import Console
 from rich.highlighter import NullHighlighter
@@ -17,20 +16,6 @@ from rich.theme import Theme
 DESIRED_LEVEL_NAME_LEN = 5
 DESIRED_NAME_LEN = 16
 DESIRED_THREAD_NAME_LEN = 13
-
-
-LOG_LEVELS = [
-    "TRACE",
-    "DEBUG",
-    "INFO",
-    "WARNING",
-    "ERROR",
-    "CRITICAL",
-]  # Valid str logging levels.
-
-
-MIN_LOG_LEVEL_INT = 0
-MAX_LOG_LEVEL_INT = 50
 
 
 class LoggingConf(BaseModel):
@@ -43,20 +28,15 @@ class LoggingConf(BaseModel):
     def validate_vars(self) -> Self:
         """Validate the logging level."""
         if isinstance(self.level, int):
-            if self.level < MIN_LOG_LEVEL_INT or self.level > MAX_LOG_LEVEL_INT:
-                msg = (
-                    f"Invalid logging level {self.level}, must be between {MIN_LOG_LEVEL_INT} and {MAX_LOG_LEVEL_INT}."
-                )
-                logger.warning(msg)
-                logger.warning("Defaulting logging level to 'INFO'.")
-                self.level = "INFO"
+            valid = 0 <= self.level <= logging.CRITICAL
         else:
             self.level = self.level.strip().upper()
-            if self.level not in LOG_LEVELS:
-                msg = f"Invalid logging level '{self.level}', must be one of {', '.join(LOG_LEVELS)}"
-                logger.warning(msg)
-                logger.warning("Defaulting logging level to 'INFO'.")
-                self.level = "INFO"
+            valid = self.level in logging.getLevelNamesMapping()  # Includes TRACE via addLevelName below
+
+        if not valid:
+            logger.warning("Invalid logging level '%s'.", self.level)
+            logger.warning("Defaulting logging level to 'INFO'.")
+            self.level = "INFO"
 
         return self
 
@@ -74,15 +54,6 @@ class LoggingConf(BaseModel):
 
         return Path(value)
 
-    def setup_verbosity_cli(self, verbosity: int) -> None:
-        """Setup the logger from verbosity count from CLI."""
-        if verbosity >= 2:  # noqa: PLR2004 Magic number makes sense
-            self.level = TRACE_LEVEL_NUM
-        elif verbosity == 1:
-            self.level = logging.DEBUG
-        else:
-            self.level = logging.INFO
-
 
 # This is the logging message format that I like.
 # LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # noqa: ERA001
@@ -92,7 +63,7 @@ TRACE_LEVEL_NUM = 5
 
 
 class CustomLogger(logging.Logger):
-    """Custom logger to appease mypy."""
+    """Custom logger to appease ty."""
 
     def trace(self, message: object, *args: Any, **kws: Any) -> None:  # noqa: ANN401
         """Create logger level for trace."""
@@ -108,17 +79,11 @@ logging.setLoggerClass(CustomLogger)
 # I don't use the function so we can have this at the top
 logger = cast("CustomLogger", logging.getLogger(__name__))
 
-# In flask the root logger doesn't have any handlers, its all in app.logger
-# root_logger : root,
-# app.logger  : root, archivepodcast,
-# logger      : root, archivepodcast, archivepodcast.module_name,
-# The issue is that waitress, werkzeug (any any other modules that log) will log separately.
-# The aim is, remove the default handler from the flask App and create one on the root logger to apply config to all.
+# The aim is to create one handler on the root logger to apply config to all module loggers
+# (uvicorn, botocore, any other modules that log).
 
 
-# Pass in the whole app object to make it obvious we are configuring the logger object within the app object.
 def setup_logger(
-    app: Flask | None,
     logging_conf: LoggingConf | None = None,
     in_logger: logging.Logger | None = None,
 ) -> None:
@@ -129,10 +94,6 @@ def setup_logger(
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
 
-    # The root logger has no handlers initially in flask, app.logger does though.
-    if app:
-        app.logger.handlers.clear()  # Remove the Flask default handlers
-
     if not running_in_serverless_environment():
         in_logger.handlers.clear()
 
@@ -142,15 +103,15 @@ def setup_logger(
     ):
         _add_console_handler(logging_conf, in_logger)
 
-    _set_log_level(in_logger, logging_conf.level)
+    in_logger.setLevel(logging_conf.level)  # Level is validated by the LoggingConf model
 
     # If we are logging to a file
     if not _has_file_handler(in_logger) and logging_conf.path is not None:
         _add_file_handler(in_logger, logging_conf.path)
 
     # Configure modules that are external and have their own loggers
-    logging.getLogger("waitress").setLevel(logging.INFO)  # Prod web server, info has useful info.
-    logging.getLogger("werkzeug").setLevel(logging.DEBUG)  # Only will be used in dev, debug logs incoming requests.
+    logging.getLogger("uvicorn").setLevel(logging.INFO)  # Prod web server, info has useful info.
+    logging.getLogger("uvicorn.access").setLevel(logging.INFO)  # Logs incoming requests.
     logging.getLogger("urllib3").setLevel(logging.WARNING)  # Bit noisy when set to info, used by requests module.
     logging.getLogger("botocore").setLevel(logging.WARNING)  # Can be noisy
     logging.getLogger("boto3").setLevel(logging.WARNING)  # Can be noisy
@@ -197,32 +158,10 @@ def _add_console_handler(
 
 
 def _get_log_level_int(level: str | int) -> int:
-    """Get the log level as an int."""
+    """Get the log level as an int, level is validated by the LoggingConf model."""
     if isinstance(level, int):
         return level
-
-    level = level.upper()
-    if level == "TRACE":
-        return TRACE_LEVEL_NUM
-    return getattr(logging, level, logging.INFO)
-
-
-def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
-    """Set the log level of the logger."""
-    if isinstance(log_level, str):
-        log_level = log_level.upper()
-        if log_level not in LOG_LEVELS:
-            in_logger.setLevel("INFO")
-            logger.warning(
-                "❗ Invalid logging level: %s, defaulting to INFO",
-                log_level,
-            )
-        else:
-            in_logger.setLevel(log_level)
-            logger.debug("Showing log level: DEBUG")
-            logger.trace("Showing log level: TRACE")
-    else:
-        in_logger.setLevel(log_level)
+    return TRACE_LEVEL_NUM if level == "TRACE" else getattr(logging, level, logging.INFO)
 
 
 def _add_file_handler(in_logger: logging.Logger, log_path: Path | str) -> None:
@@ -253,4 +192,4 @@ def running_in_serverless_environment() -> bool:
 
 def force_simple_logger() -> bool:
     """Check if the application is running in a serverless environment."""
-    return running_in_serverless_environment() or (os.getenv("AP_SIMPLE_LOGGING", "").lower() in ["1", "true"])
+    return running_in_serverless_environment() or (os.getenv("AP_SIMPLE_LOGGING", "").lower() in {"1", "true"})

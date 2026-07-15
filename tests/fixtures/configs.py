@@ -1,12 +1,15 @@
 import shutil
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from archivepodcast.config import ArchivePodcastConfig
 from archivepodcast.instances import config as _config_instance
 from tests.constants import TEST_CONFIGS_LOCATION
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @pytest.fixture

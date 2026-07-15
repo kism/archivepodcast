@@ -20,3 +20,5 @@ powertools
 delenv
 ignorefile
 MEIPASS
+literalinclude
+stdlib

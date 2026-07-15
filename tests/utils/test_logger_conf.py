@@ -3,14 +3,10 @@
 import logging
 from typing import TYPE_CHECKING
 
-import pytest
-
-from archivepodcast.utils.logger import (
-    TRACE_LEVEL_NUM,
-    LoggingConf,
-)
+from archivepodcast.utils.logger import LoggingConf
 
 if TYPE_CHECKING:
+    import pytest
     from pytest_mock import MockerFixture
 else:
     MockerFixture = object
@@ -41,23 +37,6 @@ def test_invalid_log_level(caplog: pytest.LogCaptureFixture) -> None:
     assert "Invalid logging level" in caplog.text
     assert conf.level == "INFO"
     caplog.clear()
-
-
-def test_set_level_cli() -> None:
-    """Test setting log level via CLI."""
-
-    conf = LoggingConf(level="TRACE", path=None)
-    conf.setup_verbosity_cli(verbosity=0)
-    assert conf.level == logging.INFO
-
-    conf.setup_verbosity_cli(verbosity=1)
-    assert conf.level == logging.DEBUG
-
-    conf.setup_verbosity_cli(verbosity=2)
-    assert conf.level == TRACE_LEVEL_NUM
-
-    conf.setup_verbosity_cli(verbosity=999)
-    assert conf.level == TRACE_LEVEL_NUM
 
 
 def test_set_path_validator() -> None:

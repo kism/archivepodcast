@@ -24,14 +24,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: FedericoCarboni/setup-ffmpeg@v3
-        id: setup-ffmpeg
+      - name: Install ffmpeg (cached)
+        uses: awalsh128/cache-apt-pkgs-action@v1
         with:
-          ffmpeg-version: release
-          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
-
-      - name: Install libxml2
-        run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt-dev
+          packages: ffmpeg
+          version: 1.0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -63,19 +60,12 @@ jobs:
   vitest:
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    strategy:
-      matrix:
-        node-version: ["24.x"]
     steps:
       - uses: actions/checkout@v6
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "**/package.json"
-      - run: npm install vitest @vitest/coverage-v8
-      - run: npm test
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run test
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
