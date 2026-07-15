@@ -1,6 +1,7 @@
 """FastAPI web application for archiving and serving podcasts."""
 
 import asyncio
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -38,6 +39,10 @@ def create_app(instance_path_override: str | None = None) -> FastAPI:
     """Create and configure the FastAPI application instance."""
     start_time = time.time()
 
+    env_instance_path = os.environ.get("INSTANCE_PATH")
+    if env_instance_path:
+        instance_path_override = env_instance_path
+
     instance_path = Path(instance_path_override) if instance_path_override else DEFAULT_INSTANCE_PATH
     get_app_paths(root_path=Path.cwd(), instance_path=instance_path)
 
@@ -48,9 +53,11 @@ def create_app(instance_path_override: str | None = None) -> FastAPI:
         raise ValueError(msg)
 
     ap_conf.write_config(instance_path / "config.json")
+    ap_logger.setup_logger(ap_conf.logging)  # Setup logger with config
     ap_conf.log_info(running_adhoc=False)
 
-    ap_logger.setup_logger(ap_conf.logging)  # Setup logger with config
+    if instance_path_override:
+        logger.info("Instance path override: %s", instance_path_override)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
