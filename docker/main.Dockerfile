@@ -7,8 +7,6 @@ FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim AS python-builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     python3-dev \
-    libxml2-dev \
-    libxslt1-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -41,8 +39,6 @@ WORKDIR /app
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic1 \
-    libxml2 \
-    libxslt1.1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Setup a non-root user

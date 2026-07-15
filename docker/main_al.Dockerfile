@@ -12,8 +12,6 @@ RUN dnf install -y \
     gcc \
     gcc-c++ \
     make \
-    libxml2-devel \
-    libxslt-devel \
     file-libs \
     && dnf clean all
 
@@ -54,8 +52,6 @@ WORKDIR /app
 # Install runtime dependencies
 RUN dnf install -y \
     file-libs \
-    libxml2 \
-    libxslt \
     shadow-utils \
     && dnf clean all
 
