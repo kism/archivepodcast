@@ -29,6 +29,7 @@ jobs:
         with:
           packages: ffmpeg
           version: 1.0
+          execute_install_scripts: true
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
