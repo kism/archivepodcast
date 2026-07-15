@@ -1,6 +1,8 @@
 """Tests for PodcastArchiver functionality."""
 
+import datetime
 import logging
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -208,6 +210,62 @@ def test_grab_podcasts_no_episodes(
 
     # Since it loads the old version from the disk
     assert (apa.get_rss_feed("test")).decode("utf-8") == DUMMY_RSS_STR
+
+
+@pytest.mark.asyncio
+async def test_backup_previous_feed_on_episode_drop(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
+    """Test the served feed is backed up when the downloaded feed has fewer episodes."""
+    podcast = apa.podcast_list[0]
+    previous_feed = b"<?xml version='1.0' encoding='UTF-8'?>\n<rss><item>One</item><item>Two</item></rss>"
+    tree: ET.ElementTree[ET.Element] = ET.ElementTree(ET.fromstring("<rss><item>One</item></rss>"))
+
+    with caplog.at_level(level=logging.WARNING, logger="archivepodcast.archiver"):
+        await apa._backup_previous_feed(podcast, tree, previous_feed)
+
+    date = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d")
+    backup_path = get_app_paths().web_root / "content" / podcast.name_one_word / f"{date}-rss-backup.xml"
+    assert "backing up previous feed" in caplog.text
+    assert backup_path.read_bytes() == previous_feed
+
+
+def test_grab_podcasts_live_episode_drop_backs_up_feed(
+    apa: PodcastArchiver,
+    caplog: pytest.LogCaptureFixture,
+    mock_podcast_source_rss_valid: MockerFixture,
+) -> None:
+    """Test a live grab backs up the served feed when the new feed has fewer episodes."""
+    apa.podcast_list[0].live = True
+
+    # The mock source feed has one episode, serve a two episode feed so the count drops
+    previous_rss = "<?xml version='1.0' encoding='UTF-8'?>\n<rss><item>One</item><item>Two</item></rss>"
+    rss_path = Path(get_app_paths().instance_path) / "web" / "rss" / "test"
+    rss_path.parent.mkdir(parents=True, exist_ok=True)
+    rss_path.write_text(previous_rss)
+
+    with caplog.at_level(level=logging.WARNING, logger="archivepodcast.archiver"):
+        apa.grab_podcasts()
+
+    assert "backing up previous feed" in caplog.text
+
+    date = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d")
+    backup_path = get_app_paths().web_root / "content" / "test" / f"{date}-rss-backup.xml"
+    assert backup_path.read_text() == previous_rss
+
+    # The new (smaller) feed is still served
+    assert "<title>Test Episode</title>" in str(apa.get_rss_feed("test"))
+
+
+@pytest.mark.asyncio
+async def test_backup_previous_feed_no_episode_drop(apa: PodcastArchiver) -> None:
+    """Test no backup is written when the downloaded feed has the same number of episodes."""
+    podcast = apa.podcast_list[0]
+    previous_feed = b"<?xml version='1.0' encoding='UTF-8'?>\n<rss><item>One</item></rss>"
+    tree: ET.ElementTree[ET.Element] = ET.ElementTree(ET.fromstring("<rss><item>One</item></rss>"))
+
+    await apa._backup_previous_feed(podcast, tree, previous_feed)
+
+    content_dir = get_app_paths().web_root / "content" / podcast.name_one_word
+    assert not list(content_dir.glob("*-rss-backup.xml"))
 
 
 def test_archiver_webpages(apa: PodcastArchiver) -> None:
