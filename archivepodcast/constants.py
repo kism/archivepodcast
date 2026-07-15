@@ -13,8 +13,8 @@ AP_SELF_TEST = os.getenv("AP_SELF_TEST", "false").lower() in {"true", "1", "yes"
 JSON_INDENT = 2
 XML_ENCODING = "UTF-8"
 
-
-PROGRAM_NAME = "ArchivePodcast"
+PROGRAM_NAME = Path(__file__).parent.name.replace("_", "-").lower()  # Calculate this
+PROGRAM_NAME_NICE = "ArchivePodcast"
 PROGRAM_REPO_URL = "https://github.com/kism/archivepodcast"
 try:
     PROGRAM_VERSION = version(PROGRAM_NAME)
@@ -41,12 +41,12 @@ def _get_version_str() -> str:
             current_branch = f.read().strip().split("/")[-1]
 
     return (
-        f"{PROGRAM_NAME} "
+        f"{PROGRAM_NAME_NICE} "
         f"v{PROGRAM_VERSION}"
         f"{('-' + current_branch) if current_branch and (last_commit not in current_branch) else ''}"
         f"{('/' + last_commit + '') if last_commit else ''}"
     )
 
 
-PROGRAM_NAME_WITH_VERSION = f"{PROGRAM_NAME} v{PROGRAM_VERSION}"
+PROGRAM_NAME_WITH_VERSION = f"{PROGRAM_NAME_NICE} v{PROGRAM_VERSION}"
 PROGRAM_NAME_WITH_FULL_VERSION: str = _get_version_str()

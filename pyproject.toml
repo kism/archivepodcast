@@ -175,10 +175,6 @@ addopts = [
     "--asyncio-mode=auto",
 ]
 testpaths = ["tests"]
-filterwarnings = [
-    "ignore::DeprecationWarning:boto.*",
-    "ignore::pytest.PytestUnhandledThreadExceptionWarning", # God knows
-]
 
 [tool.coverage.html]
 show_contexts = true
@@ -186,18 +182,3 @@ show_contexts = true
 [tool.ty.rules]
 missing-type-argument = "error"
 possibly-unresolved-reference = "warn"
-
-[[tool.ty.overrides]]
-# Tests poke at private attributes of mocks/fixtures
-include = ["tests/**"]
-[tool.ty.overrides.rules]
-"unresolved-attribute" = "ignore"
-
-[[tool.ty.overrides]]
-# Not sure what ty is upset about here
-include = [
-    "archivepodcast/routers/rss.py",
-    "archivepodcast/archiver/podcast_archiver.py",
-]
-[tool.ty.overrides.rules]
-"invalid-argument-type" = "ignore"

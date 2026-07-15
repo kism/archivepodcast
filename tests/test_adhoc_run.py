@@ -62,7 +62,7 @@ def test_archivepodcast_cli_from__main__(
         __main__.main()
 
     # We get to the intro
-    assert "ArchivePodcast version" in caplog.text
+    assert "ArchivePodcast v" in caplog.text
     assert "Operating mode: Adhoc" in caplog.text
 
 
