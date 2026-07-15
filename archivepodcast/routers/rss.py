@@ -19,7 +19,11 @@ logger = get_logger(__name__)
 router = APIRouter(tags=["rss"])
 
 
-@router.get("/rss/{feed}", responses={HTTPStatus.OK: {"content": {"application/rss+xml": {}}}})
+@router.get(
+    "/rss/{feed}",
+    response_class=Response,
+    responses={HTTPStatus.OK: {"content": {"application/rss+xml": {}}}},
+)
 def rss(feed: str) -> Response:
     """Send RSS Feed."""
     ap = get_ap()
