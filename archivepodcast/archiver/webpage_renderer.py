@@ -32,6 +32,11 @@ else:
     APFileList = object
 logger = get_logger(__name__)
 
+# Ignore system mime.types files (e.g. /etc/apache2/mime.types on macOS) so guessed
+# content types are consistent across machines instead of depending on what's installed.
+mimetypes.knownfiles = []
+mimetypes.init()
+
 TEMPLATE_ENV = Environment(loader=FileSystemLoader(str(APP_DIRECTORY / "templates")), autoescape=True)
 
 

@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import tempfile
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -48,7 +49,8 @@ def create_app(instance_path_override: str | None = None) -> FastAPI:
 
     ap_conf = get_ap_config(instance_path / "config.json")
 
-    if ap_conf.webapp.testing and not str(instance_path).startswith("/tmp"):  # noqa: S108
+    system_tmp_dir = Path(tempfile.gettempdir()).resolve()
+    if ap_conf.webapp.testing and not instance_path.resolve().is_relative_to(system_tmp_dir):
         msg = "TESTING mode requires instance_path to be a tmp_path."
         raise ValueError(msg)
 
