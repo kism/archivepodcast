@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from archivepodcast.constants import OUR_TIMEZONE, PROGRAM_VERSION
+from archivepodcast.constants import OUR_TIMEZONE, PROGRAM_NAME_WITH_FULL_VERSION
 
 if TYPE_CHECKING:
     import logging
@@ -19,7 +19,7 @@ def get_time_str() -> str:
 
 def log_intro(logger: logging.Logger) -> None:
     """Log introductory information."""
-    logger.info("ArchivePodcast version: %s. Current time: %s", PROGRAM_VERSION, get_time_str())
+    logger.info("%s. Current time: %s", PROGRAM_NAME_WITH_FULL_VERSION, get_time_str())
 
 
 def log_aiohttp_exception(

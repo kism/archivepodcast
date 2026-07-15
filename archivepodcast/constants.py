@@ -14,7 +14,7 @@ JSON_INDENT = 2
 XML_ENCODING = "UTF-8"
 
 
-PROGRAM_NAME = Path(__file__).parent.name.replace("_", "-").lower()  # Calculate this
+PROGRAM_NAME = "ArchivePodcast"
 PROGRAM_REPO_URL = "https://github.com/kism/archivepodcast"
 try:
     PROGRAM_VERSION = version(PROGRAM_NAME)

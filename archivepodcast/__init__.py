@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
 from .archiver import PodcastArchiver
-from .constants import DEFAULT_INSTANCE_PATH, JSON_INDENT, PROGRAM_NAME_WITH_FULL_VERSION, PROGRAM_VERSION
+from .constants import DEFAULT_INSTANCE_PATH, JSON_INDENT, PROGRAM_VERSION
 from .instances import podcast_archiver
 from .instances.config import get_ap_config
 from .instances.health import health
@@ -85,8 +85,6 @@ def run_ap_adhoc(
 ) -> None:
     """Main for adhoc running."""
     logger = ap_logger.get_logger(__name__)
-
-    logger.info(PROGRAM_NAME_WITH_FULL_VERSION)
 
     start_time = time.time()
 
