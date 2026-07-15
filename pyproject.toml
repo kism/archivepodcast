@@ -142,6 +142,8 @@ ignore = [
     "INP",
     "D",
     "A",
+
+    "S106", # Fake secrets
 ]
 
 [tool.ruff.lint.flake8-pytest-style]

@@ -30,32 +30,8 @@ sudo -u apuser .venv/bin/uvicorn --factory 'archivepodcast:create_app' --port 51
 
 Edit: `/opt/archivepodcast/instance/config.json` to your liking.
 
-```json
-{
-  "app": {
-    "inet_path": "https://mycooldomain.org/",
-    "storage_backend": "local",
-    "web_page": {
-      "title": "Podcast Archive",
-      "description": "My Cool  Podcast Archive",
-      "contact": "email@example.com"
-    }
-  },
-  "podcasts": [
-    {
-      "url": "https://feeds.megaphone.fm/replyall",
-      "new_name": "Reply All [Archive]",
-      "name_one_word": "replyall",
-      "description": "",
-      "live": true,
-      "contact_email": "archivepodcast@localhost"
-    }
-  ],
-  "logging": {
-    "level": "INFO",
-    "path": ""
-  }
-}
+```{literalinclude} ../_generated/example_config_local.json
+:language: json
 ```
 
 ## Service Configuration
