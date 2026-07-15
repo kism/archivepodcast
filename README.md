@@ -23,3 +23,7 @@ Features:
 
 - Rename feeds to indicate that they are an archive
 - Local or S3 storage backend
+
+## Todo
+
+- Remove lxml, too much hastle

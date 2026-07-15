@@ -13,7 +13,7 @@ from archivepodcast.constants import PROGRAM_VERSION
 from archivepodcast.utils.logger import get_logger
 
 if TYPE_CHECKING:
-    from lxml import etree
+    import xml.etree.ElementTree as ET
 
     from archivepodcast.archiver import PodcastArchiver  # pragma: no cover
     from archivepodcast.config import AppConfig  # pragma: no cover
@@ -42,7 +42,7 @@ class PodcastHealth(BaseModel):
     healthy_feed: bool = False
     episode_count: int = 0
 
-    def update_episode_info(self, tree: etree._ElementTree | etree._Element | None = None) -> None:
+    def update_episode_info(self, tree: ET.ElementTree[ET.Element] | ET.Element | None = None) -> None:
         """Update the latest episode info."""
         logger.trace("Updating podcast episode info")
         new_latest_episode: EpisodeInfo = EpisodeInfo()
@@ -57,7 +57,7 @@ class PodcastHealth(BaseModel):
         self.episode_count = new_episode_count
 
     @staticmethod
-    def _parse_episode_info(tree: etree._ElementTree | etree._Element | None) -> tuple[EpisodeInfo, int]:
+    def _parse_episode_info(tree: ET.ElementTree[ET.Element] | ET.Element | None) -> tuple[EpisodeInfo, int]:
         """Parse the latest episode info and episode count from a feed tree."""
         new_latest_episode: EpisodeInfo = EpisodeInfo()
         new_episode_count: int = 0
@@ -65,7 +65,7 @@ class PodcastHealth(BaseModel):
         if tree is None:
             return new_latest_episode, new_episode_count
 
-        items = tree.xpath("//item")
+        items = tree.findall(".//item")
         if len(items) == 0:
             logger.warning("No episodes found in feed")
             return new_latest_episode, new_episode_count
@@ -74,12 +74,13 @@ class PodcastHealth(BaseModel):
         new_episode_count = len(items)
 
         # If we have the title, use it
-        with contextlib.suppress(IndexError):
-            new_latest_episode.title = latest_episode.xpath("title")[0].text
+        title = latest_episode.findtext("title")
+        if title is not None:
+            new_latest_episode.title = title
 
         # If we have the pubDate, try to parse it
-        if len(latest_episode.xpath("pubDate")) > 0 and latest_episode.xpath("pubDate")[0].text:
-            pod_pubdate = str(latest_episode.xpath("pubDate")[0].text)
+        if latest_episode.findtext("pubDate"):
+            pod_pubdate = str(latest_episode.findtext("pubDate"))
             try:
                 parsed_pubdate = parsedate_to_datetime(pod_pubdate)
                 if parsed_pubdate.tzinfo is None:
@@ -207,7 +208,7 @@ class PodcastArchiverHealth:
             if value is not None and hasattr(self._podcasts[podcast], key):
                 setattr(self._podcasts[podcast], key, value)
 
-    def update_podcast_episode_info(self, podcast: str, tree: etree._ElementTree | etree._Element) -> None:
+    def update_podcast_episode_info(self, podcast: str, tree: ET.ElementTree[ET.Element] | ET.Element) -> None:
         """Update the podcast episode info."""
         logger.trace("Updating podcast episode info for %s", podcast)
         if podcast not in self._podcasts:

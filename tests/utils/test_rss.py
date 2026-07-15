@@ -1,6 +1,5 @@
+import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
-
-from lxml import etree
 
 from archivepodcast.downloader.helpers import tree_no_episodes
 from tests.constants import DUMMY_RSS_STR
@@ -16,8 +15,8 @@ def test_tree_no_episodes_none() -> None:
 
 def test_tree_no_episodes_with_episodes() -> None:
     """Test tree_no_episodes with episodes present."""
-    tree = etree.fromstring(bytes(DUMMY_RSS_STR, encoding="utf-8"))
-    assert tree_no_episodes(etree.ElementTree(tree)) is False
+    tree = ET.fromstring(bytes(DUMMY_RSS_STR, encoding="utf-8"))
+    assert tree_no_episodes(ET.ElementTree(tree)) is False
 
 
 def test_tree_no_episodes_with_episodes_disk(tmp_path: Path) -> None:
@@ -26,6 +25,6 @@ def test_tree_no_episodes_with_episodes_disk(tmp_path: Path) -> None:
     rss_path.write_text(DUMMY_RSS_STR)
 
     with rss_path.open() as file:
-        tree = etree.parse(file)
+        tree = ET.parse(file)
 
     assert tree_no_episodes(tree) is False

@@ -13,10 +13,6 @@ dependencies = [
     "aiobotocore>=2.25.2",
     "aiohttp>=3.13.2",
     "jinja2>=3.1,<4",
-    # dnf install libxml2-devel libxslt-devel
-    # apt install libxml2-dev libxslt-dev
-    "lxml>=5,<5.4", # Revert to this is you get random core dumps
-    # "lxml>=6.0.2", # Fatal Python error: Aborted
     "markdown>=3.10",
     "pydantic>=2.12",
     "pydantic-settings>=2.12",
@@ -33,7 +29,6 @@ docs = "https://archivepodcast.readthedocs.io/"
 [project.optional-dependencies]
 type = [
     "ty",
-    "types-lxml",
     "types-Markdown",
     "botocore-stubs",
     "types-aiobotocore",
@@ -46,23 +41,23 @@ lint = ["ruff"]
 profile = ["aiomonitor"]
 
 test = [
-    "pytest>=9.0",
+    "pytest>=9.1",
     "coverage==7.15.0,!=7.15.1", # Not the broken version
     "pytest-cov",
     "pytest-mock",
     "pytest-random-order",
     "detect-test-pollution",
-    "types-aiobotocore-s3",  # Mock uses typed dict
+    "types-aiobotocore-s3",      # Mock uses typed dict
     "pytest-asyncio",
     "pytest-socket>=0.7.0",
     "httpx2",
-    "python-magic>=0.4", # Tests verify downloaded/converted file content by magic bytes
+    "python-magic>=0.4",         # Tests verify downloaded/converted file content by magic bytes
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
 
 [build-system]
-requires = ["uv_build>=0.9.15,<0.10.0"]
+requires = ["uv_build>=0.10.0,<0.11.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
@@ -82,10 +77,10 @@ preview = true
 select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
-    "DJ",   # KG Django not required
-    "NPY",  # KG Numpy not required
-    "PD",   # KG Pandas not required
-    "CPY",  # KG Pandas not required
+    "DJ",  # KG Django not required
+    "NPY", # KG Numpy not required
+    "PD",  # KG Pandas not required
+    "CPY", # KG Pandas not required
 
     # Specific rules
     "TD002",   # KG Verbose TODO, only I work on this project
@@ -98,6 +93,8 @@ ignore = [
     "DOC402",  # KG Unreqired docstrings fine
     "DOC501",  # KG Unreqired docstrings fine
     "PLC1901", # KG I like comparing to empty strings
+    "S405",    # KG stdlib etree import, feeds are trusted-ish and defusedxml is dead
+    "S314",    # KG stdlib etree parsing, same reasoning
 ]
 
 [tool.ruff.lint.per-file-ignores]

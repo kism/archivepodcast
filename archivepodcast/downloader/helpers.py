@@ -18,8 +18,9 @@ from archivepodcast.utils.logger import get_logger
 from .constants import FFMPEG_INFO
 
 if TYPE_CHECKING:
+    import xml.etree.ElementTree as ET
+
     from anyio import Path as AsyncPath
-    from lxml import etree
 
 logger = get_logger(__name__)
 
@@ -29,14 +30,14 @@ async def delay_download(attempt: int) -> None:
     await asyncio.sleep(random.uniform(0.1, 1) + (0.5 * attempt))
 
 
-def tree_no_episodes(tree: etree._ElementTree | None) -> bool:
+def tree_no_episodes(tree: ET.ElementTree[ET.Element] | None) -> bool:
     """Check if the XML tree has no episodes."""
     if tree is None:
         return True
-    return len(tree.xpath("//item")) == 0
+    return len(tree.findall(".//item")) == 0
 
 
-def get_file_date_string(channel: etree._Element) -> str:
+def get_file_date_string(channel: ET.Element) -> str:
     """Get the file date string from the channel."""
     file_date_string = "00000000"
     for child in channel:

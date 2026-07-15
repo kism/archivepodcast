@@ -3,10 +3,10 @@
 import asyncio
 import contextlib
 import time
+import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
 
 import aiohttp
-from lxml import etree
 from pydantic import BaseModel
 
 from archivepodcast.constants import XML_ENCODING
@@ -31,9 +31,8 @@ else:
 logger = get_logger(__name__)
 
 
-def _load_cached_feed(podcast: PodcastConfig, previous_feed: bytes) -> etree._ElementTree | None:
+def _load_cached_feed(podcast: PodcastConfig, previous_feed: bytes) -> ET.ElementTree[ET.Element] | None:
     """Load feed from cache when live download is not available."""
-    tree = None
     if previous_feed == b"":
         logger.warning(
             "[%s] Cannot find local rss feed file to serve unavailable podcast",
@@ -42,13 +41,16 @@ def _load_cached_feed(podcast: PodcastConfig, previous_feed: bytes) -> etree._El
         return None
 
     try:
-        tree = etree.ElementTree(etree.fromstring(previous_feed))
-        if tree_no_episodes(tree):
-            logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
-            return None
-        logger.debug("[%s] Loaded rss from file", podcast.name_one_word)
-    except etree.XMLSyntaxError:
+        root = ET.fromstring(previous_feed)
+        tree: ET.ElementTree[ET.Element] = ET.ElementTree(root)
+    except ET.ParseError:
         logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
+        return None
+
+    if tree_no_episodes(tree):
+        logger.error("[%s] Local/cached rss feed has no episodes", podcast.name_one_word)
+        return None
+    logger.debug("[%s] Loaded rss from file", podcast.name_one_word)
 
     return tree
 
@@ -241,7 +243,7 @@ class PodcastArchiver:
 
     async def _download_live_podcast(
         self, podcast: PodcastConfig, aiohttp_session: aiohttp.ClientSession
-    ) -> etree._ElementTree | None:
+    ) -> ET.ElementTree[ET.Element] | None:
         """Download live podcast and update health status."""
         podcasts_downloader = PodcastsDownloader(
             podcast=podcast,
@@ -260,7 +262,7 @@ class PodcastArchiver:
         return tree
 
     async def _process_podcast_tree(
-        self, podcast: PodcastConfig, tree: etree._ElementTree | None, previous_feed: bytes
+        self, podcast: PodcastConfig, tree: ET.ElementTree[ET.Element] | None, previous_feed: bytes
     ) -> None:
         """Process the podcast tree and update RSS feed or handle errors."""
         if tree is not None:
@@ -274,13 +276,13 @@ class PodcastArchiver:
     async def _update_rss_feed(
         self,
         podcast: PodcastConfig,
-        tree: etree._ElementTree,
+        tree: ET.ElementTree[ET.Element],
         previous_feed: bytes,
     ) -> None:
         """Update the rss feed, in memory and s3."""
         self.podcast_rss.update(
             {
-                podcast.name_one_word: etree.tostring(
+                podcast.name_one_word: ET.tostring(
                     tree.getroot(),
                     encoding=XML_ENCODING,  # Keep this uppercase for the diff to work
                     method="xml",

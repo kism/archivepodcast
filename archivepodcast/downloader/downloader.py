@@ -3,10 +3,10 @@
 
 import re
 import time
+import xml.etree.ElementTree as ET
 from http import HTTPStatus
 
 import aiohttp
-from lxml import etree
 
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.health import health
@@ -22,19 +22,19 @@ logger = get_logger(__name__)
 
 
 # These make the name spaces appear nicer in the generated XML
-etree.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
-etree.register_namespace("atom", "http://www.w3.org/2005/Atom")
-etree.register_namespace("podcast", "https://podcastindex.org/namespace/1.0")
-etree.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
-etree.register_namespace("media", "http://search.yahoo.com/mrss/")
-etree.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
-etree.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
-etree.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
-etree.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
-etree.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
-etree.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
-etree.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
-etree.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
+ET.register_namespace("googleplay", "http://www.google.com/schemas/play-podcasts/1.0")
+ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
+ET.register_namespace("podcast", "https://podcastindex.org/namespace/1.0")
+ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+ET.register_namespace("media", "http://search.yahoo.com/mrss/")
+ET.register_namespace("sy", "http://purl.org/rss/1.0/modules/syndication/")
+ET.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
+ET.register_namespace("wfw", "http://wellformedweb.org/CommentAPI/")
+ET.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
+ET.register_namespace("slash", "http://purl.org/rss/1.0/modules/slash/")
+ET.register_namespace("rawvoice", "http://www.rawvoice.com/rawvoiceRssModule/")
+ET.register_namespace("spotify", "http://www.spotify.com/ns/rss/")
+ET.register_namespace("feedburner", "http://rssnamespace.org/feedburner/ext/1.0")
 
 
 class PodcastsDownloader(AssetDownloader):
@@ -42,7 +42,7 @@ class PodcastsDownloader(AssetDownloader):
 
     async def download_podcast(
         self,
-    ) -> etree._ElementTree | None:
+    ) -> ET.ElementTree[ET.Element] | None:
         """Parse the rss, Download all the assets, this is main."""
         self._feed_download_healthy = True
         feed_rss_healthy = True
@@ -54,7 +54,7 @@ class PodcastsDownloader(AssetDownloader):
                 logger.critical(
                     "[%s] Downloaded podcast rss has no episodes, full rss:\n%s",
                     self._podcast.name_one_word,
-                    etree.tostring(tree),
+                    ET.tostring(tree.getroot()),
                 )
                 logger.error(
                     "Downloaded podcast rss %s has no episodes, not writing to disk", self._podcast.name_one_word
@@ -83,7 +83,7 @@ class PodcastsDownloader(AssetDownloader):
 
         return tree
 
-    async def _download_and_parse_rss(self) -> etree._ElementTree | None:
+    async def _download_and_parse_rss(self) -> ET.ElementTree[ET.Element] | None:
         """Download and parse the podcast RSS feed."""
         content = None
         for n in range(DOWNLOAD_RETRY_COUNT):
@@ -116,8 +116,8 @@ class PodcastsDownloader(AssetDownloader):
         logger.debug("[%s] Success fetching podcast RSS", self._podcast.name_one_word)
 
         try:
-            podcast_rss = etree.fromstring(content)
-        except etree.XMLSyntaxError:
+            podcast_rss = ET.fromstring(content)
+        except ET.ParseError:
             logger.error(  # noqa: TRY400
                 "[%s] Downloaded podcast rss (length %d) is not valid XML, cannot process podcast feed",
                 self._podcast.name_one_word,
@@ -132,7 +132,7 @@ class PodcastsDownloader(AssetDownloader):
         await self._process_podcast_rss(xml_first_child)
         podcast_rss[0] = xml_first_child
 
-        return etree.ElementTree(podcast_rss)
+        return ET.ElementTree(podcast_rss)
 
     async def _fetch_podcast_rss(self) -> tuple[bytes | None, HTTPStatus | None]:
         """Fetch the podcast RSS feed."""
@@ -149,12 +149,12 @@ class PodcastsDownloader(AssetDownloader):
 
     # region RSS Hell
 
-    async def _process_podcast_rss(self, xml_first_child: etree._Element) -> None:
+    async def _process_podcast_rss(self, xml_first_child: ET.Element) -> None:
         """Process the podcast rss and update it with new values."""
         for channel in xml_first_child:
             await self._process_channel_tag(channel)
 
-    async def _process_channel_tag(self, channel: etree._Element) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
+    async def _process_channel_tag(self, channel: ET.Element) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
         """Process individual channel tags in the podcast rss."""
         match channel.tag:
             case "link":
@@ -184,29 +184,29 @@ class PodcastsDownloader(AssetDownloader):
                     channel.tag,
                 )
 
-    def _handle_link_tag(self, channel: etree._Element) -> None:
+    def _handle_link_tag(self, channel: ET.Element) -> None:
         """Handle the link tag in the podcast rss."""
         logger.trace("[%s] Podcast link: %s", self._podcast.name_one_word, str(channel.text))
         channel.text = self._app_config.inet_path.encoded_string()
 
-    def _handle_title_tag(self, channel: etree._Element) -> None:
+    def _handle_title_tag(self, channel: ET.Element) -> None:
         """Handle the title tag in the podcast rss."""
         logger.debug("[%s] Source Podcast title: %s", self._podcast.name_one_word, channel.text)
         if self._podcast.new_name != "":
             channel.text = self._podcast.new_name
 
-    def _handle_description_tag(self, channel: etree._Element) -> None:
+    def _handle_description_tag(self, channel: ET.Element) -> None:
         """Handle the description tag in the podcast rss."""
         logger.trace("[%s] Podcast description: %s", self._podcast.name_one_word, str(channel.text))
         channel.text = self._podcast.description
 
-    def _handle_atom_link_tag(self, channel: etree._Element) -> None:
+    def _handle_atom_link_tag(self, channel: ET.Element) -> None:
         """Handle the Atom link tag in the podcast rss."""
         logger.trace("[%s] Atom link: %s", self._podcast.name_one_word, str(channel.attrib["href"]))
         channel.attrib["href"] = self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
         channel.text = " "
 
-    def _handle_itunes_owner_tag(self, channel: etree._Element) -> None:
+    def _handle_itunes_owner_tag(self, channel: ET.Element) -> None:
         """Handle the iTunes owner tag in the podcast rss."""
         logger.trace("[%s] iTunes owner: %s", self._podcast.name_one_word, str(channel.text))
         for child in channel:
@@ -219,18 +219,18 @@ class PodcastsDownloader(AssetDownloader):
                     self._podcast.contact_email = child.text or ""
                 child.text = self._podcast.contact_email
 
-    def _handle_itunes_author_tag(self, channel: etree._Element) -> None:
+    def _handle_itunes_author_tag(self, channel: ET.Element) -> None:
         """Handle the iTunes author tag in the podcast rss."""
         logger.trace("[%s] iTunes author: %s", self._podcast.name_one_word, str(channel.text))
         if self._podcast.new_name != "":
             channel.text = self._podcast.new_name
 
-    def _handle_itunes_new_feed_url_tag(self, channel: etree._Element) -> None:
+    def _handle_itunes_new_feed_url_tag(self, channel: ET.Element) -> None:
         """Handle the iTunes new-feed-url tag in the podcast rss."""
         logger.trace("[%s] iTunes new-feed-url: %s", self._podcast.name_one_word, str(channel.text))
         channel.text = self._app_config.inet_path.encoded_string() + "rss/" + self._podcast.name_one_word
 
-    async def _handle_itunes_image_tag(self, channel: etree._Element) -> None:
+    async def _handle_itunes_image_tag(self, channel: ET.Element) -> None:
         """Handle the iTunes image tag in the podcast rss."""
         logger.trace("[%s] iTunes image: %s", self._podcast.name_one_word, str(channel.attrib["href"]))
         title = self._cleanup_file_name(self._podcast.new_name)
@@ -249,7 +249,7 @@ class PodcastsDownloader(AssetDownloader):
                 )
         channel.text = " "
 
-    async def _handle_image_tag(self, channel: etree._Element) -> None:
+    async def _handle_image_tag(self, channel: ET.Element) -> None:
         """Handle the image tag in the podcast rss."""
         for child in channel:
             logger.trace("[%s] image > XML tag: %s", self._podcast.name_one_word, child.tag)
@@ -274,7 +274,7 @@ class PodcastsDownloader(AssetDownloader):
                         )
         channel.text = " "
 
-    async def _handle_item_tag(self, channel: etree._Element) -> None:
+    async def _handle_item_tag(self, channel: ET.Element) -> None:
         """Handle the item tag in the podcast rss."""
         file_date_string = get_file_date_string(channel)
         title = ""
@@ -289,7 +289,7 @@ class PodcastsDownloader(AssetDownloader):
             elif child.tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}image":
                 await self._handle_episode_image_tag(child, title, file_date_string)
 
-    async def _handle_enclosure_tag(self, child: etree._Element, title: str, file_date_string: str) -> None:
+    async def _handle_enclosure_tag(self, child: ET.Element, title: str, file_date_string: str) -> None:
         """Handle the enclosure tag in the podcast rss."""
         logger.trace("Enclosure, URL: %s", child.attrib.get("url", ""))
         title = self._cleanup_file_name(title)
@@ -318,7 +318,7 @@ class PodcastsDownloader(AssetDownloader):
 
     async def _handle_episode_image_tag(
         self,
-        child: etree._Element,
+        child: ET.Element,
         title: str,
         file_date_string: str,
     ) -> None:

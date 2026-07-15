@@ -220,7 +220,7 @@ def test_rss_feed_unhandled_error(
     def return_unhandled_error(*args: Any, **kwargs: Any) -> None:
         raise FakeExceptionError
 
-    monkeypatch.setattr("lxml.etree.tostring", return_unhandled_error)
+    monkeypatch.setattr("xml.etree.ElementTree.tostring", return_unhandled_error)
 
     response = client_live.get("/rss/test")
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
