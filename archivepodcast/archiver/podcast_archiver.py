@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import datetime
 import time
 import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
@@ -222,6 +223,10 @@ class PodcastArchiver:
         if tree_no_episodes(tree):
             tree = None
 
+        # Only compare a genuinely downloaded feed against what is currently being served
+        if tree is not None and previous_feed:
+            await self._backup_previous_feed(podcast, tree, previous_feed)
+
         # Load from cache if no tree available
         if tree is None:
             tree = _load_cached_feed(podcast, previous_feed)
@@ -240,6 +245,43 @@ class PodcastArchiver:
                 with contextlib.suppress(Exception):
                     return rss_file_path.read_bytes()
             return b""
+
+    async def _backup_previous_feed(
+        self, podcast: PodcastConfig, tree: ET.ElementTree[ET.Element], previous_feed: bytes
+    ) -> None:
+        """Back up the served feed if the freshly downloaded one has fewer episodes."""
+        try:
+            previous_count = len(ET.fromstring(previous_feed).findall(".//item"))
+        except ET.ParseError:
+            return
+        new_count = len(tree.findall(".//item"))
+        if new_count >= previous_count:
+            return
+
+        date = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d")
+        backup_filename = f"{date}-rss-backup.xml"
+        backup_path = get_app_paths().web_root / "content" / podcast.name_one_word / backup_filename
+        logger.warning(
+            "[%s] Downloaded feed has %s episodes, previously %s, backing up previous feed to %s",
+            podcast.name_one_word,
+            new_count,
+            previous_count,
+            backup_path,
+        )
+        if not backup_path.exists():  # keep the earliest (fullest) backup for the day
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
+            backup_path.write_bytes(previous_feed)
+
+        if self.s3:
+            try:
+                await s3_put(
+                    self._app_config.s3.bucket,
+                    f"content/{podcast.name_one_word}/{backup_filename}",
+                    previous_feed,
+                    "application/rss+xml",
+                )
+            except Exception:
+                logger.exception("Unhandled s3 error trying to upload the file: %s", backup_filename)
 
     async def _download_live_podcast(
         self, podcast: PodcastConfig, aiohttp_session: aiohttp.ClientSession
