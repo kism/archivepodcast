@@ -23,7 +23,7 @@ jobs:
     name: "Publish GitHub Container Registry"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -40,7 +40,7 @@ jobs:
 
       # Region Login
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -48,7 +48,7 @@ jobs:
 
       # region ffmpeg
       - name: Build ffmpeg container
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/_dep_ffmpeg.Dockerfile
@@ -58,7 +58,7 @@ jobs:
 
       # region build
       - name: Build main docker
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -67,7 +67,7 @@ jobs:
           file: ./docker/main.Dockerfile
 
       - name: Build al docker
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -98,7 +98,7 @@ jobs:
 
       # region test
       - name: Build pytest docker
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/pytest.Dockerfile
@@ -111,7 +111,7 @@ jobs:
 
       # region publish
       - name: Build and push main Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -122,7 +122,7 @@ jobs:
           file: ./docker/main.Dockerfile
 
       - name: Build and push al Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
