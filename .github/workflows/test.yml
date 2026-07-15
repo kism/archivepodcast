@@ -24,11 +24,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: FedericoCarboni/setup-ffmpeg@v3
-        id: setup-ffmpeg
+      - name: Install ffmpeg (cached)
+        uses: awalsh128/cache-apt-pkgs-action@v1
         with:
-          ffmpeg-version: release
-          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+          packages: ffmpeg
+          version: 1.0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
