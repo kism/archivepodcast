@@ -9,6 +9,6 @@ To get coverage report, open the `htmlcov` folder in a browser or the vscode liv
 With docker:
 
 ```bash
-docker build -f tests/Dockerfile --tag archivepodcast-tests .
+docker build -f docker/pytest.Dockerfile --tag archivepodcast-tests .
 docker run --rm archivepodcast-tests
 ```

@@ -13,7 +13,7 @@ cd /opt
 git clone https://github.com/kism/archivepodcast.git
 cd archivepodcast
 uv sync --no-default-groups
-adduser archivepodcast --shell=/bin/false --no-create-home
+adduser apuser --shell=/bin/false --no-create-home
 mkdir /var/log/archivepodcast/
 chown apuser:apuser /var/log/archivepodcast
 chown -R apuser:apuser /opt/archivepodcast

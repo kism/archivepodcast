@@ -47,7 +47,7 @@ code --diff docker/main.Dockerfile docker/pytest.Dockerfile
 ## Lambda Container
 
 ```bash
-docker build -f docker/lambda.Dockerfile -t archivepodcast-lambda .
+docker build -f docker/main_al.Dockerfile -t archivepodcast-lambda .
 ```
 
 ```bash
