@@ -27,7 +27,7 @@ def test_health_api(client: TestClient, apa: PodcastArchiver) -> None:
     # TEST: HTTP OK
     assert response.status_code == HTTPStatus.OK
     # TEST: Content type
-    assert response.headers["content-type"] == "application/json; charset=utf-8"
+    assert response.headers["content-type"] == "application/json"
 
     assert response.json()["core"]["alive"]
 

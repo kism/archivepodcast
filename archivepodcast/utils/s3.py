@@ -72,11 +72,6 @@ class S3FileCache(BaseModel):
         self._last_cache_time = datetime.now(tz=UTC)
         return all_objects
 
-    async def get_all_list_str(self, bucket: str) -> list[str]:
-        """Get all S3 file keys as strings."""
-        s3_files = await self.get_all(bucket)
-        return [s3_file["Key"] for s3_file in s3_files]
-
     def add_file(self, s3_file: S3File) -> None:
         """Append a new S3 file to the cache."""
         self._files.append({"Key": s3_file.key, "Size": s3_file.size})

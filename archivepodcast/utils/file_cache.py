@@ -25,10 +25,6 @@ class LocalFileCache:
             raise ValueError(msg)
         return self._files
 
-    def get_all_str(self) -> list[str]:
-        """Get all cached file paths as strings."""
-        return [str(path) for path in self.get_all()]
-
     def check_exists(self, file_path: Path) -> bool:
         """Check if a file path exists in the cache."""
         return file_path in self.get_all()

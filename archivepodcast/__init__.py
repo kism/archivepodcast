@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
 from .archiver import PodcastArchiver
-from .constants import DEFAULT_INSTANCE_PATH, JSON_INDENT, PROGRAM_VERSION, PROGRAM_NAME_WITH_FULL_VERSION
+from .constants import DEFAULT_INSTANCE_PATH, JSON_INDENT, PROGRAM_NAME_WITH_FULL_VERSION, PROGRAM_VERSION
 from .instances import podcast_archiver
 from .instances.config import get_ap_config
 from .instances.health import health

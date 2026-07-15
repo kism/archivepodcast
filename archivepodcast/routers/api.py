@@ -1,12 +1,11 @@
 """API routes for ArchivePodcast."""
 
-import json
 import signal
 from http import HTTPStatus
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
-from archivepodcast.constants import JSON_INDENT
 from archivepodcast.instances.health import health
 from archivepodcast.instances.podcast_archiver import (
     get_ap,
@@ -22,54 +21,29 @@ router = APIRouter(tags=["api"])
 
 
 @router.get("/api/reload")
-def api_reload() -> Response:
+def api_reload() -> JSONResponse:
     """Reload the config."""
-    ap = get_ap()
-
-    msg_success = {"msg": "Config reload command sent"}
-    msg_forbidden = {"msg": "Config reload not allowed in production"}
-
-    if not ap.debug:
-        return Response(
-            json.dumps(msg_forbidden),
-            media_type="application/json; charset=utf-8",
-            status_code=HTTPStatus.FORBIDDEN,
-        )
+    if not get_ap().debug:
+        return JSONResponse({"msg": "Config reload not allowed in production"}, status_code=HTTPStatus.FORBIDDEN)
 
     reload_config(signal.SIGHUP)
 
-    return Response(
-        json.dumps(msg_success),
-        media_type="application/json; charset=utf-8",
-        status_code=HTTPStatus.OK,
-    )
+    return JSONResponse({"msg": "Config reload command sent"})
 
 
 @router.get("/api/health", response_model=PodcastArchiverHealthAPI)
-def api_health() -> Response:
+def api_health() -> JSONResponse:
     """Health check."""
     try:
         health_json = health.get_health().model_dump()
-        # Alphabetical json
-        health_json_str = json.dumps(health_json, sort_keys=True, indent=JSON_INDENT)
     except Exception:
         logger.exception("Error getting health")
-        health_json_str = json.dumps({"core": {"alive": False}}, sort_keys=True, indent=JSON_INDENT)
+        health_json = {"core": {"alive": False}}
 
-    return Response(
-        health_json_str,
-        media_type="application/json; charset=utf-8",
-        status_code=HTTPStatus.OK,
-    )
+    return JSONResponse(health_json)
 
 
 @router.get("/api/profile", response_model=EventLastTime)
-def api_profile() -> Response:
+def api_profile() -> EventLastTime:
     """Get the profiling info as JSON."""
-    profile_json_str = event_times.model_dump_json(indent=JSON_INDENT)
-
-    return Response(
-        profile_json_str,
-        media_type="application/json; charset=utf-8",
-        status_code=HTTPStatus.OK,
-    )
+    return event_times

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from lxml import etree
 
-from archivepodcast.utils.rss import tree_no_episodes
+from archivepodcast.downloader.helpers import tree_no_episodes
 from tests.constants import DUMMY_RSS_STR
 
 if TYPE_CHECKING:

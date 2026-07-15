@@ -201,7 +201,6 @@ dependencies = [
     { name = "markdown" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "python-magic" },
     { name = "rich" },
     { name = "typed-ffmpeg" },
     { name = "uvicorn" },
@@ -229,6 +228,7 @@ test = [
     { name = "pytest-mock" },
     { name = "pytest-random-order" },
     { name = "pytest-socket" },
+    { name = "python-magic" },
     { name = "types-aiobotocore-s3" },
 ]
 type = [
@@ -265,7 +265,7 @@ requires-dist = [
     { name = "pytest-mock", marker = "extra == 'test'" },
     { name = "pytest-random-order", marker = "extra == 'test'" },
     { name = "pytest-socket", marker = "extra == 'test'", specifier = ">=0.7.0" },
-    { name = "python-magic", specifier = ">=0.4" },
+    { name = "python-magic", marker = "extra == 'test'", specifier = ">=0.4" },
     { name = "rich", specifier = ">=14.2.0" },
     { name = "ruff", marker = "extra == 'lint'" },
     { name = "sphinx", marker = "extra == 'docs'" },

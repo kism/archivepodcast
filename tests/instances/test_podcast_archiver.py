@@ -75,29 +75,17 @@ def test_get_ap_when_ap_is_none() -> None:
         podcast_archiver.get_ap()
 
 
-def test_generate_not_initialized_error(
+def test_render_ap_error_when_ap_is_none(
     app: FastAPI,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Test generate_not_initialized_error directly."""
-    with caplog.at_level(logging.ERROR):
-        response = podcast_archiver.generate_not_initialized_error()
-
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    assert "ArchivePodcast object not initialized" in caplog.text
-    assert b"Archive Podcast not initialized" in response.body
-
-
-def test_generate_not_generated_error_when_ap_is_none(
-    app: FastAPI,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Test generate_not_generated_error when _ap is None."""
+    """Test render_ap_error when _ap is None."""
 
     podcast_archiver._ap = None
 
     with caplog.at_level(logging.ERROR):
-        response = podcast_archiver.generate_not_generated_error("test.html")
+        response = podcast_archiver.render_ap_error(HTTPStatus.INTERNAL_SERVER_ERROR, "test error")
 
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert "ArchivePodcast object not initialized" in caplog.text
+    assert b"Archive Podcast not initialized" in response.body

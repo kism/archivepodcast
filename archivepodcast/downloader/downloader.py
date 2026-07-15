@@ -12,12 +12,11 @@ from archivepodcast.constants import XML_ENCODING
 from archivepodcast.instances.health import health
 from archivepodcast.utils.log_messages import log_aiohttp_exception
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.rss import tree_no_episodes
 from archivepodcast.utils.time import warn_if_too_long
 
 from .asset_downloader import AssetDownloader
 from .constants import AUDIO_FORMATS, DOWNLOAD_RETRY_COUNT, IMAGE_FORMATS
-from .helpers import delay_download, get_file_date_string
+from .helpers import delay_download, get_file_date_string, tree_no_episodes
 
 logger = get_logger(__name__)
 
@@ -351,28 +350,14 @@ class PodcastsDownloader(AssetDownloader):
         if isinstance(file_name, bytes):
             file_name = file_name.decode()
 
-        # Standardise
-        file_name = file_name.replace("[AUDIO]", "")
-        file_name = file_name.replace("[Audio]", "")
-        file_name = file_name.replace("[audio]", "")
-        file_name = file_name.replace("AUDIO", "")
-        file_name = file_name.replace("(Audio Only)", "")
-        file_name = file_name.replace("(Audio only)", "")
-        file_name = file_name.replace("Ep. ", "Ep ")
-        file_name = file_name.replace("Ep: ", "Ep ")
-        file_name = file_name.replace("Episode ", "Ep ")
-        file_name = file_name.replace("Episode: ", "Ep ")
+        # Standardise. Patterns must stay exactly equivalent to the old replace chain,
+        # since the slugs name already-archived files on disk/s3.
+        file_name = re.sub(r"\[AUDIO\]|\[Audio\]|\[audio\]|AUDIO|\(Audio Only\)|\(Audio only\)", "", file_name)
+        file_name = re.sub(r"Ep\. |Ep: |Episode: |Episode ", "Ep ", file_name)
 
-        # Generate Slug, everything that isn't alphanumeric is now a hyphen
+        # Generate Slug, everything that isn't alphanumeric becomes a hyphen, runs collapse to one
         file_name = re.sub(r"[^a-zA-Z0-9-]", " ", file_name)
-
-        # Remove excess spaces
-        while "  " in file_name:
-            file_name = file_name.replace("  ", " ")
-
-        # Replace spaces with hyphens
-        file_name = file_name.strip()
-        file_name = file_name.replace(" ", "-")
+        file_name = "-".join(file_name.split())
 
         logger.trace("[%s] Clean Filename: '%s'", self._podcast.name_one_word, file_name)
         return file_name

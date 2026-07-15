@@ -18,20 +18,6 @@ DESIRED_NAME_LEN = 16
 DESIRED_THREAD_NAME_LEN = 13
 
 
-LOG_LEVELS = [
-    "TRACE",
-    "DEBUG",
-    "INFO",
-    "WARNING",
-    "ERROR",
-    "CRITICAL",
-]  # Valid str logging levels.
-
-
-MIN_LOG_LEVEL_INT = 0
-MAX_LOG_LEVEL_INT = 50
-
-
 class LoggingConf(BaseModel):
     """Logging configuration definition."""
 
@@ -42,20 +28,15 @@ class LoggingConf(BaseModel):
     def validate_vars(self) -> Self:
         """Validate the logging level."""
         if isinstance(self.level, int):
-            if self.level < MIN_LOG_LEVEL_INT or self.level > MAX_LOG_LEVEL_INT:
-                msg = (
-                    f"Invalid logging level {self.level}, must be between {MIN_LOG_LEVEL_INT} and {MAX_LOG_LEVEL_INT}."
-                )
-                logger.warning(msg)
-                logger.warning("Defaulting logging level to 'INFO'.")
-                self.level = "INFO"
+            valid = 0 <= self.level <= logging.CRITICAL
         else:
             self.level = self.level.strip().upper()
-            if self.level not in LOG_LEVELS:
-                msg = f"Invalid logging level '{self.level}', must be one of {', '.join(LOG_LEVELS)}"
-                logger.warning(msg)
-                logger.warning("Defaulting logging level to 'INFO'.")
-                self.level = "INFO"
+            valid = self.level in logging.getLevelNamesMapping()  # Includes TRACE via addLevelName below
+
+        if not valid:
+            logger.warning("Invalid logging level '%s'.", self.level)
+            logger.warning("Defaulting logging level to 'INFO'.")
+            self.level = "INFO"
 
         return self
 
@@ -72,15 +53,6 @@ class LoggingConf(BaseModel):
             return None
 
         return Path(value)
-
-    def setup_verbosity_cli(self, verbosity: int) -> None:
-        """Setup the logger from verbosity count from CLI."""
-        if verbosity >= 2:  # noqa: PLR2004 Magic number makes sense
-            self.level = TRACE_LEVEL_NUM
-        elif verbosity == 1:
-            self.level = logging.DEBUG
-        else:
-            self.level = logging.INFO
 
 
 # This is the logging message format that I like.

@@ -12,12 +12,12 @@ from pydantic import BaseModel
 from archivepodcast.constants import XML_ENCODING
 from archivepodcast.downloader import PodcastsDownloader
 from archivepodcast.downloader.constants import USER_AGENT
+from archivepodcast.downloader.helpers import tree_no_episodes
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_cache import local_file_cache, s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.rss import tree_no_episodes
 from archivepodcast.utils.s3 import s3_put
 
 from .webpage_renderer import WebpageRenderer
@@ -377,9 +377,9 @@ class PodcastArchiver:
         base_url = self._app_config.s3.cdn_domain if self.s3 else self._app_config.inet_path
 
         file_list = (
-            await s3_file_cache.get_all_list_str(self._app_config.s3.bucket)
+            [s3_file["Key"] for s3_file in await s3_file_cache.get_all(self._app_config.s3.bucket)]
             if self.s3
-            else local_file_cache.get_all_str()
+            else [str(path) for path in local_file_cache.get_all()]
         )
 
         return APFileList(base_url=base_url.encoded_string(), files=file_list)

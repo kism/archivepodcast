@@ -29,6 +29,13 @@ async def delay_download(attempt: int) -> None:
     await asyncio.sleep(random.uniform(0.1, 1) + (0.5 * attempt))
 
 
+def tree_no_episodes(tree: etree._ElementTree | None) -> bool:
+    """Check if the XML tree has no episodes."""
+    if tree is None:
+        return True
+    return len(tree.xpath("//item")) == 0
+
+
 def get_file_date_string(channel: etree._Element) -> str:
     """Get the file date string from the channel."""
     file_date_string = "00000000"

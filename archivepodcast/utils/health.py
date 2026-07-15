@@ -222,18 +222,6 @@ class PodcastArchiverHealth:
             if value is not None and key in valid_attrs:
                 setattr(self._core, key, value)
 
-    def currently_rendering(
-        self,
-    ) -> bool:
-        """Return the currently rendering status."""
-        return self._core.currently_rendering
-
-    def currently_loading_config(
-        self,
-    ) -> bool:
-        """Return the currently loading config status."""
-        return self._core.currently_loading_config
-
     def set_host_info(self, app_config: AppConfig) -> None:
         """Set the hosting info from AppConfig."""
         self._host_info = HostingInfo.load_from_config(app_config)

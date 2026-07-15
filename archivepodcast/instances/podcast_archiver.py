@@ -10,11 +10,11 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any
 
 from fastapi.responses import FileResponse, HTMLResponse, Response
-from jinja2 import Environment, FileSystemLoader
 
 from archivepodcast.archiver import PodcastArchiver
+from archivepodcast.archiver.webpage_renderer import TEMPLATE_ENV
 from archivepodcast.config import ArchivePodcastConfig
-from archivepodcast.constants import APP_DIRECTORY, JSON_INDENT
+from archivepodcast.constants import JSON_INDENT
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
@@ -30,12 +30,10 @@ logger = get_logger(__name__)
 
 _ap: PodcastArchiver | None = None
 
-_env = Environment(loader=FileSystemLoader(str(APP_DIRECTORY / "templates")), autoescape=True)
-
 
 def render_error(status: HTTPStatus, **context: Any) -> HTMLResponse:  # noqa: ANN401
     """Render the error template as a response."""
-    render = _env.get_template("error.html.j2").render(error_code=str(status), **context)
+    render = TEMPLATE_ENV.get_template("error.html.j2").render(error_code=str(status), **context)
     return HTMLResponse(render, status_code=status)
 
 
@@ -143,7 +141,7 @@ def _get_time_until_next_run(current_time: datetime.datetime) -> int:
 def send_ap_cached_webpage(webpage_name: str) -> Response:
     """Send a cached webpage."""
     if not _ap:
-        return generate_not_initialized_error()
+        return render_ap_error(HTTPStatus.INTERNAL_SERVER_ERROR, "Archive Podcast not initialized")
 
     try:
         webpage = _ap.renderer.webpages.get_webpage(webpage_name)
@@ -154,7 +152,11 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
             logger.warning("Webpage not in cache serving from disk: %s", static_path)
             return FileResponse(static_path)
 
-        return generate_not_generated_error(webpage_name)
+        logger.error("Requested page: %s not generated", webpage_name)  # noqa: TRY400 # Cache miss, no traceback needed
+        return render_ap_error(
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+            f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
+        )
 
     cache_control = "public, max-age=180"
     if "woff2" in webpage_name:
@@ -168,32 +170,22 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
     )
 
 
-def generate_not_initialized_error() -> Response:
-    """Generate a not initialized 500 error."""
-    logger.error("ArchivePodcast object not initialized")
-    default_header = '<header><a href="index.html">Home</a><hr></header>'
-
+def render_ap_error(status: HTTPStatus, error_text: str) -> Response:
+    """Render an error page, falling back if the archiver isn't initialised."""
     ap_conf = get_ap_config()
 
-    return render_error(
-        HTTPStatus.INTERNAL_SERVER_ERROR,
-        error_text="Archive Podcast not initialized",
-        app_config=ap_conf.app,
-        header=default_header,
-    )
-
-
-def generate_not_generated_error(webpage_name: str) -> Response:
-    """Generate a 500 error."""
     if not _ap:
-        return generate_not_initialized_error()
+        logger.error("ArchivePodcast object not initialized")
+        return render_error(
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+            error_text="Archive Podcast not initialized",
+            app_config=ap_conf.app,
+            header='<header><a href="index.html">Home</a><hr></header>',
+        )
 
-    ap_conf = get_ap_config()
-
-    logger.error("Requested page: %s not generated", webpage_name)
     return render_error(
-        HTTPStatus.INTERNAL_SERVER_ERROR,
-        error_text=f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
+        status,
+        error_text=error_text,
         about_page=get_about_page_exists(),
         app_config=ap_conf.app,
         header=_ap.renderer.webpages.generate_header("error.html"),
@@ -211,18 +203,7 @@ def get_about_page_exists() -> bool:
 
 def generate_404() -> Response:
     """We use the 404 template in a couple places."""
-    if not _ap:
-        return generate_not_initialized_error()
-
-    ap_conf = get_ap_config()
-
-    return render_error(
-        HTTPStatus.NOT_FOUND,
-        error_text="Page not found, how did you even?",
-        about_page=get_about_page_exists(),
-        app_config=ap_conf.app,
-        header=_ap.renderer.webpages.generate_header("error.html"),
-    )
+    return render_ap_error(HTTPStatus.NOT_FOUND, "Page not found, how did you even?")
 
 
 def get_ap() -> PodcastArchiver:
