@@ -16,8 +16,9 @@ from .time import warn_if_too_long
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
-    from types_aiobotocore_s3.type_defs import ObjectTypeDef  # pragma: no cover
+    from types_aiobotocore_s3.type_defs import HeadObjectOutputTypeDef, ObjectTypeDef  # pragma: no cover
 else:
+    HeadObjectOutputTypeDef = object
     ObjectTypeDef = object
 
 MAX_CACHE_AGE = 120
@@ -38,6 +39,22 @@ async def s3_put(bucket: str, key: str, body: bytes, content_type: str, *, large
     async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
         await s3_client.put_object(Bucket=bucket, Key=key, Body=body, ContentType=content_type)
     warn_if_too_long(f"upload {key} to s3", time.time() - start_time, large_file=large_file)
+
+
+async def s3_head(bucket: str, key: str) -> HeadObjectOutputTypeDef:
+    """Head an object in s3, raises botocore ClientError if it doesn't exist."""
+    s3_config = get_ap_config_s3_client()
+    session = get_session()
+    async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+        return await s3_client.head_object(Bucket=bucket, Key=key)
+
+
+async def s3_delete(bucket: str, key: str) -> None:
+    """Delete an object from s3."""
+    s3_config = get_ap_config_s3_client()
+    session = get_session()
+    async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+        await s3_client.delete_object(Bucket=bucket, Key=key)
 
 
 async def s3_get(bucket: str, key: str) -> bytes:

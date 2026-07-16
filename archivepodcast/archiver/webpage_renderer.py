@@ -7,18 +7,16 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import markdown
-from aiobotocore.session import get_session
 from anyio import Path as AsyncPath
 from jinja2 import Environment, FileSystemLoader
 
 from archivepodcast.constants import APP_DIRECTORY, JSON_INDENT
-from archivepodcast.instances.config import get_ap_config_s3_client
 from archivepodcast.instances.health import health
 from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.s3 import s3_put
+from archivepodcast.utils.s3 import s3_delete, s3_put
 
 from .webpages import Webpage, Webpages
 
@@ -274,9 +272,6 @@ class WebpageRenderer:
 
         contents_list = await s3_file_cache.get_all(self._app_config.s3.bucket)
 
-        session = get_session()
-        s3_config = get_ap_config_s3_client()
-
         cleanup_actions = 0
 
         def log_first_message() -> None:
@@ -285,23 +280,22 @@ class WebpageRenderer:
                 logger.warning("Starting cleanup of unexpected S3 objects")
             cleanup_actions += 1
 
-        async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
-            contents_str = ""
-            if len(contents_list) > 0:
-                for obj in contents_list:
-                    contents_str += obj["Key"] + "\n"
-                    if obj["Size"] == 0:  # This is for application/x-directory files, but no files should be empty
-                        log_first_message()
-                        logger.warning("S3 Object is empty: %s DELETING", obj["Key"])
-                        await s3_client.delete_object(Bucket=self._app_config.s3.bucket, Key=obj["Key"])
-                    if obj["Key"].startswith("/"):
-                        log_first_message()
-                        logger.warning("S3 Path starts with a /, this is not expected: %s DELETING", obj["Key"])
-                        await s3_client.delete_object(Bucket=self._app_config.s3.bucket, Key=obj["Key"])
-                    if "//" in obj["Key"]:
-                        log_first_message()
-                        logger.warning("S3 Path contains a //, this is not expected: %s DELETING", obj["Key"])
-                        await s3_client.delete_object(Bucket=self._app_config.s3.bucket, Key=obj["Key"])
-                logger.trace("S3 Bucket Contents >>>\n%s", contents_str.strip())
-            else:
-                logger.info("No objects found in the bucket.")
+        contents_str = ""
+        if len(contents_list) > 0:
+            for obj in contents_list:
+                contents_str += obj["Key"] + "\n"
+                if obj["Size"] == 0:  # This is for application/x-directory files, but no files should be empty
+                    log_first_message()
+                    logger.warning("S3 Object is empty: %s DELETING", obj["Key"])
+                    await s3_delete(self._app_config.s3.bucket, obj["Key"])
+                if obj["Key"].startswith("/"):
+                    log_first_message()
+                    logger.warning("S3 Path starts with a /, this is not expected: %s DELETING", obj["Key"])
+                    await s3_delete(self._app_config.s3.bucket, obj["Key"])
+                if "//" in obj["Key"]:
+                    log_first_message()
+                    logger.warning("S3 Path contains a //, this is not expected: %s DELETING", obj["Key"])
+                    await s3_delete(self._app_config.s3.bucket, obj["Key"])
+            logger.trace("S3 Bucket Contents >>>\n%s", contents_str.strip())
+        else:
+            logger.info("No objects found in the bucket.")
