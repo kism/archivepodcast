@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.5.14rc3"
+version = "1.5.14"
 description = "FastAPI webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -42,16 +42,16 @@ profile = ["aiomonitor"]
 
 test = [
     "pytest>=9.1",
-    "coverage==7.15.2", # Not the broken version
+    "coverage==7.15.2",
     "pytest-cov",
     "pytest-mock",
     "pytest-random-order",
     "detect-test-pollution",
-    "types-aiobotocore-s3",      # Mock uses typed dict
+    "types-aiobotocore-s3",  # Mock uses typed dict
     "pytest-asyncio",
     "pytest-socket>=0.7.0",
-    "httpx2",
-    "python-magic>=0.4",         # Tests verify downloaded/converted file content by magic bytes
+    "httpx2",                # FastAPI
+    "python-magic>=0.4",     # Tests verify downloaded/converted file content by magic bytes
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
