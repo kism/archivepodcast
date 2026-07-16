@@ -25,7 +25,7 @@ Run the program once manually to create the default config.json and then fill it
 
 ```bash
 cd /opt/archivepodcast
-sudo -u apuser .venv/bin/uvicorn --factory 'archivepodcast:create_app' --port 5100
+sudo -u apuser .venv/bin/uvicorn --factory 'archivepodcast.run_webapp:create_app' --port 5100
 ```
 
 Edit: `/opt/archivepodcast/instance/config.json` to your liking.
@@ -46,7 +46,7 @@ After=network.target
 [Service]
 User=apuser
 WorkingDirectory=/opt/archivepodcast
-ExecStart=/opt/archivepodcast/.venv/bin/uvicorn --factory 'archivepodcast:create_app' --port 5100
+ExecStart=/opt/archivepodcast/.venv/bin/uvicorn --factory 'archivepodcast.run_webapp:create_app' --port 5100
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 

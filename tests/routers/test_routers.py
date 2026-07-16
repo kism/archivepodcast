@@ -15,6 +15,7 @@ from archivepodcast.archiver.webpages import Webpages
 from archivepodcast.instances import podcast_archiver
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.podcast_archiver import _get_time_until_next_run
+from archivepodcast.utils.health import PodcastArchiverHealth
 from tests.constants import DUMMY_RSS_STR
 
 if TYPE_CHECKING:
@@ -400,3 +401,27 @@ def test_api_reload_no_debug(apa: PodcastArchiver, client_live: TestClient, capl
 
     response = client_live.get("/api/reload")
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_api_profile(client_live: TestClient) -> None:
+    """Test the profile API endpoint."""
+    response = client_live.get("/api/profile")
+    assert response.status_code == HTTPStatus.OK
+
+
+def test_api_health_exception(
+    client_live: TestClient, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test the health API endpoint when getting health fails."""
+
+    def mock_get_health(self: PodcastArchiverHealth) -> None:
+        raise FakeExceptionError
+
+    monkeypatch.setattr(PodcastArchiverHealth, "get_health", mock_get_health)
+
+    with caplog.at_level(logging.ERROR):
+        response = client_live.get("/api/health")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["core"]["alive"] is False
+    assert "Error getting health" in caplog.text

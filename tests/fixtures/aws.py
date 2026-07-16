@@ -86,6 +86,14 @@ class PaginatorMock:
         return generator()
 
 
+class StreamingBodyMock:
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+
+    async def read(self) -> bytes:
+        return self._data
+
+
 class S3ClientMock:
     def get_paginator(self, operation_name: str) -> PaginatorMock:
         return PaginatorMock(_objects)
@@ -139,6 +147,17 @@ class S3ClientMock:
 
     async def delete_object(self, Bucket: str, Key: str) -> None:
         _objects.pop(Key, None)
+
+    async def get_object(self, Bucket: str, Key: str) -> dict[str, StreamingBodyMock]:
+        wip = _objects.get(Key)
+        if wip is None:
+            raise S3ClientError(
+                operation_name="GetObject", error_response={"Error": {"Code": "NoSuchKey", "Message": "Not Found"}}
+            )
+        body = wip.get("Body", b"")
+        if isinstance(body, str):
+            body = body.encode()
+        return {"Body": StreamingBodyMock(body if isinstance(body, bytes) else b"")}
 
     async def head_object(self, Bucket: str, Key: str) -> HeadObjectOutputTypeDef:
         wip = _objects.get(Key)

@@ -1,6 +1,6 @@
 # --- Pytest specific stage ---
 
-FROM ghcr.io/astral-sh/uv:0.9 AS uv-base
+FROM ghcr.io/astral-sh/uv:0.11 AS uv-base
 
 FROM archivepodcast
 
