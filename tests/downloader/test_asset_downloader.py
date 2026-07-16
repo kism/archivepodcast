@@ -10,6 +10,7 @@ from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from archivepodcast.utils.s3 import S3File
+from tests import FakeExceptionError
 from tests.models.aiohttp import FakeResponseDef, FakeSession
 
 if TYPE_CHECKING:
@@ -216,3 +217,141 @@ async def test_upload_asset_s3_remove_original_false_upload_and_keep(
     s3_path = test_file.relative_to(get_app_paths().web_root).as_posix()
     s3_object_keys = [obj["Key"] for obj in s3_object_list.get("Contents", [])]
     assert s3_path in s3_object_keys
+
+
+@pytest.mark.asyncio
+async def test_download_cover_art_s3_not_found_anywhere(
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    mock_get_session: AWSAioSessionMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test cover art in s3 mode when it exists neither locally nor in the bucket."""
+    config_file = "testing_true_valid_s3.json"
+    config = get_test_config(config_file)
+    podcast = config.podcasts[0]
+
+    downloader = AssetDownloader(
+        podcast=podcast,
+        app_config=config.app,
+        s3=True,
+        aiohttp_session=FakeSession(responses={}),  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+    )
+
+    calls: list[str] = []
+
+    async def mock_download_to_local(self, url, destination) -> None:
+        calls.append("download")
+
+    async def mock_upload_asset_s3(self, file_path, extension, *, remove_original) -> None:
+        calls.append("upload")
+
+    monkeypatch.setattr(AssetDownloader, "_download_to_local", mock_download_to_local)
+    monkeypatch.setattr(AssetDownloader, "_upload_asset_s3", mock_upload_asset_s3)
+
+    await downloader._download_cover_art("https://example.com/cover.jpg", "cover", ".jpg")
+
+    assert calls == ["download", "upload"]
+
+
+@pytest.mark.asyncio
+async def test_upload_asset_s3_unhandled_error(
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    mock_get_session: AWSAioSessionMock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test that an unhandled error during s3 upload is logged and marks the feed unhealthy."""
+    config_file = "testing_true_valid_s3.json"
+    config = get_test_config(config_file)
+    podcast = config.podcasts[0]
+
+    downloader = AssetDownloader(
+        podcast=podcast,
+        app_config=config.app,
+        s3=True,
+        aiohttp_session=FakeSession(responses={}),  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+    )
+
+    content_dir = get_app_paths().web_root / "content" / podcast.name_one_word
+    content_dir.mkdir(parents=True, exist_ok=True)
+    test_file = content_dir / "test-cover.jpg"
+    test_file.write_bytes(b"test cover art content")
+
+    async def mock_put_asset_s3(self, *args, **kwargs) -> None:
+        raise FakeExceptionError
+
+    monkeypatch.setattr(AssetDownloader, "_put_asset_s3", mock_put_asset_s3)
+
+    with caplog.at_level(logging.ERROR):
+        await downloader._upload_asset_s3(test_file, ".jpg", remove_original=False)
+
+    assert "Unhandled s3 error" in caplog.text
+    assert not downloader._feed_download_healthy
+
+
+@pytest.mark.asyncio
+async def test_put_asset_s3_remove_original_file_gone(
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    mock_get_session: AWSAioSessionMock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test that a file vanishing before local removal is logged, not raised."""
+    config_file = "testing_true_valid_s3.json"
+    config = get_test_config(config_file)
+    podcast = config.podcasts[0]
+
+    downloader = AssetDownloader(
+        podcast=podcast,
+        app_config=config.app,
+        s3=True,
+        aiohttp_session=FakeSession(responses={}),  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+    )
+
+    content_dir = get_app_paths().web_root / "content" / podcast.name_one_word
+    content_dir.mkdir(parents=True, exist_ok=True)
+    test_file = content_dir / "test-episode.mp3"
+    test_file.write_bytes(b"episode content")
+
+    async def mock_unlink(self, missing_ok=False) -> None:
+        raise FileNotFoundError
+
+    monkeypatch.setattr("archivepodcast.downloader.asset_downloader.AsyncPath.unlink", mock_unlink)
+
+    with caplog.at_level(logging.ERROR):
+        await downloader._put_asset_s3(test_file, "content/test/test-episode.mp3", "audio/mpeg", remove_original=True)
+
+    assert "Could not remove the local file, the source file was not found" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_check_path_exists_s3_found_in_bucket(
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    mock_get_session: AWSAioSessionMock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test _check_path_exists finding the file in the bucket via head_object."""
+    config_file = "testing_true_valid_s3.json"
+    config = get_test_config(config_file)
+    podcast = config.podcasts[0]
+
+    downloader = AssetDownloader(
+        podcast=podcast,
+        app_config=config.app,
+        s3=True,
+        aiohttp_session=FakeSession(responses={}),  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+    )
+
+    s3_key = "content/test/exists.mp3"
+    async with mock_get_session.create_client("s3") as s3_client:
+        await s3_client.put_object(Bucket=config.app.s3.bucket, Key=s3_key, Body=b"x", ContentType="audio/mpeg")
+
+    # Clear the cache so the check has to hit head_object
+    s3_file_cache._files = []
+
+    with caplog.at_level(logging.DEBUG):
+        exists = await downloader._check_path_exists(s3_key)
+
+    assert exists is True
+    assert "exists in s3 bucket" in caplog.text
+    assert s3_file_cache.check_file_exists(s3_key)

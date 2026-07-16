@@ -19,7 +19,7 @@ from archivepodcast.instances.path_cache import local_file_cache, s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.s3 import s3_put
+from archivepodcast.utils.s3 import s3_get, s3_put
 
 from .webpage_renderer import WebpageRenderer
 
@@ -209,7 +209,7 @@ class PodcastArchiver:
 
         logger.info("[%s] Processing podcast to archive: %s", podcast.name_one_word, podcast.new_name)
 
-        previous_feed = self._get_previous_feed(podcast)
+        previous_feed = await self._get_previous_feed(podcast)
         tree = await self._download_live_podcast(podcast, aiohttp_session) if podcast.live else None
 
         if not podcast.live:
@@ -235,8 +235,8 @@ class PodcastArchiver:
         logger.trace("Exiting _grab_podcast for %s", podcast.name_one_word)
 
     # region _grab helpers
-    def _get_previous_feed(self, podcast: PodcastConfig) -> bytes:
-        """Get the previous feed from cache or file."""
+    async def _get_previous_feed(self, podcast: PodcastConfig) -> bytes:
+        """Get the previous feed from cache, file, or s3."""
         try:
             return self.podcast_rss[podcast.name_one_word]
         except KeyError:
@@ -244,6 +244,11 @@ class PodcastArchiver:
             if rss_file_path.is_file():
                 with contextlib.suppress(Exception):
                     return rss_file_path.read_bytes()
+            if self.s3:  # Fresh container (lambda) won't have the feed on disk, but it will be in s3
+                previous_feed = await s3_get(self._app_config.s3.bucket, "rss/" + podcast.name_one_word)
+                if previous_feed:
+                    logger.debug("[%s] Loaded previous feed from s3", podcast.name_one_word)
+                return previous_feed
             return b""
 
     async def _backup_previous_feed(

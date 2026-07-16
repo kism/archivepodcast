@@ -1,13 +1,34 @@
+import importlib
+import os
+import sys
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
 
+import archivepodcast.lambda_handler
 from archivepodcast.lambda_handler import handler
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
+
+def test_import_in_lambda_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Reimport the module with lambda env vars set to cover the import-time branches."""
+    monkeypatch.setenv("AWS_LAMBDA_FUNCTION_NAME", "pytest")
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/fake/existing")
+
+    try:
+        importlib.reload(archivepodcast.lambda_handler)
+
+        assert getattr(sys, "frozen", False) is True
+        assert getattr(sys, "_MEIPASS", "") == "/tmp"  # noqa: S108
+        assert os.environ["LD_LIBRARY_PATH"] == "/opt/lib:/fake/existing"
+    finally:
+        for attr in ("frozen", "_MEIPASS"):
+            if hasattr(sys, attr):
+                delattr(sys, attr)
 
 
 def test_run_lambda(

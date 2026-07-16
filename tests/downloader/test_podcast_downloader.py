@@ -1,6 +1,8 @@
 """Tests for PodcastsDownloader functionality."""
 
 import logging
+import xml.etree.ElementTree as ET
+from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -259,6 +261,63 @@ async def test_download_podcast_no_response(
 
     assert tree is None
     assert not apd._feed_download_healthy
+
+
+@pytest.mark.asyncio
+async def test_download_and_parse_rss_invalid_xml(
+    apd: PodcastsDownloader,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test that a downloaded feed that isn't valid XML is discarded."""
+
+    async def mock_fetch_podcast_rss(*args: Any, **kwargs: Any) -> tuple[bytes, HTTPStatus]:
+        return b"NOT XML", HTTPStatus.OK
+
+    monkeypatch.setattr("archivepodcast.downloader.PodcastsDownloader._fetch_podcast_rss", mock_fetch_podcast_rss)
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
+        tree = await apd._download_and_parse_rss()
+
+    assert tree is None
+    assert not apd._feed_download_healthy
+    assert "is not valid XML, cannot process podcast feed" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_fetch_podcast_rss_client_error(apd: PodcastsDownloader) -> None:
+    """Test that an aiohttp client error during fetch returns None, None."""
+
+    class RaisingSession:
+        def get(self, url: str) -> None:
+            raise aiohttp.ClientError
+
+    apd._aiohttp_session = RaisingSession()  # type: ignore[assignment]  # ty:ignore[invalid-assignment]
+
+    content, status = await apd._fetch_podcast_rss()
+
+    assert content is None
+    assert status is None
+
+
+def test_handle_itunes_owner_tag_defaults(apd: PodcastsDownloader) -> None:
+    """Test that owner name/email from the source feed are adopted when not set in config."""
+    itunes = "{http://www.itunes.com/dtds/podcast-1.0.dtd}"
+    owner = ET.Element(f"{itunes}owner")
+    name = ET.SubElement(owner, f"{itunes}name")
+    name.text = "Source Name"
+    email = ET.SubElement(owner, f"{itunes}email")
+    email.text = "source@example.com"
+
+    apd._podcast.new_name = ""
+    apd._podcast.contact_email = ""
+
+    apd._handle_itunes_owner_tag(owner)
+
+    assert apd._podcast.new_name == "Source Name"
+    assert name.text == "Source Name"
+    assert apd._podcast.contact_email == "source@example.com"
+    assert email.text == "source@example.com"
 
 
 @pytest.mark.parametrize(

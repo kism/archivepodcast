@@ -3,7 +3,7 @@
 
 [project]
 name = "archivepodcast"
-version = "1.5.14rc2"
+version = "1.5.14rc3"
 description = "FastAPI webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
@@ -98,9 +98,6 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"archivepodcast/__init__.py" = [
-    "RUF067", # KG App factory convention, create_app lives in __init__
-]
 "archivepodcast/config.py" = [
     "E501", # KG Some long lines
 ]
@@ -159,24 +156,19 @@ docstring-code-format = true
 docstring-code-line-length = 40
 
 [tool.coverage.run]
+command_line = ".venv/bin/pytest"
 source = ["archivepodcast"]
 context = "test"
 
+[tool.pytest.ini_options]
+addopts = ["--disable-socket", "--allow-hosts=127.0.0.1,127.0.1.1"]
+asyncio_mode = "auto"
+testpaths = ["tests"]
 
 [tool.coverage.report]
 show_missing = false
-sort = "-Cover"
-
-[tool.pytest.ini_options]
-addopts = [
-    "--cov=archivepodcast",
-    "--cov-report=term",
-    "--cov-report=html",
-    "--disable-socket",
-    "--allow-hosts=127.0.0.1,127.0.1.1",
-    "--asyncio-mode=auto",
-]
-testpaths = ["tests"]
+format = "text"
+sort = "-Miss"
 
 [tool.coverage.html]
 show_contexts = true

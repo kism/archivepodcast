@@ -6,16 +6,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiohttp
-from aiobotocore.session import get_session
 from anyio import Path as AsyncPath
 from botocore.exceptions import ClientError as S3ClientError
 
-from archivepodcast.instances.config import get_ap_config_s3_client
 from archivepodcast.instances.path_cache import local_file_cache, s3_file_cache
 from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.utils.log_messages import log_aiohttp_exception
 from archivepodcast.utils.logger import get_logger
-from archivepodcast.utils.s3 import S3File, s3_put
+from archivepodcast.utils.s3 import S3File, s3_head, s3_put
 from archivepodcast.utils.time import warn_if_too_long
 
 from .constants import CONTENT_TYPES, DOWNLOAD_RETRY_COUNT
@@ -232,11 +230,7 @@ class AssetDownloader:
             msg = f"Checking length of s3 object: {s3_key}"
             logger.trace("[%s] %s", self._podcast.name_one_word, msg)
 
-            session = get_session()
-            ap_s3_config = get_ap_config_s3_client()
-            async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
-                response = await s3_client.head_object(Bucket=self._app_config.s3.bucket, Key=s3_key)
-
+            response = await s3_head(self._app_config.s3.bucket, s3_key)
             new_length = response["ContentLength"]
             msg = f"Length of converted wav file {s3_key}: {new_length} bytes, stored in s3"
         else:
@@ -324,30 +318,26 @@ class AssetDownloader:
             s3_key = file_path.as_posix().lstrip("/")
 
             if not s3_file_cache.check_file_exists(s3_key):
-                session = get_session()
-                ap_s3_config = get_ap_config_s3_client()
+                try:
+                    # Head object to check if file exists
+                    my_object = await s3_head(self._app_config.s3.bucket, s3_key)
+                    logger.debug(
+                        "File: %s exists in s3 bucket",
+                        s3_key,
+                    )
+                    s3_file_cache.add_file(S3File(key=s3_key, size=my_object.get("ContentLength", 0)))
+                    file_exists = True
 
-                async with session.create_client("s3", **ap_s3_config.__dict__) as s3_client:
-                    try:
-                        # Head object to check if file exists
-                        my_object = await s3_client.head_object(Bucket=self._app_config.s3.bucket, Key=s3_key)
+                except S3ClientError as e:
+                    if e.response.get("Error", {}).get("Code") == "404":
                         logger.debug(
-                            "File: %s exists in s3 bucket",
+                            "File: %s does not exist 🙅‍ in the s3 bucket",
                             s3_key,
                         )
-                        s3_file_cache.add_file(S3File(key=s3_key, size=my_object.get("ContentLength", 0)))
-                        file_exists = True
-
-                    except S3ClientError as e:
-                        if e.response.get("Error", {}).get("Code") == "404":
-                            logger.debug(
-                                "File: %s does not exist 🙅‍ in the s3 bucket",
-                                s3_key,
-                            )
-                        else:
-                            logger.exception("s3 check file exists errored out?")
-                    except Exception:  # pylint: disable=broad-exception-caught
-                        logger.exception("Unhandled s3 Error:")
+                    else:
+                        logger.exception("s3 check file exists errored out?")
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logger.exception("Unhandled s3 Error:")
 
             else:
                 logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_key)

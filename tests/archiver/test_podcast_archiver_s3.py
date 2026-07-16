@@ -1,6 +1,8 @@
 """Tests for PodcastArchiver S3 functionality."""
 
+import asyncio
 import logging
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -99,6 +101,84 @@ async def test__check_s3_files(apa_aws: PodcastArchiver, caplog: pytest.LogCaptu
     assert "Checking state of s3 bucket" in caplog.text
     assert "S3 Bucket Contents" in caplog.text
     assert "Unhandled s3 error" not in caplog.text
+
+
+def test_grab_podcasts_not_live_feed_in_s3(
+    apa_aws: PodcastArchiver,
+    caplog: pytest.LogCaptureFixture,
+    mock_get_session: AWSAioSessionMock,
+) -> None:
+    """live=false and no feed on disk, but the feed exists in s3 (fresh lambda container)."""
+    apa_aws.podcast_list[0].live = False
+
+    async def seed_feed() -> None:
+        async with mock_get_session.create_client("s3") as s3_client:
+            await s3_client.put_object(
+                Bucket=apa_aws._app_config.s3.bucket,
+                Key="rss/test",
+                Body=DUMMY_RSS_STR,
+                ContentType="application/rss+xml",
+            )
+
+    asyncio.run(seed_feed())
+
+    with caplog.at_level(logging.DEBUG, logger="archivepodcast.archiver"):
+        apa_aws.grab_podcasts()
+
+    assert "Loaded previous feed from s3" in caplog.text
+    assert "Cannot find local rss feed file" not in caplog.text
+    assert "Unable to host podcast" not in caplog.text
+    assert str(apa_aws.get_rss_feed("test"), "utf-8") == DUMMY_RSS_STR
+
+
+def _rss_with_items(count: int) -> str:
+    items = "".join(f"<item><title>ep{i}</title></item>" for i in range(count))
+    return f"<rss><channel><title>t</title>{items}</channel></rss>"
+
+
+@pytest.mark.asyncio
+async def test_backup_previous_feed_uploads_to_s3(
+    apa_aws: PodcastArchiver,
+    caplog: pytest.LogCaptureFixture,
+    mock_get_session: AWSAioSessionMock,
+) -> None:
+    """Test that a shrinking feed gets the previous version backed up to s3."""
+    tree: ET.ElementTree[ET.Element] = ET.ElementTree(ET.fromstring(_rss_with_items(1)))
+    previous_feed = _rss_with_items(2).encode()
+
+    with caplog.at_level(logging.WARNING, logger="archivepodcast.archiver"):
+        await apa_aws._backup_previous_feed(apa_aws.podcast_list[0], tree, previous_feed)
+
+    assert "backing up previous feed" in caplog.text
+
+    async with mock_get_session.create_client("s3") as s3_client:
+        listing = await s3_client.list_objects_v2(Bucket=apa_aws._app_config.s3.bucket)
+
+    keys = [obj["Key"] for obj in listing.get("Contents", [])]
+    assert any(key.startswith("content/test/") and key.endswith("-rss-backup.xml") for key in keys)
+
+
+@pytest.mark.asyncio
+async def test_backup_previous_feed_s3_error(
+    apa_aws: PodcastArchiver,
+    caplog: pytest.LogCaptureFixture,
+    mock_get_session: AWSAioSessionMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that an s3 error during feed backup is logged, not raised."""
+
+    async def mock_s3_put(*args: Any, **kwargs: Any) -> None:
+        raise FakeExceptionError
+
+    monkeypatch.setattr("archivepodcast.archiver.podcast_archiver.s3_put", mock_s3_put)
+
+    tree: ET.ElementTree[ET.Element] = ET.ElementTree(ET.fromstring(_rss_with_items(1)))
+    previous_feed = _rss_with_items(2).encode()
+
+    with caplog.at_level(logging.ERROR, logger="archivepodcast.archiver"):
+        await apa_aws._backup_previous_feed(apa_aws.podcast_list[0], tree, previous_feed)
+
+    assert "Unhandled s3 error trying to upload the file" in caplog.text
 
 
 @pytest.mark.asyncio
