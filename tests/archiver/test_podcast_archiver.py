@@ -8,9 +8,11 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+from archivepodcast.archiver.podcast_archiver import _load_cached_feed
 from archivepodcast.instances.path_helper import get_app_paths
 from tests import FakeExceptionError
 from tests.constants import DUMMY_RSS_STR
+from tests.models.aiohttp import FakeSession
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine
@@ -144,6 +146,57 @@ def test_grab_podcasts_not_live_no_existing_feed(
     assert '"live": false, in config, not fetching new episodes, will load feed from disk' in caplog.text
     assert "Cannot find local rss feed file to serve unavailable podcast" in caplog.text
     assert "Unable to host podcast: test, something is wrong" in caplog.text
+
+
+def test_load_cached_feed_no_episodes(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
+    """Test that a cached feed with no episodes is discarded."""
+    rss_no_items = b"<rss><channel><title>t</title></channel></rss>"
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.archiver"):
+        tree = _load_cached_feed(apa.podcast_list[0], rss_no_items)
+
+    assert tree is None
+    assert "Local/cached rss feed has no episodes" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_grab_podcast_no_name(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
+    """Test that a podcast with no name_one_word is skipped."""
+    apa.podcast_list[0].name_one_word = ""
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.archiver"):
+        await apa._grab_podcast(apa.podcast_list[0], FakeSession(responses={}))  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+
+    assert "Podcast has no name_one_word set in config, cannot proceed" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_backup_previous_feed_invalid_previous(apa: PodcastArchiver, caplog: pytest.LogCaptureFixture) -> None:
+    """Test that an unparseable previous feed is not backed up."""
+    tree: ET.ElementTree[ET.Element] = ET.ElementTree(ET.fromstring(DUMMY_RSS_STR))
+
+    with caplog.at_level(level=logging.WARNING, logger="archivepodcast.archiver"):
+        await apa._backup_previous_feed(apa.podcast_list[0], tree, b"INVALID")
+
+    assert "backing up previous feed" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_download_live_podcast_failure(
+    apa: PodcastArchiver, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that a failed live download is logged."""
+
+    async def mock_download_podcast(self: Any) -> None:
+        return None
+
+    monkeypatch.setattr("archivepodcast.downloader.PodcastsDownloader.download_podcast", mock_download_podcast)
+
+    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.archiver"):
+        tree = await apa._download_live_podcast(apa.podcast_list[0], FakeSession(responses={}))  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+
+    assert tree is None
+    assert "Unable to download podcast: test" in caplog.text
 
 
 def test_grab_podcasts_live(
