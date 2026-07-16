@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from aiobotocore.session import get_session
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from archivepodcast.instances.config import get_ap_config_s3_client
@@ -37,6 +38,22 @@ async def s3_put(bucket: str, key: str, body: bytes, content_type: str, *, large
     async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
         await s3_client.put_object(Bucket=bucket, Key=key, Body=body, ContentType=content_type)
     warn_if_too_long(f"upload {key} to s3", time.time() - start_time, large_file=large_file)
+
+
+async def s3_get(bucket: str, key: str) -> bytes:
+    """Download an object from s3, returns empty bytes if it doesn't exist."""
+    s3_config = get_ap_config_s3_client()
+    session = get_session()
+    start_time = time.time()
+    try:
+        async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+            response = await s3_client.get_object(Bucket=bucket, Key=key)
+            body = await response["Body"].read()
+    except ClientError:
+        logger.debug("Object not found in s3: %s", key)
+        return b""
+    warn_if_too_long(f"download {key} from s3", time.time() - start_time)
+    return body
 
 
 class S3FileCache(BaseModel):
