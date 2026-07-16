@@ -2,7 +2,7 @@ FROM archivepodcast:ffmpeg AS ffmpeg-builder
 
 FROM public.ecr.aws/lambda/python:3.14 AS python-source
 
-FROM ghcr.io/astral-sh/uv:0.9 AS uv-base
+FROM ghcr.io/astral-sh/uv:0.11 AS uv-base
 
 # --- Python dependencies stage ---
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS python-builder
