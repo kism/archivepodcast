@@ -77,6 +77,6 @@ USER ap:ap
 
 EXPOSE 5100
 
-CMD [ "uvicorn", "--factory", "archivepodcast:create_app", "--host", "0.0.0.0", "--port", "5100", "--proxy-headers", "--forwarded-allow-ips", "*" ]
+CMD [ "uvicorn", "--factory", "archivepodcast.run_webapp:create_app", "--host", "0.0.0.0", "--port", "5100", "--proxy-headers", "--forwarded-allow-ips", "*" ]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -f http://localhost:5100/api/health || exit 1
