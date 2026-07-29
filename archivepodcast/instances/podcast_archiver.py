@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 _ap: PodcastArchiver | None = None
 
 
-def render_error(status: HTTPStatus, **context: Any) -> HTMLResponse:  # noqa: ANN401
+def render_error(status: HTTPStatus, **context: Any) -> HTMLResponse:  # ruff: ignore[any-type]
     """Render the error template as a response."""
     render = TEMPLATE_ENV.get_template("error.html.j2").render(error_code=str(status), **context)
     return HTMLResponse(render, status_code=status)
@@ -39,7 +39,7 @@ def render_error(status: HTTPStatus, **context: Any) -> HTMLResponse:  # noqa: A
 
 def initialise_archivepodcast() -> None:
     """Initialize the archivepodcast app."""
-    global _ap  # noqa: PLW0603
+    global _ap  # ruff: ignore[global-statement]
     ap_conf = get_ap_config()
 
     start_time = time.time()
@@ -152,7 +152,7 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
             logger.warning("Webpage not in cache serving from disk: %s", static_path)
             return FileResponse(static_path)
 
-        logger.error("Requested page: %s not generated", webpage_name)  # noqa: TRY400 # Cache miss, no traceback needed
+        logger.error("Requested page: %s not generated", webpage_name)  # ruff: ignore[error-instead-of-exception] # Cache miss, no traceback needed
         return render_ap_error(
             HTTPStatus.INTERNAL_SERVER_ERROR,
             f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",

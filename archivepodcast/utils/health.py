@@ -87,7 +87,7 @@ class PodcastHealth(BaseModel):
                     parsed_pubdate = parsed_pubdate.replace(tzinfo=datetime.UTC)
                 new_latest_episode.pubdate = int(parsed_pubdate.timestamp())
             except ValueError:
-                logger.error("Unable to parse pubDate: %s", pod_pubdate)  # noqa: TRY400 # No need for a traceback
+                logger.error("Unable to parse pubDate: %s", pod_pubdate)  # ruff: ignore[error-instead-of-exception] # No need for a traceback
 
         return new_latest_episode, new_episode_count
 

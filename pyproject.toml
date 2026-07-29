@@ -80,33 +80,33 @@ ignore = [
     "DJ",  # KG Django not required
     "NPY", # KG Numpy not required
     "PD",  # KG Pandas not required
-    "CPY", # KG Pandas not required
+    "CPY", # KG Copyright not required, handled in pyproject.toml
 
     # Specific rules
-    "TD002",   # KG Verbose TODO, only I work on this project
-    "TD003",   # KG Verbose TODO, only I work on this project
-    "S311",    # KG I'll assume no real crypto will be done.
-    "ISC001",  # KG conflict in the formatter
-    "COM812",  # KG conflict in the formatter
-    "SIM117",  # KG Honestly easier to read with thing and thing as with: with:
-    "DOC201",  # KG Unrequired docstrings fine
-    "DOC402",  # KG Unrequired docstrings fine
-    "DOC501",  # KG Unrequired docstrings fine
-    "PLC1901", # KG I like comparing to empty strings
-    "S405",    # KG stdlib etree import, feeds are trusted-ish and defusedxml is dead
-    "S314",    # KG stdlib etree parsing, same reasoning
+    "missing-todo-author",   # KG Verbose TODO, only I work on this project
+    "missing-todo-link",   # KG Verbose TODO, only I work on this project
+    "suspicious-non-cryptographic-random-usage",    # KG I'll assume no real crypto will be done.
+    "single-line-implicit-string-concatenation",  # KG conflict in the formatter
+    "missing-trailing-comma",  # KG conflict in the formatter
+    "multiple-with-statements",  # KG Honestly easier to read with thing and thing as with: with:
+    "docstring-missing-returns",  # KG Unrequired docstrings fine
+    "docstring-missing-yields",  # KG Unrequired docstrings fine
+    "docstring-missing-exception",  # KG Unrequired docstrings fine
+    "compare-to-empty-string", # KG I like comparing to empty strings
+    "suspicious-xml-etree-import",    # KG stdlib etree import, feeds are trusted-ish and defusedxml is dead
+    "suspicious-xml-element-tree-usage",    # KG stdlib etree parsing, same reasoning
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "archivepodcast/config.py" = [
-    "E501", # KG Some long lines
+    "line-too-long", # KG Some long lines
 ]
 "archivepodcast/lambda_handler.py" = [
-    "ANN401", # KG AWS Lambda handler signatures
-    "ARG001", # KG AWS Lambda handler signatures
-    "D103",   # KG AWS Lambda handler signatures
-    "S108",   # KG AWS Lambda needs /tmp usage
-    "TRY400", # KG Logging in lambda a bit different
+    "any-type", # KG AWS Lambda handler signatures
+    "unused-function-argument", # KG AWS Lambda handler signatures
+    "undocumented-public-function",   # KG AWS Lambda handler signatures
+    "hardcoded-temp-file",   # KG AWS Lambda needs /tmp usage
+    "error-instead-of-exception", # KG Logging in lambda a bit different
 ]
 "tests/**/*.py" = [
     # Modules
@@ -116,23 +116,23 @@ ignore = [
     "ANN", # KG Don't care about annotations in tests
 
     # Specific rules
-    "S101",    # KG asserts allowed in tests.
-    "SLF001",  # KG Accessing private members is needed for testing.
-    "PT004",   # KG monkeypatch doesn't return.
-    "S105",    # KG Hardcoded fake passwords are fine in tests.
-    "PLR0913", # KG Tests can have as many arguments as they want.
-    "BLE001",  # KG Tests can use BaseException.
-    "PLR2004", # KG Tests can have magic number comparisons.
-    "PLC2701", # KG Importing private fine in tests
-    "RUF029",  # KG Unused async fine in tests
-    "PLR0917", # KG Many positional arguments fine in tests
-    "DOC402",  # KG Unrequired docstrings fine
-    "DOC201",  # KG Unrequired docstrings fine
-    "PLR6301", # KG Fakes/mocks must match instance method signatures
-    "RUF067",  # KG Shared test exception lives in __init__
+    "assert",    # KG asserts allowed in tests.
+    "private-member-access",  # KG Accessing private members is needed for testing.
+    "pytest-missing-fixture-name-underscore",   # KG monkeypatch doesn't return.
+    "hardcoded-password-string",    # KG Hardcoded fake passwords are fine in tests.
+    "too-many-arguments", # KG Tests can have as many arguments as they want.
+    "blind-except",  # KG Tests can use BaseException.
+    "magic-value-comparison", # KG Tests can have magic number comparisons.
+    "import-private-name", # KG Importing private fine in tests
+    "unused-async",  # KG Unused async fine in tests
+    "too-many-positional-arguments", # KG Many positional arguments fine in tests
+    "docstring-missing-yields",  # KG Unrequired docstrings fine
+    "docstring-missing-returns",  # KG Unrequired docstrings fine
+    "no-self-use", # KG Fakes/mocks must match instance method signatures
+    "non-empty-init-module",  # KG Shared test exception lives in __init__
 ]
 "tests/fixtures/aws.py" = [
-    "N803", # KG AWS Just breaks the rules here
+    "invalid-argument-name", # KG AWS Just breaks the rules here
 ]
 "docs/*.py" = [
     # Modules
@@ -140,7 +140,7 @@ ignore = [
     "D",
     "A",
 
-    "S106", # Fake secrets
+    "hardcoded-password-func-arg", # Fake secrets
 ]
 
 [tool.ruff.lint.flake8-pytest-style]

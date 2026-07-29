@@ -28,7 +28,7 @@ def _example_config(app: AppConfig | None = None, podcasts: list[PodcastConfig] 
     kwargs = {"app": app} if app else {}
     if podcasts:
         kwargs["podcasts"] = podcasts
-    return ArchivePodcastConfig(_env_file=None, **kwargs)  # ty: ignore[unknown-argument] # Don't let a local .env leak into the docs
+    return ArchivePodcastConfig(_env_file=None, **kwargs)  # Don't let a local .env leak into the docs
 
 
 _deploy_web_page = AppWebPageConfig(

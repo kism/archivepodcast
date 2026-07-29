@@ -23,7 +23,7 @@ def test_import_in_lambda_environment(monkeypatch: pytest.MonkeyPatch) -> None:
         importlib.reload(archivepodcast.lambda_handler)
 
         assert getattr(sys, "frozen", False) is True
-        assert getattr(sys, "_MEIPASS", "") == "/tmp"  # noqa: S108
+        assert getattr(sys, "_MEIPASS", "") == "/tmp"  # ruff: ignore[hardcoded-temp-file]
         assert os.environ["LD_LIBRARY_PATH"] == "/opt/lib:/fake/existing"
     finally:
         for attr in ("frozen", "_MEIPASS"):

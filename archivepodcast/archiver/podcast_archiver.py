@@ -45,7 +45,7 @@ def _load_cached_feed(podcast: PodcastConfig, previous_feed: bytes) -> ET.Elemen
         root = ET.fromstring(previous_feed)
         tree: ET.ElementTree[ET.Element] = ET.ElementTree(root)
     except ET.ParseError:
-        logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # noqa: TRY400
+        logger.error("[%s] Syntax error in rss feed file", podcast.name_one_word)  # ruff: ignore[error-instead-of-exception]
         return None
 
     if tree_no_episodes(tree):
@@ -68,7 +68,7 @@ _aiohttp_session: aiohttp.ClientSession | None = None
 
 def _get_aiohttp_session() -> aiohttp.ClientSession:
     """Get or create the aiohttp ClientSession."""
-    global _aiohttp_session  # noqa: PLW0603
+    global _aiohttp_session  # ruff: ignore[global-statement]
     if _aiohttp_session is None or _aiohttp_session.closed:
         _aiohttp_session = aiohttp.ClientSession(
             # timeout, 5 minutes, why not
@@ -144,7 +144,7 @@ class PodcastArchiver:
         # > ps
         # st <task id>
 
-        # import aiomonitor  # noqa: ERA001
+        # import aiomonitor  # ruff: ignore[commented-out-code]
         # with aiomonitor.start_monitor(event_loop):
         # Part 1: Update the file cache to know what files we have already downloaded
         event_loop.run_until_complete(self.update_file_cache())

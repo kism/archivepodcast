@@ -214,7 +214,7 @@ class AIOHTTPSessionMock:
 @pytest.fixture
 def mock_get_session(monkeypatch: pytest.MonkeyPatch) -> AWSAioSessionMock:
     """Mock aiobotocore session.get_session to return a mock session. Also returns the session, why not."""
-    global _objects  # noqa: PLW0603
+    global _objects  # ruff: ignore[global-statement]
     _objects = {}
 
     # Also clear the s3_file_cache to ensure tests start fresh
