@@ -57,7 +57,7 @@ test = [
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
 
 [build-system]
-requires = ["uv_build>=0.11.29,<0.12.0"]
+requires = ["uv_build>=0.12.0,<0.13.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
@@ -68,7 +68,6 @@ archivepodcast = "archivepodcast.__main__:main"
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
-target-version = "py314"
 line-length = 120
 
 [tool.ruff.lint]
@@ -156,7 +155,7 @@ docstring-code-format = true
 docstring-code-line-length = 40
 
 [tool.coverage.run]
-command_line = ".venv/bin/pytest"
+command_line = ".venv/bin/pytest -q"
 source = ["archivepodcast"]
 context = "test"
 
