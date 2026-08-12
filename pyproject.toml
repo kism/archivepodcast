@@ -42,7 +42,7 @@ profile = ["aiomonitor"]
 
 test = [
     "pytest>=9.1",
-    "coverage==7.15.2",
+    "coverage==7.15.4",
     "pytest-cov",
     "pytest-mock",
     "pytest-random-order",
