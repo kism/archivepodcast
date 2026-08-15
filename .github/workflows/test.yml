@@ -23,6 +23,8 @@ jobs:
         python-version: ["3.14"]
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
 
       - name: Install ffmpeg (cached)
         uses: awalsh128/cache-apt-pkgs-action@v1
@@ -52,8 +54,6 @@ jobs:
 
       - name: Test with pytest
         run: .venv/bin/pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
-        env:
-          CI_SKIP_LFS_CHECK: "true"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v7
