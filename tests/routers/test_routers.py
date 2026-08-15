@@ -56,12 +56,16 @@ def test_app_paths(
             "/static/clipboard.js",
             "/favicon.ico",
             "/static/favicon.ico",
+            "/static/apple-touch-icon.png",
+            "/static/android-chrome-192x192.png",
+            "/static/android-chrome-512x512.png",
+            "/static/site.webmanifest",
             "/static/main.css",
-            "/static/fonts/fira-code-v12-latin-500.woff2",
-            "/static/fonts/fira-code-v12-latin-600.woff2",
-            "/static/fonts/fira-code-v12-latin-700.woff2",
-            "/static/fonts/noto-sans-display-latin-500.woff2",
-            "/static/fonts/noto-sans-display-latin-500italic.woff2",
+            "/static/fonts/fira-code-latin-500-normal.woff2",
+            "/static/fonts/fira-code-latin-600-normal.woff2",
+            "/static/fonts/fira-code-latin-700-normal.woff2",
+            "/static/fonts/noto-sans-display-latin-500-normal.woff2",
+            "/static/fonts/noto-sans-display-latin-500-italic.woff2",
         ]
 
         for path in valid_path_list:

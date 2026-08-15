@@ -12,7 +12,7 @@ Example install in /opt, with systemd, logging, log rotation, nginx reverse prox
 cd /opt
 git clone https://github.com/kism/archivepodcast.git
 cd archivepodcast
-uv sync --no-default-groups
+uv sync --no-default-groups --extra web
 adduser apuser --shell=/bin/false --no-create-home
 mkdir /var/log/archivepodcast/
 chown apuser:apuser /var/log/archivepodcast

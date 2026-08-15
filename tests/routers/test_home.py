@@ -85,11 +85,11 @@ async def test_fonts_exist(client: TestClient, apa: PodcastArchiver) -> None:
     await apa.renderer.render_files()
 
     font_list = [
-        "/static/fonts/fira-code-v12-latin-500.woff2",
-        "/static/fonts/fira-code-v12-latin-600.woff2",
-        "/static/fonts/fira-code-v12-latin-700.woff2",
-        "/static/fonts/noto-sans-display-latin-500.woff2",
-        "/static/fonts/noto-sans-display-latin-500italic.woff2",
+        "/static/fonts/fira-code-latin-500-normal.woff2",
+        "/static/fonts/fira-code-latin-600-normal.woff2",
+        "/static/fonts/fira-code-latin-700-normal.woff2",
+        "/static/fonts/noto-sans-display-latin-500-normal.woff2",
+        "/static/fonts/noto-sans-display-latin-500-italic.woff2",
     ]
     for font in font_list:
         response = client.get(font)

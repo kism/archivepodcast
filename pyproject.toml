@@ -3,13 +3,12 @@
 
 [project]
 name = "archivepodcast"
-version = "1.5.14"
+version = "1.5.15"
 description = "FastAPI webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them."
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
-    "fastapi>=0.115",
     "aiobotocore>=2.25.2",
     "aiohttp>=3.13.2",
     "jinja2>=3.1,<4",
@@ -18,7 +17,6 @@ dependencies = [
     "pydantic-settings>=2.12",
     "rich>=15.0.0",
     "typed-ffmpeg-v7>=4.3",
-    "uvicorn>=0.35",
     "anyio>=4.12.1",
 ]
 
@@ -27,6 +25,11 @@ Repository = "https://github.com/kism/archivepodcast"
 docs = "https://archivepodcast.readthedocs.io/"
 
 [project.optional-dependencies]
+web = [
+    "fastapi>=0.115",
+    "uvicorn>=0.35",
+]
+
 type = [
     "ty",
     "types-Markdown",
@@ -41,6 +44,7 @@ lint = ["ruff"]
 profile = ["aiomonitor"]
 
 test = [
+    "archivepodcast[web]", # Tests exercise the FastAPI app
     "pytest>=9.1",
     "coverage==7.15.4",
     "pytest-cov",
