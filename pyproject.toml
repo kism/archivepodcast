@@ -17,7 +17,7 @@ dependencies = [
     "pydantic>=2.12",
     "pydantic-settings>=2.12",
     "rich>=15.0.0",
-    "typed-ffmpeg>=3.7",
+    "typed-ffmpeg-v7>=4.3",
     "uvicorn>=0.35",
     "anyio>=4.12.1",
 ]
