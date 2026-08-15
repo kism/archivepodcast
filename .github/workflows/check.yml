@@ -70,6 +70,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - name: Install bun
         uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
