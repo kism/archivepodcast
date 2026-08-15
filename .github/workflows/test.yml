@@ -52,8 +52,11 @@ jobs:
           echo 'ensuring that this never gets touched by pytest' > instance/config.json
           chmod 000 instance/config.json
 
-      - name: Test with pytest
-        run: .venv/bin/pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
+      - name: Test with pytest, get coverage
+        run: |
+          .venv/bin/coverage run
+          .venv/bin/coverage report
+          .venv/bin/coverage xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v7
