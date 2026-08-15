@@ -67,7 +67,7 @@ def _ffmpeg_convert_check() -> None:
         bytes.fromhex("524946469822000057415645666D7420100000000100010044AC000088580100020010006461746174220000")
         + b"\x00" * 5120
     )
-    wav_path = Path("/tmp/test.wav")  # noqa: S108
+    wav_path = Path("/tmp/test.wav")  # ruff: ignore[hardcoded-temp-file]
 
     if wav_path.exists():
         wav_path.unlink()

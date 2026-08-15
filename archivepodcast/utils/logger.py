@@ -41,7 +41,7 @@ class LoggingConf(BaseModel):
         return self
 
     @field_validator("path", mode="before")
-    def set_path(cls, value: str | None) -> Path | None:  # noqa: N805 # ???
+    def set_path(cls, value: str | None) -> Path | None:  # ruff: ignore[invalid-first-argument-name-for-method] # ???
         """Set the path to a slugified version."""
         if value is None:
             return None
@@ -56,7 +56,7 @@ class LoggingConf(BaseModel):
 
 
 # This is the logging message format that I like.
-# LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # noqa: ERA001
+# LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"   # ruff: ignore[commented-out-code]
 SIMPLE_LOG_FORMAT = "%(levelname)s:%(message)s"
 SIMPLE_LOG_FORMAT_DEBUG = "%(levelname)s:%(name)s:%(message)s"
 TRACE_LEVEL_NUM = 5
@@ -65,7 +65,7 @@ TRACE_LEVEL_NUM = 5
 class CustomLogger(logging.Logger):
     """Custom logger to appease ty."""
 
-    def trace(self, message: object, *args: Any, **kws: Any) -> None:  # noqa: ANN401
+    def trace(self, message: object, *args: Any, **kws: Any) -> None:  # ruff: ignore[any-type]
         """Create logger level for trace."""
         if self.isEnabledFor(TRACE_LEVEL_NUM):
             # Yes, logger takes its '*args' as 'args'.

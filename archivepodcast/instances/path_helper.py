@@ -30,7 +30,7 @@ def get_app_paths(
     instance_path: Path | None = None,
 ) -> AppPathsHelper:
     """Get the application paths helper instance."""
-    global _app_paths  # noqa: PLW0603
+    global _app_paths  # ruff: ignore[global-statement]
     if _app_paths is None:
         if root_path is None or instance_path is None:
             msg = "Application paths helper instance has not been set."

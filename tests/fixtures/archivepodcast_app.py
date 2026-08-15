@@ -19,8 +19,17 @@ else:
 
 
 @pytest.fixture
-def app(tmp_path: Path, get_test_config: Callable[[str], ArchivePodcastConfig]) -> FastAPI:
-    """This fixture uses the default config within the app."""
+def app(
+    tmp_path: Path,
+    get_test_config: Callable[[str], ArchivePodcastConfig],
+    no_threading_start: None,
+) -> FastAPI:
+    """This fixture uses the default config within the app.
+
+    Depends on no_threading_start: the app lifespan starts a real background thread
+    (podcast_loop) that grabs podcasts and logs hourly; left running it outlives the
+    test and prints stray log lines during later, unrelated tests.
+    """
 
     # Create a dummy RSS file since this app instance is not live and requires an existing rss feed.
     (tmp_path / "web" / "rss").mkdir(parents=True)

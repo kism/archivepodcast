@@ -61,7 +61,7 @@ def rss(feed: str) -> Response:
         except OSError:
             return error_response(HTTPStatus.NOT_FOUND, "Feed not found, you know you can copy and paste yeah?")
 
-        except:  # noqa: E722 Bare except since this is a catch all to prevent app crash
+        except:  # ruff: ignore[bare-except] Bare except since this is a catch all to prevent app crash
             return error_response(HTTPStatus.INTERNAL_SERVER_ERROR, "Feed not loadable, Internal Server Error")
 
     return Response(rss_str, media_type="application/rss+xml; charset=utf-8", status_code=HTTPStatus.OK)

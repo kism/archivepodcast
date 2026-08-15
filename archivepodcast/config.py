@@ -49,7 +49,7 @@ class AppS3Config(BaseModel):
     secret_access_key: str = ""
 
     @field_validator("api_url", mode="before")
-    def validate_api_url(cls, v: str) -> str | None:  # noqa: N805
+    def validate_api_url(cls, v: str) -> str | None:  # ruff: ignore[invalid-first-argument-name-for-method]
         """Validate api_url to allow empty string to be None."""
         if v == "":
             return None

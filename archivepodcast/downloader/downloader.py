@@ -118,7 +118,7 @@ class PodcastsDownloader(AssetDownloader):
         try:
             podcast_rss = ET.fromstring(content)
         except ET.ParseError:
-            logger.error(  # noqa: TRY400
+            logger.error(  # ruff: ignore[error-instead-of-exception]
                 "[%s] Downloaded podcast rss (length %d) is not valid XML, cannot process podcast feed",
                 self._podcast.name_one_word,
                 len(content),
@@ -154,7 +154,7 @@ class PodcastsDownloader(AssetDownloader):
         for channel in xml_first_child:
             await self._process_channel_tag(channel)
 
-    async def _process_channel_tag(self, channel: ET.Element) -> None:  # noqa: C901 # There is no way to avoid this really, there are many tag types
+    async def _process_channel_tag(self, channel: ET.Element) -> None:  # ruff: ignore[complex-structure] # There is no way to avoid this really, there are many tag types
         """Process individual channel tags in the podcast rss."""
         match channel.tag:
             case "link":

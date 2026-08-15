@@ -12,7 +12,7 @@ from pathlib import Path
 # those attributes before any code path that triggers the lazy import of ffmpeg_core.common.cache.
 if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
     sys.frozen = True  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]
-    sys._MEIPASS = "/tmp"  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]  # noqa: SLF001
+    sys._MEIPASS = "/tmp"  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]  # ruff: ignore[private-member-access]
 
 from typing import TYPE_CHECKING
 
@@ -39,7 +39,9 @@ INSTANCE_PATH = Path("/tmp/instance")
 
 try:
     from archivepodcast import run_ap_adhoc
-    from archivepodcast.downloader.helpers import check_ffmpeg  # noqa: F401 # For checking in the aws console
+    from archivepodcast.downloader.helpers import (
+        check_ffmpeg,  # ruff: ignore[unused-import] # For checking in the aws console
+    )
     from archivepodcast.utils.log_messages import log_intro
 
 except ImportError:
@@ -53,7 +55,7 @@ if "LD_LIBRARY_PATH" in os.environ:
 else:
     os.environ["LD_LIBRARY_PATH"] = str(LAMBDA_LIB_PATH)
 
-# check_ffmpeg(convert_check=True)  # noqa: ERA001 # For checking in the aws console
+# check_ffmpeg(convert_check=True)  # ruff: ignore[commented-out-code] # For checking in the aws console
 
 
 def handler(event: ALBEvent, context: LambdaContext) -> None:

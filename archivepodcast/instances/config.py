@@ -18,9 +18,9 @@ _conf_cache: ArchivePodcastConfig | None = None
 
 def get_ap_config(config_path: Path | None = None) -> ArchivePodcastConfig:
     """Get the global ArchivePodcastConfig instance."""
-    global _conf_cache  # noqa: PLW0603
+    global _conf_cache  # ruff: ignore[global-statement]
     if _conf_cache is None:
-        from archivepodcast.config import ArchivePodcastConfig  # noqa: PLC0415
+        from archivepodcast.config import ArchivePodcastConfig  # ruff: ignore[import-outside-top-level]
 
         if config_path is None:
             msg = "config_path must be provided the first time get_ap_config is called"
