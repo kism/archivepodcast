@@ -246,9 +246,9 @@ web = [
 [package.metadata]
 requires-dist = [
     { name = "aiobotocore", specifier = ">=2.25.2" },
-    { name = "aiohttp", specifier = ">=3.13.2" },
+    { name = "aiohttp", specifier = ">=3.13.3" },
     { name = "aiomonitor", marker = "extra == 'profile'" },
-    { name = "anyio", specifier = ">=4.12.1" },
+    { name = "anyio", specifier = ">=4.14.2" },
     { name = "archivepodcast", extras = ["web"], marker = "extra == 'test'" },
     { name = "aws-lambda-powertools", marker = "extra == 'type'" },
     { name = "botocore-stubs", marker = "extra == 'type'" },
@@ -259,8 +259,8 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1,<4" },
     { name = "markdown", specifier = ">=3.10" },
     { name = "myst-parser", marker = "extra == 'docs'" },
-    { name = "pydantic", specifier = ">=2.12" },
-    { name = "pydantic-settings", specifier = ">=2.12" },
+    { name = "pydantic", specifier = ">=2.13" },
+    { name = "pydantic-settings", specifier = ">=2.13" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1" },
     { name = "pytest-asyncio", marker = "extra == 'test'" },
     { name = "pytest-cov", marker = "extra == 'test'" },
