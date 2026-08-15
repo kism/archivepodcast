@@ -62,6 +62,9 @@ jobs:
           chmod +x /usr/local/bin/ffmpeg
       - name: Generate the HTML
         run: uv run python -m archivepodcast
+        env:
+          CI_SKIP_LFS_CHECK: "true"
+
       - name: Validate HTML
         run: bunx html-validate instance/web/*.html
 

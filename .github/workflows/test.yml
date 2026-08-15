@@ -52,6 +52,8 @@ jobs:
 
       - name: Test with pytest
         run: .venv/bin/pytest --cov-report=xml # xml report needed for codecov, other config from pyproject.toml
+        env:
+          CI_SKIP_LFS_CHECK: "true"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v7
