@@ -33,7 +33,9 @@ CONTENT_TYPE_PARAMS = [
     ("static/filelist.js", "text/javascript"),
     ("robots.txt", "text/plain"),
     ("static/favicon.ico", "image/vnd.microsoft.icon"),
-    ("static/fonts/fira-code-v12-latin-500.woff2", "font/woff2"),
+    ("static/fonts/fira-code-latin-500-normal.woff2", "font/woff2"),
+    ("static/site.webmanifest", "application/manifest+json"),
+    ("static/apple-touch-icon.png", "image/png"),
 ]
 
 

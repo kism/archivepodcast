@@ -21,6 +21,7 @@ package-lock.json
 *.png
 *.wav
 *.prof
+*.zip
 
 # CSpell
 .cspell/.cspellcache

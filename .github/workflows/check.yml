@@ -64,3 +64,45 @@ jobs:
         run: uv run python -m archivepodcast
       - name: Validate HTML
         run: bunx html-validate instance/web/*.html
+
+  check_fonts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Install Playwright's Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Get dependencies
+        run: uv sync --extra web
+      - name: Prepare instance
+        run: |
+          mkdir -p instance/web/rss/
+          cp -f scripts/config/rss-ci.rss instance/web/rss/test
+          cp -f scripts/config/config-ci.json instance/config.json
+      - name: Create fake ffmpeg
+        run: |
+          echo '#!/bin/bash' > /usr/local/bin/ffmpeg
+          chmod +x /usr/local/bin/ffmpeg
+      - name: Start the webserver
+        run: uv run uvicorn --factory archivepodcast.run_webapp:create_app --port 5100 &
+      - name: Wait for the webserver to be ready
+        run: |
+          for _ in $(seq 1 30); do
+            if curl -sf http://localhost:5100/api/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Webserver did not become ready in time" >&2
+          exit 1
+      - name: Check fonts load in a real browser
+        run: bun scripts/check_fonts.mjs http://localhost:5100

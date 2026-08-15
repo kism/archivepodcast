@@ -79,6 +79,13 @@ class WebpageRenderer:
             with favicon_path.open("rb") as favicon:
                 self.webpages.add(path="favicon.ico", mime="image/x-icon", content=favicon.read())
 
+        # Web manifest, rendered so name/theme match the app config
+        self.webpages.add(
+            path="static/site.webmanifest",
+            mime="application/manifest+json",
+            content=TEMPLATE_ENV.get_template("site.webmanifest.j2").render(app_config=self._app_config),
+        )
+
         # Static items
         static_items_to_copy = [file for file in app_paths.static_directory.rglob("*") if file.is_file()]
 
