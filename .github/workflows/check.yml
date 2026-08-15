@@ -63,7 +63,7 @@ jobs:
       - name: Generate the HTML
         run: uv run python -m archivepodcast
         env:
-          CI_SKIP_LFS_CHECK: "true"
+          CI_SKIP_LFS_CHECK: "true" # Sure we can clone with lfs, but we can save a few cpu cycles.
 
       - name: Validate HTML
         run: bunx html-validate instance/web/*.html
