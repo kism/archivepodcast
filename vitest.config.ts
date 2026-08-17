@@ -6,7 +6,7 @@ export default defineConfig({
     include: ["tests/*.js"],
     coverage: {
       provider: "v8",
-      include: ["archivepodcast/static/*.js"],
+      include: ["src/archivepodcast/static/*.js"],
       reportsDirectory: "htmlcov_js",
     },
   },
