@@ -273,7 +273,7 @@ requires-dist = [
     { name = "sphinx", marker = "extra == 'docs'" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'" },
     { name = "ty", marker = "extra == 'type'" },
-    { name = "typed-ffmpeg-v7", specifier = ">=4.3" },
+    { name = "typed-ffmpeg-v7", specifier = ">=4.4" },
     { name = "types-aiobotocore", marker = "extra == 'type'" },
     { name = "types-aiobotocore-s3", marker = "extra == 'test'" },
     { name = "types-aiobotocore-s3", marker = "extra == 'type'" },
