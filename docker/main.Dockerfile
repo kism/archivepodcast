@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --extra web
 
 # Copy application code and project metadata
-COPY archivepodcast archivepodcast
+COPY src src
 
 # Install the project to ensure the command archivepodcast works
 RUN --mount=type=cache,target=/root/.cache/uv \

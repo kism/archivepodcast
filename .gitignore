@@ -34,7 +34,7 @@ htmlcov_js
 .DS_Store
 
 # Do not ignore anything in the static path
-!archivepodcast/static/**
+!src/archivepodcast/static/**
 
 # Python
 # https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Python.gitignore

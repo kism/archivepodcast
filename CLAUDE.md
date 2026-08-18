@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-FastAPI webapp that archives podcasts from RSS feeds: downloads episodes, rewrites the feed, and re-hosts both. Storage backend is local filesystem or S3. Three run modes share the same core: web server, adhoc CLI run, and AWS Lambda ([lambda_handler.py](archivepodcast/lambda_handler.py)).
+FastAPI webapp that archives podcasts from RSS feeds: downloads episodes, rewrites the feed, and re-hosts both. Storage backend is local filesystem or S3. Three run modes share the same core: web server, adhoc CLI run, and AWS Lambda ([lambda_handler.py](src/archivepodcast/lambda_handler.py)).
 
-Python 3.14 only, managed with `uv`. Frontend is plain JS in [archivepodcast/static/](archivepodcast/static/), tooling via `bun`.
+Python 3.14 only, managed with `uv`. Frontend is plain JS in [src/archivepodcast/static/](src/archivepodcast/static/), tooling via `bun`.
 
 ## Commands
 
@@ -33,10 +33,10 @@ Pytest runs with `--disable-socket` (only 127.0.0.1 allowed) and `--asyncio-mode
 
 ## Architecture
 
-- **App factory**: `create_app()` in [archivepodcast/run_webapp.py](archivepodcast/run_webapp.py); `run_ap_adhoc()` for CLI mode in [archivepodcast/run_adhoc.py](archivepodcast/run_adhoc.py); both are re-exported from the package root. Config lives at `<instance_path>/config.json` (pydantic models in [config.py](archivepodcast/config.py)); it is rewritten/normalized on every startup. Instance path defaults to `./instance`, overridable via `INSTANCE_PATH` env var or `--instance-path`.
-- **Module-level singletons** in [archivepodcast/instances/](archivepodcast/instances/): `health`, `event_times` (profiler), `get_app_paths()` (path helper — must be first called with `root_path`/`instance_path`, later calls take no args), `local_file_cache`/`s3_file_cache`, `get_ap_config()`, and the live `PodcastArchiver` instance. Routers and archiver code import these globals rather than passing state around.
-- **Core flow**: [archiver/podcast_archiver.py](archivepodcast/archiver/podcast_archiver.py) (`PodcastArchiver`) orchestrates each archive pass → [downloader/](archivepodcast/downloader/) fetches feeds and episodes (aiohttp, ffmpeg conversion via typed-ffmpeg) → rewritten RSS and rendered webpages ([archiver/webpage_renderer.py](archivepodcast/archiver/webpage_renderer.py), Jinja templates in [archivepodcast/templates/](archivepodcast/templates/)) are written to `<instance>/web/` and optionally uploaded to S3 ([utils/s3.py](archivepodcast/utils/s3.py)). In web-server mode a background thread re-checks feeds hourly.
-- **Routers** in [archivepodcast/routers/](archivepodcast/routers/): api, content, rss, static, webpages. `create_app` adds HEAD to every GET route because podcast clients probe media with HEAD requests.
+- **App factory**: `create_app()` in [src/archivepodcast/run_webapp.py](src/archivepodcast/run_webapp.py); `run_ap_adhoc()` for CLI mode in [src/archivepodcast/run_adhoc.py](src/archivepodcast/run_adhoc.py); both are re-exported from the package root. Config lives at `<instance_path>/config.json` (pydantic models in [config.py](src/archivepodcast/config.py)); it is rewritten/normalized on every startup. Instance path defaults to `./instance`, overridable via `INSTANCE_PATH` env var or `--instance-path`.
+- **Module-level singletons** in [src/archivepodcast/instances/](src/archivepodcast/instances/): `health`, `event_times` (profiler), `get_app_paths()` (path helper — must be first called with `root_path`/`instance_path`, later calls take no args), `local_file_cache`/`s3_file_cache`, `get_ap_config()`, and the live `PodcastArchiver` instance. Routers and archiver code import these globals rather than passing state around.
+- **Core flow**: [archiver/podcast_archiver.py](src/archivepodcast/archiver/podcast_archiver.py) (`PodcastArchiver`) orchestrates each archive pass → [downloader/](src/archivepodcast/downloader/) fetches feeds and episodes (aiohttp, ffmpeg conversion via typed-ffmpeg) → rewritten RSS and rendered webpages ([archiver/webpage_renderer.py](src/archivepodcast/archiver/webpage_renderer.py), Jinja templates in [src/archivepodcast/templates/](src/archivepodcast/templates/)) are written to `<instance>/web/` and optionally uploaded to S3 ([utils/s3.py](src/archivepodcast/utils/s3.py)). In web-server mode a background thread re-checks feeds hourly.
+- **Routers** in [src/archivepodcast/routers/](src/archivepodcast/routers/): api, content, rss, static, webpages. `create_app` adds HEAD to every GET route because podcast clients probe media with HEAD requests.
 - With the S3 backend, downloaded assets are uploaded then deleted locally — don't assume archived files exist on disk.
 
 ## Conventions

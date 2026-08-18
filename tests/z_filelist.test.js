@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, test } from "vitest";
-import { addFileToStructure, showCurrentDirectory, showJSDivs } from "../archivepodcast/static/filelist.js";
+import { addFileToStructure, showCurrentDirectory, showJSDivs } from "../src/archivepodcast/static/filelist.js";
 
 beforeEach(() => {
   document.body.innerHTML = `

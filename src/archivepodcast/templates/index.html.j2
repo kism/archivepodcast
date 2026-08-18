@@ -11,16 +11,16 @@
 </head>
 
 <body>
-    <main class="contained-content">
+    <main class="contained-content podcast-index">
         <h1>{{ app_config['web_page']['title']|e }}</h1>
         {{ header | safe }}
-        <h3>{{ app_config['web_page']['description']|e }}</h3>
-        <h3>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
+        <p class="page-description">{{ app_config['web_page']['description']|e }}</p>
+        <p>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
                 guide</a>.
-        </h3>
+        </p>
         {%- for podcast in podcasts %}
         <h2>{{ podcast['new_name']|e }}</h2>
-        {% if podcast['description'] %}<h3>{{ podcast['description']|e }}</h3>{% endif -%}
+        {% if podcast['description'] %}<p>{{ podcast['description']|e }}</p>{% endif -%}
         <input type="text" readonly value="{{app_config['inet_path']}}rss/{{ podcast['name_one_word']}}"
             id="{{ podcast['name_one_word']}}">
         <button type="button" class="button" onclick="window.grabToClipboard('{{ podcast['name_one_word']}}')"
