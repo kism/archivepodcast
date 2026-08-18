@@ -133,6 +133,15 @@ p {
   margin-bottom: 10px;
 }
 
+/* Index is a list of podcasts, not prose, one-line descriptions don't need prose spacing */
+.podcast-index p {
+  margin: 2px 0 4px;
+}
+
+.page-description {
+  font-size: 17px;
+}
+
 ol {
   margin: 0;
 }

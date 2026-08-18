@@ -11,10 +11,10 @@
 </head>
 
 <body>
-    <main class="contained-content">
+    <main class="contained-content podcast-index">
         <h1>{{ app_config['web_page']['title']|e }}</h1>
         {{ header | safe }}
-        <p>{{ app_config['web_page']['description']|e }}</p>
+        <p class="page-description">{{ app_config['web_page']['description']|e }}</p>
         <p>For instructions on how to add a podcast url to a podcast app, <a href="/guide.html">check out the
                 guide</a>.
         </p>
