@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { grabToClipboard, resetText } from "../archivepodcast/static/clipboard.js";
+import { grabToClipboard, resetText } from "../src/archivepodcast/static/clipboard.js";
 
 describe("Clipboard Operations", () => {
   test("throws error when copying from non-existent element", () => {

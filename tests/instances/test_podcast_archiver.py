@@ -1,4 +1,4 @@
-"""Tests for archivepodcast/instances/podcast_archiver.py to achieve 100% coverage."""
+"""Tests for src/archivepodcast/instances/podcast_archiver.py to achieve 100% coverage."""
 
 import logging
 from http import HTTPStatus

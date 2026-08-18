@@ -10,14 +10,14 @@ readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
     "aiobotocore>=2.25.2",
-    "aiohttp>=3.13.2",
+    "aiohttp>=3.13.3",
     "jinja2>=3.1,<4",
     "markdown>=3.10",
-    "pydantic>=2.12",
-    "pydantic-settings>=2.12",
+    "pydantic>=2.13",
+    "pydantic-settings>=2.13",
     "rich>=15.0.0",
-    "typed-ffmpeg-v7>=4.3",
-    "anyio>=4.12.1",
+    "typed-ffmpeg-v7>=4.4",
+    "anyio>=4.14.2",
 ]
 
 [project.urls]
@@ -64,9 +64,6 @@ docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
 requires = ["uv_build>=0.12.0,<0.13.0"]
 build-backend = "uv_build"
 
-[tool.uv.build-backend]
-module-root = ""
-
 [project.scripts]
 archivepodcast = "archivepodcast.__main__:main"
 
@@ -101,10 +98,10 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"archivepodcast/config.py" = [
+"src/archivepodcast/config.py" = [
     "line-too-long", # KG Some long lines
 ]
-"archivepodcast/lambda_handler.py" = [
+"src/archivepodcast/lambda_handler.py" = [
     "any-type", # KG AWS Lambda handler signatures
     "unused-function-argument", # KG AWS Lambda handler signatures
     "undocumented-public-function",   # KG AWS Lambda handler signatures
@@ -160,7 +157,7 @@ docstring-code-line-length = 40
 
 [tool.coverage.run]
 command_line = ".venv/bin/pytest -q"
-source = ["archivepodcast"]
+source = ["src/archivepodcast"]
 context = "test"
 
 [tool.pytest.ini_options]

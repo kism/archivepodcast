@@ -5,7 +5,7 @@
 
 import { chromium } from "playwright";
 
-// Keep in sync with the @font-face rules in archivepodcast/static/main.css
+// Keep in sync with the @font-face rules in src/archivepodcast/static/main.css
 const FONT_SPECS = [
   '500 16px "Fira Code"',
   '600 16px "Fira Code"',

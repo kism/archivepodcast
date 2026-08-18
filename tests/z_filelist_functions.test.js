@@ -2,7 +2,7 @@
 
 import { expect, test } from "vitest";
 
-import { generateBreadcrumbHtml } from "../archivepodcast/static/filelist.js";
+import { generateBreadcrumbHtml } from "../src/archivepodcast/static/filelist.js";
 
 test("generateBreadcrumbHtml with path", () => {
   const current_path = "/test/path";
@@ -22,7 +22,7 @@ test("generateBreadcrumbHtml with slash", () => {
   expect(generateBreadcrumbHtml(current_path)).toBe(expected_html);
 });
 
-import { generateCurrentListHTML } from "../archivepodcast/static/filelist.js";
+import { generateCurrentListHTML } from "../src/archivepodcast/static/filelist.js";
 
 test("generateCurrentListHTML with path", () => {
   const current_path = "/test/path";

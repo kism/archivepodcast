@@ -24,7 +24,7 @@ except PackageNotFoundError:  # pragma: no cover
 
 def _get_version_str() -> str:
     """Get a string representation of the version, including branch and commit hash."""
-    repo_root = Path(__file__).parent.parent
+    repo_root = Path(__file__).parents[2]  # src/archivepodcast/constants.py -> repo root
     git_head_log = repo_root / ".git" / "logs" / "HEAD"
     git_head = repo_root / ".git" / "HEAD"
     last_commit = ""

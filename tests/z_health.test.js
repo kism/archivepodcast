@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { populateHealth } from "../archivepodcast/static/health";
+import { populateHealth } from "../src/archivepodcast/static/health";
 
 beforeEach(() => {
   document.body.innerHTML = '<div id="health" style="display: block;"></div>';

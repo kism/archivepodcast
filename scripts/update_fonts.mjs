@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // Copies the latin-subset woff2 files this project uses out of the installed
-// @fontsource packages into archivepodcast/static/fonts, keeping fontsource's
+// @fontsource packages into src/archivepodcast/static/fonts, keeping fontsource's
 // own filenames. Run `bun install` first, then `bun run update_fonts` to pick
 // up new font versions, weights, or styles.
 
@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const FONTS_DIR = join(ROOT, "archivepodcast", "static", "fonts");
+const FONTS_DIR = join(ROOT, "src", "archivepodcast", "static", "fonts");
 
 // Add an entry here for any weight/style this project's CSS needs.
 const FONTS = [

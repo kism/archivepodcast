@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --extra test
 
 # Copy application code
-COPY --chown=ap:ap archivepodcast archivepodcast
+COPY --chown=ap:ap src src
 
 WORKDIR /app
 
