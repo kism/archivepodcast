@@ -35,36 +35,6 @@ export function fetchProfile() {
     .catch((error) => console.error("Error fetching profile data:", error));
 }
 
-function recursiveTimerDisplay(data, indent = 0) {
-  const div = document.createElement("div");
-
-  // Create indentation string
-  const indentStr = " ".repeat(indent);
-
-  // Create the main line with event name
-  let msg = `${indentStr}${data.name || "Unknown Event"}: `;
-
-  // Add duration if available
-  if (data.duration !== null && data.duration !== undefined) {
-    msg += `${data.duration.toFixed(2)}s\n`;
-  } else {
-    msg += "∞\n";
-  }
-
-  // Add the message to the div
-  div.textContent += msg;
-
-  // Recursively process children if they exist
-  if (data.children && Array.isArray(data.children)) {
-    for (const child of data.children) {
-      const childDiv = recursiveTimerDisplay(child, indent + 2);
-      div.textContent += childDiv.textContent;
-    }
-  }
-
-  return div;
-}
-
 export function populateProfile(data) {
   const profileDiv = document.getElementById("profile");
   profileDiv.innerHTML = "";
@@ -73,10 +43,16 @@ export function populateProfile(data) {
   description.textContent = `Timer stats per: /api/profile`;
   profileDiv.appendChild(description);
 
-  // Just display it raw for now
-  const timerDisplay = recursiveTimerDisplay(data);
+  // /api/profile is a flat {path: seconds} map, indent by path depth to make the tree
+  const timerDisplay = document.createElement("div");
   timerDisplay.classList.add("health-table");
   timerDisplay.style.whiteSpace = "pre";
+  timerDisplay.textContent = Object.entries(data.times ?? {})
+    .map(([path, duration]) => {
+      const parts = path.split("/");
+      return `${"  ".repeat(parts.length - 1)}${parts.at(-1)}: ${duration.toFixed(2)}s`;
+    })
+    .join("\n");
   profileDiv.appendChild(timerDisplay);
 }
 

@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { populateHealth } from "../src/archivepodcast/static/health";
+import { populateHealth, populateProfile } from "../src/archivepodcast/static/health";
 
 beforeEach(() => {
-  document.body.innerHTML = '<div id="health" style="display: block;"></div>';
+  document.body.innerHTML = '<div id="health" style="display: block;"></div><div id="profile"></div>';
   global.fetch = vi.fn();
 });
 
@@ -59,15 +59,10 @@ const healthData = {
 };
 
 const profileData = {
-  name: "root",
-  duration: 0.1234,
-  children: [
-    {
-      name: "load_config",
-      duration: 0.0456,
-      children: [],
-    },
-  ],
+  times: {
+    root: 0.1234,
+    "grab_podcasts/Post Scrape/write_health": 0.0456,
+  },
 };
 
 describe("Health API", () => {
@@ -91,6 +86,14 @@ describe("Health API", () => {
     populateHealth(healthData);
     const healthDiv = document.getElementById("health");
     expect(healthDiv.children.length).greaterThan(0);
+  });
+
+  test("populates profile timers from the flat times map", () => {
+    populateProfile(profileData);
+    const text = document.getElementById("profile").textContent;
+    expect(text).toContain("root: 0.12s");
+    expect(text).toContain("    write_health: 0.05s");
+    expect(text).not.toContain("Unknown Event");
   });
 
   test("correctly formats all date fields in health display", () => {

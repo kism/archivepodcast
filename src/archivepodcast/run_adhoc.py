@@ -42,8 +42,8 @@ def run_ap_adhoc(
     event_times.set_event_time("PodcastArchiver", time.time() - podcast_archiver_start_time)
 
     ap.grab_podcasts()
-    asyncio.run(ap.write_health_s3())
-    event_times.set_event_time("/", time.time() - start_time)
+    event_times.set_event_time("/", time.time() - start_time)  # Before the write, so the total makes it into the json
+    asyncio.run(ap.write_health())
 
     logger.trace(health.get_health().model_dump_json(indent=JSON_INDENT))
     logger.trace(event_times.model_dump_json(indent=JSON_INDENT))

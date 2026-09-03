@@ -435,9 +435,9 @@ class PodcastArchiver:
 
     # region Rendering
 
-    async def write_health_s3(self) -> None:
-        """Write the health api to s3."""
+    async def write_health(self) -> None:
+        """Write the health api json out."""
         health_api_response = health.get_health()
-        await self.renderer.write_health_s3(health_api_response)
+        await self.renderer.write_health(health_api_response)
 
     # endregion
