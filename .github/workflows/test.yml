@@ -26,12 +26,8 @@ jobs:
         with:
           lfs: true
 
-      - name: Install ffmpeg (cached)
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: ffmpeg
-          version: 1.0
-          execute_install_scripts: true
+      - name: Install ffmpeg
+        run: sudo apt-get install -y ffmpeg
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v7
