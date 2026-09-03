@@ -44,7 +44,7 @@ try:
     )
     from archivepodcast.utils.log_messages import log_intro
 
-except ImportError:
+except ImportError:  # pragma: no cover
     logger.error("Failed to import archivepodcast module")
     logger.error("Contents of %s: %s", LAMBDA_LIB_PATH, [str(p) for p in LAMBDA_LIB_PATH.iterdir()])
     raise

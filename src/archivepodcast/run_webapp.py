@@ -35,7 +35,7 @@ def create_app(instance_path_override: str | None = None) -> FastAPI:
     start_time = time.time()
 
     env_instance_path = os.environ.get("INSTANCE_PATH")
-    if env_instance_path:
+    if env_instance_path:  # pragma: no cover # This is just a string, it's fine to not be tested
         instance_path_override = env_instance_path
 
     instance_path = Path(instance_path_override) if instance_path_override else DEFAULT_INSTANCE_PATH

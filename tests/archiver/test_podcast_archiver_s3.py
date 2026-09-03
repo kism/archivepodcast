@@ -9,7 +9,10 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from archivepodcast.archiver.podcast_archiver import PodcastArchiver
+from archivepodcast.archiver.webpages import Webpage
+from archivepodcast.instances.path_cache import s3_file_cache
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
+from archivepodcast.utils.s3 import S3File
 from tests import FakeExceptionError
 from tests.constants import DUMMY_RSS_STR
 from tests.fixtures.aws import S3ClientMock
@@ -315,3 +318,51 @@ def test_upload_to_s3_exception(
         apa_aws.grab_podcasts()
 
     assert "Unhandled s3 error trying to upload the file:" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("page_count", "expected_log"),
+    [
+        (1, "skipped upload due to same size"),
+        (2, "skipped 2 s3 uploads due to matching size"),
+    ],
+)
+async def test_write_webpages_skips_unchanged_s3_uploads(
+    apa_aws: PodcastArchiver,
+    mock_get_session: AWSAioSessionMock,
+    caplog: pytest.LogCaptureFixture,
+    page_count: int,
+    expected_log: str,
+) -> None:
+    """Pages already in s3 with a matching size are not re-uploaded."""
+    webpages = [Webpage(path=f"unchanged{n}.html", mime="text/html", content="unchanged") for n in range(page_count)]
+
+    for webpage in webpages:
+        s3_file_cache.add_file(S3File(key=webpage.path, size=len(webpage.content)))
+
+    with caplog.at_level(level=logging.DEBUG):
+        await apa_aws.renderer._write_webpages(webpages)
+
+    assert expected_log in caplog.text
+
+    async with mock_get_session.create_client("s3") as s3_client:
+        list_files = await s3_client.list_objects_v2(Bucket=apa_aws._app_config.s3.bucket)
+
+    uploaded = [path["Key"] for path in list_files.get("Contents", [])]
+    assert [webpage.path for webpage in webpages if webpage.path in uploaded] == []
+
+
+async def test_write_webpages_force_override_ignores_cache(
+    apa_aws: PodcastArchiver,
+    mock_get_session: AWSAioSessionMock,
+) -> None:
+    """force_override uploads even when the cache says the size matches."""
+    webpage = Webpage(path="forced.html", mime="text/html", content="forced")
+    s3_file_cache.add_file(S3File(key=webpage.path, size=len(webpage.content)))
+
+    await apa_aws.renderer._write_webpages([webpage], force_override=True)
+
+    async with mock_get_session.create_client("s3") as s3_client:
+        list_files = await s3_client.list_objects_v2(Bucket=apa_aws._app_config.s3.bucket)
+
+    assert webpage.path in [path["Key"] for path in list_files.get("Contents", [])]

@@ -107,7 +107,7 @@ def podcast_loop() -> None:
         logger.critical("ArchivePodcast object not initialized, podcast_loop dead")
         return
 
-    while True:
+    while True:  # pragma: no cover
         _ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
         current_datetime = datetime.datetime.now(tz=datetime.UTC)

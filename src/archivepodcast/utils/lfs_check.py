@@ -29,7 +29,7 @@ def check_lfs_objects(static_directory: Path) -> None:
     Checking out without Git LFS support (e.g. actions/checkout without `lfs: true`)
     leaves LFS-tracked files as small text pointer stubs instead of real content.
     """
-    if SKIP_LFS_CHECK:
+    if SKIP_LFS_CHECK:  # pragma: no cover # Only used in CI
         return
 
     broken = [item for item in static_directory.rglob("*") if item.is_file() and _is_lfs_pointer(item)]
