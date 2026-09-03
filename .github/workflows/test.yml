@@ -27,7 +27,9 @@ jobs:
           lfs: true
 
       - name: Install ffmpeg
-        run: sudo apt-get install -y ffmpeg
+        run: | # Runner apt lists go stale and 404, recommends drag in ~60MB of drivers/voice models we don't use
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v7
