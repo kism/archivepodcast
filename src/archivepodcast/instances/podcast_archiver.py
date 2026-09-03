@@ -20,6 +20,7 @@ from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.instances.profiler import event_times
 from archivepodcast.utils.log_messages import get_time_str
 from archivepodcast.utils.logger import get_logger
+from archivepodcast.utils.s3 import cache_control_for
 
 from .config import get_ap_config
 
@@ -158,15 +159,11 @@ def send_ap_cached_webpage(webpage_name: str) -> Response:
             f"Your requested page: {webpage_name} is not generated, webapp might be still starting up.",
         )
 
-    cache_control = "public, max-age=180"
-    if "woff2" in webpage_name:
-        cache_control = "public, max-age=31536000"  # 1 year
-
     return Response(
         webpage.content,
         media_type=webpage.mime,
         status_code=HTTPStatus.OK,
-        headers={"Cache-Control": cache_control},
+        headers={"Cache-Control": cache_control_for(webpage_name)},
     )
 
 
