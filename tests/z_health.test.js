@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { populateHealth } from "../src/archivepodcast/static/health";
+import { populateHealth, populateProfile } from "../src/archivepodcast/static/health";
 
 beforeEach(() => {
-  document.body.innerHTML = '<div id="health" style="display: block;"></div>';
+  document.body.innerHTML = '<div id="health" style="display: block;"></div><div id="profile"></div>';
   global.fetch = vi.fn();
 });
 
@@ -59,15 +59,14 @@ const healthData = {
 };
 
 const profileData = {
-  name: "root",
-  duration: 0.1234,
-  children: [
-    {
-      name: "load_config",
-      duration: 0.0456,
-      children: [],
-    },
-  ],
+  times: {
+    "grab_podcasts/Update file cache": 0.01,
+    "grab_podcasts/Scrape/_render_files": 0.03,
+    "grab_podcasts/Scrape/silver": 78.65,
+    "grab_podcasts/Scrape": 78.65,
+    grab_podcasts: 78.67,
+    root: 78.68,
+  },
 };
 
 describe("Health API", () => {
@@ -91,6 +90,22 @@ describe("Health API", () => {
     populateHealth(healthData);
     const healthDiv = document.getElementById("health");
     expect(healthDiv.children.length).greaterThan(0);
+  });
+
+  test("nests profile timers under their parent event", () => {
+    populateProfile(profileData);
+    const text = document.getElementById("profile").textContent;
+    expect(text).toContain(
+      [
+        "root: 78.68s",
+        "  grab_podcasts: 78.67s",
+        "    Update file cache: 0.01s",
+        "    Scrape: 78.65s",
+        "      _render_files: 0.03s",
+        "      silver: 78.65s",
+      ].join("\n"),
+    );
+    expect(text).not.toContain("Unknown Event");
   });
 
   test("correctly formats all date fields in health display", () => {

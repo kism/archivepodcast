@@ -112,7 +112,7 @@ def podcast_loop() -> None:
 
         current_datetime = datetime.datetime.now(tz=datetime.UTC)
 
-        asyncio.run(_ap.write_health_s3())
+        asyncio.run(_ap.write_health())
 
         # Calculate time until next run
         seconds_until_next_run = _get_time_until_next_run(current_datetime)

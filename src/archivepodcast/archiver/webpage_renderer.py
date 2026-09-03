@@ -156,11 +156,8 @@ class WebpageRenderer:
         health.update_template_status(output_filename, last_rendered=current_time)
         await self._write_webpages([self.webpages.get_webpage(output_filename)])
 
-    async def write_health_s3(self, health_api_response: PodcastArchiverHealthAPI) -> None:
-        """Write health.json to s3."""
-        if not self._s3:
-            return
-
+    async def write_health(self, health_api_response: PodcastArchiverHealthAPI) -> None:
+        """Write the health and profile json, to disk and s3 if enabled."""
         start_time = time.time()
 
         health_json = health_api_response.model_dump()
@@ -179,7 +176,7 @@ class WebpageRenderer:
             force_override=True,
         )
 
-        event_times.set_event_time("grab_podcasts/Post Scrape/write_health_s3", time.time() - start_time)
+        event_times.set_event_time("grab_podcasts/Post Scrape/write_health", time.time() - start_time)
 
     async def _write_webpages(self, webpages: list[Webpage], *, force_override: bool = False) -> None:
         """Write files to disk, and to s3 if needed."""

@@ -256,7 +256,7 @@ async def test_check_path_exists_s3_unhandled_exception(
 
 
 @pytest.mark.asyncio
-async def test_write_health_s3(
+async def test_write_health(
     apa_aws: PodcastArchiver,
     mock_get_session: AWSAioSessionMock,
 ) -> None:
@@ -265,7 +265,7 @@ async def test_write_health_s3(
     health_api_response = health.get_health()
 
     # Write health data to S3
-    await apa_aws.renderer.write_health_s3(health_api_response)
+    await apa_aws.renderer.write_health(health_api_response)
 
     # Verify the webpages were added
     assert apa_aws.renderer.webpages.get_webpage("api/health") is not None
