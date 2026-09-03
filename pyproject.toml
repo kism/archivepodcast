@@ -25,10 +25,7 @@ Repository = "https://github.com/kism/archivepodcast"
 docs = "https://archivepodcast.readthedocs.io/"
 
 [project.optional-dependencies]
-web = [
-    "fastapi>=0.115",
-    "uvicorn>=0.35",
-]
+web = ["fastapi>=0.115", "uvicorn>=0.35"]
 
 type = [
     "ty",
@@ -44,7 +41,7 @@ lint = ["ruff"]
 profile = ["aiomonitor"]
 
 test = [
-    "archivepodcast[web]", # Tests exercise the FastAPI app
+    "archivepodcast[web]",   # Tests exercise the FastAPI app
     "pytest>=9.1",
     "coverage==7.15.4",
     "pytest-cov",
@@ -74,65 +71,69 @@ line-length = 120
 [tool.ruff.lint]
 extend-select = ["ANN", "PYI"]
 preview = true
-select = ["ALL"] # KG Include absolutely all of Ruff's rules.
+select = ["ALL"] # Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
-    "DJ",  # KG Django not required
-    "NPY", # KG Numpy not required
-    "PD",  # KG Pandas not required
-    "CPY", # KG Copyright not required, handled in pyproject.toml
+    "DJ",  # Django not required
+    "NPY", # Numpy not required
+    "PD",  # Pandas not required
+    "CPY", # Copyright not required, handled in pyproject.toml
 
     # Specific rules
-    "missing-todo-author",   # KG Verbose TODO, only I work on this project
-    "missing-todo-link",   # KG Verbose TODO, only I work on this project
-    "suspicious-non-cryptographic-random-usage",    # KG I'll assume no real crypto will be done.
-    "single-line-implicit-string-concatenation",  # KG conflict in the formatter
-    "missing-trailing-comma",  # KG conflict in the formatter
-    "multiple-with-statements",  # KG Honestly easier to read with thing and thing as with: with:
-    "docstring-missing-returns",  # KG Unrequired docstrings fine
-    "docstring-missing-yields",  # KG Unrequired docstrings fine
-    "docstring-missing-exception",  # KG Unrequired docstrings fine
-    "compare-to-empty-string", # KG I like comparing to empty strings
-    "suspicious-xml-etree-import",    # KG stdlib etree import, feeds are trusted-ish and defusedxml is dead
-    "suspicious-xml-element-tree-usage",    # KG stdlib etree parsing, same reasoning
+    "missing-todo-author",                       # Verbose TODO, only I work on this project
+    "missing-todo-link",                         # Verbose TODO, only I work on this project
+    "suspicious-non-cryptographic-random-usage", # I'll assume no real crypto will be done.
+    "single-line-implicit-string-concatenation", # conflict in the formatter
+    "missing-trailing-comma",                    # conflict in the formatter
+    "multiple-with-statements",                  # Honestly easier to read with thing and thing as with: with:
+    "docstring-missing-returns",                 # Unrequired docstrings fine
+    "docstring-missing-yields",                  # Unrequired docstrings fine
+    "docstring-missing-exception",               # Unrequired docstrings fine
+    "compare-to-empty-string",                   # I like comparing to empty strings
+    "suspicious-xml-etree-import",               # stdlib etree import, feeds are trusted-ish and defusedxml is dead
+    "suspicious-xml-element-tree-usage",         # stdlib etree parsing, same reasoning
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "src/archivepodcast/config.py" = [
-    "line-too-long", # KG Some long lines
+    "line-too-long", # Some long lines
 ]
 "src/archivepodcast/lambda_handler.py" = [
-    "any-type", # KG AWS Lambda handler signatures
-    "unused-function-argument", # KG AWS Lambda handler signatures
-    "undocumented-public-function",   # KG AWS Lambda handler signatures
-    "hardcoded-temp-file",   # KG AWS Lambda needs /tmp usage
-    "error-instead-of-exception", # KG Logging in lambda a bit different
+    "any-type",                     # AWS Lambda handler signatures
+    "unused-function-argument",     # AWS Lambda handler signatures
+    "undocumented-public-function", # AWS Lambda handler signatures
+    "hardcoded-temp-file",          # AWS Lambda needs /tmp usage
+    "error-instead-of-exception",   # Logging in lambda a bit different
 ]
 "tests/**/*.py" = [
     # Modules
-    "ARG", # KG Unused function args -> fixtures nevertheless are functionally relevant
-    "FBT", # KG Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
-    "D",   # KG Don't care about docstrings in tests
-    "ANN", # KG Don't care about annotations in tests
+    "ARG", # Unused function args -> fixtures nevertheless are functionally relevant
+    "FBT", # Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
+    "D",   # Don't care about docstrings in tests
+    "ANN", # Don't care about annotations in tests
 
     # Specific rules
-    "assert",    # KG asserts allowed in tests.
-    "private-member-access",  # KG Accessing private members is needed for testing.
-    "pytest-missing-fixture-name-underscore",   # KG monkeypatch doesn't return.
-    "hardcoded-password-string",    # KG Hardcoded fake passwords are fine in tests.
-    "too-many-arguments", # KG Tests can have as many arguments as they want.
-    "blind-except",  # KG Tests can use BaseException.
-    "magic-value-comparison", # KG Tests can have magic number comparisons.
-    "import-private-name", # KG Importing private fine in tests
-    "unused-async",  # KG Unused async fine in tests
-    "too-many-positional-arguments", # KG Many positional arguments fine in tests
-    "docstring-missing-yields",  # KG Unrequired docstrings fine
-    "docstring-missing-returns",  # KG Unrequired docstrings fine
-    "no-self-use", # KG Fakes/mocks must match instance method signatures
-    "non-empty-init-module",  # KG Shared test exception lives in __init__
+    "assert",                                 # asserts allowed in tests.
+    "private-member-access",                  # Accessing private members is needed for testing.
+    "pytest-missing-fixture-name-underscore", # monkeypatch doesn't return.
+    "hardcoded-password-string",              # Hardcoded fake passwords are fine in tests.
+    "too-many-arguments",                     # Tests can have as many arguments as they want.
+    "blind-except",                           # Tests can use BaseException.
+    "magic-value-comparison",                 # Tests can have magic number comparisons.
+    "import-private-name",                    # Importing private fine in tests
+    "unused-async",                           # Unused async fine in tests
+    "too-many-positional-arguments",          # Many positional arguments fine in tests
+    "docstring-missing-yields",               # Unrequired docstrings fine
+    "docstring-missing-returns",              # Unrequired docstrings fine
+    "no-self-use",                            # Fakes/mocks must match instance method signatures
+    "non-empty-init-module",                  # Shared test exception lives in __init__
+]
+"tests/fixtures/*.py" = [
+    "pytest-fixture-autouse", # Global test setup (paths, thread errors, sleep) is what autouse is for
+
 ]
 "tests/fixtures/aws.py" = [
-    "invalid-argument-name", # KG AWS Just breaks the rules here
+    "invalid-argument-name", # AWS Just breaks the rules here
 ]
 "docs/*.py" = [
     # Modules
