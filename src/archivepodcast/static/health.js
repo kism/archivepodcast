@@ -35,6 +35,38 @@ export function fetchProfile() {
     .catch((error) => console.error("Error fetching profile data:", error));
 }
 
+/**
+ * Turns the flat {"a/b": seconds} map from /api/profile into an indented tree,
+ * the same shape get_event_times_str() logs on the python side.
+ * @param {Object<string, number>} times
+ * @returns {string}
+ */
+function renderTimes(times) {
+  const root = { duration: null, children: {} };
+  for (const [path, duration] of Object.entries(times ?? {})) {
+    let node = root;
+    if (path !== "root") {
+      for (const part of path.split("/")) {
+        node.children[part] ??= { duration: null, children: {} };
+        node = node.children[part];
+      }
+    }
+    node.duration = duration;
+  }
+
+  const lines = [];
+  const render = (name, node, indent) => {
+    const duration = node.duration === null ? "No duration" : `${node.duration.toFixed(2)}s`;
+    lines.push(`${" ".repeat(indent)}${name}: ${duration}`);
+    for (const [childName, child] of Object.entries(node.children)) {
+      render(childName, child, indent + 2);
+    }
+  };
+  render("root", root, 0);
+
+  return lines.join("\n");
+}
+
 export function populateProfile(data) {
   const profileDiv = document.getElementById("profile");
   profileDiv.innerHTML = "";
@@ -43,16 +75,10 @@ export function populateProfile(data) {
   description.textContent = `Timer stats per: /api/profile`;
   profileDiv.appendChild(description);
 
-  // /api/profile is a flat {path: seconds} map, indent by path depth to make the tree
   const timerDisplay = document.createElement("div");
   timerDisplay.classList.add("health-table");
   timerDisplay.style.whiteSpace = "pre";
-  timerDisplay.textContent = Object.entries(data.times ?? {})
-    .map(([path, duration]) => {
-      const parts = path.split("/");
-      return `${"  ".repeat(parts.length - 1)}${parts.at(-1)}: ${duration.toFixed(2)}s`;
-    })
-    .join("\n");
+  timerDisplay.textContent = renderTimes(data.times);
   profileDiv.appendChild(timerDisplay);
 }
 

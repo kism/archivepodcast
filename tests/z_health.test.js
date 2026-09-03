@@ -60,8 +60,12 @@ const healthData = {
 
 const profileData = {
   times: {
-    root: 0.1234,
-    "grab_podcasts/Post Scrape/write_health": 0.0456,
+    "grab_podcasts/Update file cache": 0.01,
+    "grab_podcasts/Scrape/_render_files": 0.03,
+    "grab_podcasts/Scrape/silver": 78.65,
+    "grab_podcasts/Scrape": 78.65,
+    grab_podcasts: 78.67,
+    root: 78.68,
   },
 };
 
@@ -88,11 +92,19 @@ describe("Health API", () => {
     expect(healthDiv.children.length).greaterThan(0);
   });
 
-  test("populates profile timers from the flat times map", () => {
+  test("nests profile timers under their parent event", () => {
     populateProfile(profileData);
     const text = document.getElementById("profile").textContent;
-    expect(text).toContain("root: 0.12s");
-    expect(text).toContain("    write_health: 0.05s");
+    expect(text).toContain(
+      [
+        "root: 78.68s",
+        "  grab_podcasts: 78.67s",
+        "    Update file cache: 0.01s",
+        "    Scrape: 78.65s",
+        "      _render_files: 0.03s",
+        "      silver: 78.65s",
+      ].join("\n"),
+    );
     expect(text).not.toContain("Unknown Event");
   });
 
