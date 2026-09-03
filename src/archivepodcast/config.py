@@ -186,7 +186,7 @@ class ArchivePodcastConfig(BaseSettings):
                 msg_warn += (
                     _LOG_INFO_MESSAGES["adhoc_s3_mismatch"] + f" {self.app.inet_path} != {self.app.s3.cdn_domain}"
                 )
-        except KeyError:
+        except KeyError:  # pragma: no cover # Unreachable, every key above is a literal in _LOG_INFO_MESSAGES
             logger.exception("log_info Missing message key")
 
         logger.info(msg.strip())

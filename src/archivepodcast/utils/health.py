@@ -42,7 +42,7 @@ class PodcastHealth(BaseModel):
     healthy_feed: bool = False
     episode_count: int = 0
 
-    def update_episode_info(self, tree: ET.ElementTree[ET.Element] | ET.Element | None = None) -> None:
+    def update_episode_info(self, tree: ET.ElementTree[ET.Element] | ET.Element) -> None:
         """Update the latest episode info."""
         logger.trace("Updating podcast episode info")
         new_latest_episode: EpisodeInfo = EpisodeInfo()
@@ -57,13 +57,10 @@ class PodcastHealth(BaseModel):
         self.episode_count = new_episode_count
 
     @staticmethod
-    def _parse_episode_info(tree: ET.ElementTree[ET.Element] | ET.Element | None) -> tuple[EpisodeInfo, int]:
+    def _parse_episode_info(tree: ET.ElementTree[ET.Element] | ET.Element) -> tuple[EpisodeInfo, int]:
         """Parse the latest episode info and episode count from a feed tree."""
         new_latest_episode: EpisodeInfo = EpisodeInfo()
         new_episode_count: int = 0
-
-        if tree is None:
-            return new_latest_episode, new_episode_count
 
         items = tree.findall(".//item")
         if len(items) == 0:
@@ -95,7 +92,7 @@ class PodcastHealth(BaseModel):
 class WebpageHealth(BaseModel):
     """Health status for an individual webpage."""
 
-    last_render: int = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
+    last_rendered: int = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
 
 
 class Host(BaseModel):

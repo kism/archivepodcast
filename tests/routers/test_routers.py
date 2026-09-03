@@ -51,6 +51,7 @@ def test_app_paths(
         valid_path_list = [
             "/index.html",
             "/guide.html",
+            "/webplayer.html",
             "/health",
             "/robots.txt",
             "/static/clipboard.js",
@@ -429,3 +430,12 @@ def test_api_health_exception(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["core"]["alive"] is False
     assert "Error getting health" in caplog.text
+
+
+def test_content_not_found(apa: PodcastArchiver, client_live: TestClient) -> None:
+    """Content that isn't on disk 404s."""
+    podcast_archiver._ap = apa
+
+    response = client_live.get("/content/test/not_an_episode.mp3")
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
