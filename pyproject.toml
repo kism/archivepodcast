@@ -27,6 +27,8 @@ docs = "https://archivepodcast.readthedocs.io/"
 [project.optional-dependencies]
 web = ["fastapi>=0.115", "uvicorn>=0.35"]
 
+# Dev-only tooling: groups, not extras, so they never ship to PyPI as installable extras.
+[dependency-groups]
 type = [
     "ty",
     "types-Markdown",
@@ -56,6 +58,15 @@ test = [
 ]
 
 docs = ["sphinx", "myst-parser", "sphinx-rtd-theme"]
+
+# Synced by default; `uv sync --all-extras` then gets tooling + the web extra.
+dev = [
+    { include-group = "type" },
+    { include-group = "lint" },
+    { include-group = "profile" },
+    { include-group = "test" },
+    { include-group = "docs" },
+]
 
 [build-system]
 requires = ["uv_build>=0.12.0,<0.13.0"]
