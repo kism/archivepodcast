@@ -311,7 +311,8 @@ input[type="button"]:focus {
 
 /* Card per podcast on the index, same radius as the buttons */
 .podcast {
-  border: 1px solid #555;
+  border: 0px;
+  background-color: #000000;
   border-radius: 4px;
   padding: 8px 12px 12px;
   margin: 12px 0;
