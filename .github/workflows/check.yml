@@ -13,6 +13,7 @@ on:
       - ".github/workflows/*docker*.yml"
       - "scripts/**"
       - "docker/**"
+      - ".cspell/**"
 
 jobs:
   check_py:
