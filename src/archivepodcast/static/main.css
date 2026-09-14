@@ -53,40 +53,30 @@
 
 /* #endregion */
 
-/* #region: Media Queries */
-
-@media screen and (width <= 430px) {
-  body {
-    /* biome-ignore lint/complexity/noImportantStyles: TODO */
-    margin-left: 10px !important;
-    /* biome-ignore lint/complexity/noImportantStyles: TODO */
-    margin-right: 10px !important;
-  }
-
-  .podcast-player {
-    /* biome-ignore lint/complexity/noImportantStyles: TODO */
-    margin-left: 10px !important;
-    /* biome-ignore lint/complexity/noImportantStyles: TODO */
-    margin-right: 10px !important;
-  }
-}
-
-/* #endregion */
-
 /* #region: General */
 
-body {
-  font-family:
+:root {
+  --font-sans:
     "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: "Fira Code", Consolas, "Lucida Console", monospace;
+  --bg: #1a1a1a;
+  --surface: #101010;
+  --text: #c8c8c8;
+  --muted: #bbb;
+  --border: #ababab;
+  --accent: #008080;
+}
+
+body {
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
-  background-color: #1a1a1a;
-  color: #c8c8c8;
   line-height: 1.5;
+  background-color: var(--bg);
+  color: var(--text);
   margin-top: 20px;
-  margin-left: 23px;
-  margin-right: 23px;
+  margin-inline: 23px;
 }
 
 .contained-content {
@@ -95,7 +85,7 @@ body {
 
 h1,
 h2 {
-  font-family: "Fira Code", Consolas, "Lucida Console", monospace;
+  font-family: var(--font-mono);
   line-height: 1.2;
   color: #f0f0f0;
 }
@@ -112,25 +102,14 @@ h2 {
   margin: 20px 0 2px;
 }
 
-h3,
-h4 {
-  font-family:
-    "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  color: #c8c8c8;
-  font-weight: 500;
-  margin-top: 4px;
-  margin-bottom: 6px;
+h3 {
   font-size: 18px;
-}
-
-h4 {
-  font-style: italic;
+  font-weight: 500;
+  margin: 4px 0 6px;
 }
 
 p {
-  margin-top: 6px;
-  margin-bottom: 10px;
+  margin: 6px 0 10px;
 }
 
 /* Index is a list of podcasts, not prose, one-line descriptions don't need prose spacing */
@@ -147,7 +126,7 @@ ol {
 }
 
 a:link {
-  color: #008080;
+  color: var(--accent);
 }
 
 a:visited {
@@ -156,7 +135,7 @@ a:visited {
 
 ::selection {
   color: #e6e6e6;
-  background: #008080;
+  background: var(--accent);
 }
 
 .active {
@@ -174,133 +153,107 @@ footer {
   margin: 20px 0 16px;
 }
 
-.last-generated {
-  display: none;
-}
-
-.breadcrumb {
-  margin: 0;
-}
-
 /* #endregion */
 
-/* #region: File List, breadcrumbs */
+/* #region: File list, breadcrumbs */
+
+.file-list,
+.breadcrumb {
+  display: list-item;
+  list-style-type: none;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: var(--surface);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow-x: auto;
+}
 
 .file-list {
   margin-top: 10px;
 }
 
-.file-list,
-.breadcrumb {
-  border-radius: 4px;
-  display: list-item;
-  list-style-type: none;
-  padding: 8px;
-  background-color: #101010;
-  font-family: "Fira Code", Consolas, "Lucida Console", monospace;
-  font-weight: 500;
-  width: auto;
-  white-space: nowrap; /* Prevent line breaks */
-  overflow-x: auto; /* Enable horizontal scrolling */
-}
-
 .file-list::-webkit-scrollbar {
-  height: 8px; /* Customize scrollbar height */
+  height: 8px;
 }
 
 .file-list::-webkit-scrollbar-thumb {
-  background-color: #888; /* Color of the scrollbar */
-  border-radius: 4px; /* Rounded edges */
+  background-color: #888;
+  border-radius: 4px;
 }
 
 .file-list::-webkit-scrollbar-thumb:hover {
-  background-color: #555; /* Darker color on hover */
+  background-color: #555;
 }
 
 /* #endregion */
 
-/* #region: Podcast Episode List */
+/* #region: Podcast episode list */
 
 #podcast-episode-list li {
-  /* background: #c8c8c8; */
-
-  /* color: #c8c8c8; */
-  border-bottom: 1px solid #ababab;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
 }
 
 #podcast-episode-list li:hover {
-  background: #008080;
-}
-
-/*
-#podcast-episode-list li:nth-child(odd) {
-  background: #bbbbbb;
-} */
-
-#podcast-episode-list a:link {
-  color: #c8c8c8;
-  margin-top: 10px;
-  font-style: unset;
-  text-decoration: unset;
-}
-
-#podcast-episode-list a:visited {
-  color: #c8c8c8;
-  font-style: unset;
-  text-decoration: unset;
+  background: var(--accent);
 }
 
 /* #endregion */
 
-/* #region: Button, selectors */
-.button,
-button,
-input[type="submit"],
-input[type="reset"],
-input[type="button"] {
+/* #region: Buttons, cards */
+
+.button {
   display: inline-block;
+  box-sizing: border-box;
   height: 30px;
+  min-width: 100px;
   padding: 0 15px;
-  color: #bbb;
-  text-align: center;
+  color: var(--muted);
+  background-color: #004040;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
   line-height: 30px;
   letter-spacing: 0.1rem;
+  text-align: center;
   text-transform: uppercase;
   text-decoration: none;
   white-space: nowrap;
-  background-color: #004040;
-  border-radius: 4px;
-  border: 1px solid #bbb;
   cursor: pointer;
-  box-sizing: border-box;
-  min-width: 100px;
 }
 
-/* Beat a:link / a:visited colours for link-styled buttons, before :hover so hover still wins */
+/* Beat a:link / a:visited colours, before :hover so hover still wins */
 .button:link,
 .button:visited {
-  color: #bbb;
+  color: var(--muted);
 }
 
 .button:hover,
-button:hover,
-input[type="submit"]:hover,
-input[type="reset"]:hover,
-input[type="button"]:hover,
-.button:focus,
-button:focus,
-input[type="submit"]:focus,
-input[type="reset"]:focus,
-input[type="button"]:focus {
+.button:focus {
   color: #333;
   border-color: #888;
-  background-color: #008080;
+  background-color: var(--accent);
   outline: 0;
+}
+
+/* Brand colours only on hover/focus, so a page of podcasts isn't a wall of colour */
+.button-pocketcasts:hover,
+.button-pocketcasts:focus {
+  background-color: #f08c30;
+}
+
+.button-apple:hover,
+.button-apple:focus {
+  background-color: #b07ad8;
+}
+
+.button-youtube:hover,
+.button-youtube:focus {
+  background-color: #e05050;
 }
 
 .podcast-links {
@@ -312,8 +265,7 @@ input[type="button"]:focus {
 /* Cards: podcasts on the index, guides on the guide page, same radius as the buttons */
 .podcast,
 .guide {
-  border: 0px;
-  background-color: #101010;
+  background-color: var(--surface);
   border-radius: 4px;
   padding: 8px 12px 12px;
 }
@@ -334,103 +286,9 @@ input[type="button"]:focus {
   gap: 12px;
 }
 
-/* Brand colours only on hover/focus, so a page of podcasts isn't a wall of colour */
-.button-pocketcasts:hover,
-.button-pocketcasts:focus {
-  background-color: #f08c30;
-}
+/* #endregion */
 
-.button-apple:hover,
-.button-apple:focus {
-  background-color: #b07ad8;
-}
-
-.button-youtube:hover,
-.button-youtube:focus {
-  background-color: #e05050;
-}
-
-/* Forms */
-input[type="email"],
-input[type="number"],
-input[type="search"],
-input[type="text"],
-input[type="tel"],
-input[type="url"],
-input[type="password"],
-textarea,
-select {
-  font-family: "Noto Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  background-color: #464646;
-  border: 1px solid #d1d1d1;
-  color: #bbb;
-  border-radius: 4px;
-  box-shadow: none;
-  box-sizing: border-box;
-  width: 250px;
-  margin-top: 3px;
-  margin-bottom: 3px;
-}
-
-input[type="email"],
-input[type="number"],
-input[type="search"],
-input[type="text"],
-input[type="tel"],
-input[type="url"],
-input[type="password"],
-textarea {
-  appearance: none; /* Remove default styling */
-  height: 24px;
-  padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
-}
-
-select {
-  height: 26px;
-  padding: 2px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
-}
-
-textarea {
-  min-height: 10px;
-  padding-top: 1px;
-  padding-bottom: 1px;
-}
-
-input[type="email"]:focus,
-input[type="number"]:focus,
-input[type="search"]:focus,
-input[type="text"]:focus,
-input[type="tel"]:focus,
-input[type="url"]:focus,
-input[type="password"]:focus,
-textarea:focus,
-select:focus {
-  border: 1px solid #008080;
-  outline: 0;
-}
-
-label,
-legend {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-fieldset {
-  padding: 0;
-  border-width: 0;
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-  display: inline;
-}
-
-label > .label-body {
-  display: inline-block;
-  margin-left: 0.5rem;
-  font-weight: normal;
-}
+/* #region: Podcast select */
 
 .custom-select {
   position: relative;
@@ -439,84 +297,57 @@ label > .label-body {
 
 .custom-select select {
   appearance: none;
+  box-sizing: border-box;
   width: 100%;
-  padding-left: 5px;
-  border: 1px solid #bbb;
-  border-radius: 5px;
-  background-color: #333;
+  height: 26px;
+  margin: 3px 0;
+  padding: 2px 10px 2px 5px;
+  font-family: var(--font-sans);
   font-size: 12px;
+  color: var(--muted);
+  background-color: #333;
+  border: 1px solid var(--muted);
+  border-radius: 5px;
   cursor: pointer;
 }
 
-/* Dropdown arrow */
+.custom-select select:hover,
+.custom-select select:focus {
+  border-color: var(--accent);
+  outline: 0;
+}
+
+/* Dropdown arrow, since appearance: none removes the native one */
 .custom-select::after {
-  content: "▼"; /* Unicode down arrow */
+  content: "▼";
   position: absolute;
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
   font-size: 14px;
-  color: #bbb;
-}
-
-/* Hover and focus styles */
-.custom-select select:hover,
-.custom-select select:focus {
-  border-color: #008080;
+  color: var(--muted);
 }
 
 /* #endregion */
 
-/* #region: Table */
-
-table {
-  margin-top: 6px;
-  margin-bottom: 2px;
-  border: 1px solid #ababab;
-  border-collapse: collapse;
-}
-
-tr {
-  border: 2px solid #ababab;
-  border-bottom: 2px solid #ababab;
-}
-
-th,
-td {
-  padding: 2px 10px;
-  text-align: left;
-  width: fit-content;
-}
-
-thead th {
-  background-color: #008080;
-  color: #fff;
-  text-align: center;
-}
-
-/* #endregion */
-
-/* #region: Health Table */
+/* #region: Health tables */
 
 .health-table table {
   width: 100%;
+  margin: 2px 0;
   font-size: 11px;
-  margin-top: 2px;
-  margin-bottom: 2px;
-  border: 1px solid #ababab;
+  border: 1px solid var(--border);
   border-collapse: collapse;
 }
 
 .health-table tr {
-  border: 1px solid #ababab;
-  border-bottom: 1px solid #ababab;
+  border: 1px solid var(--border);
 }
 
-.health-table th,
 .health-table td {
   padding: 2px 4px;
-  text-align: left;
+  width: fit-content;
 }
 
 .health-table td:first-child {
@@ -525,7 +356,7 @@ thead th {
 
 /* #endregion */
 
-/* #region: Podcast Player */
+/* #region: Podcast player */
 
 .podcast-player-offset,
 .podcast-player-footer {
@@ -537,12 +368,11 @@ thead th {
   left: 0;
   bottom: 0;
   width: 100%;
-  background-color: #1a1a1a;
+  background-color: var(--bg);
 }
 
 .podcast-player {
-  margin-left: 23px;
-  margin-right: 23px;
+  margin-inline: 23px;
   max-width: 700px;
 }
 
@@ -581,12 +411,11 @@ thead th {
 
 /* #endregion */
 
-/* #region: Webkit Audio */
+/* #region: Webkit audio */
 
 audio {
   height: 25px;
-  margin-bottom: 3px;
-  margin-top: 3px;
+  margin-block: 3px;
 }
 
 audio::-webkit-media-controls-enclosure,
@@ -606,51 +435,43 @@ audio::-webkit-media-controls-enclosure {
   height: 25px;
 }
 
-audio::-webkit-media-controls-panel,
-video::-webkit-media-controls-panel {
+/* flex-start keeps the play button visible when there isn't room for every control */
+audio::-webkit-media-controls-panel {
   display: flex;
   flex-direction: row;
   align-items: center;
-
-  /* We use flex-start here to ensure that the play button is visible even
-   * if we are too small to show all controls.
-   */
   justify-content: flex-start;
   user-select: none;
   position: relative;
   width: 100%;
+  height: 25px;
   z-index: 0;
   overflow: hidden;
   text-align: right;
   bottom: auto;
-  height: 25px;
-
-  /* background-color: rgba(20, 20, 20, 0.8); */
+  margin: 0;
+  border: none;
   border-radius: 5px;
-
-  /* The duration is also specified in MediaControlElements.cpp and LayoutTests/media/media-controls.js */
   transition: opacity 0.3s;
 }
 
-audio::-webkit-media-controls-panel {
-  /* background-color: #101010; */
-
-  /* padding: 0px; */
-  border: none;
-  margin: 0;
-}
-
 audio::-webkit-media-controls-play-button {
-  background-color: #008080;
+  background-color: var(--accent);
   color: #fff;
   height: 18px;
   width: 10px;
 }
 
-audio::-webkit-media-controls-current-time-display,
-audio::-webkit-media-controls-time-remaining-display,
-audio::-webkit-time-display {
-  text-shadow: none;
+/* #endregion */
+
+/* #region: Phones */
+
+/* Last so it overrides the margins above without !important */
+@media screen and (width <= 430px) {
+  body,
+  .podcast-player {
+    margin-inline: 10px;
+  }
 }
 
 /* #endregion */
