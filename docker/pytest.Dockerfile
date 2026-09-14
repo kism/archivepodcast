@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     --mount=type=bind,source=README.md,target=README.md \
-    uv sync --frozen --extra test
+    uv sync --frozen --group test
 
 # Copy application code
 COPY --chown=ap:ap src src
@@ -41,4 +41,4 @@ RUN chmod 000 instance/config.json
 # User and permissions
 USER ap:ap
 
-CMD ["pytest", "--no-cov", "-o", "cache_dir=/tmp/.pytest_cache"]
+CMD ["pytest", "-q", "-o", "cache_dir=/tmp/.pytest_cache"]
