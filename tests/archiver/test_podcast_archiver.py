@@ -80,7 +80,7 @@ def test_grab_podcasts_not_live(
 
     assert "No response, loading rss from file" not in caplog.text  # This shouldn't happen
 
-    get_rss = str(apa.get_rss_feed("test"), "utf-8")
+    get_rss = str(apa.podcast_rss["test"], "utf-8")
 
     assert get_rss == DUMMY_RSS_STR
 
@@ -216,7 +216,7 @@ def test_grab_podcasts_live(
     assert "Hosted feed: http://localhost:5100/rss/test" in caplog.text
     assert "Loaded rss from file" not in caplog.text
 
-    rss = str(apa.get_rss_feed("test"))
+    rss = str(apa.podcast_rss["test"])
 
     assert "PyTest Podcast [Archive]" in rss
     assert "http://localhost:5100/content/test/20200101-Test-Episode.mp3" in rss
@@ -262,7 +262,7 @@ def test_grab_podcasts_no_episodes(
     assert "has no episodes, not writing to disk" in caplog.text  # This shouldn't happen
 
     # Since it loads the old version from the disk
-    assert (apa.get_rss_feed("test")).decode("utf-8") == DUMMY_RSS_STR
+    assert (apa.podcast_rss["test"]).decode("utf-8") == DUMMY_RSS_STR
 
 
 @pytest.mark.asyncio
@@ -305,7 +305,7 @@ def test_grab_podcasts_live_episode_drop_backs_up_feed(
     assert backup_path.read_text() == previous_rss
 
     # The new (smaller) feed is still served
-    assert "<title>Test Episode</title>" in str(apa.get_rss_feed("test"))
+    assert "<title>Test Episode</title>" in str(apa.podcast_rss["test"])
 
 
 @pytest.mark.asyncio

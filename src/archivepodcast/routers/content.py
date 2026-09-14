@@ -1,7 +1,6 @@
 """Routes for serving archived podcast content."""
 
 from http import HTTPStatus
-from pathlib import Path
 
 from fastapi import APIRouter, Response
 from fastapi.responses import FileResponse, RedirectResponse
@@ -21,10 +20,7 @@ def send_content(path: str) -> Response:
     ap_conf = get_ap_config()
 
     if ap_conf.app.storage_backend == "s3":
-        path_obj = Path(path)
-        web_root = Path(get_app_paths().web_root)
-        relative_path = str(path_obj).replace(str(web_root), "")  # The easiest way to get the "relative" path
-        new_path = ap_conf.app.s3.cdn_domain.encoded_string() + "content/" + relative_path
+        new_path = ap_conf.app.s3.cdn_domain.encoded_string() + "content/" + path
         return RedirectResponse(new_path, status_code=HTTPStatus.TEMPORARY_REDIRECT)
 
     web_dir = (get_app_paths().instance_path / "web" / "content").resolve()

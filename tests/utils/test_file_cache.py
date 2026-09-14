@@ -62,23 +62,7 @@ def test_raises_error_when_not_initialized() -> None:
         cache.get_all()
 
     with pytest.raises(ValueError, match=match_text):
-        cache.check_exists(Path("somefile.txt"))
-
-    with pytest.raises(ValueError, match=match_text):
         cache.add_file(Path("somefile.txt"))
-
-
-def test_check_exists_returns_true_for_cached_file(tmp_path: Path) -> None:
-    """Test that check_exists() returns True for files in the cache."""
-    web_root = tmp_path / "web_root"
-    web_root.mkdir()
-    (web_root / "exists.txt").touch()
-
-    cache = LocalFileCache()
-    cache.refresh(web_root)
-
-    assert cache.check_exists(Path("exists.txt")) is True
-    assert cache.check_exists(Path("nonexistent.txt")) is False
 
 
 def test_add_file_adds_new_file(tmp_path: Path) -> None:

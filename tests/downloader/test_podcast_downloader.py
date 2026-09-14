@@ -324,7 +324,6 @@ def test_handle_itunes_owner_tag_defaults(apd: PodcastsDownloader) -> None:
     ("file_name", "expected_slug"),
     [
         ("str", "str"),
-        (b"str", "str"),
         ("str ", "str"),
         ("str%", "str"),
         ("str%str", "str-str"),

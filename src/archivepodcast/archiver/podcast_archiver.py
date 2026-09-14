@@ -107,10 +107,6 @@ class PodcastArchiver:
 
         self.s3: bool = app_config.storage_backend == "s3"
         self.renderer = WebpageRenderer(app_config=app_config, podcast_list=podcast_list, s3=self.s3, debug=debug)
-
-        # Set the config and podcast list
-        self._app_config: AppConfig = app_config
-        self.podcast_list: list[PodcastConfig] = podcast_list
         self.podcast_rss: dict[str, bytes] = {}
 
         self.load_config(app_config, podcast_list)
@@ -120,14 +116,9 @@ class PodcastArchiver:
 
     def load_config(self, app_config: AppConfig, podcast_list: list[PodcastConfig]) -> None:
         """Load the config from the config file."""
-        self._app_config = app_config
-        self.podcast_list = podcast_list
+        self._app_config: AppConfig = app_config
+        self.podcast_list: list[PodcastConfig] = podcast_list
         self._make_folder_structure()
-
-    # region Getters
-    def get_rss_feed(self, feed: str) -> bytes:
-        """Return the rss file for a given feed."""
-        return self.podcast_rss[feed]
 
     # region Grab
 

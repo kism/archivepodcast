@@ -26,10 +26,7 @@ logger = get_logger(__name__)
 
 
 def _append_to_local_paths_cache(file_path: Path) -> None:
-    file_path = Path(file_path).relative_to(get_app_paths().web_root)
-
-    if not local_file_cache.check_exists(file_path):
-        local_file_cache.add_file(file_path)
+    local_file_cache.add_file(file_path.relative_to(get_app_paths().web_root))
 
 
 def _check_local_path_exists(file_path: Path) -> bool:
@@ -69,12 +66,8 @@ class AssetDownloader:
 
     async def _download_asset(self, url: str, title: str, extension: str = "", file_date_string: str = "") -> None:
         """Download asset from url with appropriate file name."""
-        spacer = ""
-        if file_date_string != "":
-            spacer = "-"
-
-        content_dir = get_app_paths().web_root / "content" / self._podcast.name_one_word
-        file_path = content_dir / f"{file_date_string}{spacer}{title}{extension}"
+        file_name = f"{file_date_string}-{title}" if file_date_string else title
+        file_path = get_app_paths().web_root / "content" / self._podcast.name_one_word / f"{file_name}{extension}"
 
         if not await self._check_path_exists(file_path):  # if the asset hasn't already been downloaded
             await self._download_to_local(url, file_path)
@@ -92,99 +85,51 @@ class AssetDownloader:
         """Download the asset from the url."""
         logger.debug("[%s] Downloading: %s", self._podcast.name_one_word, url)
 
-        async def _stream_to_file() -> None:
-            """Download the asset from the url to the file path."""
-            logger.trace("[%s] Downloading asset from URL: %s", self._podcast.name_one_word, url)
+        for n in range(DOWNLOAD_RETRY_COUNT):
             start_time = time.time()
-            async with self._aiohttp_session.get(url) as response:
-                response.raise_for_status()
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                with file_path.open("wb") as asset_file:
-                    while True:
-                        chunk = await response.content.read(8192)
-                        if not chunk:
-                            break
-                        asset_file.write(chunk)
-
-            warn_if_too_long(f"download asset: {file_path}", time.time() - start_time, large_file=True)
-
-        async def _attempt_download() -> bool:
-            """Attempt to download the asset."""
             try:
-                await _stream_to_file()
+                async with self._aiohttp_session.get(url) as response:
+                    response.raise_for_status()
+                    file_path.parent.mkdir(parents=True, exist_ok=True)
+                    with file_path.open("wb") as asset_file:
+                        async for chunk in response.content.iter_chunked(8192):
+                            asset_file.write(chunk)
             except aiohttp.ClientError as e:
                 self._feed_download_healthy = False
                 log_aiohttp_exception(self._podcast.name_one_word, url, e, logger)
-                return False
-
-            logger.info("[%s] Downloaded asset to: %s", self._podcast.name_one_word, file_path)
-
-            return True
-
-        success = False
-        for n in range(DOWNLOAD_RETRY_COUNT):
-            success = await _attempt_download()
-            if success:
-                break
-            await delay_download(n)
-        if not success:
+                await delay_download(n)
+                continue
+            warn_if_too_long(f"download asset: {file_path}", time.time() - start_time, large_file=True)
+            break
+        else:
             logger.error("[%s] Failed to download asset after multiple attempts: %s", self._podcast.name_one_word, url)
             return
 
-        logger.debug("[%s] Success, downloaded to %s", self._podcast.name_one_word, file_path)
+        logger.info("[%s] Downloaded asset to: %s", self._podcast.name_one_word, file_path)
 
         if not self._s3:
             _append_to_local_paths_cache(file_path)
 
-    async def _download_cover_art(
-        self,
-        url: str,
-        title: str,
-        extension: str = "",
-    ) -> None:
-        """Download cover art from url with appropriate file name."""
-        content_dir = get_app_paths().web_root / "content" / self._podcast.name_one_word
-        cover_art_destination = content_dir / f"{title}{extension}"
-
-        remote_file_found = False
+    async def _download_cover_art(self, url: str, title: str, extension: str = "") -> None:
+        """Download cover art, the local copy is kept even with s3 since it is small."""
+        cover_art_destination = (
+            get_app_paths().web_root / "content" / self._podcast.name_one_word / f"{title}{extension}"
+        )
         local_file_found = _check_local_path_exists(cover_art_destination)
 
-        # If we are using s3
-        #    we haven't found the local file
-        #    we will remove the original after upload
-        # Check s3 for the file
-        if self._s3 and not local_file_found and await self._check_path_exists(cover_art_destination):
-            remote_file_found = True
-
-        logger.trace(
-            "[%s] _download_cover_art, local_file_found=%s, remote_file_found=%s",
-            self._podcast.name_one_word,
-            local_file_found,
-            remote_file_found,
-        )
-
-        # Download to local if we aren't using s3 and haven't found it locally
-        if not self._s3 and not local_file_found:
+        if not local_file_found and self._s3 and await self._check_path_exists(cover_art_destination):
+            return  # Already in s3, nothing to do
+        if not local_file_found:
             await self._download_to_local(url, cover_art_destination)
-
-        # Download to local if we haven't found it locally or remotely
-        if self._s3 and not local_file_found and not remote_file_found:
-            await self._download_to_local(url, cover_art_destination)
-
-        # If we (now) have a file here, upload to s3 if needed
-        if self._s3 and (local_file_found or not remote_file_found):
+        if self._s3:
             await self._upload_asset_s3(cover_art_destination, extension, remove_original=False)
 
-    async def _handle_wav(self, url: str, title: str, extension: str = "", file_date_string: str = "") -> int:
+    async def _handle_wav(self, url: str, title: str, extension: str, file_date_string: str) -> int:
         """Convert podcasts that have wav episodes 😔. Returns new file length."""
         logger.trace("[%s] Handling wav file: %s", self._podcast.name_one_word, title)
-        spacer = ""  # This logic can be removed since WAVs will always have a date
-        if file_date_string != "":
-            spacer = "-"
-
         content_dir = get_app_paths().web_root / "content" / self._podcast.name_one_word
-        wav_file_path: AsyncPath = AsyncPath(content_dir / f"{file_date_string}{spacer}{title}.wav")
-        mp3_file_path: AsyncPath = AsyncPath(content_dir / f"{file_date_string}{spacer}{title}.mp3")
+        wav_file_path: AsyncPath = AsyncPath(content_dir / f"{file_date_string}-{title}.wav")
+        mp3_file_path: AsyncPath = AsyncPath(content_dir / f"{file_date_string}-{title}.mp3")
 
         # If we need do download and convert a wav there is a small chance
         # the user has had ffmpeg issues, remove existing files to play it safe
@@ -247,15 +192,9 @@ class AssetDownloader:
         self, file_path: Path | AsyncPath, extension: str, *, remove_original: bool = True
     ) -> None:
         """Upload asset to s3."""
-        if not self._s3:
-            logger.error("[%s] s3 client not found, cannot upload", self._podcast.name_one_word)
-            return
         content_type = CONTENT_TYPES[extension]
         file_path = Path(file_path)
-        if not file_path.is_absolute():
-            file_path = get_app_paths().web_root / file_path
         s3_path = file_path.relative_to(get_app_paths().web_root).as_posix()
-        s3_path = s3_path.removeprefix("/")
 
         if not remove_original:
             # So if we are not removing the original, we can check if we can skip the upload
@@ -302,50 +241,29 @@ class AssetDownloader:
 
     # region Helpers
 
-    async def _check_path_exists(self, file_path: Path | AsyncPath | str) -> bool:
-        """Check the path, s3 or local."""
-        file_exists = False
+    async def _check_path_exists(self, file_path: Path | AsyncPath) -> bool:
+        """Check the path (absolute, under web_root), s3 or local."""
+        file_path = Path(file_path)
+        if not self._s3:
+            return _check_local_path_exists(file_path)
 
-        if self._s3:
-            # Convert file_path to a Path object if it isn't already
-            file_path = Path(file_path)
+        s3_key = file_path.relative_to(get_app_paths().web_root).as_posix()
+        if s3_file_cache.check_file_exists(s3_key):
+            logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_key)
+            return True
 
-            # If it's an absolute path and under web_root, make it relative to web_root
-            if file_path.is_absolute() and file_path.is_relative_to(get_app_paths().web_root):
-                file_path = file_path.relative_to(get_app_paths().web_root)
-
-            # Convert to a posix path (forward slashes) and ensure no leading slash
-            s3_key = file_path.as_posix().lstrip("/")
-
-            if not s3_file_cache.check_file_exists(s3_key):
-                try:
-                    # Head object to check if file exists
-                    my_object = await s3_head(self._app_config.s3.bucket, s3_key)
-                    logger.debug(
-                        "File: %s exists in s3 bucket",
-                        s3_key,
-                    )
-                    s3_file_cache.add_file(S3File(key=s3_key, size=my_object.get("ContentLength", 0)))
-                    file_exists = True
-
-                except S3ClientError as e:
-                    if e.response.get("Error", {}).get("Code") == "404":
-                        logger.debug(
-                            "File: %s does not exist 🙅‍ in the s3 bucket",
-                            s3_key,
-                        )
-                    else:
-                        logger.exception("s3 check file exists errored out?")
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.exception("Unhandled s3 Error:")
-
+        try:
+            my_object = await s3_head(self._app_config.s3.bucket, s3_key)
+        except S3ClientError as e:
+            if e.response.get("Error", {}).get("Code") == "404":
+                logger.debug("File: %s does not exist 🙅‍ in the s3 bucket", s3_key)
             else:
-                logger.trace("s3 path %s exists in s3_paths_cache, skipping", s3_key)
-                file_exists = True
+                logger.exception("s3 check file exists errored out?")
+            return False
+        except Exception:
+            logger.exception("Unhandled s3 Error:")
+            return False
 
-        else:
-            if not isinstance(file_path, Path):
-                file_path = Path(file_path)
-            file_exists = _check_local_path_exists(file_path)
-
-        return file_exists
+        logger.debug("File: %s exists in s3 bucket", s3_key)
+        s3_file_cache.add_file(S3File(key=s3_key, size=my_object.get("ContentLength", 0)))
+        return True

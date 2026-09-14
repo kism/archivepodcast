@@ -1,6 +1,7 @@
 """Helper utilities for archivepodcast."""
 
 import time
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -8,7 +9,7 @@ from aiobotocore.session import get_session
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
-from archivepodcast.instances.config import get_ap_config_s3_client
+from archivepodcast.instances.config import get_ap_config
 
 from .logger import get_logger
 from .time import warn_if_too_long
@@ -16,6 +17,9 @@ from .time import warn_if_too_long
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from types_aiobotocore_s3 import S3Client
     from types_aiobotocore_s3.type_defs import HeadObjectOutputTypeDef, ObjectTypeDef  # pragma: no cover
 else:
     HeadObjectOutputTypeDef = object
@@ -42,12 +46,24 @@ def cache_control_for(path: str) -> str:
     return "public, max-age=180"
 
 
+@asynccontextmanager
+async def _s3_client() -> AsyncIterator[S3Client]:
+    """S3 client configured from the app config."""
+    s3_conf = get_ap_config().app.s3
+    async with get_session().create_client(
+        "s3",
+        aws_access_key_id=s3_conf.access_key_id,
+        aws_secret_access_key=s3_conf.secret_access_key,
+        region_name=s3_conf.region or None,
+        endpoint_url=s3_conf.api_url.encoded_string() if s3_conf.api_url else None,
+    ) as s3_client:
+        yield s3_client
+
+
 async def s3_put(bucket: str, key: str, body: bytes, content_type: str, *, large_file: bool = False) -> None:
     """Upload an object to s3."""
-    s3_config = get_ap_config_s3_client()
-    session = get_session()
     start_time = time.time()
-    async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+    async with _s3_client() as s3_client:
         await s3_client.put_object(
             Bucket=bucket, Key=key, Body=body, ContentType=content_type, CacheControl=cache_control_for(key)
         )
@@ -56,27 +72,21 @@ async def s3_put(bucket: str, key: str, body: bytes, content_type: str, *, large
 
 async def s3_head(bucket: str, key: str) -> HeadObjectOutputTypeDef:
     """Head an object in s3, raises botocore ClientError if it doesn't exist."""
-    s3_config = get_ap_config_s3_client()
-    session = get_session()
-    async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+    async with _s3_client() as s3_client:
         return await s3_client.head_object(Bucket=bucket, Key=key)
 
 
 async def s3_delete(bucket: str, key: str) -> None:
     """Delete an object from s3."""
-    s3_config = get_ap_config_s3_client()
-    session = get_session()
-    async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+    async with _s3_client() as s3_client:
         await s3_client.delete_object(Bucket=bucket, Key=key)
 
 
 async def s3_get(bucket: str, key: str) -> bytes:
     """Download an object from s3, returns empty bytes if it doesn't exist."""
-    s3_config = get_ap_config_s3_client()
-    session = get_session()
     start_time = time.time()
     try:
-        async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+        async with _s3_client() as s3_client:
             response = await s3_client.get_object(Bucket=bucket, Key=key)
             body = await response["Body"].read()
     except ClientError:
@@ -103,10 +113,7 @@ class S3FileCache(BaseModel):
 
         logger.debug("Fetching object list from S3, no cache available")
 
-        s3_config = get_ap_config_s3_client()
-
-        session = get_session()
-        async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
+        async with _s3_client() as s3_client:
             paginator = s3_client.get_paginator("list_objects_v2")
             page_iterator = paginator.paginate(Bucket=bucket)
 

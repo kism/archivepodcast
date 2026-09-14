@@ -177,61 +177,6 @@ def test_rss_feed(
     assert response.status_code == HTTPStatus.OK
 
 
-def test_rss_feed_type_error(
-    apa: PodcastArchiver,
-    app_live: FastAPI,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Test the RSS feed."""
-
-    podcast_archiver._ap = apa
-    ap = apa
-
-    client_live = TestClient(app_live, follow_redirects=False)
-
-    def return_type_error(*args: Any, **kwargs: Any) -> None:
-        raise TypeError
-
-    monkeypatch.setattr(ap, "get_rss_feed", return_type_error)
-
-    response = client_live.get("/rss/test")
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-
-
-def test_rss_feed_unhandled_error(
-    apa: PodcastArchiver,
-    app_live: FastAPI,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Test the RSS feed."""
-
-    podcast_archiver._ap = apa
-    ap = apa
-
-    ap.grab_podcasts()
-
-    client_live = TestClient(app_live, follow_redirects=False)
-
-    Path(tmp_path / "web" / "rss" / "test").write_text(data=DUMMY_RSS_STR, encoding="utf-8")
-
-    def return_key_error(*args: Any, **kwargs: Any) -> None:
-        raise KeyError
-
-    monkeypatch.setattr(ap, "get_rss_feed", return_key_error)
-
-    def return_unhandled_error(*args: Any, **kwargs: Any) -> None:
-        raise FakeExceptionError
-
-    monkeypatch.setattr("xml.etree.ElementTree.tostring", return_unhandled_error)
-
-    response = client_live.get("/rss/test")
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-
-
 def test_content_s3(
     apa_aws: PodcastArchiver,
     app_live_s3: FastAPI,
@@ -368,7 +313,7 @@ async def test_file_list_s3(
         file_list = await apa_aws.get_file_list()
         await apa_aws.renderer.render_filelist_html(file_list)
 
-    assert "Wrote filelist.html to file" in caplog.text
+    assert "Wrote filelist.html" in caplog.text
 
     response = client_live_s3.get("/filelist.html")
     assert response.status_code == HTTPStatus.OK

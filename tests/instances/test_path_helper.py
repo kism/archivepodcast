@@ -29,4 +29,4 @@ def test_get_app_paths_set(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> N
         None,
     )
 
-    get_app_paths(root_path=tmp_path, instance_path=tmp_path / "instance")
+    get_app_paths(instance_path=tmp_path / "instance")

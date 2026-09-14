@@ -94,14 +94,7 @@ describe("loadPodcast", () => {
 
     select.dispatchEvent(new Event("change"));
 
-    expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml", {
-      cache: "no-cache",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
+    expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml", { cache: "no-cache" });
     const element = await vi.waitUntil(() => document.querySelector("#podcast-episode-list li:nth-child(2)"));
 
     expect(element.innerHTML).toContain("Test Episode 2");
@@ -154,14 +147,7 @@ describe("loadPodcast", () => {
 
     select.dispatchEvent(new Event("change"));
 
-    expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml", {
-      cache: "no-cache",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
+    expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml", { cache: "no-cache" });
     const element = await vi.waitUntil(() => document.querySelector("#podcast-episode-list li:nth-child(1)"));
 
     expect(element.innerHTML).toContain("Error: No episodes found in feed");
@@ -193,14 +179,7 @@ describe("loadPodcast", () => {
 
     select.dispatchEvent(new Event("change"));
 
-    expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml", {
-      cache: "no-cache",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
+    expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss.xml", { cache: "no-cache" });
     const element = await vi.waitUntil(() => document.querySelector("#podcast-player-cover"));
 
     expect(element.src).toBe("");

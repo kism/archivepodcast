@@ -10,14 +10,11 @@ from archivepodcast.utils.lfs_check import check_lfs_objects
 class AppPathsHelper:
     """Helper for application paths."""
 
-    def __init__(self, root_path: Path, instance_path: Path) -> None:
+    def __init__(self, instance_path: Path) -> None:
         """Setup the application paths."""
-        self.root_path = Path(root_path)
         self.instance_path = Path(instance_path)
         self.web_root: Path = self.instance_path / "web"  # This gets used so often, it's worth the variable
-        self.app_directory: Path = APP_DIRECTORY
-        self.static_directory: Path = self.app_directory / "static"
-        self.template_directory: Path = self.app_directory / "templates"
+        self.static_directory: Path = APP_DIRECTORY / "static"
 
         check_lfs_objects(self.static_directory)
 
@@ -28,16 +25,13 @@ class AppPathsHelper:
 _app_paths: AppPathsHelper | None = None
 
 
-def get_app_paths(
-    root_path: Path | None = None,
-    instance_path: Path | None = None,
-) -> AppPathsHelper:
+def get_app_paths(instance_path: Path | None = None) -> AppPathsHelper:
     """Get the application paths helper instance."""
     global _app_paths  # ruff: ignore[global-statement]
     if _app_paths is None:
-        if root_path is None or instance_path is None:
+        if instance_path is None:
             msg = "Application paths helper instance has not been set."
             raise RuntimeError(msg)
 
-        _app_paths = AppPathsHelper(root_path, instance_path)
+        _app_paths = AppPathsHelper(instance_path)
     return _app_paths

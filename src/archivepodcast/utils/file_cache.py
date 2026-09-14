@@ -25,10 +25,6 @@ class LocalFileCache:
             raise ValueError(msg)
         return self._files
 
-    def check_exists(self, file_path: Path) -> bool:
-        """Check if a file path exists in the cache."""
-        return file_path in self.get_all()
-
     def add_file(self, file_path: Path) -> None:
         """Add a new file path to the cache."""
         if self._files is None:

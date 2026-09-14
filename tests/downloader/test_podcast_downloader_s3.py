@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 
 from archivepodcast.downloader.downloader import PodcastsDownloader
 from archivepodcast.instances.health import health
+from archivepodcast.instances.path_helper import get_app_paths
 from archivepodcast.utils.logger import TRACE_LEVEL_NUM
 from tests import FakeExceptionError
 from tests.fixtures.aws import S3ClientMock
@@ -134,19 +135,10 @@ async def test_download_podcast_wav(
 
 
 @pytest.mark.asyncio
-async def test_upload_asset_s3_no_client(apd: PodcastsDownloader, caplog: pytest.LogCaptureFixture) -> None:
-    """Test handling missing S3 client during upload."""
-    with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
-        await apd._upload_asset_s3(Path("test.jpg"), ".jpg")
-
-    assert "s3 client not found, cannot upload" in caplog.text
-
-
-@pytest.mark.asyncio
 async def test_upload_asset_s3_file_not_found(apd_aws: PodcastsDownloader, caplog: pytest.LogCaptureFixture) -> None:
     """Test handling file not found error during S3 upload."""
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
-        await apd_aws._upload_asset_s3(Path("test_file_not_exist.jpg"), ".jpg")
+        await apd_aws._upload_asset_s3(get_app_paths().web_root / "test_file_not_exist.jpg", ".jpg")
 
     assert "Could not upload to s3, the source file was not found" in caplog.text
 
@@ -163,7 +155,7 @@ async def test_upload_asset_s3_unhandled_exception(
     monkeypatch.setattr(S3ClientMock, "put_object", unhandled_exception)
 
     with caplog.at_level(level=logging.ERROR):
-        await apd_aws._upload_asset_s3(Path("test_file_not_exist.jpg"), ".jpg")
+        await apd_aws._upload_asset_s3(get_app_paths().web_root / "test_file_not_exist.jpg", ".jpg")
 
     assert "Could not upload to s3, the source file was not found" in caplog.text
 
@@ -183,7 +175,7 @@ async def test_upload_asset_s3_os_remove_error(
     monkeypatch.setattr(S3ClientMock, "put_object", lambda *args, **kwargs: None)
 
     with caplog.at_level(level=logging.ERROR):
-        await apd_aws._upload_asset_s3(Path("test_file_mocked.jpg"), ".jpg")
+        await apd_aws._upload_asset_s3(get_app_paths().web_root / "test_file_mocked.jpg", ".jpg")
 
     assert "Could not upload to s3, the source file was not found" in caplog.text
 
@@ -205,15 +197,15 @@ async def test_check_path_exists_s3(
             ContentType="text/html",
         )
 
-    assert await apd_aws._check_path_exists("/content/test") is True
+    assert await apd_aws._check_path_exists(get_app_paths().web_root / "content/test") is True
 
     # Test path handling and if the cache gets hit
     with caplog.at_level(level=TRACE_LEVEL_NUM, logger="archivepodcast.downloader"):
-        assert await apd_aws._check_path_exists("content/test") is True
+        assert await apd_aws._check_path_exists(get_app_paths().web_root / "content/test") is True
         assert "s3 path content/test exists in s3_paths_cache, skipping" in caplog.text
 
     with caplog.at_level(level=logging.DEBUG, logger="archivepodcast.downloader"):
-        assert await apd_aws._check_path_exists("content/test/not_exist") is False
+        assert await apd_aws._check_path_exists(get_app_paths().web_root / "content/test/not_exist") is False
 
     assert "File: content/test/not_exist does not exist" in caplog.text
 
@@ -233,7 +225,7 @@ async def test_check_path_exists_s3_client_error(
     monkeypatch.setattr(S3ClientMock, "head_object", client_error_not_404)
 
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
-        assert await apd_aws._check_path_exists("content/test") is False
+        assert await apd_aws._check_path_exists(get_app_paths().web_root / "content/test") is False
 
     assert "s3 check file exists errored out?" in caplog.text
 
@@ -250,7 +242,7 @@ async def test_check_path_exists_s3_unhandled_exception(
     monkeypatch.setattr(S3ClientMock, "head_object", unhandled_exception)
 
     with caplog.at_level(level=logging.ERROR, logger="archivepodcast.downloader"):
-        assert await apd_aws._check_path_exists("content/test") is False
+        assert await apd_aws._check_path_exists(get_app_paths().web_root / "content/test") is False
 
     assert "Unhandled s3 Error" in caplog.text
 

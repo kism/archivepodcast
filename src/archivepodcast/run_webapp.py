@@ -39,7 +39,7 @@ def create_app(instance_path_override: str | None = None) -> FastAPI:
         instance_path_override = env_instance_path
 
     instance_path = Path(instance_path_override) if instance_path_override else DEFAULT_INSTANCE_PATH
-    get_app_paths(root_path=Path.cwd(), instance_path=instance_path)
+    get_app_paths(instance_path=instance_path)
 
     ap_conf = get_ap_config(instance_path / "config.json")
 

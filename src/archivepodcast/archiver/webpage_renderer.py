@@ -50,7 +50,6 @@ class WebpageRenderer:
         *,
         s3: bool,
         debug: bool,
-        # podcast_downloader: PodcastsDownloader,
     ) -> None:
         """Initialise the WebpageRenderer object."""
         self.about_page_exists = False
@@ -186,12 +185,8 @@ class WebpageRenderer:
     async def _write_webpages(self, webpages: list[Webpage], *, force_override: bool = False) -> None:
         """Write files to disk, and to s3 if needed."""
         app_paths = get_app_paths()
-        str_webpages = f"{(len(webpages))} pages to files"
-        if len(webpages) == 1:
-            str_webpages = f"{webpages[0].path} to file"
-
-        s3_pages_uploaded = []
-        s3_pages_skipped = []
+        s3_uploaded = 0
+        s3_skipped = 0
 
         for webpage in webpages:
             webpage_path = Path(webpage.path)
@@ -212,10 +207,10 @@ class WebpageRenderer:
                 s3_key = webpage_path.as_posix()
                 if not force_override and s3_file_cache.check_file_exists(s3_key, len(page_content_bytes)):
                     logger.trace("Skipping upload to S3 for %s as it already exists with the same size.", s3_key)
-                    s3_pages_skipped.append(s3_key)
+                    s3_skipped += 1
                     continue
 
-                s3_pages_uploaded.append(s3_key)
+                s3_uploaded += 1
                 logger.trace("Writing page s3: %s", s3_key)
 
                 try:
@@ -224,19 +219,11 @@ class WebpageRenderer:
                 except Exception:
                     logger.exception("Unhandled s3 error trying to upload the file: %s", s3_key)
 
-        msg = f"Wrote {str_webpages}"
+        pages_str = webpages[0].path if len(webpages) == 1 else f"{len(webpages)} pages"
         if self._s3:
-            if len(s3_pages_skipped) == 1:
-                msg += ", skipped upload due to same size"
-            elif len(s3_pages_skipped) > 1:
-                msg += f", skipped {len(s3_pages_skipped)} s3 uploads due to matching size"
-                logger.debug("Skipped s3 uploads: %s", s3_pages_skipped)
-                logger.debug("Uploaded s3 pages: %s", s3_pages_uploaded)
-            elif len(s3_pages_uploaded) == 1:
-                msg += ", uploaded to s3"
-            else:
-                msg += ", all pages uploaded to s3"
-        logger.info(msg)
+            logger.info("Wrote %s, s3: %d uploaded, %d skipped (same size)", pages_str, s3_uploaded, s3_skipped)
+        else:
+            logger.info("Wrote %s", pages_str)
 
     def _render_markdown_page(self, md_text: str, output_filename: str) -> None:
         """Render markdown into the shared page template and register it."""
@@ -267,38 +254,20 @@ class WebpageRenderer:
             logger.debug("About page doesn't exist")
 
     async def _check_s3_files(self) -> None:
-        """Function to list files in s3 bucket."""
+        """Delete unexpected objects from the s3 bucket."""
         logger.debug("Checking state of s3 bucket")
         if not self._s3:
             logger.debug("No s3 client to list files")
             return
 
         contents_list = await s3_file_cache.get_all(self._app_config.s3.bucket)
-
-        cleanup_actions = 0
-
-        def log_first_message() -> None:
-            nonlocal cleanup_actions
-            if cleanup_actions == 0:
-                logger.warning("Starting cleanup of unexpected S3 objects")
-            cleanup_actions += 1
-
-        contents_str = ""
-        if len(contents_list) > 0:
-            for obj in contents_list:
-                contents_str += obj["Key"] + "\n"
-                if obj["Size"] == 0:  # This is for application/x-directory files, but no files should be empty
-                    log_first_message()
-                    logger.warning("S3 Object is empty: %s DELETING", obj["Key"])
-                    await s3_delete(self._app_config.s3.bucket, obj["Key"])
-                if obj["Key"].startswith("/"):
-                    log_first_message()
-                    logger.warning("S3 Path starts with a /, this is not expected: %s DELETING", obj["Key"])
-                    await s3_delete(self._app_config.s3.bucket, obj["Key"])
-                if "//" in obj["Key"]:
-                    log_first_message()
-                    logger.warning("S3 Path contains a //, this is not expected: %s DELETING", obj["Key"])
-                    await s3_delete(self._app_config.s3.bucket, obj["Key"])
-            logger.trace("S3 Bucket Contents >>>\n%s", contents_str.strip())
-        else:
+        if not contents_list:
             logger.info("No objects found in the bucket.")
+            return
+
+        logger.trace("S3 Bucket Contents >>>\n%s", "\n".join(obj["Key"] for obj in contents_list))
+        for obj in contents_list:
+            # Empty objects are application/x-directory placeholders, no real file should be empty
+            if obj["Size"] == 0 or obj["Key"].startswith("/") or "//" in obj["Key"]:
+                logger.warning("Unexpected S3 object (empty, leading / or //): %s DELETING", obj["Key"])
+                await s3_delete(self._app_config.s3.bucket, obj["Key"])
