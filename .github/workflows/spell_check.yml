@@ -5,12 +5,10 @@ on:
     branches:
       - main
       - test
-    paths-ignore: # README and docs are what this checks, so they aren't ignored
+    paths-ignore:
+      - "**/README*"
+      - "docs/**"
       - ".github/workflows/*publish*.yml"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   spellcheck: # run the action
