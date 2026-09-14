@@ -100,7 +100,9 @@ class WebpageRenderer:
             self.webpages.add(path=static_path, mime=item_mime, content=item.read_bytes())
 
         # Markdown pages
-        self._render_markdown_page((APP_DIRECTORY / "templates" / "guide.md").read_text(encoding="utf-8"), "guide.html")
+        self._render_markdown_page(
+            (APP_DIRECTORY / "templates" / "guide.md").read_text(encoding="utf-8"), "guide.html", guide_layout=True
+        )
         health.update_template_status("guide.html", last_rendered=int(time.time()))
 
         # Templates
@@ -225,12 +227,18 @@ class WebpageRenderer:
         else:
             logger.info("Wrote %s", pages_str)
 
-    def _render_markdown_page(self, md_text: str, output_filename: str) -> None:
+    def _render_markdown_page(self, md_text: str, output_filename: str, *, guide_layout: bool = False) -> None:
         """Render markdown into the shared page template and register it."""
+        content = markdown.markdown(md_text, extensions=["tables"])
+        if guide_layout:  # Each h2 section becomes a card in a grid, see .guides in main.css
+            intro, *sections = content.split("<h2")
+            cards = "".join(f'<section class="guide"><h2{section}</section>' for section in sections)
+            content = f'{intro}<div class="guides">{cards}</div>'
+
         rendered_output = TEMPLATE_ENV.get_template("markdown.html.j2").render(
             app_config=self._app_config,
             header=self.webpages.generate_header(output_filename, debug=self._debug),
-            content=markdown.markdown(md_text, extensions=["tables"]),
+            content=content,
         )
         self.webpages.add(output_filename, mime="text/html", content=rendered_output)
 
