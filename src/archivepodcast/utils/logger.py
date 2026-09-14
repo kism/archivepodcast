@@ -114,8 +114,6 @@ def setup_logger(
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)  # Logs incoming requests.
     logging.getLogger("urllib3").setLevel(logging.WARNING)  # Bit noisy when set to info, used by requests module.
     logging.getLogger("botocore").setLevel(logging.WARNING)  # Can be noisy
-    logging.getLogger("boto3").setLevel(logging.WARNING)  # Can be noisy
-    logging.getLogger("s3transfer").setLevel(logging.WARNING)  # Can be noisy
     logging.getLogger("aiobotocore").setLevel(logging.INFO)  # Can be noisy
     logging.getLogger("asyncio").setLevel(logging.INFO)  # Can be noisy
 
@@ -148,20 +146,14 @@ def _add_console_handler(
         in_logger.addHandler(rich_handler)
     else:
         console_handler = StreamHandler()
-        if _get_log_level_int(settings.level) <= logging.DEBUG:
+        level = settings.level if isinstance(settings.level, int) else logging.getLevelNamesMapping()[settings.level]
+        if level <= logging.DEBUG:
             formatter = logging.Formatter(SIMPLE_LOG_FORMAT_DEBUG)
         else:
             formatter = logging.Formatter(SIMPLE_LOG_FORMAT)
 
         console_handler.setFormatter(formatter)
         in_logger.addHandler(console_handler)
-
-
-def _get_log_level_int(level: str | int) -> int:
-    """Get the log level as an int, level is validated by the LoggingConf model."""
-    if isinstance(level, int):
-        return level
-    return TRACE_LEVEL_NUM if level == "TRACE" else getattr(logging, level, logging.INFO)
 
 
 def _add_file_handler(in_logger: logging.Logger, log_path: Path) -> None:

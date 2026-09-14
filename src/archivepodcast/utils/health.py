@@ -43,50 +43,30 @@ class PodcastHealth(BaseModel):
     episode_count: int = 0
 
     def update_episode_info(self, tree: ET.ElementTree[ET.Element] | ET.Element) -> None:
-        """Update the latest episode info."""
+        """Update the latest episode info and episode count from a feed tree."""
         logger.trace("Updating podcast episode info")
-        new_latest_episode: EpisodeInfo = EpisodeInfo()
-        new_episode_count: int = 0
-
-        try:
-            new_latest_episode, new_episode_count = self._parse_episode_info(tree)
-        except Exception:  # pragma: no cover # Just to be safe
-            logger.exception("Error parsing podcast episode info")  # pragma: no cover # Just to be safe
-
-        self.latest_episode = new_latest_episode
-        self.episode_count = new_episode_count
-
-    @staticmethod
-    def _parse_episode_info(tree: ET.ElementTree[ET.Element] | ET.Element) -> tuple[EpisodeInfo, int]:
-        """Parse the latest episode info and episode count from a feed tree."""
-        new_latest_episode: EpisodeInfo = EpisodeInfo()
-        new_episode_count: int = 0
-
         items = tree.findall(".//item")
-        if len(items) == 0:
+        self.episode_count = len(items)
+        self.latest_episode = EpisodeInfo()
+        if not items:
             logger.warning("No episodes found in feed")
-            return new_latest_episode, new_episode_count
-
-        latest_episode = items[0]
-        new_episode_count = len(items)
+            return
 
         # If we have the title, use it
-        title = latest_episode.findtext("title")
+        title = items[0].findtext("title")
         if title is not None:
-            new_latest_episode.title = title
+            self.latest_episode.title = title
 
         # If we have the pubDate, try to parse it
-        if latest_episode.findtext("pubDate"):
-            pod_pubdate = str(latest_episode.findtext("pubDate"))
+        pod_pubdate = items[0].findtext("pubDate")
+        if pod_pubdate:
             try:
                 parsed_pubdate = parsedate_to_datetime(pod_pubdate)
                 if parsed_pubdate.tzinfo is None:
                     parsed_pubdate = parsed_pubdate.replace(tzinfo=datetime.UTC)
-                new_latest_episode.pubdate = int(parsed_pubdate.timestamp())
+                self.latest_episode.pubdate = int(parsed_pubdate.timestamp())
             except ValueError:
                 logger.error("Unable to parse pubDate: %s", pod_pubdate)  # ruff: ignore[error-instead-of-exception] # No need for a traceback
-
-        return new_latest_episode, new_episode_count
 
 
 class WebpageHealth(BaseModel):

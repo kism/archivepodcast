@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any, Self, TypedDict
 import aiohttp
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from aiohttp.pytest_plugin import AiohttpServer
     from pytest_mock import MockerFixture  # pragma: no cover
 else:
@@ -29,6 +31,10 @@ class FakeContent:
         result = self._data[self._position : self._position + size]
         self._position += size
         return result
+
+    async def iter_chunked(self, n: int) -> AsyncIterator[bytes]:
+        while chunk := await self.read(n):
+            yield chunk
 
 
 class FakeResponse:

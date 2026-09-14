@@ -3,7 +3,7 @@
  */
 
 // Root object for file system structure
-export const file_structure = new Object();
+export const file_structure = {};
 
 /**
  * Shows file navigation UI elements
@@ -29,7 +29,7 @@ export function addFileToStructure(url, file_path) {
   let current = file_structure;
   for (let i = 0; i < path_parts.length; i++) {
     if (!current[path_parts[i]]) {
-      current[path_parts[i]] = new Object();
+      current[path_parts[i]] = {};
     }
     current = current[path_parts[i]];
   }
@@ -88,7 +88,6 @@ export function generateCurrentListHTML(in_current_path, items) {
     }
   }
 
-  html += "";
   return html;
 }
 
@@ -98,69 +97,28 @@ export function getValue(obj, path) {
   return keys.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
 }
 
-export function checkValidPath(path) {
-  if (path === "" || path === "/") {
-    return true;
-  }
-  const path_parts = path.split("/");
-  let current = file_structure;
-  for (let i = 0; i < path_parts.length; i++) {
-    if (!current[path_parts[i]]) {
-      console.log("Invalid path: ", path);
-      return false;
-    }
-    current = current[path_parts[i]];
-  }
-  return true;
-}
-
 export function getNicePathStr() {
-  let path = window.location.hash;
-
-  path = path.replace("#", ""); // Remove the hash
-
-  if (path === "" || path === "/") {
-    // If the path is empty or just a slash, return a single slash
-    return "/";
-  }
-  path = path.replace(/\/\//g, "/"); // Replace double slashes with a single slash
-  if (path[path.length - 1] === "/") {
-    // Remove trailing slash
-    path = path.slice(0, -1);
-  }
-  return path;
+  // Strip the hash, collapse repeated slashes, drop the trailing slash
+  const path = window.location.hash.replace("#", "").replace(/\/+/g, "/").replace(/\/$/, "");
+  return path || "/";
 }
 
 export function showCurrentDirectory() {
-  let current_path = getNicePathStr();
+  const current_path = getNicePathStr();
+  const items = getValue(file_structure, current_path);
+  const breadcrumbJSDiv = document.getElementById("breadcrumb_js");
+  const fileListJSDiv = document.getElementById("file_list_js");
 
   // Handle invalid paths
-  if (!checkValidPath(current_path)) {
-    const breadcrumbJSDiv = document.getElementById("breadcrumb_js");
+  if (current_path !== "/" && items === undefined) {
     breadcrumbJSDiv.innerHTML = generateBreadcrumbHtml("/");
-    const fileListJSDiv = document.getElementById("file_list_js");
     fileListJSDiv.innerHTML = `<li>Invalid path: ${current_path}</li>`;
     return;
   }
 
-  // Normalize the current path
-  current_path = current_path.replace(/\/\//g, "/");
-  if (current_path[current_path.length - 1] === "/") {
-    current_path = current_path.slice(0, -1);
-  }
-  if (current_path === "") {
-    current_path = "/";
-  }
-
-  // Update breadcrumb
-  const breadcrumbJSDiv = document.getElementById("breadcrumb_js");
   if (breadcrumbJSDiv) {
     breadcrumbJSDiv.innerHTML = generateBreadcrumbHtml(current_path);
   }
-
-  //File List
-  const items = getValue(file_structure, current_path);
-  const fileListJSDiv = document.getElementById("file_list_js");
   if (fileListJSDiv) {
     fileListJSDiv.innerHTML = generateCurrentListHTML(current_path, items);
   }

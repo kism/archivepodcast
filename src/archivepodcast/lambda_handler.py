@@ -14,16 +14,6 @@ if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
     sys.frozen = True  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]
     sys._MEIPASS = "/tmp"  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]  # ruff: ignore[private-member-access]
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from aws_lambda_powertools.utilities.data_classes import ALBEvent
-    from aws_lambda_powertools.utilities.typing import LambdaContext
-else:
-    ALBEvent = object
-    LambdaContext = object
-
-
 # We don't use the real logger yet since we want to be able to diagnose import issues
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -58,7 +48,7 @@ else:
 # check_ffmpeg(convert_check=True)  # ruff: ignore[commented-out-code] # For checking in the aws console
 
 
-def handler(event: ALBEvent, context: LambdaContext) -> None:
+def handler(event: dict[str, object], context: object) -> None:
     # Copy the RO instance folder to /tmp/instance since it needs to be writable
     logger.info("Event invoked with event: %s", event)
 

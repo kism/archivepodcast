@@ -61,11 +61,11 @@ async def test_download_asset_already_exists(
 
 
 @pytest.mark.asyncio
-async def test_check_path_exists_str_path(
+async def test_check_path_exists_local(
     get_test_config: Callable[[str], ArchivePodcastConfig],
     tmp_path: Path,
 ) -> None:
-    """Test _check_path_exists with string path."""
+    """Test _check_path_exists with a local path."""
     config_file = "testing_true_valid.json"
     config = get_test_config(config_file)
     podcast = config.podcasts[0]
@@ -86,8 +86,7 @@ async def test_check_path_exists_str_path(
     test_file = content_dir / "test.mp3"
     test_file.write_text("test")
 
-    # Test with string path
-    exists = await downloader._check_path_exists(str(test_file))
+    exists = await downloader._check_path_exists(test_file)
     assert exists is True
 
 
@@ -350,7 +349,7 @@ async def test_check_path_exists_s3_found_in_bucket(
     s3_file_cache._files = []
 
     with caplog.at_level(logging.DEBUG):
-        exists = await downloader._check_path_exists(s3_key)
+        exists = await downloader._check_path_exists(get_app_paths().web_root / s3_key)
 
     assert exists is True
     assert "exists in s3 bucket" in caplog.text

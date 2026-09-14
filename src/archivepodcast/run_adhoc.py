@@ -2,7 +2,7 @@
 
 import asyncio
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .archiver import PodcastArchiver
 from .constants import JSON_INDENT
@@ -12,6 +12,9 @@ from .instances.path_helper import get_app_paths
 from .instances.profiler import event_times
 from .utils import logger as ap_logger
 from .utils.profiler import get_event_times_str
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def run_ap_adhoc(
@@ -32,7 +35,7 @@ def run_ap_adhoc(
 
     podcast_archiver_start_time = time.time()
 
-    get_app_paths(root_path=Path.cwd(), instance_path=instance_path)
+    get_app_paths(instance_path=instance_path)
 
     ap = PodcastArchiver(
         app_config=ap_conf.app,

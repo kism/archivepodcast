@@ -36,14 +36,7 @@ export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: episodeName,
       artist: podcastName,
-      artwork: [
-        { src: current_podcast_cover_image, sizes: "96x96", type: "image/png" },
-        { src: current_podcast_cover_image, sizes: "128x128", type: "image/png" },
-        { src: current_podcast_cover_image, sizes: "192x192", type: "image/png" },
-        { src: current_podcast_cover_image, sizes: "256x256", type: "image/png" },
-        { src: current_podcast_cover_image, sizes: "384x384", type: "image/png" },
-        { src: current_podcast_cover_image, sizes: "512x512", type: "image/png" },
-      ],
+      artwork: [{ src: current_podcast_cover_image }],
     });
   }
 }
@@ -56,14 +49,7 @@ export function playerSetCurrentEpisode(url, type, episodeName, podcastName) {
 async function fetchAndParseXML(url) {
   console.log("Fetching and parsing XML from:", url);
 
-  const response = await fetch(url, {
-    cache: "no-cache",
-    headers: {
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      Pragma: "no-cache",
-      Expires: "0",
-    },
-  });
+  const response = await fetch(url, { cache: "no-cache" });
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }

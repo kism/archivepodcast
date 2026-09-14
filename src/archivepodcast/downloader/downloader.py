@@ -239,14 +239,7 @@ class PodcastsDownloader(AssetDownloader):
         for filetype in IMAGE_FORMATS:
             if filetype in url:
                 await self._download_cover_art(url, title, filetype)
-                channel.attrib["href"] = (
-                    self._app_config.inet_path.encoded_string()
-                    + "content/"
-                    + self._podcast.name_one_word
-                    + "/"
-                    + title
-                    + filetype
-                )
+                channel.attrib["href"] = self._content_url(title + filetype)
         channel.text = " "
 
     async def _handle_image_tag(self, channel: ET.Element) -> None:
@@ -264,14 +257,7 @@ class PodcastsDownloader(AssetDownloader):
                 for filetype in IMAGE_FORMATS:
                     if filetype in url:
                         await self._download_asset(url, title, filetype)
-                        child.text = (
-                            self._app_config.inet_path.encoded_string()
-                            + "content/"
-                            + self._podcast.name_one_word
-                            + "/"
-                            + title
-                            + filetype
-                        )
+                        child.text = self._content_url(title + filetype)
         channel.text = " "
 
     async def _handle_item_tag(self, channel: ET.Element) -> None:
@@ -305,16 +291,7 @@ class PodcastsDownloader(AssetDownloader):
                     child.attrib["length"] = str(new_length)
                 else:
                     await self._download_asset(url, title, audio_format, file_date_string)
-                child.attrib["url"] = (
-                    self._app_config.inet_path.encoded_string()
-                    + "content/"
-                    + self._podcast.name_one_word
-                    + "/"
-                    + file_date_string
-                    + "-"
-                    + title
-                    + new_audio_format
-                )
+                child.attrib["url"] = self._content_url(f"{file_date_string}-{title}{new_audio_format}")
 
     async def _handle_episode_image_tag(
         self,
@@ -328,28 +305,20 @@ class PodcastsDownloader(AssetDownloader):
         for filetype in IMAGE_FORMATS:
             if filetype in url:
                 await self._download_asset(url, title, filetype, file_date_string)
-                child.attrib["href"] = (
-                    self._app_config.inet_path.encoded_string()
-                    + "content/"
-                    + self._podcast.name_one_word
-                    + "/"
-                    + file_date_string
-                    + "-"
-                    + title
-                    + filetype
-                )
+                child.attrib["href"] = self._content_url(f"{file_date_string}-{title}{filetype}")
 
     # region Helpers
 
-    def _cleanup_file_name(self, file_name: str | bytes) -> str:
+    def _content_url(self, file_name: str) -> str:
+        """Public URL of a file in this podcast's content directory."""
+        return f"{self._app_config.inet_path.encoded_string()}content/{self._podcast.name_one_word}/{file_name}"
+
+    def _cleanup_file_name(self, file_name: str) -> str:
         """Convert a file name into a URL-safe slug format.
 
         Standardizes names by removing common podcast prefixes/suffixes and
         converting to hyphenated lowercase alphanumeric format.
         """
-        if isinstance(file_name, bytes):
-            file_name = file_name.decode()
-
         # Standardise. Patterns must stay exactly equivalent to the old replace chain,
         # since the slugs name already-archived files on disk/s3.
         file_name = re.sub(r"\[AUDIO\]|\[Audio\]|\[audio\]|AUDIO|\(Audio Only\)|\(Audio only\)", "", file_name)

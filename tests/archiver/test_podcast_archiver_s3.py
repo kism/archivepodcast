@@ -81,7 +81,7 @@ async def test_render_files(
     assert "guide.html" in list_files_str
     assert "about.html" not in list_files_str
 
-    assert "pages to files, all pages uploaded to s3" in caplog.text
+    assert "0 skipped (same size)" in caplog.text
     assert "Unhandled s3 error" not in caplog.text
 
 
@@ -133,7 +133,7 @@ def test_grab_podcasts_not_live_feed_in_s3(
     assert "Loaded previous feed from s3" in caplog.text
     assert "Cannot find local rss feed file" not in caplog.text
     assert "Unable to host podcast" not in caplog.text
-    assert str(apa_aws.get_rss_feed("test"), "utf-8") == DUMMY_RSS_STR
+    assert str(apa_aws.podcast_rss["test"], "utf-8") == DUMMY_RSS_STR
 
 
 def _rss_with_items(count: int) -> str:
@@ -254,9 +254,8 @@ async def test_check_s3_files_problem_files(
     with caplog.at_level(level=logging.WARNING):
         await apa_aws.renderer._check_s3_files()
 
-    assert "S3 Path starts with a /, this is not expected: /index.html DELETING" in caplog.text
-    assert "S3 Path contains a //, this is not expected: content/test//episode.mp3 DELETING" in caplog.text
-    assert "S3 Object is empty: content/test/empty_file.mp3 DELETING" in caplog.text
+    for key in ("/index.html", "content/test//episode.mp3", "content/test/empty_file.mp3"):
+        assert f"Unexpected S3 object (empty, leading / or //): {key} DELETING" in caplog.text
 
     async with mock_get_session.create_client("s3") as s3_client:
         s3_object_list = await s3_client.list_objects_v2(Bucket=apa_aws._app_config.s3.bucket)
@@ -281,7 +280,7 @@ def test_grab_podcasts_live(
     assert "Wrote rss to disk:" in caplog.text
     assert "Hosted feed: http://localhost:5100/rss/test" in caplog.text
 
-    rss = str(apa_aws.get_rss_feed("test"))
+    rss = str(apa_aws.podcast_rss["test"])
 
     assert "PyTest Podcast [Archive S3]" in rss
     assert "http://localhost:5100/content/test/20200101-Test-Episode.mp3" in rss
@@ -323,8 +322,8 @@ def test_upload_to_s3_exception(
 @pytest.mark.parametrize(
     ("page_count", "expected_log"),
     [
-        (1, "skipped upload due to same size"),
-        (2, "skipped 2 s3 uploads due to matching size"),
+        (1, "s3: 0 uploaded, 1 skipped"),
+        (2, "s3: 0 uploaded, 2 skipped"),
     ],
 )
 async def test_write_webpages_skips_unchanged_s3_uploads(
