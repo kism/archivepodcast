@@ -136,7 +136,32 @@ export function populateEpisodeList(url) {
 // Event handler for podcast selection
 export function loadPodcast(event) {
   const selectedPodcast = event.target.value;
+  // replaceState so picking podcasts doesn't spam browser history
+  const newUrl = selectedPodcast
+    ? `#${selectedPodcast.split("/rss/").pop()}`
+    : window.location.pathname + window.location.search;
+  window.history.replaceState(null, "", newUrl);
   populateEpisodeList(selectedPodcast);
+}
+
+/**
+ * Selects and loads the podcast named in the URL hash, e.g. /webplayer.html#<name_one_word>
+ */
+export function loadPodcastFromHash() {
+  const name = window.location.hash.slice(1);
+  const select = document.getElementById("podcast_select");
+  if (!name || !select) {
+    return;
+  }
+
+  const option = [...select.options].find((o) => o.value.endsWith(`/rss/${name}`));
+  if (!option) {
+    console.log("No podcast found for hash:", name);
+    return;
+  }
+
+  select.value = option.value;
+  populateEpisodeList(option.value);
 }
 
 /**
@@ -158,3 +183,4 @@ export function showJSDivs() {
 window.loadPodcast = loadPodcast;
 
 showJSDivs();
+loadPodcastFromHash();

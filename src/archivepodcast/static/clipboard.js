@@ -3,21 +3,16 @@
  */
 
 /**
- * Copies text from an input element to clipboard
- * @param {string} button_name - ID of button/input element
+ * Copies the button's data-url to clipboard
+ * @param {string} button_name - ID prefix of the button element
  */
 export function grabToClipboard(button_name) {
   console.log(`User clicked: ${button_name}`);
-  const copyText = document.getElementById(button_name);
+  const button = document.getElementById(`${button_name}_button`);
 
-  // Select the text field
-  copyText.select();
-  copyText.setSelectionRange(0, 99999); // For mobile devices
+  navigator.clipboard.writeText(button.dataset.url);
 
-  // Copy the text inside the text field
-  navigator.clipboard.writeText(copyText.value);
-
-  document.getElementById(`${button_name}_button`).innerHTML = "Copied!";
+  button.innerHTML = "Copied!";
   setTimeout(resetText, 2000, button_name);
 }
 
