@@ -6,6 +6,11 @@ FROM archivepodcast
 
 USER root
 
+# libmagic for python-magic, which is test-only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=uv-base /uv /uvx /bin/
 
 # Enable bytecode compilation
@@ -17,7 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     --mount=type=bind,source=README.md,target=README.md \
-    uv sync --frozen --group test
+    uv sync --frozen --no-dev --group test
 
 # Copy application code
 COPY --chown=ap:ap src src
