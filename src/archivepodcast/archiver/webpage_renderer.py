@@ -100,9 +100,12 @@ class WebpageRenderer:
 
             self.webpages.add(path=static_path, mime=item_mime, content=item.read_bytes())
 
+        # Markdown pages
+        self._render_markdown_page((APP_DIRECTORY / "templates" / "guide.md").read_text(encoding="utf-8"), "guide.html")
+        health.update_template_status("guide.html", last_rendered=int(time.time()))
+
         # Templates
         templates_to_render = [
-            "guide.html.j2",
             "index.html.j2",
             "health.html.j2",
             "webplayer.html.j2",
@@ -235,6 +238,15 @@ class WebpageRenderer:
                 msg += ", all pages uploaded to s3"
         logger.info(msg)
 
+    def _render_markdown_page(self, md_text: str, output_filename: str) -> None:
+        """Render markdown into the shared page template and register it."""
+        rendered_output = TEMPLATE_ENV.get_template("markdown.html.j2").render(
+            app_config=self._app_config,
+            header=self.webpages.generate_header(output_filename, debug=self._debug),
+            content=markdown.markdown(md_text, extensions=["tables"]),
+        )
+        self.webpages.add(output_filename, mime="text/html", content=rendered_output)
+
     async def _load_about_page(self) -> None:
         """Create about page if needed."""
         app_paths = get_app_paths()
@@ -244,23 +256,8 @@ class WebpageRenderer:
 
         if await about_page_md_expected_path.exists():  # Check if about.html exists, affects index.html so it's first.
             async with await about_page_md_expected_path.open(encoding="utf-8") as about_page:
-                about_page_md_rendered = markdown.markdown(await about_page.read(), extensions=["tables"])
+                self._render_markdown_page(await about_page.read(), about_page_filename)
 
-            template_filename = "about.html.j2"
-            output_filename = template_filename.replace(".j2", "")
-
-            template = TEMPLATE_ENV.get_template(template_filename)
-
-            self.webpages.add(output_filename, mime="text/html", content="generating...")
-
-            about_page_str = template.render(
-                app_config=self._app_config,
-                podcasts=self._podcast_list,
-                header=self.webpages.generate_header(output_filename, debug=self._debug),
-                about_content=about_page_md_rendered,
-            )
-
-            self.webpages.add(output_filename, mime="text/html", content=about_page_str)
             self.about_page_exists = True
             health.update_core_status(about_page_exists=True)
             logger.info("About page exists, rendering and including")
