@@ -24,14 +24,14 @@
         {% set rss_url = app_config['inet_path'] ~ 'rss/' ~ podcast['name_one_word'] -%}
         {% set bare_url = rss_url.split('://', 1)[1] -%}
         <div class="podcast-links">
-            <button type="button" class="button" data-url="{{ rss_url }}"
-                onclick="window.grabToClipboard('{{ podcast['name_one_word']}}')"
-                id="{{ podcast['name_one_word']}}_button">Copy URL</button>
             <a class="button button-pocketcasts" href="pktc://subscribe/{{ bare_url }}">Pocket Casts</a>
             <a class="button button-apple" href="podcast://{{ bare_url }}">Apple Podcasts</a>
             <a class="button button-youtube"
                 href="https://music.youtube.com/library/podcasts?addrssfeed={{ rss_url | b64encode | urlencode }}">YouTube
                 Music</a>
+            <a class="button" href="{{ rss_url }}" data-url="{{ rss_url }}"
+                onclick="window.grabToClipboard('{{ podcast['name_one_word']}}'); return false;"
+                id="{{ podcast['name_one_word']}}_button">Copy URL</a>
         </div>{% endfor %}
         <footer>
             <hr>

@@ -1,4 +1,6 @@
-Guides for some popular podcast applications.
+<!-- markdownlint-disable MD036 MD041 --> <!-- h1 comes from markdown.html.j2, platforms are plain italic -->
+
+Guides on manually adding a podcast url for some popular podcast applications.
 
 ## Pocket Casts
 
@@ -32,7 +34,7 @@ _Android, iOS, Web_
 
 ## AntennaPod
 
-### Android
+_Android_
 
 1. Tap ☰
 2. Tap Add Podcast
