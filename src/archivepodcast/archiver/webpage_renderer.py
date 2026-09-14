@@ -1,5 +1,6 @@
 """Module to render static webpages for ArchivePodcast."""
 
+import base64
 import json
 import mimetypes
 import time
@@ -36,6 +37,7 @@ mimetypes.knownfiles = []
 mimetypes.init()
 
 TEMPLATE_ENV = Environment(loader=FileSystemLoader(str(APP_DIRECTORY / "templates")), autoescape=True)
+TEMPLATE_ENV.filters["b64encode"] = lambda s: base64.b64encode(str(s).encode()).decode()
 
 
 class WebpageRenderer:

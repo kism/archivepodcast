@@ -1,7 +1,12 @@
 // @vitest-environment happy-dom
 import { describe, expect, test, vi } from "vitest";
 
-import { loadPodcast, playerSetCurrentEpisode, showJSDivs } from "../src/archivepodcast/static/webplayer";
+import {
+  loadPodcast,
+  loadPodcastFromHash,
+  playerSetCurrentEpisode,
+  showJSDivs,
+} from "../src/archivepodcast/static/webplayer";
 
 // region: media mock
 class MockMediaMetadata {
@@ -243,6 +248,64 @@ describe("loadPodcast", () => {
 
     expect(episodeList.innerHTML).toBe("");
     expect(episodeList.style.display).toBe("none");
+  });
+});
+
+describe("loadPodcastFromHash", () => {
+  test("selects and loads the podcast matching the URL hash", () => {
+    document.body.innerHTML = `
+              <select id="podcast_select">
+                  <option value="">Select a podcast</option>
+                  <option value="http://example.com/rss/other">Other</option>
+                  <option value="http://example.com/rss/test">Test Podcast</option>
+              </select><ul id="podcast-episode-list"></ul>
+          `;
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+
+    window.location.hash = "#test";
+    loadPodcastFromHash();
+    window.location.hash = "";
+
+    expect(document.getElementById("podcast_select").value).toBe("http://example.com/rss/test");
+    expect(global.fetch).toHaveBeenCalledWith("http://example.com/rss/test", expect.anything());
+  });
+
+  test("selecting a podcast updates the hash, deselecting clears it", () => {
+    document.body.innerHTML = `
+              <select id="podcast_select">
+                  <option value="">Select a podcast</option>
+                  <option value="http://example.com/rss/test">Test Podcast</option>
+              </select><ul id="podcast-episode-list"></ul>
+          `;
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+
+    const select = document.getElementById("podcast_select");
+    select.onchange = loadPodcast;
+
+    select.value = "http://example.com/rss/test";
+    select.dispatchEvent(new Event("change"));
+    expect(window.location.hash).toBe("#test");
+
+    select.value = "";
+    select.dispatchEvent(new Event("change"));
+    expect(window.location.hash).toBe("");
+  });
+
+  test("does nothing when hash matches no podcast", () => {
+    document.body.innerHTML = `
+              <select id="podcast_select">
+                  <option value="">Select a podcast</option>
+                  <option value="http://example.com/rss/test">Test Podcast</option>
+              </select><ul id="podcast-episode-list"></ul>
+          `;
+    global.fetch = vi.fn();
+
+    window.location.hash = "#nope";
+    loadPodcastFromHash();
+    window.location.hash = "";
+
+    expect(document.getElementById("podcast_select").value).toBe("");
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 });
 
