@@ -138,7 +138,9 @@ class S3ClientMock:
 
         return output
 
-    async def put_object(self, Bucket: str, Key: str, Body: str | bytes, ContentType: str = "") -> None:
+    async def put_object(
+        self, Bucket: str, Key: str, Body: str | bytes, ContentType: str = "", CacheControl: str = ""
+    ) -> None:
         _objects[Key] = PutObjectRequestBucketPutObjectTypeDef(Key=Key, Body=Body, ContentType=ContentType)
 
         # Update the s3_file_cache with the new file

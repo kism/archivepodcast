@@ -50,7 +50,7 @@ jobs:
         with:
           enable-cache: true
       - name: Get dependencies
-        run: uv sync
+        run: uv sync --no-default-groups
       - name: Prepare to generate the HTML
         run: |
           mkdir -p instance/web/rss/
@@ -85,7 +85,7 @@ jobs:
         with:
           enable-cache: true
       - name: Get dependencies
-        run: uv sync --extra web
+        run: uv sync --no-default-groups --extra web
       - name: Prepare instance
         run: |
           mkdir -p instance/web/rss/

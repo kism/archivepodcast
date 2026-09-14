@@ -42,7 +42,7 @@ jobs:
           enable-cache: true
 
       - name: Install the project
-        run: uv sync --extra test
+        run: uv sync --group test
 
       - name: Ensure that pytest isnt getting polluted by the default instance dir.
         run: |

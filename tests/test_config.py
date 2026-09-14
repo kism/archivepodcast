@@ -1,3 +1,4 @@
+import json
 from typing import TYPE_CHECKING
 
 from pydantic import HttpUrl
@@ -5,6 +6,8 @@ from pydantic import HttpUrl
 from archivepodcast.config import _LOG_INFO_MESSAGES, ArchivePodcastConfig
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     import pytest
 
 base_config = ArchivePodcastConfig()
@@ -103,3 +106,13 @@ def test_log_info_adhoc_with_s3_matching_domains(caplog: pytest.LogCaptureFixtur
     assert _LOG_INFO_MESSAGES["frontend_cdn"].strip() in caplog.text
     assert _LOG_INFO_MESSAGES["backend_s3"].strip() in caplog.text
     assert _LOG_INFO_MESSAGES["adhoc_s3_mismatch"].strip() not in caplog.text
+
+
+def test_load_config_migrates_flask_section(tmp_path: Path) -> None:
+    """A flask-era config file gets its flask section loaded as webapp."""
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps({"flask": {"debug": True}}))
+
+    config = ArchivePodcastConfig.force_load_config_file(config_path)
+
+    assert config.webapp.debug

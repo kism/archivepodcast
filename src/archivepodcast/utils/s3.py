@@ -31,13 +31,26 @@ class S3File(BaseModel):
     size: int
 
 
+# ponytail: extension check, swap for per-podcast config if someone ever needs different TTLs
+IMMUTABLE_SUFFIXES = (".woff2", ".mp3", ".m4a", ".opus", ".ogg", ".wav", ".flac")
+
+
+def cache_control_for(path: str) -> str:
+    """Cache-Control header for a webpage/asset path, keyed off the file extension."""
+    if path.endswith(IMMUTABLE_SUFFIXES):
+        return "public, max-age=31536000"  # 1 year, archived episodes and fonts never change
+    return "public, max-age=180"
+
+
 async def s3_put(bucket: str, key: str, body: bytes, content_type: str, *, large_file: bool = False) -> None:
     """Upload an object to s3."""
     s3_config = get_ap_config_s3_client()
     session = get_session()
     start_time = time.time()
     async with session.create_client("s3", **s3_config.model_dump()) as s3_client:
-        await s3_client.put_object(Bucket=bucket, Key=key, Body=body, ContentType=content_type)
+        await s3_client.put_object(
+            Bucket=bucket, Key=key, Body=body, ContentType=content_type, CacheControl=cache_control_for(key)
+        )
     warn_if_too_long(f"upload {key} to s3", time.time() - start_time, large_file=large_file)
 
 

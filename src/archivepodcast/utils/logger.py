@@ -164,11 +164,8 @@ def _get_log_level_int(level: str | int) -> int:
     return TRACE_LEVEL_NUM if level == "TRACE" else getattr(logging, level, logging.INFO)
 
 
-def _add_file_handler(in_logger: logging.Logger, log_path: Path | str) -> None:
+def _add_file_handler(in_logger: logging.Logger, log_path: Path) -> None:
     """Add a file handler to the logger."""
-    if not isinstance(log_path, Path):
-        log_path = Path(log_path)
-
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         file_handler = RotatingFileHandler(log_path, maxBytes=1000000, backupCount=5)

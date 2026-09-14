@@ -94,7 +94,7 @@ def check_ffmpeg(*, convert_check: bool = False) -> None:
         sys.exit(1)
 
     if AP_SELF_TEST or convert_check:
-        _ffmpeg_convert_check()
+        _ffmpeg_convert_check()  # pragma: no cover # Single statement that is tested elsewhere
 
 
 check_ffmpeg()
