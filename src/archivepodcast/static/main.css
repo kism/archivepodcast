@@ -281,6 +281,12 @@ input[type="button"] {
   min-width: 100px;
 }
 
+/* Beat a:link / a:visited colours for link-styled buttons, before :hover so hover still wins */
+.button:link,
+.button:visited {
+  color: #bbb;
+}
+
 .button:hover,
 button:hover,
 input[type="submit"]:hover,
@@ -295,6 +301,39 @@ input[type="button"]:focus {
   border-color: #888;
   background-color: #008080;
   outline: 0;
+}
+
+.podcast-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.button-pocketcasts {
+  background-color: #804000;
+}
+
+.button-apple {
+  background-color: #502070;
+}
+
+.button-youtube {
+  background-color: #700000;
+}
+
+.button-pocketcasts:hover,
+.button-pocketcasts:focus {
+  background-color: #f08c30;
+}
+
+.button-apple:hover,
+.button-apple:focus {
+  background-color: #b07ad8;
+}
+
+.button-youtube:hover,
+.button-youtube:focus {
+  background-color: #e05050;
 }
 
 /* Forms */

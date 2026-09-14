@@ -13,3 +13,4 @@ AP
 slugified
 statm
 sysconf
+pocketcasts
