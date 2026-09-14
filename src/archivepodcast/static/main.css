@@ -309,6 +309,18 @@ input[type="button"]:focus {
   gap: 6px;
 }
 
+/* Card per podcast on the index, same radius as the buttons */
+.podcast {
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 8px 12px 12px;
+  margin: 12px 0;
+}
+
+.podcast h2 {
+  margin-top: 0;
+}
+
 /* Brand colours only on hover/focus, so a page of podcasts isn't a wall of colour */
 .button-pocketcasts:hover,
 .button-pocketcasts:focus {
