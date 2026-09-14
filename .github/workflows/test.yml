@@ -15,6 +15,10 @@ on:
       - "docker/**"
       - ".cspell/**"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -45,7 +49,7 @@ jobs:
       - name: Install the project
         run: uv sync --no-default-groups --group test
 
-      - name: Ensure that pytest isnt getting polluted by the default instance dir.
+      - name: Ensure that pytest isn't getting polluted by the default instance dir.
         run: |
           mkdir -p instance
           echo 'ensuring that this never gets touched by pytest' > instance/config.json

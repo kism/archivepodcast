@@ -15,6 +15,10 @@ on:
       - "docker/**"
       - ".cspell/**"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ty:
     runs-on: ubuntu-latest

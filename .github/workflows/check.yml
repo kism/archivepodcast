@@ -11,9 +11,13 @@ on:
       - "docs/**"
       - ".github/workflows/*publish*.yml"
       - ".github/workflows/*docker*.yml"
-      - "scripts/**"
+      - "scripts/*.sh" # Not scripts/**, check_html and check_fonts use scripts/config and scripts/check_fonts.mjs
       - "docker/**"
       - ".cspell/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check_py:
