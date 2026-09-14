@@ -76,6 +76,7 @@ async def test_guide_exists(client: TestClient, apa: PodcastArchiver) -> None:
 
     response = client.get("/guide.html")
     assert response.status_code == HTTPStatus.OK
+    assert '<div class="guides"><section class="guide"><h2' in response.text
 
 
 @pytest.mark.asyncio

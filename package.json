@@ -1,4 +1,6 @@
 {
+  "type": "module",
+  "packageManager": "bun@1.4.2",
   "devDependencies": {
     "@biomejs/biome": "^2.5.13",
     "@cspell/dict-en-au": "^1.1.27",
