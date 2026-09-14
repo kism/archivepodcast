@@ -309,18 +309,7 @@ input[type="button"]:focus {
   gap: 6px;
 }
 
-.button-pocketcasts {
-  background-color: #804000;
-}
-
-.button-apple {
-  background-color: #502070;
-}
-
-.button-youtube {
-  background-color: #700000;
-}
-
+/* Brand colours only on hover/focus, so a page of podcasts isn't a wall of colour */
 .button-pocketcasts:hover,
 .button-pocketcasts:focus {
   background-color: #f08c30;
