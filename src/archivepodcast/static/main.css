@@ -309,17 +309,29 @@ input[type="button"]:focus {
   gap: 6px;
 }
 
-/* Card per podcast on the index, same radius as the buttons */
-.podcast {
+/* Cards: podcasts on the index, guides on the guide page, same radius as the buttons */
+.podcast,
+.guide {
   border: 0px;
-  background-color: #000000;
+  background-color: #101010;
   border-radius: 4px;
   padding: 8px 12px 12px;
+}
+
+.podcast {
   margin: 12px 0;
 }
 
-.podcast h2 {
+.podcast h2,
+.guide h2 {
   margin-top: 0;
+}
+
+/* Two columns of guides when there's room, one on phones */
+.guides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
 }
 
 /* Brand colours only on hover/focus, so a page of podcasts isn't a wall of colour */
