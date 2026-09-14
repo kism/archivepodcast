@@ -19,7 +19,7 @@ ENV UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --extra web
+    uv sync --frozen --no-install-project --no-dev --extra web
 
 # Copy application code and project metadata
 COPY src src
@@ -29,21 +29,18 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     --mount=type=bind,source=README.md,target=README.md \
-    uv sync --frozen --extra web
+    uv sync --frozen --no-dev --extra web
 
 # --- Final runtime stage ---
 FROM python:3.14-slim-trixie
 
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libmagic1 \
-    && rm -rf /var/lib/apt/lists/*
-
 # Setup a non-root user
+# Instance dir owned by ap, so the image runs without a mount and named volumes inherit the owner
 RUN groupadd --system --gid 999 ap \
- && useradd --system --gid 999 --uid 999 --create-home ap
+ && useradd --system --gid 999 --uid 999 --create-home ap \
+ && install -d -o ap -g ap /app/instance
 
 # Copy FFmpeg from builder
 COPY --from=ffmpeg-builder /build/ffmpeg/ffmpeg /usr/local/bin/ffmpeg
@@ -61,4 +58,5 @@ EXPOSE 5100
 
 CMD [ "uvicorn", "--factory", "archivepodcast.run_webapp:create_app", "--host", "0.0.0.0", "--port", "5100", "--proxy-headers", "--forwarded-allow-ips", "*" ]
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -f http://localhost:5100/api/health || exit 1
+# Stdlib instead of curl, the slim image has no curl
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --start-interval=2s --retries=3 CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5100/api/health', timeout=4)"]

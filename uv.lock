@@ -196,6 +196,7 @@ dependencies = [
     { name = "aiobotocore" },
     { name = "aiohttp" },
     { name = "anyio" },
+    { name = "botocore" },
     { name = "jinja2" },
     { name = "markdown" },
     { name = "pydantic" },
@@ -272,6 +273,7 @@ requires-dist = [
     { name = "aiobotocore", specifier = ">=2.25.2" },
     { name = "aiohttp", specifier = ">=3.13.3" },
     { name = "anyio", specifier = ">=4.14.2" },
+    { name = "botocore", specifier = ">=1.43.75" },
     { name = "fastapi", marker = "extra == 'web'", specifier = ">=0.115" },
     { name = "jinja2", specifier = ">=3.1,<4" },
     { name = "markdown", specifier = ">=3.10" },
@@ -288,7 +290,7 @@ dev = [
     { name = "aiomonitor" },
     { name = "archivepodcast", extras = ["web"] },
     { name = "botocore-stubs" },
-    { name = "coverage", specifier = "==7.15.4" },
+    { name = "coverage", specifier = ">=7.15.4" },
     { name = "detect-test-pollution" },
     { name = "httpx2" },
     { name = "myst-parser" },
@@ -316,7 +318,7 @@ lint = [{ name = "ruff" }]
 profile = [{ name = "aiomonitor" }]
 test = [
     { name = "archivepodcast", extras = ["web"] },
-    { name = "coverage", specifier = "==7.15.4" },
+    { name = "coverage", specifier = ">=7.15.4" },
     { name = "detect-test-pollution" },
     { name = "httpx2" },
     { name = "pytest", specifier = ">=9.1" },
