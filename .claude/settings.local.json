@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run *)",
+      "Bash(python3 -c ' *)",
+      "Bash(git --version)",
+      "Bash(git merge-tree *)",
+      "Read(//private/tmp/**)",
+      "Bash(rm -rf ap_test_env)",
+      "Bash(uv venv *)",
+      "Bash(uv pip *)",
+      "Bash(rm -rf /tmp/ap_test_env && uv venv /tmp/ap_test_env --python 3.14 -q && uv pip install --python /tmp/ap_test_env/bin/python -e /Users/kism/src/archivepodcast -q 2>&1 | tail -20)",
+      "Bash(/tmp/ap_test_env/bin/python -c \"import fastapi\")",
+      "Bash(/tmp/ap_test_env/bin/python -c \"import uvicorn\")",
+      "Bash(/tmp/ap_test_env/bin/python -c \"from archivepodcast import run_ap_adhoc; print\\('adhoc import OK:', run_ap_adhoc\\)\")",
+      "Bash(/tmp/ap_test_env/bin/python -c ' *)",
+      "Bash(timeout 300 docker build -f docker/main.Dockerfile -t archivepodcast-test --target=python-builder .)",
+      "Bash(bun run *)",
+      "Bash(bunx cspell *)",
+      "Bash(git check-ignore *)",
+      "Bash(git status *)",
+      "Bash(bun install *)",
+      "Bash(bunx playwright *)",
+      "Bash(bun scripts/check_fonts.mjs http://localhost:5197)",
+      "Bash(python3 -c \"import yaml, sys; yaml.safe_load\\(open\\('.github/workflows/check.yml'\\)\\); print\\('YAML valid'\\)\")"
+    ],
+    "additionalDirectories": ["/private/tmp/ap_test_env"]
+  }
+}
