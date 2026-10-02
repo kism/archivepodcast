@@ -17,7 +17,7 @@ from .time import warn_if_too_long
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator
 
     from types_aiobotocore_s3 import S3Client
     from types_aiobotocore_s3.type_defs import HeadObjectOutputTypeDef, ObjectTypeDef  # pragma: no cover
@@ -47,7 +47,7 @@ def cache_control_for(path: str) -> str:
 
 
 @asynccontextmanager
-async def _s3_client() -> AsyncIterator[S3Client]:
+async def _s3_client() -> AsyncGenerator[S3Client]:
     """S3 client configured from the app config."""
     s3_conf = get_ap_config().app.s3
     async with get_session().create_client(
