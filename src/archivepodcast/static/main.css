@@ -356,6 +356,25 @@ footer {
 
 /* #endregion */
 
+/* #region: Markdown tables */
+
+/* ponytail: direct child only, so the nested health tables are left alone */
+.contained-content > table {
+  border-collapse: collapse;
+}
+
+.contained-content > table th,
+.contained-content > table td {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+}
+
+.contained-content > table th {
+  background-color: var(--accent);
+}
+
+/* #endregion */
+
 /* #region: Podcast player */
 
 .podcast-player-offset,
