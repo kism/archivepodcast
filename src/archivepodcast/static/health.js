@@ -71,7 +71,7 @@ export function populateProfile(data) {
   const profileDiv = document.getElementById("profile");
   profileDiv.innerHTML = "";
 
-  const description = document.createElement("h3");
+  const description = document.createElement("h2");
   description.textContent = `Timer stats per: /api/profile`;
   profileDiv.appendChild(description);
 
@@ -90,10 +90,8 @@ export function populateHealth(data) {
   const healthDiv = document.getElementById("health");
   healthDiv.innerHTML = "";
 
-  const currentTime = new Date().toLocaleTimeString();
-
-  const description = document.createElement("p");
-  description.textContent = `Health per: /api/health @ ${currentTime}`;
+  const description = document.createElement("h2");
+  description.textContent = `Health per: /api/health`;
   healthDiv.appendChild(description);
 
   for (const [section, sectionData] of Object.entries(data)) {
