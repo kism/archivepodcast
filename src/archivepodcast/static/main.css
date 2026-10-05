@@ -354,6 +354,17 @@ footer {
   width: 1px;
 }
 
+/* Desktop: grow past .contained-content to fit the stats, capped at the viewport (body margins are 23px each side) */
+@media screen and (width > 430px) {
+  #health,
+  #profile {
+    width: max-content;
+    min-width: 100%;
+    max-width: calc(100vw - 46px);
+    box-sizing: border-box;
+  }
+}
+
 /* #endregion */
 
 /* #region: Markdown tables */
