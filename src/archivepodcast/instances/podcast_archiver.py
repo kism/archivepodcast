@@ -1,7 +1,7 @@
 """Response helpers and archiver lifecycle for the ArchivePodcast app."""
 
 import asyncio
-import datetime
+import datetime as dt
 import os
 import signal
 import threading
@@ -111,7 +111,7 @@ def podcast_loop() -> None:
     while True:  # pragma: no cover
         _ap.grab_podcasts()  # The function has a big try except block to avoid crashing the loop
 
-        current_datetime = datetime.datetime.now(tz=datetime.UTC)
+        current_datetime = dt.datetime.now(tz=dt.UTC)
 
         asyncio.run(_ap.write_health())
 
@@ -127,7 +127,7 @@ def podcast_loop() -> None:
         logger.info("🌄 Waking up, its %s, looking for new episodes", get_time_str())  # pragma: no cover
 
 
-def _get_time_until_next_run(current_time: datetime.datetime) -> int:
+def _get_time_until_next_run(current_time: dt.datetime) -> int:
     """Calculate the time until the next run of the podcast loop."""
     one_hour_in_seconds = 3600
     seconds_offset = 1200  # 20 minutes

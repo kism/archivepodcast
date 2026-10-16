@@ -2,7 +2,7 @@
 
 import asyncio
 import contextlib
-import datetime
+import datetime as dt
 import time
 import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
@@ -254,7 +254,7 @@ class PodcastArchiver:
         if new_count >= previous_count:
             return
 
-        date = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d")
+        date = dt.datetime.now(tz=dt.UTC).strftime("%Y%m%d")
         backup_filename = f"{date}-rss-backup.xml"
         backup_path = get_app_paths().web_root / "content" / podcast.name_one_word / backup_filename
         logger.warning(
