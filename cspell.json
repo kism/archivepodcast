@@ -62,7 +62,7 @@
     }
   ],
 
-  "ignorePaths": [".gitignore", "instance/*"],
+  "ignorePaths": [".gitignore", "instance/*", "pnpm-lock.yaml"],
   "useGitignore": true,
   "flagWords": [],
   "ignoreWords": [],
