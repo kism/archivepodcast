@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "packageManager": "bun@1.4.2",
+  "packageManager": "pnpm@12.11.2",
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
     "@cspell/dict-en-au": "^1.1.27",
@@ -16,13 +16,13 @@
   },
   "scripts": {
     "test": "vitest run",
-    "coverage": "node --run vitest run --coverage",
+    "coverage": "vitest run --coverage",
     "check": "biome check",
     "lint": "biome lint .",
-    "spell": "bunx cspell '**/*.{py,js,css,html,md,json,Dockerfile}'",
-    "check_markdown": "bunx markdownlint --ignore node_modules --fix ./**/*.md",
+    "spell": "cspell '**/*.{py,js,css,html,md,json,Dockerfile}'",
+    "check_markdown": "markdownlint --ignore node_modules --fix ./**/*.md",
     "format": "biome format --write .",
-    "update_fonts": "bun scripts/update_fonts.mjs",
-    "check_fonts": "bun scripts/check_fonts.mjs"
+    "update_fonts": "node scripts/update_fonts.mjs",
+    "check_fonts": "node scripts/check_fonts.mjs"
   }
 }
