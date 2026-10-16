@@ -1,6 +1,6 @@
 """Test the application router endpoints."""
 
-import datetime
+import datetime as dt
 import logging
 import signal
 from datetime import UTC
@@ -243,11 +243,11 @@ def test_reload_config_exception(
 @pytest.mark.parametrize(
     ("time", "expected_seconds"),
     [
-        (datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=UTC), 1200),  # 1200 seconds = 20 minutes
-        (datetime.datetime(2020, 1, 1, 0, 30, 0, tzinfo=UTC), 3000),  # 3000 seconds = 50 minutes
+        (dt.datetime(2020, 1, 1, 0, 0, 0, tzinfo=UTC), 1200),  # 1200 seconds = 20 minutes
+        (dt.datetime(2020, 1, 1, 0, 30, 0, tzinfo=UTC), 3000),  # 3000 seconds = 50 minutes
     ],
 )
-def test_time_until_next_run(time: datetime.datetime, expected_seconds: int) -> None:
+def test_time_until_next_run(time: dt.datetime, expected_seconds: int) -> None:
     """Test the logic for waiting for the next run."""
 
     assert _get_time_until_next_run(time) == expected_seconds

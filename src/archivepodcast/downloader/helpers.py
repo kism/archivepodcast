@@ -2,7 +2,7 @@
 
 import asyncio
 import contextlib
-import datetime
+import datetime as dt
 import random
 import shutil
 import sys
@@ -42,7 +42,7 @@ def get_file_date_string(channel: ET.Element) -> str:
     file_date_string = "00000000"
     for child in channel:
         if child.tag == "pubDate":
-            file_date = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+            file_date = dt.datetime(1970, 1, 1, tzinfo=dt.UTC)
             with contextlib.suppress(ValueError):
                 file_date = parsedate_to_datetime(str(child.text))
             file_date_string = file_date.strftime("%Y%m%d")

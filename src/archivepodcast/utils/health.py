@@ -1,7 +1,7 @@
 """Health monitoring for archivepodcast components."""
 
 import contextlib
-import datetime
+import datetime as dt
 import os
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -63,7 +63,7 @@ class PodcastHealth(BaseModel):
             try:
                 parsed_pubdate = parsedate_to_datetime(pod_pubdate)
                 if parsed_pubdate.tzinfo is None:
-                    parsed_pubdate = parsed_pubdate.replace(tzinfo=datetime.UTC)
+                    parsed_pubdate = parsed_pubdate.replace(tzinfo=dt.UTC)
                 self.latest_episode.pubdate = int(parsed_pubdate.timestamp())
             except ValueError:
                 logger.error("Unable to parse pubDate: %s", pod_pubdate)  # ruff: ignore[error-instead-of-exception] # No need for a traceback
@@ -72,7 +72,7 @@ class PodcastHealth(BaseModel):
 class WebpageHealth(BaseModel):
     """Health status for an individual webpage."""
 
-    last_rendered: int = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
+    last_rendered: int = int(dt.datetime.now(tz=dt.UTC).timestamp())
 
 
 class Host(BaseModel):
@@ -116,7 +116,7 @@ class CoreHealth(BaseModel):
     alive: bool = True
     last_run: int = 0
     about_page_exists: bool = False
-    last_startup: int = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
+    last_startup: int = int(dt.datetime.now(tz=dt.UTC).timestamp())
     currently_rendering: bool = False
     currently_loading_config: bool = False
     memory_mb: float = -0.0

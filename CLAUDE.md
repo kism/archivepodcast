@@ -6,22 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FastAPI webapp that archives podcasts from RSS feeds: downloads episodes, rewrites the feed, and re-hosts both. Storage backend is local filesystem or S3. Three run modes share the same core: web server, adhoc CLI run, and AWS Lambda ([lambda_handler.py](src/archivepodcast/lambda_handler.py)).
 
-Python 3.14 only, managed with `uv`. Frontend is plain JS in [src/archivepodcast/static/](src/archivepodcast/static/), tooling via `bun`.
+Python 3.14 only, managed with `uv`. Frontend is plain JS in [src/archivepodcast/static/](src/archivepodcast/static/), tooling via `pnpm`.
 
 ## Commands
 
 ```bash
 uv sync --all-extras          # setup (then: source .venv/bin/activate)
-bun install                   # JS tooling
+pnpm install                  # JS tooling
 
 pytest                        # Python tests (coverage always on via addopts)
 pytest tests/test_config.py -k test_name --no-cov   # single test, faster
-bun run test                  # JS tests (vitest, tests/z_*.test.js)
+pnpm run test                 # JS tests (vitest, tests/z_*.test.js)
 
 ruff format . && ruff check . --fix   # Python format + lint
 ty check .                    # Python type checking
-bun run format && bun run check       # JS/CSS/HTML via biome
-bun run spell                 # cspell
+pnpm run format && pnpm run check     # JS/CSS/HTML via biome
+pnpm run spell                # cspell
 
 scripts/run_ci_local.sh       # everything CI runs, locally
 

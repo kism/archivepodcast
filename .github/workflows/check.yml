@@ -45,9 +45,12 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - name: Install bun
-        uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -69,7 +72,7 @@ jobs:
           CI_SKIP_LFS_CHECK: "true" # Sure we can clone with lfs, but we can save a few cpu cycles.
 
       - name: Validate HTML
-        run: bunx html-validate instance/web/*.html
+        run: pnpm exec html-validate instance/web/*.html
 
   check_fonts:
     runs-on: ubuntu-latest
@@ -79,13 +82,16 @@ jobs:
         with:
           lfs: true
 
-      - name: Install bun
-        uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
 
-      - run: bun install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Install Playwright's Chromium
-        run: bunx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -121,4 +127,4 @@ jobs:
           exit 1
 
       - name: Check fonts load in a real browser
-        run: bun scripts/check_fonts.mjs http://localhost:5100
+        run: node scripts/check_fonts.mjs http://localhost:5100

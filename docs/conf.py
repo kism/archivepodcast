@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any
 
 from pydantic import HttpUrl
 
@@ -25,7 +26,7 @@ def _write_example_config(name: str, config: ArchivePodcastConfig) -> None:
 
 
 def _example_config(app: AppConfig | None = None, podcasts: list[PodcastConfig] | None = None) -> ArchivePodcastConfig:
-    kwargs = {"app": app} if app else {}
+    kwargs: dict[str, Any] = {"app": app} if app else {}
     if podcasts:
         kwargs["podcasts"] = podcasts
     return ArchivePodcastConfig(_env_file=None, **kwargs)  # Don't let a local .env leak into the docs

@@ -16,18 +16,18 @@ ty check .
 
 ## Frontend Code Quality
 
-For frontend code quality check, we use some npm packages, installed via [bun](https://bun.sh/).
+For frontend code quality check, we use some npm packages, installed via [pnpm](https://pnpm.io/).
 
 ```bash
-bun install
+pnpm install
 ```
 
 If you wish to upgrade packages
 
 ```bash
-bun update
+pnpm update
 ```
 
 ## Run
 
-See the scripts in `package.json` for various commands, run via `bun run <script>`.
+See the scripts in `package.json` for various commands, run via `pnpm run <script>`.

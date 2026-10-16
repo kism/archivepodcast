@@ -1,7 +1,7 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 // Confirms every @font-face declared in main.css actually loads in a real browser.
-// Usage: bun scripts/check_fonts.mjs [baseUrl]  (baseUrl defaults to http://localhost:5100)
-// Requires a running webserver and: bunx playwright install --with-deps chromium
+// Usage: node scripts/check_fonts.mjs [baseUrl]  (baseUrl defaults to http://localhost:5100)
+// Requires a running webserver and: pnpm exec playwright install --with-deps chromium
 
 import { chromium } from "playwright";
 

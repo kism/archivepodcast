@@ -1,6 +1,6 @@
 """Tests for PodcastArchiver functionality."""
 
-import datetime
+import datetime as dt
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -275,7 +275,7 @@ async def test_backup_previous_feed_on_episode_drop(apa: PodcastArchiver, caplog
     with caplog.at_level(level=logging.WARNING, logger="archivepodcast.archiver"):
         await apa._backup_previous_feed(podcast, tree, previous_feed)
 
-    date = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d")
+    date = dt.datetime.now(tz=dt.UTC).strftime("%Y%m%d")
     backup_path = get_app_paths().web_root / "content" / podcast.name_one_word / f"{date}-rss-backup.xml"
     assert "backing up previous feed" in caplog.text
     assert backup_path.read_bytes() == previous_feed
@@ -300,7 +300,7 @@ def test_grab_podcasts_live_episode_drop_backs_up_feed(
 
     assert "backing up previous feed" in caplog.text
 
-    date = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d")
+    date = dt.datetime.now(tz=dt.UTC).strftime("%Y%m%d")
     backup_path = get_app_paths().web_root / "content" / "test" / f"{date}-rss-backup.xml"
     assert backup_path.read_text() == previous_rss
 

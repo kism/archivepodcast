@@ -1,4 +1,4 @@
 biomejs
 Vitest
 nvmrc
-bunx
+pnpm
