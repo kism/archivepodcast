@@ -1,7 +1,7 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 // Copies the latin-subset woff2 files this project uses out of the installed
 // @fontsource packages into src/archivepodcast/static/fonts, keeping fontsource's
-// own filenames. Run `bun install` first, then `bun run update_fonts` to pick
+// own filenames. Run `pnpm install` first, then `pnpm run update_fonts` to pick
 // up new font versions, weights, or styles.
 
 import { copyFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
@@ -29,7 +29,7 @@ for (const { package: pkg, weight, style } of FONTS) {
   const source = join(ROOT, "node_modules", "@fontsource", pkg, "files", filename);
 
   if (!existsSync(source)) {
-    throw new Error(`Missing ${source} -- is @fontsource/${pkg} installed? Run 'bun install' first.`);
+    throw new Error(`Missing ${source} -- is @fontsource/${pkg} installed? Run 'pnpm install' first.`);
   }
 
   copyFileSync(source, join(FONTS_DIR, filename));
