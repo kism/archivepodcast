@@ -9,15 +9,15 @@ authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
-    "aiobotocore>=2.25.2",
-    "aiohttp>=3.13.3",
+    "aiobotocore>=3.9.2",
+    "aiohttp>=3.14.5",
     "jinja2>=3.1,<4",
-    "markdown>=3.10",
-    "pydantic>=2.13",
-    "pydantic-settings>=2.13",
+    "markdown>=3.11",
+    "pydantic>=2.14",
+    "pydantic-settings>=2.16",
     "rich>=15.0.0",
-    "typed-ffmpeg-v7>=4.4",
-    "anyio>=4.14.2",
+    "typed-ffmpeg-v7>=4.6",
+    "anyio>=4.15.1",
     "botocore>=1.43.75",
 ]
 
