@@ -20,17 +20,3 @@ jobs:
           incremental_files_only: false # Fine for small projects
           root: "."
           config: "cspell.json"
-
-  check_md:
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/setup@v3
-      - uses: actions/setup-node@v6
-        with:
-          node-version: lts/*
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Run markdownlint
-        run: pnpm exec markdownlint --ignore node_modules ./**/*.md

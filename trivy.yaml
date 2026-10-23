@@ -11,4 +11,4 @@ severity:
 
 misconfiguration:
   scanners:
-   - dockerfile
+    - dockerfile

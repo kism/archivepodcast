@@ -1,11 +1,8 @@
-<!-- markdownlint-disable MD036 MD041 --> <!-- h1 comes from markdown.html.j2, platforms are plain italic -->
-
 Guides on manually adding a podcast url for some popular podcast applications.
 
 ## Pocket Casts
 
 _iOS, Android_
-
 1. Tap Discover
 2. Paste URL into the search
 3. Tap Search
@@ -14,7 +11,6 @@ _iOS, Android_
 ## Apple Podcasts
 
 _iOS_
-
 1. Tap Library
 2. Tap "..."
 3. Tap Add a Show by URL
@@ -24,7 +20,6 @@ _iOS_
 ## YouTube Music
 
 _Android, iOS, Web_
-
 1. Tap Library
 2. Scroll the library categories for "Podcasts"
 3. Tap Add podcast
@@ -35,7 +30,6 @@ _Android, iOS, Web_
 ## AntennaPod
 
 _Android_
-
 1. Tap ☰
 2. Tap Add Podcast
 3. Tap Add Podcast by RSS address
@@ -44,7 +38,6 @@ _Android_
 ## PodcastAddict
 
 _Android_
-
 1. Tap +
 2. Tap the RSS button
 3. Paste URL
@@ -53,7 +46,6 @@ _Android_
 ## Overcast
 
 _iOS_
-
 1. Tap the Search button
 2. Tap Add URL
 3. Paste URL
@@ -62,7 +54,6 @@ _iOS_
 ## Podbean
 
 _Android, iOS, God I hate this app_
-
 1. Tap Search
 2. Tap +Feed
 3. Paste URL
@@ -71,7 +62,6 @@ _Android, iOS, God I hate this app_
 ## gPodder
 
 _Linux, MacOS, Windows_
-
 1. Subscriptions
 2. Add Podcast by URL
 3. Paste URL
@@ -80,7 +70,6 @@ _Linux, MacOS, Windows_
 ## VLC
 
 _Linux, MacOS, Windows_
-
 1. View
 2. Playlist
 3. Podcasts
