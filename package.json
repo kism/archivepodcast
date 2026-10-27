@@ -2,7 +2,7 @@
   "type": "module",
   "packageManager": "pnpm@12.11.2",
   "devDependencies": {
-    "@biomejs/biome": "^2.6.2",
+    "@biomejs/biome": "^2.6.3",
     "@cspell/dict-en-au": "^1.1.31",
     "@fontsource/fira-code": "^5.3.0",
     "@fontsource/noto-sans-display": "^5.3.0",

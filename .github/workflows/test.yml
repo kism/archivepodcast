@@ -16,7 +16,40 @@ on:
       - ".cspell/**"
 
 jobs:
+  ffmpeg: # Static build from our Dockerfile, cached as a single entry, only rebuilt when the Dockerfile changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        id: cache
+        with:
+          path: ffmpeg-bin/ffmpeg
+          key: ffmpeg-${{ hashFiles('docker/_dep_ffmpeg.Dockerfile') }}
+
+      - name: Build ffmpeg
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          docker build -f docker/_dep_ffmpeg.Dockerfile -t ffmpeg-build .
+          id=$(docker create ffmpeg-build)
+          mkdir -p ffmpeg-bin
+          docker cp "$id":/build/ffmpeg/ffmpeg ffmpeg-bin/ffmpeg
+
+      - name: Delete stale ffmpeg caches
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP: ffmpeg-${{ hashFiles('docker/_dep_ffmpeg.Dockerfile') }}
+        run: |
+          gh cache list -R "$GITHUB_REPOSITORY" --key ffmpeg- --json id,key \
+            -q '.[] | select(.key != env.KEEP) | .id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
+
   pytest:
+    needs: ffmpeg
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:
@@ -27,10 +60,14 @@ jobs:
         with:
           lfs: true
 
+      - uses: actions/cache/restore@v6
+        with:
+          path: ffmpeg-bin/ffmpeg
+          key: ffmpeg-${{ hashFiles('docker/_dep_ffmpeg.Dockerfile') }}
+          fail-on-cache-miss: true
+
       - name: Install ffmpeg
-        run: | # Runner apt lists go stale and 404, recommends drag in ~60MB of drivers/voice models we don't use
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ffmpeg
+        run: sudo install -m755 ffmpeg-bin/ffmpeg /usr/local/bin/ffmpeg
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v7
