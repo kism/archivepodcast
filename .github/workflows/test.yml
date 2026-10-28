@@ -69,15 +69,11 @@ jobs:
       - name: Install ffmpeg
         run: sudo install -m755 ffmpeg-bin/ffmpeg /usr/local/bin/ffmpeg
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
+      - name: Install uv and Python ${{ matrix.python-version }}
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          python-version: ${{ matrix.python-version }}
 
       - name: Install the project
         run: uv sync --no-default-groups --group test
