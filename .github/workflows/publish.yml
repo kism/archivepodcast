@@ -12,6 +12,10 @@ jobs:
   publish:
     name: "Build and publish release"
     runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # Trusted publishing
+      contents: read
 
     steps:
       - uses: actions/checkout@v7
@@ -30,4 +34,4 @@ jobs:
         run: uv build
 
       - name: Publish
-        run: uv publish -t ${{ secrets.PYPI_TOKEN }}
+        run: uv publish
