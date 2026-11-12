@@ -11,8 +11,8 @@ from pathlib import Path
 # It supports PyInstaller's _MEIPASS mechanism to redirect to a writable path, so we set
 # those attributes before any code path that triggers the lazy import of ffmpeg_core.common.cache.
 if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
-    sys.frozen = True  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]
-    sys._MEIPASS = "/tmp"  # type: ignore[attr-defined]  # ty:ignore[unresolved-attribute]  # ruff: ignore[private-member-access]
+    sys.frozen = True  # type: ignore[attr-defined]  # ty:ignore[missing-attribute]
+    sys._MEIPASS = "/tmp"  # type: ignore[attr-defined]  # ty:ignore[missing-attribute]  # ruff: ignore[private-member-access]
 
 # We don't use the real logger yet since we want to be able to diagnose import issues
 logger = logging.getLogger()
