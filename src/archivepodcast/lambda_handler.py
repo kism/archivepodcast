@@ -48,12 +48,35 @@ else:
 # check_ffmpeg(convert_check=True)  # ruff: ignore[commented-out-code] # For checking in the aws console
 
 
+def _load_instance_from_ssm(prefix: str) -> None:
+    """Write each SSM parameter under prefix to INSTANCE_PATH, e.g. /archivepodcast/config.json -> config.json."""
+    import botocore.session  # ruff: ignore[import-outside-top-level] # Only needed in this mode
+
+    ssm = botocore.session.get_session().create_client("ssm")
+    for page in ssm.get_paginator("get_parameters_by_path").paginate(Path=prefix, WithDecryption=True):
+        for param in page["Parameters"]:
+            dest = INSTANCE_PATH / param["Name"].removeprefix(prefix).lstrip("/")
+            logger.info("Loading instance file from SSM: %s", param["Name"])
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(param["Value"], encoding="utf-8")
+
+    if not (INSTANCE_PATH / "config.json").is_file():
+        msg = f"Instance config.json not found in SSM under {prefix}"
+        logger.error(msg)
+        raise FileNotFoundError(msg)
+
+
 def handler(event: dict[str, object], context: object) -> None:
-    # Copy the RO instance folder to /tmp/instance since it needs to be writable
     logger.info("Event invoked with event: %s", event)
 
     log_intro(logger)
 
+    if ssm_prefix := os.environ.get("AP_SSM_INSTANCE_PATH"):
+        _load_instance_from_ssm(ssm_prefix)
+        run_ap_adhoc(instance_path=INSTANCE_PATH)
+        return
+
+    # Layer mode: copy the RO instance folder to /tmp/instance since it needs to be writable
     if not LOCAL_RO_INSTANCE_PATH.exists():
         msg = f"Instance path does not exist, please add via a layer to {LOCAL_RO_INSTANCE_PATH}"
         logger.error(msg)

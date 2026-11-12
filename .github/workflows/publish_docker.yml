@@ -16,6 +16,8 @@ env:
   AL_VERSION: al2023
   AL_TAG: ghcr.io/${{ github.repository }}:al2023
   AL_TAG_LOCAL: archivepodcast:al2023
+  LAMBDA_TAG: ghcr.io/${{ github.repository }}:lambda
+  LAMBDA_TAG_LOCAL: archivepodcast:lambda
   PYTEST_TAG_LOCAL: archivepodcast:pytest
   FFMPEG_TAG_LOCAL: archivepodcast:ffmpeg
 jobs:
@@ -75,6 +77,16 @@ jobs:
           tags: ${{ env.AL_TAG_LOCAL }}
           file: ./docker/main_al.Dockerfile
 
+      - name: Build lambda docker
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.LAMBDA_TAG_LOCAL }}
+          file: ./docker/main_al.Dockerfile
+          target: lambda
+
       # region run
       - name: Create instance directory
         run: |
@@ -92,6 +104,16 @@ jobs:
 
       - name: Healthcheck al docker
         run: bash scripts/check_docker_health.sh ${{ env.AL_TAG_LOCAL }}
+
+      - name: Smoke test lambda docker
+        run: |
+          docker run -d --rm --name ap-lambda -p 9000:8080 ${{ env.LAMBDA_TAG_LOCAL }}
+          sleep 3
+          OUT=$(curl -s -XPOST localhost:9000/2015-03-31/functions/function/invocations -d '{}')
+          docker stop ap-lambda
+          echo "$OUT"
+          # No instance is provided, so the handler must import fine and fail on the missing instance
+          echo "$OUT" | grep -q "Instance path does not exist"
 
       - name: Remove instance directory
         run: sudo rm -rf instance
@@ -129,4 +151,16 @@ jobs:
           tags: |
             ${{ env.AL_TAG }}
             ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}-{2}', github.repository_owner, steps.version.outputs.version, env.AL_VERSION) || '' }}
+          file: ./docker/main_al.Dockerfile
+
+      - name: Build and push lambda Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          provenance: false # Lambda rejects image indexes with attestations
+          target: lambda
+          tags: |
+            ${{ env.LAMBDA_TAG }}
+            ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}-lambda', github.repository_owner, steps.version.outputs.version) || '' }}
           file: ./docker/main_al.Dockerfile

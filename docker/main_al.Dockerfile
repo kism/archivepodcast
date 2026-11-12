@@ -43,6 +43,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=README.md,target=README.md \
     uv sync --frozen --no-dev --extra web
 
+# --- Lambda container image stage (build with --target lambda) ---
+# Instance config is loaded from SSM at invoke time, see lambda_handler.py
+FROM python-source AS lambda
+
+COPY --from=ffmpeg-builder /build/ffmpeg/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=python-builder /app/.venv/lib/python3.14/site-packages/ ${LAMBDA_TASK_ROOT}/
+# Project is installed editable, so copy the source too
+COPY --from=python-builder /app/src/archivepodcast ${LAMBDA_TASK_ROOT}/archivepodcast
+
+CMD [ "archivepodcast.lambda_handler.handler" ]
+
 # --- Final runtime stage ---
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
 

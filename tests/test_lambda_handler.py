@@ -200,3 +200,47 @@ def test_run_lambda_logs_event(
 
     # Verify event was logged
     assert any("Event invoked with event:" in record.message for record in caplog.records)
+
+
+def test_run_lambda_ssm(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Instance files are loaded from SSM when AP_SSM_INSTANCE_PATH is set."""
+    test_instance_path = tmp_path / "instance"
+    monkeypatch.setenv("AP_SSM_INSTANCE_PATH", "/archivepodcast/")
+    monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", test_instance_path)
+
+    mock_client = Mock()
+    mock_client.get_paginator.return_value.paginate.return_value = [
+        {"Parameters": [{"Name": "/archivepodcast/config.json", "Value": "{}"}]},
+        {"Parameters": [{"Name": "/archivepodcast/about.md", "Value": "# About"}]},
+    ]
+    monkeypatch.setattr("botocore.session.Session.create_client", lambda *_a, **_k: mock_client)
+    mock_run_ap_adhoc = Mock()
+    monkeypatch.setattr("archivepodcast.lambda_handler.run_ap_adhoc", mock_run_ap_adhoc)
+
+    handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+
+    assert (test_instance_path / "config.json").read_text() == "{}"
+    assert (test_instance_path / "about.md").read_text() == "# About"
+    mock_client.get_paginator.return_value.paginate.assert_called_once_with(
+        Path="/archivepodcast/", WithDecryption=True
+    )
+    mock_run_ap_adhoc.assert_called_once_with(instance_path=test_instance_path)
+
+
+def test_run_lambda_ssm_no_config(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Missing config.json in SSM raises."""
+    monkeypatch.setenv("AP_SSM_INSTANCE_PATH", "/archivepodcast/")
+    monkeypatch.setattr("archivepodcast.lambda_handler.INSTANCE_PATH", tmp_path / "instance")
+
+    mock_client = Mock()
+    mock_client.get_paginator.return_value.paginate.return_value = [{"Parameters": []}]
+    monkeypatch.setattr("botocore.session.Session.create_client", lambda *_a, **_k: mock_client)
+
+    with pytest.raises(FileNotFoundError, match="not found in SSM"):
+        handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
