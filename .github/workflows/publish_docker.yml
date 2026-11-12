@@ -13,9 +13,6 @@ env:
   MAIN_TAG_LOCAL: archivepodcast:latest
   DEB_VERSION: trixie
   DEB_TAG: ghcr.io/${{ github.repository }}:trixie
-  AL_VERSION: al2023
-  AL_TAG: ghcr.io/${{ github.repository }}:al2023
-  AL_TAG_LOCAL: archivepodcast:al2023
   LAMBDA_TAG: ghcr.io/${{ github.repository }}:lambda
   LAMBDA_TAG_LOCAL: archivepodcast:lambda
   PYTEST_TAG_LOCAL: archivepodcast:pytest
@@ -68,15 +65,6 @@ jobs:
           tags: ${{ env.MAIN_TAG_LOCAL }}
           file: ./docker/main.Dockerfile
 
-      - name: Build al docker
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: false
-          load: true
-          tags: ${{ env.AL_TAG_LOCAL }}
-          file: ./docker/main_al.Dockerfile
-
       - name: Build lambda docker
         uses: docker/build-push-action@v7
         with:
@@ -84,8 +72,7 @@ jobs:
           push: false
           load: true
           tags: ${{ env.LAMBDA_TAG_LOCAL }}
-          file: ./docker/main_al.Dockerfile
-          target: lambda
+          file: ./docker/lambda.Dockerfile
 
       # region run
       - name: Create instance directory
@@ -98,12 +85,6 @@ jobs:
 
       - name: Healthcheck main docker
         run: bash scripts/check_docker_health.sh ${{ env.MAIN_TAG_LOCAL }}
-
-      - name: Run al docker
-        run: docker run --rm --mount type=bind,source="$(pwd)"/instance,target=/app/instance --env AP_SELF_TEST=true ${{ env.AL_TAG_LOCAL }} archivepodcast
-
-      - name: Healthcheck al docker
-        run: bash scripts/check_docker_health.sh ${{ env.AL_TAG_LOCAL }}
 
       - name: Smoke test lambda docker
         run: |
@@ -143,24 +124,13 @@ jobs:
             ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}-{2}', github.repository_owner, steps.version.outputs.version, env.DEB_VERSION) || '' }}
           file: ./docker/main.Dockerfile
 
-      - name: Build and push al Docker image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.AL_TAG }}
-            ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}-{2}', github.repository_owner, steps.version.outputs.version, env.AL_VERSION) || '' }}
-          file: ./docker/main_al.Dockerfile
-
       - name: Build and push lambda Docker image
         uses: docker/build-push-action@v7
         with:
           context: .
           push: true
           provenance: false # Lambda rejects image indexes with attestations
-          target: lambda
           tags: |
             ${{ env.LAMBDA_TAG }}
             ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}-lambda', github.repository_owner, steps.version.outputs.version) || '' }}
-          file: ./docker/main_al.Dockerfile
+          file: ./docker/lambda.Dockerfile
