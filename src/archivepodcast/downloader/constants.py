@@ -22,6 +22,6 @@ CONTENT_TYPES = {
     ".flac": "audio/flac",
 }
 
-USER_AGENT = "Podcasts/4024.230.1 CFNetwork/1568.200.51 Darwin/24.1.0"
+USER_AGENT = "Podcasts/4025.700.3 CFNetwork/3860.700.2 Darwin/25.6.0"
 
 DOWNLOAD_RETRY_COUNT = 5

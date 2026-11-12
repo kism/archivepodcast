@@ -10,7 +10,6 @@
 FastAPI webapp that will archive a podcast from a RSS feed. It will download the episodes and re-host them.
 
 Features:
-
 - Webapp
   - List of feeds hosted
   - File listing for unlisted episodes

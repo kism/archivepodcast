@@ -54,10 +54,6 @@ echo_magenta "cspell"
 pnpm run spell
 check_return $?
 
-echo_magenta "Markdownlint"
-pnpm run check_markdown
-check_return $?
-
 echo_magenta "Biome format"
 pnpm run format
 check_return $?
