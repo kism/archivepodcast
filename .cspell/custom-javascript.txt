@@ -2,3 +2,4 @@ biomejs
 Vitest
 nvmrc
 pnpm
+minimatch
