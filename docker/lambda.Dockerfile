@@ -2,7 +2,7 @@ FROM archivepodcast:ffmpeg AS ffmpeg-builder
 
 FROM public.ecr.aws/lambda/python:3.14 AS python-source
 
-FROM ghcr.io/astral-sh/uv:0.12 AS uv-base
+FROM ghcr.io/astral-sh/uv:0.13 AS uv-base
 
 # --- Python dependencies stage ---
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS python-builder
@@ -50,6 +50,7 @@ FROM python-source AS lambda
 COPY --from=ffmpeg-builder /build/ffmpeg/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=python-builder /app/.venv/lib/python3.14/site-packages/ ${LAMBDA_TASK_ROOT}/
 # Project is installed editable, so copy the source too
-COPY --from=python-builder /app/src/archivepodcast ${LAMBDA_TASK_ROOT}/archivepodcast
+# chmod: Lambda runs as a non-root user, a umask 077 checkout would make the source unreadable
+COPY --chmod=755 --from=python-builder /app/src/archivepodcast ${LAMBDA_TASK_ROOT}/archivepodcast
 
 CMD [ "archivepodcast.lambda_handler.handler" ]

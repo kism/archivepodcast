@@ -1,5 +1,11 @@
 # Docker
 
+Build every image (ffmpeg, main, lambda, pytest) in dependency order:
+
+```bash
+scripts/build_docker_all.sh
+```
+
 ## Main Container
 
 ```bash

@@ -18,9 +18,21 @@ if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
+class LambdaLogFormatter(logging.Formatter):
+    r"""One CloudWatch event per record when the runtime logs via stdout (container images).
+
+    CloudWatch splits stdout on \n, so inner newlines become \r and a single \n terminates the record.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format the record as a single line."""
+        return super().format(record).replace("\n", "\r") + "\n"
+
+
 # Configure logger to only show messages without level/timestamp/request ID
 for log_handler in logger.handlers:
-    log_handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
+    log_handler.setFormatter(LambdaLogFormatter("[%(levelname)s] %(message)s"))
 
 LAMBDA_LIB_PATH = Path("/opt/lib")
 LOCAL_RO_INSTANCE_PATH = Path("/opt/instance")

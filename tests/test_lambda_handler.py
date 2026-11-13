@@ -1,4 +1,5 @@
 import importlib
+import logging
 import os
 import sys
 from typing import TYPE_CHECKING
@@ -244,3 +245,11 @@ def test_run_lambda_ssm_no_config(
 
     with pytest.raises(FileNotFoundError, match="not found in SSM"):
         handler(None, None)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+
+
+def test_lambda_log_formatter_single_event() -> None:
+    """Multi-line messages must stay one CloudWatch event: inner newlines become \\r, one trailing \\n."""
+    from archivepodcast.lambda_handler import LambdaLogFormatter  # ruff: ignore[import-outside-top-level]
+
+    record = logging.LogRecord("test", logging.INFO, __file__, 1, "a >>>\nb: 1s\nc: 2s", None, None)
+    assert LambdaLogFormatter("[%(levelname)s] %(message)s").format(record) == "[INFO] a >>>\rb: 1s\rc: 2s\n"

@@ -232,7 +232,7 @@ wheels = [
 
 [[package]]
 name = "archivepodcast"
-version = "1.5.29"
+version = "1.6.0rc1"
 source = { editable = "." }
 dependencies = [
     { name = "aiobotocore" },

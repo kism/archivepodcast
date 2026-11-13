@@ -29,12 +29,19 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
             echo "version=${VERSION}" >> $GITHUB_OUTPUT
             echo "has_version=true" >> $GITHUB_OUTPUT
+            # PEP 440 pre/dev releases contain letters: 1.6.0rc1, 1.6.0b2, 1.6.0.dev1
+            if [[ "$VERSION" =~ [a-z] ]]; then
+              echo "stable=false" >> $GITHUB_OUTPUT
+            else
+              echo "stable=true" >> $GITHUB_OUTPUT
+            fi
           else
             echo "has_version=false" >> $GITHUB_OUTPUT
+            echo "stable=false" >> $GITHUB_OUTPUT
           fi
 
       # Region Login
@@ -117,10 +124,10 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: true
+          push: ${{ steps.version.outputs.has_version == 'true' }} # Manual runs only build and test
           tags: |
-            ghcr.io/${{ github.repository_owner }}/archivepodcast:latest
-            ${{ env.DEB_TAG}}
+            ${{ steps.version.outputs.stable == 'true' && env.MAIN_TAG || '' }}
+            ${{ steps.version.outputs.stable == 'true' && env.DEB_TAG || '' }}
             ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}-{2}', github.repository_owner, steps.version.outputs.version, env.DEB_VERSION) || '' }}
           file: ./docker/main.Dockerfile
 
@@ -128,9 +135,9 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: true
+          push: ${{ steps.version.outputs.has_version == 'true' }} # Manual runs only build and test
           provenance: false # Lambda rejects image indexes with attestations
           tags: |
-            ${{ env.LAMBDA_TAG }}
+            ${{ steps.version.outputs.stable == 'true' && env.LAMBDA_TAG || '' }}
             ${{ steps.version.outputs.has_version == 'true' && format('ghcr.io/{0}/archivepodcast:{1}-lambda', github.repository_owner, steps.version.outputs.version) || '' }}
           file: ./docker/lambda.Dockerfile
