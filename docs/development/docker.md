@@ -1,5 +1,11 @@
 # Docker
 
+Build every image (ffmpeg, main, lambda, pytest) in dependency order:
+
+```bash
+scripts/build_docker_all.sh
+```
+
 ## Main Container
 
 ```bash
@@ -47,7 +53,7 @@ code --diff docker/main.Dockerfile docker/pytest.Dockerfile
 ## Lambda Container
 
 ```bash
-docker build -f docker/main_al.Dockerfile -t archivepodcast-lambda .
+docker build -f docker/lambda.Dockerfile -t archivepodcast-lambda .
 ```
 
 ```bash

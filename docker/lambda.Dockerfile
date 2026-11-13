@@ -2,7 +2,7 @@ FROM archivepodcast:ffmpeg AS ffmpeg-builder
 
 FROM public.ecr.aws/lambda/python:3.14 AS python-source
 
-FROM ghcr.io/astral-sh/uv:0.12 AS uv-base
+FROM ghcr.io/astral-sh/uv:0.13 AS uv-base
 
 # --- Python dependencies stage ---
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS python-builder
@@ -43,41 +43,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=README.md,target=README.md \
     uv sync --frozen --no-dev --extra web
 
-# --- Final runtime stage ---
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
+# --- Lambda container image stage ---
+# Instance config is loaded from SSM at invoke time, see lambda_handler.py
+FROM python-source AS lambda
 
-WORKDIR /app
-
-# Install runtime dependencies
-RUN dnf install -y \
-    shadow-utils \
-    && dnf clean all
-
-# Setup a non-root user
-# Instance dir owned by ap, so the image runs without a mount and named volumes inherit the owner
-RUN groupadd --system --gid 999 ap \
- && useradd --system --gid 999 --uid 999 --create-home ap \
- && install -d -o ap -g ap /app/instance
-
-# Copy FFmpeg from builder
 COPY --from=ffmpeg-builder /build/ffmpeg/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=python-builder /app/.venv/lib/python3.14/site-packages/ ${LAMBDA_TASK_ROOT}/
+# Project is installed editable, so copy the source too
+# chmod: Lambda runs as a non-root user, a umask 077 checkout would make the source unreadable
+COPY --chmod=755 --from=python-builder /app/src/archivepodcast ${LAMBDA_TASK_ROOT}/archivepodcast
 
-# Copy Python binaries from Python base image
-COPY --from=python-source /var/lang /var/lang
-ENV PATH="/var/lang/bin:$PATH"
-
-# Copy Python virtual environment from builder
-COPY --chown=ap:ap --from=python-builder /app /app
-
-# Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
-ENV AP_SIMPLE_LOGGING=1
-
-USER ap:ap
-
-EXPOSE 5100
-
-CMD [ "uvicorn", "--factory", "archivepodcast.run_webapp:create_app", "--host", "0.0.0.0", "--port", "5100", "--proxy-headers", "--forwarded-allow-ips", "*" ]
-
-# Stdlib instead of curl, same check as the Debian image
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --start-interval=2s --retries=3 CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5100/api/health', timeout=4)"]
+CMD [ "archivepodcast.lambda_handler.handler" ]

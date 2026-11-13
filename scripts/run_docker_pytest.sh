@@ -12,10 +12,8 @@ echo_magenta() {
 
 echo_magenta "Building ffmpeg image"
 docker build -f docker/_dep_ffmpeg.Dockerfile -t archivepodcast:ffmpeg .
-docker build -f docker/main_al.Dockerfile -t archivepodcast:al2023 .
 
 echo_magenta "Building main image"
-docker build -f docker/_dep_ffmpeg.Dockerfile -t archivepodcast:ffmpeg .
 docker build -f docker/main.Dockerfile -t archivepodcast:latest .
 
 echo_magenta "Building pytest image"
@@ -25,4 +23,4 @@ echo_magenta "Running pytest image"
 docker run --rm archivepodcast:pytest
 
 echo_magenta "Running self test"
-docker run --rm --env AP_SELF_TEST=true archivepodcast:al2023 sh -c "mkdir -p /tmp/instance && archivepodcast --instance-path /tmp/instance"
+docker run --rm --env AP_SELF_TEST=true archivepodcast:latest sh -c "mkdir -p /tmp/instance && archivepodcast --instance-path /tmp/instance"
